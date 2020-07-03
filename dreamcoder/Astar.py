@@ -52,13 +52,18 @@ class Astar(Solver):
 
     def _getNextNodes(self, task, node, g, request):
         totalCost, policyCost, sketch, zippers = node
+        #print("TOTAL COSTS", totalCost)
         if self.canonicalOrdering:
             zippers = [zippers[0]] #only use the first zipper if cannonicalOrdering
         for zipper in zippers:
-            for stepCost, newZippers, newSketch in self.owner.policyHead.enumSingleStep(task, g, sketch, request, 
+            try:
+                for stepCost, newZippers, newSketch in self.owner.policyHead.enumSingleStep(task, g, sketch, request, 
                                                                     holeZipper=zipper,
                                                                     maximumDepth=self.maxDepth):
-                yield policyCost + stepCost, newZippers, newSketch
+                    yield policyCost + stepCost, newZippers, newSketch
+            except AssertionError:
+                #print("SKKKK", sketch)
+                return
 
     def infer(self, g, tasks, likelihoodModel, _=None,
                               #verbose=False,
@@ -123,6 +128,8 @@ class Astar(Solver):
 
                 nNei = 0
                 for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
+                    # print(policyCost, neighbor)
+                    # import pdb; pdb.set_trace()
                     nNei += 1
                     if (neighbor) in allObjects:
                         continue

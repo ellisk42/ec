@@ -14,7 +14,11 @@ from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
 from dreamcoder.domains.tower.tower_common import renderPlan
 from dreamcoder.Astar import InferenceTimeout
 
+from dreamcoder.program import Index, Program
 import types 
+from dreamcoder.domains.rb.rbPrimitives import *
+from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
+
 
 class computeValueError(Exception):
     pass
@@ -664,6 +668,64 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 
         distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
         return distance #Or something ...
+
+
+
+
+class RBPrefixValueHead(BaseValueHead):
+    def __init__(self):
+        super(BaseValueHead, self).__init__()
+        self.use_cuda = torch.cuda.is_available()
+    def valueLossFromFrontier(self, frontier, g):
+        if self.use_cuda:
+            return torch.tensor([0.]).cuda()
+        else: 
+            return torch.tensor([0.])
+    def computeValue(self, sketch, task):
+
+        #print(sketch)
+        #print(task)
+
+
+        I, O = zip(*task.examples)
+        prefix = self._getPrefix(sketch, task)
+        exprs = prefix.evaluate([])
+        try:
+            newP = ROB.P( exprs ([]) ) 
+
+            previousWords = [ ROB.executeProgWithOutputs(newP, i, o) for i, o in zip(I,O)] #TODO change this in a few ways
+        except (IndexError, ButtonSeqError, CommitPrefixError, NoChangeError) as e:
+            #print("fail")
+            return 100000000
+
+        #print('okay')
+        return 0.
+
+
+    def _getPrefix(self, sk, task):
+        prev, scratch = self._seperatePrevAndScratch(sk, task.request)
+        return prev
+
+    def _seperatePrevAndScratch(self, sk, request):
+        """
+        prev should be full prog
+        scratch is not
+        """
+        zippers = findHoles(sk, request)
+        if len(zippers) == 1:
+            assert zippers[0].tp == texpression
+            scratch = Hole(tp=texpression)
+            prev = NewExprPlacer().execute(sk, zippers[0].path, Index(0))
+
+        else: 
+            commonPath = []
+            for group in zip(*[zipp.path for zipp in zippers]):
+                if all(move == group[0] for move in group ):
+                    commonPath.append(group[0])
+                else: break
+            prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, Index(0)) 
+        return prev, scratch
+
 
 
 

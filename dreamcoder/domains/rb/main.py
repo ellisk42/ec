@@ -251,9 +251,9 @@ def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False)
 
 
 
-def makeOldTasks():
+def makeOldTasks(synth=True, challenge=True):
     tasklist = makeTestdata(synth=True, challenge=True, max_num_ex=4)
-    tasklist = list(set( (tuple(i), tuple(o)) for i, o, in tasklist))
+    tasklist = list(set( (tuple(i), tuple(o)) for i, o in tasklist))
     tasks = []
 
     for ins, outs in tasklist:

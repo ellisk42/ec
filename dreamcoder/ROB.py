@@ -627,6 +627,9 @@ def generate_string(constraint, max_string_size=MAX_STR_LEN):
 def executeProg(prog, inp):
     return BUTT.apply_fs(BUTT.RobState.new([inp], [""]), prog.flatten()).committed[0]
 
+def executeProgWithOutputs(prog, inp, out):
+    return BUTT.apply_fs(BUTT.RobState.new([inp], [out]), prog.flatten()).committed[0]
+
 def generate_FIO(n_ios, verbose=False, limit_p_size=None):
     """
         generate a function, inputs, outputs triple

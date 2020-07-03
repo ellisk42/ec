@@ -47,10 +47,10 @@ TODO:
 
 class SMC(Solver):
     def __init__(self, owner, _=None,
-                 maximumLength=35,
+                 maximumLength=12,
                  initialParticles=8, exponentialGrowthFactor=2,
                  criticCoefficient=1.,
-                 maxDepth=16,
+                 maxDepth=12,
                  holeProb=0.2):
         self.maximumLength = maximumLength
         self.initialParticles = initialParticles
@@ -152,12 +152,17 @@ class SMC(Solver):
                             newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)
+                            totalNumberOfPrograms += 1
+
                             # print(newObject)
                             # print(newZippers)
                             # print()
                         except NoCandidates:
                             print(f"NoCand error on particle: {p}")
                             break
+
+                        except AssertionError:
+                            continue
 
                     # for newObject, newZippers in (sampleSingleStep(g, p.trajectory,
                     #                                 request, holeZippers=p.zippers,
