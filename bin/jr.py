@@ -57,7 +57,7 @@ Josh
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description = "")
-    parser.add_argument("--w","-w",default=1,type=int)
+    parser.add_argument("--w","-w",default="1",type=str)
     parser.add_argument("--dream","-d",default=False,action='store_true')
     parser.add_argument("--timeout","-t",default=600,type=float)
     parser.add_argument("--CPUs",default=numberOfCPUs(),type=int)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     timeout = arguments.timeout
 
-    if arguments.w == 3:
+    if float(arguments.w) >= 3:
         gs = [Grammar.uniform(pt)
               for pt in josh_primitives(arguments.w) ]
     else:
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         t.examples = []
 
     if arguments.dream:
-        assert arguments.w >= 3
+        assert float(arguments.w) >= 3
 
         promises = []
         for g in gs:
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     tasks = tasks
 
-    if arguments.w == 3:
+    if float(arguments.w) >= 3:
         taskToGrammar = {t: gs[int(int(t.name.split("_")[0]) >= 81)]
                          for t in tasks }
         for trial in range(11):

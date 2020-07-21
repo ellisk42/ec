@@ -11,12 +11,14 @@ def joshTasks(w):
     import os
     ts = []
     import json
-    if w == 1:
+    if w == "1":
         directory = "data/wave1"
-    elif w == 2:
+    elif w == "2":
         directory = "data/wave2"
-    elif w == 3:
+    elif w == "3":
         directory = "data/wave3/json"
+    elif w == "3.1":
+        directory = "data/wave3.1/json"
     else:
         assert False
     for fn in os.listdir(directory):

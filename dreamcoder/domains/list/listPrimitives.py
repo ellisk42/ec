@@ -406,7 +406,7 @@ def no_length():
 
 
 def josh_primitives(w):
-    if w == 1:
+    if w == "1":
         return [
             Primitive("empty_int", tlist(tint), []),
             Primitive("cons_int", arrow(tint, tlist(tint), tlist(tint)), _cons),
@@ -417,7 +417,7 @@ def josh_primitives(w):
             Primitive("eq?", arrow(tint, tint, tbool), _eq),
             primitiveRecursion1
         ] + [Primitive(str(j), tint, j) for j in range(100)]
-    elif w == 2:
+    elif w == "2":
         return [
             Primitive("empty_int", tlist(tint), []),
             Primitive("cons_int", arrow(tint, tlist(tint), tlist(tint)), _cons),
@@ -431,7 +431,7 @@ def josh_primitives(w):
             Primitive("gt?", arrow(tint,tint,tint), _gt),
             primitiveRecursion1
         ] + [Primitive(str(j), tint, j) for j in range(10)]
-    elif w == 3:
+    elif w == "3" or w == "3.1":
         return ([
             Primitive("empty", tlist(t0), []),
             Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
