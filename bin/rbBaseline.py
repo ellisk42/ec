@@ -191,13 +191,13 @@ if __name__=='__main__':
     parser.add_argument("--domain",'-d',default="josh")
     parser.add_argument("--test", type=str, default=False)
     parser.add_argument("--timeout", type=float, default=1200)
-    parser.add_argument("-w", type=int)
+    parser.add_argument("-w", type=str,)
     parser.add_argument("--type", type=str, default='9') #'9' or '99'
     parser.add_argument("--tasks", type=int, default=0)
     arguments = parser.parse_args()
 
     assert arguments.domain == "josh"
-    assert arguments.w == 3
+    #assert arguments.w == 3
 
     BATCHSIZE = 16
 
@@ -263,8 +263,8 @@ if __name__=='__main__':
         m99 = torch.load(path+"_g=99", map_location=lambda storage, loc: storage)
         m9.max_length=50
         m99.max_length=50
-        print('testing model:')
-        print(path)
+        # print('testing model:')
+        # print(path)
 
         #assumes tasks are the testing tasks
         taskToModel = {t: m99 if (int(t.name.split("_")[0]) >= 81) else m9
@@ -275,7 +275,7 @@ if __name__=='__main__':
 
         start = arguments.tasks
 
-        for i in range(start, start + 10):
+        for i in range(start*10, start*10 + 10):
         #for i, task in enumerate(tasks):
             task = tasks[i]
             test_task(taskToModel[task], task, i, arguments.timeout)
