@@ -19,6 +19,8 @@ def joshTasks(w):
         directory = "data/wave3/json"
     elif w == "3.1":
         directory = "data/wave3.1/json"
+    elif w == "final":
+        directory = "data/final_wave"
     else:
         assert False
     for fn in os.listdir(directory):
