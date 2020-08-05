@@ -68,7 +68,9 @@ if __name__ == "__main__":
 
     timeout = arguments.timeout
 
-    if float(arguments.w) >= 3:
+    if arguments.w == "final":
+        g = Grammar.uniform(josh_primitives(arguments.w))
+    elif float(arguments.w) >= 3:
         gs = [Grammar.uniform(pt)
               for pt in josh_primitives(arguments.w) ]
     else:
@@ -98,9 +100,13 @@ if __name__ == "__main__":
 
     tasks = tasks
 
-    if float(arguments.w) >= 3:
-        taskToGrammar = {t: gs[int(int(t.name.split("_")[0]) >= 81)]
-                         for t in tasks }
+    if arguments.w == "final" or float(arguments.w) >= 3:
+        if arguments.w == "final":
+            taskToGrammar = {t: g
+                             for t in tasks }
+        else:
+            taskToGrammar = {t: gs[int(int(t.name.split("_")[0]) >= 81)]
+                             for t in tasks }
         for trial in range(11):
             frontiers, times, pcs = multicoreEnumeration(taskToGrammar,tasks,solver="ocaml",maximumFrontier=1,
                                                          enumerationTimeout=timeout,CPUs=arguments.CPUs,
