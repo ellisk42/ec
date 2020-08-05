@@ -25,10 +25,14 @@ def joshTasks(w):
         assert False
     for fn in os.listdir(directory):
         if not fn.endswith(".json"):continue
-        
+
+        if w == "final":
+            if not (fn.endswith("_1.json")):
+                continue
+
         with open(f"{directory}/{fn}") as handle:
             data = json.load(handle)
-            
+
             ts.append(Task(data.get("name",fn.split(".")[0][1:]),
                            arrow(tlist(tint),tlist(tint)),
                            [((e["i"],),e["o"])

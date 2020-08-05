@@ -431,6 +431,20 @@ def josh_primitives(w):
             Primitive("gt?", arrow(tint,tint,tint), _gt),
             primitiveRecursion1
         ] + [Primitive(str(j), tint, j) for j in range(10)]
+    elif w == "final":
+        return [
+            Primitive("empty", tlist(t0), []),
+            Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
+            Primitive("car", arrow(tlist(t0), t0), _car),
+            Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
+            Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
+            Primitive("if", arrow(tbool, t0, t0, t0), _if),
+            Primitive("eq?", arrow(tint, tint, tbool), _eq),
+            Primitive("-n99", arrow(tint,tint,tint), _minusNatural99),
+            Primitive("+n99", arrow(tint,tint,tint), _plusNatural99),
+            Primitive("gt?", arrow(tint,tint,tint), _gt),
+            primitiveRecursion1
+        ] + [Primitive(str(j), tint, j) for j in range(100)]
     elif w == "3" or w == "3.1":
         return ([
             Primitive("empty", tlist(t0), []),
