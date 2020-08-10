@@ -479,6 +479,11 @@ def ecIterator(grammar, tasks,
             resumeTrainingModel = None 
 
         thisRatio = helmholtzRatio
+        if grammar.continuationType is None: # hack for list domain
+            defaultRequest = arrow(tlist(tint), tlist(tint))
+        else:
+            defaultRequest = arrow(grammar.continuationType, grammar.continuationType)
+
         result.recognitionModel = sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
                                ensembleSize=ensembleSize, featureExtractor=featureExtractor, mask=mask,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
@@ -491,7 +496,7 @@ def ecIterator(grammar, tasks,
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
                                seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining,
                                searchType=searchType, filterMotifs=filterMotifs, policyType=policyType,
-                               defaultRequest=arrow(grammar.continuationType, grammar.continuationType))
+                               defaultRequest=defaultRequest)
 
 
         #check log likelihood
