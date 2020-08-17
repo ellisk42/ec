@@ -15,6 +15,9 @@ from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, M
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 
+from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
+from dreamcoder.domains.list.makeDeepcoderData import deepcoder_taskloader, task_of_line
+
 
 def retrieveJSONTasks(filename, features=False):
     """
@@ -153,6 +156,16 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     
     special = None
 
+    def sampleHelmholtzTask(self, request, motifs=[]):
+        # NOTE: we ignore the `request` argument
+        if motifs != []:
+            raise NotImplementedError
+        try:
+            program, task = next(self.deepcoder_taskloader)
+        except StopIteration:
+            return None,None
+        return program, task
+
     def tokenize(self, examples):
         def sanitize(l): 
             #print("L LIST", l)
@@ -213,6 +226,10 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                  for l in [y] + [x for x in xs])
 
         self.recomputeTasks = True
+        self.deepcoder_taskloader = deepcoder_taskloader(
+           #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt',
+           'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train_perm.txt',
+           allowed_requests=[arrow(tlist(tint),tlist(tint))])
 
         super(
             LearnedFeatureExtractor,
@@ -267,7 +284,7 @@ def list_options(parser):
     parser.add_argument("--primitives",
                         default="common",
                         help="Which primitive set to use",
-                        choices=["McCarthy", "base", "rich", "common", "noLength"])
+                        choices=["McCarthy", "base", "rich", "common", "noLength", "deepcoder"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned"],
                         default="learned")
@@ -369,6 +386,7 @@ def main(args):
              "McCarthy": McCarthyPrimitives,
              "common": bootstrapTarget_extra,
              "noLength": no_length,
+             "deepcoder": deepcoderPrimitives,
              "rich": primitives}[args.pop("primitives")]()
     haveLength = not args.pop("noLength")
     haveMap = not args.pop("noMap")
@@ -427,4 +445,4 @@ def main(args):
         train = tasks
         test = []
 
-    explorationCompression(baseGrammar, train, testingTasks=test, **args)
+    explorationCompression(baseGrammar,[], testingTasks=[], **args)

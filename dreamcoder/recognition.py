@@ -1231,13 +1231,17 @@ class RecognitionModel(nn.Module):
             random.seed(seed)
         request = random.choice(requests)
 
-        #hack for robustfill:
+        #hack for robustfill and lists:
         if hasattr(self.featureExtractor, 'sampleHelmholtzTask'):
             program, task = self.featureExtractor.sampleHelmholtzTask(request, motifs=self.filterMotifs)
             if program is None: return None
 
             if statusUpdate is not None:
                 flushEverything()
+            if 'LearnedFeatureExtractor' in str(self.featureExtractor.__class__):
+                # the silly if-stmt guard on this might be unnecessary idk. But this line is improtant bc we ignore `request`
+                # during sampleHelmholtzTask and everything will crash if `self.generativeModel.logLikelihood` is called later with the wrong request
+                request = task.request 
 
         else:            
             program = self.generativeModel.sample(request, maximumDepth=6, maxAttempts=100) 
@@ -1260,7 +1264,13 @@ class RecognitionModel(nn.Module):
                 if self.featureExtractor.tokenize(task.examples) is None:
                     return None
         
-        ll = self.generativeModel.logLikelihood(request, program)
+        import mlb
+        try:
+            ll = self.generativeModel.logLikelihood(request, program)
+            mlb.green(program)
+        except AssertionError:
+            mlb.red(program)
+            return None
         frontier = Frontier([FrontierEntry(program=program,
                                            logLikelihood=0., logPrior=ll)],
                             task=task)
@@ -1272,18 +1282,18 @@ class RecognitionModel(nn.Module):
         frequency = N / 50
         startingSeed = random.random()
 
-        # Sequentially for ensemble training.
-        # samples = [self.sampleHelmholtz(requests,
-        #                                    statusUpdate='.' if n % frequency == 0 else None,
-        #                                    seed=startingSeed + n) for n in range(N)]
-
-        # (cathywong) Disabled for ensemble training. 
-        samples = parallelMap(
-            CPUs,
-            lambda n: self.sampleHelmholtz(requests,
-                                           statusUpdate='.' if n % frequency == 0 else None,
-                                           seed=startingSeed + n),
-            range(N))
+        # Sequentially load for deepcoder data in list domain
+        if 'LearnedFeatureExtractor' in str(self.featureExtractor.__class__): # horrible hack bc we can't import `dreamcoder.domains.list.main` without a cyclic import error
+            samples = [self.sampleHelmholtz(requests,
+                                                statusUpdate='.' if n % frequency == 0 else None,
+                                                seed=startingSeed + n) for n in range(N)]
+        else:
+            samples = parallelMap(
+                CPUs,
+                lambda n: self.sampleHelmholtz(requests,
+                                            statusUpdate='.' if n % frequency == 0 else None,
+                                            seed=startingSeed + n),
+                range(N))
         eprint()
         flushEverything()
         samples = [z for z in samples if z is not None]

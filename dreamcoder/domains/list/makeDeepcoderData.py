@@ -12,14 +12,15 @@ from collections import namedtuple
 #Function = namedtuple('Function', ['src', 'sig', 'fun', 'bounds'])
 
 
-try:
-    import binutil  # required to import from dreamcoder modules
-except ModuleNotFoundError:
-    import bin.binutil  # alt import if called as module
+if __name__ == '__main__':
+    try:
+        import binutil  # required to import from dreamcoder modules
+    except ModuleNotFoundError:
+        import bin.binutil  # alt import if called as module
 
-from dreamcoder.domains.list.main import main, list_options
-from dreamcoder.dreamcoder import commandlineArguments
-from dreamcoder.utilities import numberOfCPUs
+#from dreamcoder.domains.list.main import main, list_options
+#from dreamcoder.dreamcoder import commandlineArguments
+#from dreamcoder.utilities import numberOfCPUs
 
 from dreamcoder.task import Task
 
@@ -281,9 +282,48 @@ def batchloader(data_file_list,
                                           improved_dc_model=improved_dc_model,
                                           nHoles=nHoles) for data_file in data_file_list])
 
+def task_of_line(line, N=5, L=10, V=512):
+    line = line.replace(' | ', '\n')
+    dc_program = compile(line, V=V, L=L)
+
+    if dc_program is None:
+        return None
+
+    # find IO
+    IO = tuple(generate_IO_examples(dc_program, N=N, L=L, V=V))
+
+    # find tp
+    ins = [tint if inp == int else tlist(tint) for inp in dc_program.ins]
+    if dc_program.out == int:
+        out = tint
+    else:
+        assert dc_program.out == [int]
+        out = tlist(tint)
+    tp = arrow(*(ins+[out]))
+
+    # find program p
+    pseq = tuple(convert_dc_program_to_ec(dc_program, tp))
+    p = parseprogram(pseq, tp)
+    task = Task(str(p), tp, IO)
+    return p, task
+
+
+def deepcoder_taskloader(file, allowed_requests, shuffle=False):
+    f = open(file,'r') # sadly we can't close this while maintaining laziness I think
+    next(f) # skip first line
+    lines = (line.rstrip('\n') for line in f)
+    if shuffle:
+        print("shuffle=True, loading entire file (non-lazy)")
+        lines = list(lines)
+        random.shuffle(lines)
+    #if one_arg:
+    #    lines = (line for line in lines if line.count('|') == 1)
+    tasks = (task_of_line(line) for line in lines)
+    tasks = ((prgm,tsk) for prgm,tsk in tasks if tsk.request in allowed_requests)
+    yield from tasks
 
 if __name__ == '__main__':
-    from itertools import islice
+    #from itertools import islice
     #convert_source_to_datum("a <- [int] | b <- [int] | c <- ZIPWITH + b a | d <- COUNT isEVEN c | e <- ZIPWITH MAX a c | f <- MAP MUL4 e | g <- TAKE d f")
 
     #filename = 'data/DeepCoder_data/T2_A2_V512_L10_train_perm.txt'
@@ -302,6 +342,12 @@ if __name__ == '__main__':
 
     ##import models.deepcoderModel as deepcoderModel
     ##dcModel = torch.load("./saved_models/dc_model.p")
+
+    print("loading")
+    x=deepcoder_dataloader(train_data)
+    next(x)
+    print("loaded")
+    exit(0)
 
     print("making tasks")
     tasks = []

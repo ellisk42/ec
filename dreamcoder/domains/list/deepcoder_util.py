@@ -21,13 +21,13 @@ import time
 from collections import OrderedDict
 #from util import enumerate_reg, Hole
 
-from grammar import Grammar, NoCandidates
+from dreamcoder.grammar import Grammar, NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderProductions, flatten_program
 
-from program import Application, Hole, Primitive, Index, Abstraction, ParseFailure
+from dreamcoder.program import Application, Hole, Primitive, Index, Abstraction, ParseFailure
 
 import math
-from type import Context, arrow, tint, tlist, tbool, UnificationFailure
+from dreamcoder.type import Context, arrow, tint, tlist, tbool, UnificationFailure
 
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
 dc_primitives = {prim.name:prim for prim in deepcoderPrimitives()}
