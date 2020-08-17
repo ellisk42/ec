@@ -5,6 +5,7 @@ import math
 import os
 import datetime
 import torch
+from inspect import getgeneratorlocals
 
 from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
@@ -215,21 +216,26 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         return tokenized
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
-            x, str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
-
-        # Calculate the maximum length
-        self.maximumLength = float('inf') # Believe it or not this is actually important to have here
-        self.maximumLength = max(len(l)
-                                 for t in tasks + testingTasks
-                                 for xs, y in self.tokenize(t.examples)
-                                 for l in [y] + [x for x in xs])
-
-        self.recomputeTasks = True
         self.deepcoder_taskloader = deepcoder_taskloader(
            #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt',
-           'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train_perm.txt',
+           #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train_perm.txt',
+           'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_train_perm.txt',
            allowed_requests=[arrow(tlist(tint),tlist(tint))])
+        #_, task = next(self.deepcoder_taskloader)
+        #self.lexicon = set(flatten(task.examples, abort=lambda x: isinstance(x,str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
+        self.lexicon = {"LIST_START", "LIST_END", "?"}.union(set(range(-64, 64)))
+
+        # Calculate the maximum length
+        if len(testingTasks + tasks) == 0:
+            self.maximumLength = getgeneratorlocals(self.deepcoder_taskloader)['L'] # ok this is a little over the top
+        else:
+            self.maximumLength = float('inf') # Believe it or not this is actually important to have here
+            self.maximumLength = max(len(l)
+                                    for t in tasks + testingTasks
+                                    for xs, y in self.tokenize(t.examples)
+                                    for l in [y] + [x for x in xs])
+
+        self.recomputeTasks = True
 
         super(
             LearnedFeatureExtractor,

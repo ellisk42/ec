@@ -282,7 +282,7 @@ def batchloader(data_file_list,
                                           improved_dc_model=improved_dc_model,
                                           nHoles=nHoles) for data_file in data_file_list])
 
-def task_of_line(line, N=5, L=10, V=512):
+def task_of_line(line, N=5, L=10, V=63):
     line = line.replace(' | ', '\n')
     dc_program = compile(line, V=V, L=L)
 
@@ -308,7 +308,7 @@ def task_of_line(line, N=5, L=10, V=512):
     return p, task
 
 
-def deepcoder_taskloader(file, allowed_requests, shuffle=False):
+def deepcoder_taskloader(file, allowed_requests, shuffle=False, N=5, L=10, V=63):
     f = open(file,'r') # sadly we can't close this while maintaining laziness I think
     next(f) # skip first line
     lines = (line.rstrip('\n') for line in f)
@@ -318,7 +318,8 @@ def deepcoder_taskloader(file, allowed_requests, shuffle=False):
         random.shuffle(lines)
     #if one_arg:
     #    lines = (line for line in lines if line.count('|') == 1)
-    tasks = (task_of_line(line) for line in lines)
+    tasks = (task_of_line(line,N=N,L=L,V=V) for line in lines)
+    tasks = (t for t in tasks if t is not None)
     tasks = ((prgm,tsk) for prgm,tsk in tasks if tsk.request in allowed_requests)
     yield from tasks
 
