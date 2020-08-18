@@ -124,7 +124,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(4800))
+        xs = list(range(5300))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n], linewidth=4)
@@ -217,11 +217,13 @@ if __name__ == '__main__':
         ]
 
     graph="_graph=True"
-    nameSalt = "SMCpseudo" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "SMCpseudoWithSynth" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'rb'
     runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     paths = [
         (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPL_SRE=True.pickle', 'Abstract REPL policy (ours)'),
+        (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNN_SRE=True.pickle', 'RNN Policy'),
+        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCBigram_SRE=True.pickle', 'Bigram Policy'),
         ]
 
 
@@ -247,6 +249,7 @@ if __name__ == '__main__':
             rbHardTasks = [ t.name for t in makeTasks()]
 
             challenge = [t.name for t in makeOldTasks(synth=False) ]
+            print("length challenge,", len(challenge))
 
             delTasks = []
             seenBridges = False
@@ -270,7 +273,7 @@ if __name__ == '__main__':
 
                 if task.name in tnames:  delTasks.append(task)
 
-                if task.name not in challenge: delTasks.append(task)
+                #if task.name not in challenge: delTasks.append(task)
 
             for task in delTasks: del r.testingSearchStats[-1][task]
 
@@ -293,6 +296,11 @@ if __name__ == '__main__':
 
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
+
+            # for i, (task, v) in enumerate(res.items()):
+            #     print(i, "task", task, "res", bool(v))
+
+            # assert 0
             testResults.append( list(res.values()) )
 
         plotTestResults(testResults, timeout,

@@ -56,7 +56,7 @@ import torch
 from torch import nn
 
 from dreamcoder.zipper import sampleSingleStep, enumSingleStep
-from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead, SimpleModularValueHead
 from dreamcoder.program import Index, Program
 from dreamcoder.zipper import *
 from dreamcoder.utilities import count_parameters
@@ -235,6 +235,12 @@ class RNNPolicyHead(NeuralPolicyHead):
         return dist
 
 
+class ModularPolicyHead(RNNPolicyHead):
+    def __init__(self, g, featureExtractor, H=512, maxVar=15, encodeTargetHole=True, canonicalOrdering=False):
+        super(ModularPolicyHead, self).__init__() #should have featureExtractor?
+        self.RNNHead = SimpleModularValueHead(g, featureExtractor, H=self.H, encodeTargetHole=encodeTargetHole) #hack
+
+
 class REPLPolicyHead(NeuralPolicyHead):
     """
     does not specify the target hole at all here
@@ -341,7 +347,6 @@ class SimpleNM(nn.Module):
         
     def forward(self, *args):
         #print(self.operator.name)
-
         if self.nArgs == 0:
             return self.params
         else:

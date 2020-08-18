@@ -241,6 +241,117 @@ class SimpleRNNValueHead(BaseValueHead):
         return loss
 
 
+
+class SimpleModularValueHead(BaseValueHead):
+
+    def __init__(self, g, featureExtractor, H=512, encodeTargetHole=False):
+        #specEncoder can be None, meaning you dont use the spec at all to encode objects
+        super(SimpleModularValueHead, self).__init__()
+        self.use_cuda = torch.cuda.is_available() #FIX THIS
+
+        self.H = H
+
+        assert featureExtractor.outputDimensionality == H, f"{featureExtractor.outputDimensionality} vs {H}"
+
+        self._distance = nn.Sequential(
+                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.ReLU(),
+                nn.Linear(H, 1),
+                nn.Softplus())
+        self.featureExtractor = featureExtractor
+
+        self.fn_modules = nn.ModuleDict()
+        self.lambdaParam = nn.Sequential(nn.Linear(1*H, H), nn.ReLU())
+        self.holeParam = nn.Parameter(torch.randn(H))
+
+        from dreamcoder.program import Primitive
+        from dreamcoder.type import tint
+        zero = Primitive('0', tint, 0)
+        for _, _, prim in g.productions:
+            self.fn_modules['0'] = NMN(zero, H)
+            if not prim.isPrimitive: continue #This should be totally fine i think...
+            self.fn_modules[prim.name] = NMN(prim, H)
+
+        for i in range(15): 
+            self.index_vectors[i] = nn.Parameter(torch.randn(H))
+
+       # self.RNNHead = SimpleRNNValueHead(g, featureExtractor, H=self.H)
+        if self.use_cuda:
+            self.cuda()
+
+    def _encodeSketches(self, sketches):
+        #don't use spec, just there for the API
+        assert type(sketches) == list
+        objectEncodings = []
+        for sk in sketches:
+            objectEncodings.append(self._encodeSingleSketch(sk.betaNormalForm()))
+        return torch.stack(objectEncodings, dim=0) #TODO
+
+    def _encodeSingleSketch(self, sk):
+        if sk.isPrimitive or sk.isInvention:
+            return self.fn_modules[sk.name]()
+
+        elif sk.isAbstraction:
+            return self.lambdaParam( self._encodeSingleSketch(sk.body) )
+
+        elif sk.isApplication:
+            f, xs = sk.applicationParse()
+
+            if f.isPrimitive:
+                f_hat = self.fn_modules[f.name]
+            else: assert False, f"was expecting the f to be a primitive, but it is something else: f:{f}, sk: {sk}"
+
+            args = [ self._encodeSingleSketch(x) for x in xs]
+            return f_hat(args)
+
+        elif sk.isHole:
+            return self.holeParam
+
+        elif sk.isIndex:
+            return self.index_vectors[sk.i]
+
+        else: assert False, f"wrong sketch: {sk}"
+
+    def computeValue(self, sketch, task):
+        taskFeatures = self.featureExtractor.featuresOfTask(task).unsqueeze(0) #memoize this plz
+        sketchEncoding = self._encodeSketches([sketch])
+        return self._distance(torch.cat([sketchEncoding, taskFeatures], dim=1)).squeeze(1).data.item()
+
+    def valueLossFromFrontier(self, frontier, g):
+        """
+        given a frontier, should sample a postive trace and a negative trace
+        and then train value head on those
+        """
+        features = self.featureExtractor.featuresOfTask(frontier.task)
+        if features is None: return None, None
+        features = features.unsqueeze(0)
+
+        # Monte Carlo estimate: draw a sample from the frontier
+        entry = frontier.sample()
+        tp = frontier.task.request
+        fullProg = entry.program._fullProg
+        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+
+        #discard negative sketches which overlap with positive
+        negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
+
+        nPos = len(posTrace)
+        nNeg = len(negTrace)
+        nTot = nPos + nNeg
+
+        sketchEncodings = self._encodeSketches(posTrace + negTrace)
+        # copy features a bunch
+        distance = self._distance(torch.cat([sketchEncodings, features.expand(nTot, -1)], dim=1)).squeeze(1)
+
+        targets = [1.0]*nPos + [0.0]*nNeg
+        targets = torch.tensor(targets)
+        if self.use_cuda:
+            targets = targets.cuda()
+        #import pdb; pdb.set_trace()
+        loss = binary_cross_entropy(-distance, targets, average=False) #average?
+        return loss
+
+
 class NMN(nn.Module):
     def __init__(self, prim, H=128):
         super(NMN, self).__init__()
@@ -430,6 +541,11 @@ class AbstractREPLValueHead(BaseValueHead):
         #discard negative sketches which overlap with positive
         negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
 
+        return self._valueLossFromTraces(posTrace, negTrace, task)
+
+
+
+    def _valueLossFromTraces(self, posTrace, negTrace, task):
         # compute outVectors: 
         outVectors = self._computeOutputVectors(task)
 
@@ -473,6 +589,7 @@ class AbstractREPLValueHead(BaseValueHead):
             assert 0
 
         return loss
+
 
     def valueLossFromFrontier(self, frontier, g):
         try:
