@@ -287,7 +287,7 @@ def task_of_line(line, N=5, L=10, V=63):
     dc_program = compile(line, V=V, L=L)
 
     if dc_program is None:
-        return None
+        return None,None
 
     # find IO
     IO = tuple(generate_IO_examples(dc_program, N=N, L=L, V=V))
@@ -308,25 +308,45 @@ def task_of_line(line, N=5, L=10, V=63):
     return p, task
 
 
-def deepcoder_taskloader(file, allowed_requests, shuffle=False, N=5, L=10, V=63,repeat=False, micro=False):
-    loop = True
-    while loop:
-        loop = repeat # stop after first iteration if `repeat=False`
-        f = open(file,'r') # sadly we can't close this while maintaining laziness I think
-        next(f) # skip first line
-        lines = (line.rstrip('\n') for line in f)
-        if shuffle:
-            print("shuffle=True, loading entire file (non-lazy)")
-            lines = list(lines)
-            random.shuffle(lines)
-        #if one_arg:
-        #    lines = (line for line in lines if line.count('|') == 1)
-        tasks = (task_of_line(line,N=N,L=L,V=V) for line in lines)
-        tasks = (t for t in tasks if t is not None)
-        tasks = ((prgm,tsk) for prgm,tsk in tasks if tsk.request in allowed_requests)
-        if micro:
-            tasks = islice(tasks,3) # only take first 3 tasks
-        yield from tasks
+class DeepcoderTaskloader:
+    def __init__(self,file,allowed_requests,N=5,L=10,V=63,repeat=False,micro=None):
+        self.buf = [] # buffer of (program,task) tuples
+        self.file = file
+        self.allowed_requests = allowed_requests
+        self.N = N
+        self.L = L
+        self.V = V
+        self.repeat = repeat
+        self.micro = micro
+        with open(self.file,'r') as f:
+            f.readline() # skip first line of file
+            self.offset_in_file = f.tell()
+            self.file_start = self.offset_in_file
+    def reloadBuffer(self):
+        assert len(self.buf) == 0
+        with open(self.file,'r') as f:
+            f.seek(self.offset_in_file) # pick up where we left off
+            # note we can't use next(f) as this disables f.tell(), so we do f.readline()
+            while True:
+                if len(self.buf) >= 500:
+                    break
+                line = f.readline().rstrip()
+                if line == '': # readline never errors out, it returns empty string on EOF
+                    if not self.repeat:
+                        raise EOFError
+                    f.seek(self.file_start) # repeat
+                program,task = task_of_line(line,N=self.N,L=self.L,V=self.V)
+                if program is None: continue
+                if task.request not in self.allowed_requests: continue
+                self.buf.append((program,task))
+                if self.micro and len(self.buf) % self.micro == 0:
+                    assert len(self.buf) != 0
+                    f.seek(self.file_start) # this should always
+            self.offset_in_file = f.tell()
+    def getTask(self):
+        if len(self.buf) == 0:
+            self.reloadBuffer()
+        return self.buf.pop()
 
 if __name__ == '__main__':
     #from itertools import islice

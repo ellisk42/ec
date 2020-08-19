@@ -164,6 +164,79 @@ def test_abstractREPL():
     print(task.examples)
     valueHead.computeValue(sketch, task)
 
+def test_trainListREPL():
+    from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
+    from dreamcoder.domains.list.main import LearnedFeatureExtractor
+    from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
+    from dreamcoder.valueHead import SimpleRNNValueHead
+    NUM_TASKS = 1
+    taskloader = DeepcoderTaskloader(
+        'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt', #TODO <- careful this is set to `train` instead of `test` for an ultra simple baseline
+        #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test_perm.txt',
+        #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_test_perm.txt',
+        #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_test_perm.txt',
+        allowed_requests=[arrow(tlist(tint),tlist(tint))],
+        repeat=True,
+        micro=NUM_TASKS, # load only 3 tasks
+        )
+
+    class FakeFrontier:
+        # pretends to be whatever valueLossFromFrontier wants for simplicity
+        def __init__(self,program,task):
+            self.task = task # satisfies frontier.task call
+            self._fullProg = program
+            self.program = self # trick for frontier.sample().program._fullProg
+        def sample(self):
+            return self
+    g = Grammar.uniform(deepcoderPrimitives())
+    prgms_and_tasks = [taskloader.getTask() for _ in range(500)] # a full size batch but it loops every 3 tasks
+    tasks = [task for program,task in prgms_and_tasks]
+    frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
+
+    featureExtractor = LearnedFeatureExtractor(tasks, testingTasks=tasks[:NUM_TASKS], cuda=True) # test on same tasks you train on
+    valueHead = SimpleRNNValueHead(g, featureExtractor, H=64)
+    optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+    j=0
+    for i in range(10):
+        for f in frontiers: # list of 3 tasks that is looped 500 times
+            valueHead.zero_grad()
+            loss = valueHead.valueLossFromFrontier(f, g)
+            #loss = sum([valueHead.valueLossFromFrontier(frontiers[i], g) for i in range(3)])/3
+            if j %200 == 0:
+                print(j,loss.data.item())
+            loss.backward()
+            optimizer.step()
+            j += 1
+            # For NUM_TASKS=1 it should converge to like .0001 or less or whatever roughly
+            # For NUM_TASKS=3 it should print roughly this (tho sometimes it doesnt get quite that low):
+            # 0 4.185908317565918
+            # 200 2.2845935821533203
+            # 400 0.09386047720909119
+            # 600 0.1874145269393921
+            # 800 0.25692281126976013
+            # 1000 0.19681498408317566
+            # 1200 0.04110711067914963
+            # 1400 0.11137421429157257
+            # 1600 2.1041994094848633
+            # 1800 0.04916973039507866
+            # 2000 0.03187175095081329
+            # 2200 0.0027384415734559298
+            # 2400 0.12562792003154755
+            # 2600 0.07696416229009628
+            # 2800 0.03026503510773182
+            # 3000 0.003952879458665848
+            # 3200 0.0077062807977199554
+            # 3400 0.002124919556081295
+            # 3600 0.006129148416221142
+            # 3800 0.0011640205048024654
+            # 4000 0.0007198153762146831
+            # 4200 0.0002680253819562495
+            # 4400 0.0006631703581660986
+            # 4600 0.0005345264216884971
+            # 4800 0.001332330284640193
+
+
 def test_trainAbstractREPL():
     from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
     from dreamcoder.domains.list.main import LearnedFeatureExtractor
@@ -692,9 +765,12 @@ if __name__=='__main__':
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
     # test_abstractHolesTower()
     # test_abstractHolesTowerValue()
-    test_policyTiming()
+    #test_policyTiming()
     # test_TowerREPLValueConvergence()
     # test_TowerRNNPolicyConvergence()
     # test_TowerREPLPolicyConvergence()
     # finetuneAndTestPolicy()
     # test_abstraction_bug()
+
+    with torch.cuda.device(6):
+        test_trainListREPL()

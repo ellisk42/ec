@@ -17,7 +17,7 @@ from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
-from dreamcoder.domains.list.makeDeepcoderData import deepcoder_taskloader, task_of_line
+from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 
 
 def retrieveJSONTasks(filename, features=False):
@@ -162,7 +162,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         if motifs != []:
             raise NotImplementedError
         try:
-            program, task = next(self.deepcoder_taskloader)
+            program, task = self.deepcoder_taskloader.getTask()
         except StopIteration:
             return None,None
         return program, task
@@ -216,13 +216,13 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         return tokenized
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.deepcoder_taskloader = deepcoder_taskloader(
+        self.deepcoder_taskloader = DeepcoderTaskloader(
            'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt',
            #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train_perm.txt',
            #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_train_perm.txt',
            allowed_requests=[arrow(tlist(tint),tlist(tint))],
            repeat=True,
-           micro=True,
+           micro=3,
            )
         #_, task = next(self.deepcoder_taskloader)
         #self.lexicon = set(flatten(task.examples, abort=lambda x: isinstance(x,str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
@@ -454,16 +454,16 @@ def main(args):
         train = tasks
         test = []
     
-    testing_taskloader = deepcoder_taskloader(
+    testing_taskloader = DeepcoderTaskloader(
         'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt', #TODO <- careful this is set to `train` instead of `test` for an ultra simple baseline
         #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test_perm.txt',
         #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_test_perm.txt',
         #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_test_perm.txt',
         allowed_requests=[arrow(tlist(tint),tlist(tint))],
         repeat=True,
-        micro=True,
+        micro=3,
         )
 
-    test = [next(testing_taskloader)[1] for _ in range(5)]
+    test = [testing_taskloader.getTask()[1] for _ in range(5)]
 
     explorationCompression(baseGrammar,[], testingTasks=test, **args)
