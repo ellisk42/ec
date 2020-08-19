@@ -217,17 +217,20 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
         self.deepcoder_taskloader = deepcoder_taskloader(
-           #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt',
+           'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt',
            #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train_perm.txt',
-           'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_train_perm.txt',
-           allowed_requests=[arrow(tlist(tint),tlist(tint))])
+           #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_train_perm.txt',
+           allowed_requests=[arrow(tlist(tint),tlist(tint))],
+           repeat=True,
+           micro=True,
+           )
         #_, task = next(self.deepcoder_taskloader)
         #self.lexicon = set(flatten(task.examples, abort=lambda x: isinstance(x,str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
         self.lexicon = {"LIST_START", "LIST_END", "?"}.union(set(range(-64, 64)))
 
         # Calculate the maximum length
         if len(testingTasks + tasks) == 0:
-            self.maximumLength = getgeneratorlocals(self.deepcoder_taskloader)['L'] # ok this is a little over the top
+            self.maximumLength = getgeneratorlocals(self.deepcoder_taskloader)['L']+2 # ok this is a little over the top. Note +2 is for the LIST_START and LIST_END
         else:
             self.maximumLength = float('inf') # Believe it or not this is actually important to have here
             self.maximumLength = max(len(l)
@@ -450,5 +453,17 @@ def main(args):
     else:
         train = tasks
         test = []
+    
+    testing_taskloader = deepcoder_taskloader(
+        'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt', #TODO <- careful this is set to `train` instead of `test` for an ultra simple baseline
+        #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test_perm.txt',
+        #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_test_perm.txt',
+        #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_test_perm.txt',
+        allowed_requests=[arrow(tlist(tint),tlist(tint))],
+        repeat=True,
+        micro=True,
+        )
 
-    explorationCompression(baseGrammar,[], testingTasks=[], **args)
+    test = [next(testing_taskloader)[1] for _ in range(5)]
+
+    explorationCompression(baseGrammar,[], testingTasks=test, **args)

@@ -29,7 +29,7 @@ from dreamcoder.utilities import flatten
 
 import math
 import random
-from itertools import zip_longest, chain
+from itertools import zip_longest, chain, islice
 from functools import reduce
 import torch
 
@@ -308,20 +308,25 @@ def task_of_line(line, N=5, L=10, V=63):
     return p, task
 
 
-def deepcoder_taskloader(file, allowed_requests, shuffle=False, N=5, L=10, V=63):
-    f = open(file,'r') # sadly we can't close this while maintaining laziness I think
-    next(f) # skip first line
-    lines = (line.rstrip('\n') for line in f)
-    if shuffle:
-        print("shuffle=True, loading entire file (non-lazy)")
-        lines = list(lines)
-        random.shuffle(lines)
-    #if one_arg:
-    #    lines = (line for line in lines if line.count('|') == 1)
-    tasks = (task_of_line(line,N=N,L=L,V=V) for line in lines)
-    tasks = (t for t in tasks if t is not None)
-    tasks = ((prgm,tsk) for prgm,tsk in tasks if tsk.request in allowed_requests)
-    yield from tasks
+def deepcoder_taskloader(file, allowed_requests, shuffle=False, N=5, L=10, V=63,repeat=False, micro=False):
+    loop = True
+    while loop:
+        loop = repeat # stop after first iteration if `repeat=False`
+        f = open(file,'r') # sadly we can't close this while maintaining laziness I think
+        next(f) # skip first line
+        lines = (line.rstrip('\n') for line in f)
+        if shuffle:
+            print("shuffle=True, loading entire file (non-lazy)")
+            lines = list(lines)
+            random.shuffle(lines)
+        #if one_arg:
+        #    lines = (line for line in lines if line.count('|') == 1)
+        tasks = (task_of_line(line,N=N,L=L,V=V) for line in lines)
+        tasks = (t for t in tasks if t is not None)
+        tasks = ((prgm,tsk) for prgm,tsk in tasks if tsk.request in allowed_requests)
+        if micro:
+            tasks = islice(tasks,3) # only take first 3 tasks
+        yield from tasks
 
 if __name__ == '__main__':
     #from itertools import islice
