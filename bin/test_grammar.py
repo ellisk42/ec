@@ -12,6 +12,7 @@ from dreamcoder.zipper import *
 
 from dreamcoder.domains.tower.towerPrimitives import *
 import time
+import itertools
 
 bootstrapTarget()
 g = Grammar.uniform([k0,k1,addition, subtraction, Program.parse('cons'), 
@@ -164,22 +165,39 @@ def test_abstractREPL():
     print(task.examples)
     valueHead.computeValue(sketch, task)
 
-def test_trainListREPL():
+def test_trainListREPL(T=2, repeat=True, test_every=3000, num_tasks=None, value=False,policy=False, share_extractor=True):
+    """
+    share_extractor means all value/policy heads will share the same LearnedFeatureExtractor which is often what you want unless
+    comparing multiple value functions side by side.
+    """
+    assert value or policy
     from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
     from dreamcoder.domains.list.main import LearnedFeatureExtractor
     from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
     from dreamcoder.valueHead import SimpleRNNValueHead
-    NUM_TASKS = 1
+    from dreamcoder.policyHead import RNNPolicyHead
+    from dreamcoder.Astar import Astar
+    from likelihoodModel import AllOrNothingLikelihoodModel
+    #import mlb
     taskloader = DeepcoderTaskloader(
-        'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt', #TODO <- careful this is set to `train` instead of `test` for an ultra simple baseline
-        #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test_perm.txt',
-        #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_test_perm.txt',
-        #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_test_perm.txt',
+        f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_train_perm.txt',
         allowed_requests=[arrow(tlist(tint),tlist(tint))],
         repeat=True,
-        micro=NUM_TASKS, # load only 3 tasks
+        micro=num_tasks, # load only 3 tasks
         )
-
+    testloader = DeepcoderTaskloader(
+        f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_test_perm.txt',
+        allowed_requests=[arrow(tlist(tint),tlist(tint))],
+        repeat=False,
+        micro=None, # load only 3 tasks
+        )
+    test_tasks = [testloader.getTask()[1] for _ in range(10)]
+    
+    class FakeRecognitionModel:
+        # pretends to be whatever Astar wants from its RecognitionModel. Which isn't much lol
+        def __init__(self,valueHead,policyHead):
+            self.policyHead = policyHead
+            self.valueHead = valueHead
     class FakeFrontier:
         # pretends to be whatever valueLossFromFrontier wants for simplicity
         def __init__(self,program,task):
@@ -188,26 +206,75 @@ def test_trainListREPL():
             self.program = self # trick for frontier.sample().program._fullProg
         def sample(self):
             return self
-    g = Grammar.uniform(deepcoderPrimitives())
-    prgms_and_tasks = [taskloader.getTask() for _ in range(500)] # a full size batch but it loops every 3 tasks
-    tasks = [task for program,task in prgms_and_tasks]
-    frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
 
-    featureExtractor = LearnedFeatureExtractor(tasks, testingTasks=tasks[:NUM_TASKS], cuda=True) # test on same tasks you train on
-    valueHead = SimpleRNNValueHead(g, featureExtractor, H=64)
-    optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+    g = Grammar.uniform(deepcoderPrimitives())
+
+    new_extractor = lambda: LearnedFeatureExtractor([], testingTasks=[], cuda=True) # test on same tasks you train on
+    def extractor():
+        if share_extractor:
+            if not hasattr(extractor,'_extractor'):
+                extractor._extractor = new_extractor()
+            return extractor._extractor
+        return new_extractor()
+
+    # if you want to add more heads to compare them side by side just add them to the valueHeads or policyHeads list!
+    policyHeads = [RNNPolicyHead(g, extractor(), H=512) if policy else None]
+    #valueHeads = [SimpleRNNValueHead(g, extractor(), H=64) if value else None]
+    valueHeads = [None]
+    valueHeads = list(filter(None,valueHeads))
+    policyHeads = list(filter(None,policyHeads))
+    params = itertools.chain.from_iterable([list(head.parameters()) for head in valueHeads+policyHeads])
+    optimizer = torch.optim.Adam(params, lr=0.001, eps=1e-3, amsgrad=True)
 
     j=0
-    for i in range(10):
+    tstart = time()
+    while True:
+        prgms_and_tasks = [taskloader.getTask() for _ in range(1000)] # a full size batch but it loops every 3 tasks
+        tasks = [task for program,task in prgms_and_tasks]
+        frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
         for f in frontiers: # list of 3 tasks that is looped 500 times
-            valueHead.zero_grad()
-            loss = valueHead.valueLossFromFrontier(f, g)
-            #loss = sum([valueHead.valueLossFromFrontier(frontiers[i], g) for i in range(3)])/3
-            if j %200 == 0:
-                print(j,loss.data.item())
-            loss.backward()
-            optimizer.step()
+            for i,head in enumerate(valueHeads+policyHeads):
+                head.zero_grad()
+                if hasattr(head,'valueLossFromFrontier'):
+                    loss = head.valueLossFromFrontier(f, g) # value loss
+                else:
+                    loss = head.policyLossFromFrontier(f, g) # policy loss
+                loss.backward()
+                optimizer.step()
+                if j % 200 == 0:
+                    print(f"[{j}] [{i}] {head.__class__.__name__} {loss.item()}")
+            if j % test_every == 0:
+                if j != 0:
+                    print(f"{test_every} steps in {time()-tstart:.1f}s")
+                print("Testing...")
+                likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+                solver = Astar(FakeRecognitionModel(policyHeads[0].RNNHead,policyHeads[0]))
+                for task in test_tasks:
+                    fs, times, num_progs, solns = solver.infer(
+                            g, 
+                            [task],
+                            likelihoodModel, 
+                            timeout=3,
+                            elapsedTime=0,
+                            evaluationTimeout=0.01,
+                            maximumFrontiers={task: 2},
+                            CPUs=1,
+                        ) 
+                    solns = solns[task]
+                    times = times[task]
+                    if len(solns) > 0:
+                        #mlb.green(f"solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
+                        print(f"solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
+                    else:
+                        #mlb.red(f"failed to solve {task.name} (searched {num_progs} programs)")
+                        print(f"failed to solve {task.name} (searched {num_progs} programs)")
+                tstart = time()
+
+
             j += 1
+    
+            #loss = sum([valueHead.valueLossFromFrontier(frontiers[i], g) for i in range(3)])/3
             # For NUM_TASKS=1 it should converge to like .0001 or less or whatever roughly
             # For NUM_TASKS=3 it should print roughly this (tho sometimes it doesnt get quite that low):
             # 0 4.185908317565918
@@ -773,4 +840,4 @@ if __name__=='__main__':
     # test_abstraction_bug()
 
     with torch.cuda.device(6):
-        test_trainListREPL()
+        test_trainListREPL(value=True,policy=True)
