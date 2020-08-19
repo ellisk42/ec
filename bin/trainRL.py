@@ -4,7 +4,8 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-
+import time
+import argparse
 from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
 import torch
@@ -12,6 +13,13 @@ import dill
 from dreamcoder.valueHead import SampleDummyValueHead, TowerREPLValueHead
 from dreamcoder.policyHead import RNNPolicyHead, REPLPolicyHead
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--id', type=str, default='towers3')
+parser.add_argument('--modeltype', type=str, default='REPL')
+parser.add_argument('--nPerGrad', type=int, default=4)
+parser.add_argument('--nSamples', type=int, default=4)
+parser.add_argument('--gpu', type=int, default=0)
+args = parser.parse_args()
 #imports
 class HelmholtzEntry:
     def __init__(self, frontier, owner):
@@ -39,25 +47,33 @@ class HelmholtzEntry:
         #              task=self.task)
         return f
 
-ID = 'towers' + str(3)
+torch.cuda.set_device(args.gpu)
+
+sys.setrecursionlimit(20000)
+ID = args.id
 graph = ""
 model = 'RNN'
 #When model is "Sample", don't need policyOnly
 path = f'experimentOutputs/{ID}PolicyOnly{model}_SRE=True{graph}.pickle'
 
-model = 'REPL'
+model = args.modeltype
 modelPath=f"experimentOutputs/{ID}PolicyOnly{model}.pickle_RecModelOnly"
 
 def loadRecModel():
     print(path)
     with open(path, 'rb') as h:
         result = dill.load(h)
-    with open(modelPath, 'rb') as h:
-        recModel = torch.load(h)
 
+    if args.modeltype == 'REPL':
+        with open(modelPath, 'rb') as h:
+            recModel = torch.load(h)
+    else: recModel = result.recognitionModel
+    recModel.cuda()
     return result, recModel
 
 def get_rl_loss(frontier, r, nSamples=4):
+    r.valueHead.train()
+
     entry = frontier.sample()
     task = frontier.task
     tp = frontier.task.request
@@ -94,17 +110,22 @@ def get_rl_loss(frontier, r, nSamples=4):
     posTrace = [p for t, ll in zip(traces,lls) for p in t if ll==0 ]
     negTrace = [p for t, ll in zip(traces,lls) for p in t if ll<0 ]
 
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
+    #print(lls)
 
-    return r.valueHead._valueLossFromTraces(posTrace, negTrace, task)
+    success = any(ll==0 for ll in lls)
+
+    return r.valueHead._valueLossFromTraces(posTrace, negTrace, task), success
 
 
 def createValueHeadFromPolicy(r):
     if isinstance(r.valueHead, SampleDummyValueHead):
         if isinstance(r.policyHead, REPLPolicyHead):
             r.valueHead = r.policyHead.REPLHead
+            r.valueHead.rl_iterations = 0
         elif isinstance(r.policyHead, RNNPolicyHead):
             r.valueHead = r.policyHead.RNNHead
+            r.valueHead.rl_iterations = 0
     elif isinstance(r.valueHead, TowerREPLValueHead):
         pass
     elif isinstance(r.valueHead, RNNValueHead):
@@ -122,29 +143,30 @@ optimizer = torch.optim.Adam(r.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
 g = r.generativeModel 
 requests = [frontier.request for frontier in result.allFrontiers]
 
-for i in range(1000000):
-    #frontier = r.sampleHelmholtz(requests) #this can return None
-    frontier = None
-    while frontier is None: frontier = r.sampleHelmholtz(requests)
-
-    for e in frontier:
-        e.program._fullProg = e.program
-    # e = HelmholtzEntry(frontier,r)
-    # frontier = [e]
-
+t = time.time()
+for i in range(16000):
     r.zero_grad()
-    contrastive_loss = r.valueHead.valueLossFromFrontier(frontier, g) #we do or dont need this
-    #rl_loss = 0
-    rl_loss = get_rl_loss(frontier, r)
-    (rl_loss + contrastive_loss).backward()
+    rl_loss = 0
+    contrastive_loss = 0
+    policy_loss = 0
+
+    for j in range(args.nPerGrad):
+
+        frontier = None
+        while frontier is None: frontier = r.sampleHelmholtz(requests)
+        for e in frontier: e.program._fullProg = e.program        
+        #contrastive_loss = r.valueHead.valueLossFromFrontier(frontier, g) #we do or dont need this    
+        Ls, success = get_rl_loss(frontier, r, nSamples=args.nSamples)
+        rl_loss += Ls        
+        policy_loss += r.policyHead.policyLossFromFrontier(frontier, g)
+
+    (rl_loss + contrastive_loss + policy_loss).backward()
     optimizer.step()
+    r.valueHead.rl_iterations += args.nPerGrad*args.nSamples
 
-    print("contrastive_loss", contrastive_loss)
-    print("rl_loss", rl_loss)
+    if i%10==0 and i !=0 : 
+        print(f"iteration: {i}, rl loss: {rl_loss.item()}, time: {(time.time() - t)/i}")
 
-
-
-
-    #prints
-
-    #saves
+    if i%100==0:
+        torch.save(r, modelPath+'rl')
+        print('saved model')

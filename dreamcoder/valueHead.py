@@ -209,9 +209,6 @@ class SimpleRNNValueHead(BaseValueHead):
         given a frontier, should sample a postive trace and a negative trace
         and then train value head on those
         """
-        features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None, None
-        features = features.unsqueeze(0)
 
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
@@ -221,6 +218,14 @@ class SimpleRNNValueHead(BaseValueHead):
 
         #discard negative sketches which overlap with positive
         negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
+
+        return self._valueLossFromTraces(posTrace, negTrace, frontier.task)
+
+    def _valueLossFromTraces(self, posTrace, negTrace, task):
+
+        features = self.featureExtractor.featuresOfTask(task)
+        if features is None: return None, None
+        features = features.unsqueeze(0)
 
         nPos = len(posTrace)
         nNeg = len(negTrace)
