@@ -1264,13 +1264,7 @@ class RecognitionModel(nn.Module):
                 if self.featureExtractor.tokenize(task.examples) is None:
                     return None
         
-        import mlb
-        try:
-            ll = self.generativeModel.logLikelihood(request, program)
-            mlb.green(program)
-        except AssertionError:
-            mlb.red(program)
-            return None
+        ll = self.generativeModel.logLikelihood(request, program)
         frontier = Frontier([FrontierEntry(program=program,
                                            logLikelihood=0., logPrior=ll)],
                             task=task)
