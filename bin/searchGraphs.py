@@ -124,7 +124,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(5300))
+        xs = list(range(1600))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n], linewidth=4)
@@ -224,6 +224,19 @@ if __name__ == '__main__':
         (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPL_SRE=True.pickle', 'Abstract REPL policy (ours)'),
         (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNN_SRE=True.pickle', 'RNN Policy'),
         #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCBigram_SRE=True.pickle', 'Bigram Policy'),
+        ]
+
+    graph=""
+    nameSalt = "AstarPseudoResultBoth" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+
+    paths = [
+        (f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + value (ours)'),
+        (f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy (ours)'),
+        (f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + value'),
+        (f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}Sample_SRE=True{graph}.pickle', 'Bigram Policy'),
         ]
 
 

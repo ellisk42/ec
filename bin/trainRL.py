@@ -10,7 +10,7 @@ from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
 import torch
 import dill
-from dreamcoder.valueHead import SampleDummyValueHead, TowerREPLValueHead
+from dreamcoder.valueHead import SampleDummyValueHead, TowerREPLValueHead, SimpleRNNValueHead
 from dreamcoder.policyHead import RNNPolicyHead, REPLPolicyHead
 
 parser = argparse.ArgumentParser()
@@ -19,6 +19,7 @@ parser.add_argument('--modeltype', type=str, default='REPL')
 parser.add_argument('--nPerGrad', type=int, default=4)
 parser.add_argument('--nSamples', type=int, default=4)
 parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--resume', action='store_true')
 args = parser.parse_args()
 #imports
 class HelmholtzEntry:
@@ -63,6 +64,12 @@ def loadRecModel():
     print(path)
     with open(path, 'rb') as h:
         result = dill.load(h)
+
+    if args.resume:
+        recModel = torch.load(modelPath+'rl') 
+        print(f"resuming, from {modelPath+'rl'}, number of rl steps taken so far is {recModel.valueHead.rl_iterations}")
+        recModel.cuda()
+        return result, recModel
 
     if args.modeltype == 'REPL':
         with open(modelPath, 'rb') as h:
@@ -128,7 +135,7 @@ def createValueHeadFromPolicy(r):
             r.valueHead.rl_iterations = 0
     elif isinstance(r.valueHead, TowerREPLValueHead):
         pass
-    elif isinstance(r.valueHead, RNNValueHead):
+    elif isinstance(r.valueHead, SimpleRNNValueHead):
         pass
     # much more annoying for robustfill
 
@@ -144,7 +151,9 @@ g = r.generativeModel
 requests = [frontier.request for frontier in result.allFrontiers]
 
 t = time.time()
-for i in range(16000):
+i = 0
+while r.valueHead.rl_iterations <= 16000*4*4:
+    i += 1
     r.zero_grad()
     rl_loss = 0
     contrastive_loss = 0
@@ -165,7 +174,7 @@ for i in range(16000):
     r.valueHead.rl_iterations += args.nPerGrad*args.nSamples
 
     if i%10==0 and i !=0 : 
-        print(f"iteration: {i}, rl loss: {rl_loss.item()}, time: {(time.time() - t)/i}")
+        print(f"iteration: {i}, rl_iterations: {r.valueHead.rl_iterations}, rl loss: {rl_loss.item()}, time: {(time.time() - t)/i}", flush=True)
 
     if i%100==0:
         torch.save(r, modelPath+'rl')
