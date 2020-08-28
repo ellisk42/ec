@@ -7,6 +7,8 @@ import datetime
 import torch
 import numpy as np
 from torch import nn
+from torch.nn.utils.rnn import pack_padded_sequence
+import mlb
 
 from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
@@ -169,11 +171,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
 
         self.maximumLength = maximumLength
 
-        # encodes a [int]
-        self.list_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
 
-        # encodes a task (set of inputs and outputs)
-        self.task_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
+
+        self.modular = True
 
         #self.recomputeTasks = True
 
@@ -185,6 +185,13 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             bidirectional=True)
 
         self.lexicon = set(self.lexicon)
+
+        # encodes a [int]
+        self.list_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
+
+        self.ctx_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=False)
+
+
 
     def tokenize(self, examples):
         def sanitize(l): 
@@ -223,24 +230,63 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
     def inputFeatures(self,task):
-        tokenized = self.tokenize(task.examples)
-        assert tokenized
+        if not self.modular:
+            # TODO old code just kept for comparison
+            tokenized = self.tokenize(task.examples)
+            assert tokenized
 
-        # this deletes any LIST_START LIST_END inserted by .tokenize()
-        tokenized = [(ex[0],[]) for ex in tokenized]
+            # this deletes any LIST_START LIST_END inserted by .tokenize()
+            tokenized = [(ex[0],[]) for ex in tokenized]
 
-        e = self.examplesEncoding(tokenized)
-        return e
+            e = self.examplesEncoding(tokenized)
+            return e
+        inputs = [ex[0] for ex in task.examples] # [num_exs,num_args]
+        argwise = list(zip(*inputs)) # [num_args,num_exs]
+        inputs = torch.stack([self.encodeValue(arg) for arg in argwise]) # [num_args,num_exs,H]
+        _, res = self.ctx_encoder(inputs)
+        res = res.squeeze(0) # [num_exs,H]
+        return res
+        
     def outputFeatures(self,task):
-        tokenized = self.tokenize(task.examples)
-        assert tokenized
+        if not self.modular:
+            # TODO old code just kept for comparison
+            tokenized = self.tokenize(task.examples)
+            assert tokenized
 
-        # this deletes any LIST_START LIST_END inserted by .tokenize()
-        tokenized = [([],ex[1]) for ex in tokenized]
+            # this deletes any LIST_START LIST_END inserted by .tokenize()
+            tokenized = [([],ex[1]) for ex in tokenized]
 
-        e = self.examplesEncoding(tokenized)
-        return e
-    
+            e = self.examplesEncoding(tokenized)
+            return e
+        outputs = [ex[1] for ex in task.examples] # [num_exs]
+        res = self.encodeValue(outputs)
+        return res
+        
+    def tokensToIndices(self,token_list):
+        # sanitize
+        unk = 0
+        for i,token in enumerate(token_list):
+            if token not in self.symbolToIndex:
+                if unk == 0:
+                    mlb.yellow(f"converting {token} to <UNK>. suppressing future warnings")
+                unk += 1
+                token_list[i] = "?"
+        if unk > 0:
+            mlb.yellow(f"Total <UNK>s: {unk}")
+        # convert to indices for embeddings
+        return [self.symbolToIndex[token] for token in token_list]
+
+    def pad_indices_lists(self,indices_lists):
+        assert isinstance(indices_lists,list)
+        assert isinstance(indices_lists[0],list)
+        sizes = [len(indices_list) for indices_list in indices_lists]
+        pad_till = max(sizes)
+
+        # padding
+        for i, indices_list in enumerate(indices_lists):
+            indices_lists[i] += [self.endingIndex] * (pad_till - len(indices_list))
+        return indices_lists, torch.tensor(sizes)
+
     def encodeValue(self, val):
         """
         val :: a concrete value that shows up as an intermediate value
@@ -257,19 +303,45 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         assert is_list(val)
         #assert len(val) == self.deepcoder_taskloader.N
         if is_list(val[0]):
-            assert len(val[0]) == 0 or is_int(val[0][0]) # make sure its [[int]]
-            class FakeTask: pass
-            fake_task = FakeTask()
-            fake_task.examples = [((v,),[]) for v in val] # :: [(([Int],),[])] in the single argument case
-            vec = self.inputFeatures(fake_task) # [5,H]
-            return vec
+            if not self.modular:
+                # TODO old code, only keeping it around for comparison
+                assert len(val[0]) == 0 or is_int(val[0][0]) # make sure its [[int]]
+                class FakeTask: pass
+                fake_task = FakeTask()
+                fake_task.examples = [((v,),[]) for v in val] # :: [(([Int],),[])] in the single argument case
+                vec = self.inputFeatures(fake_task) # [5,H]
+                return vec
+
+            indices_lists = []
+            for int_list in val:
+                tokens = ["LIST_START"] + int_list + ["LIST_END"]
+                assert len(tokens) <= self.maximumLength
+                indices = self.tokensToIndices(tokens) # [int]
+                indices_lists.append(indices)
+            
+            # pad
+            indices_lists, sizes = self.pad_indices_lists(indices_lists) # [[int]]
+            # sort by sizes for pytorch efficiency
+            sizes,sorter = sizes.sort(descending=True)
+            _,unsorter = sorter.sort() # fun trick
+            # embed & pack
+            embeddings = self.embedding(indices_lists, cuda=self.use_cuda) # [num_exs, padded_ex_length, H]
+            embeddings = embeddings[sorter] # sort by decreasing size
+            embeddings = embeddings.permute(1,0,2) # swap first two dims. [padded_ex_length, num_exs, H]
+            packed = pack_padded_sequence(embeddings,sizes)
+
+            _, hidden = self.list_encoder(packed)
+            res = hidden.sum(0) # sum over bidirectionality. [num_exs, H]
+            sizes = sizes[unsorter]
+            res = res[unsorter] # undo the sorting so the examples line up with what were passed in originally
+            return res
+            # XXX next we run thru list_encoder examplewise batched also we pack them
+
         
         # val is one concrete non-list value per example
-        for i,v in enumerate(val):
-            if v not in self.symbolToIndex:
-                print("converthing {v} to <UNK>")
-                v[i] = "?"
-        res = self.encoder([self.symbolToIndex[v] for v in val],cuda=self.use_cuda)
+        # no LIST_START or anything needed here! Bc the list is examplewise
+        indices = self.tokensToIndices(val) # [int]
+        res = self.embedding(indices, cuda=self.use_cuda) # [num_exs,H]
         return res
 
     def sampleHelmholtzTask(self, request, motifs=[]):

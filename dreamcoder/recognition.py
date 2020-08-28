@@ -1897,7 +1897,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
         #encoder = nn.Embedding(len(lexicon), H)
         encoder = OptionalVectorEmbedding(len(lexicon), H)
-        self.encoder = encoder
+        self.encoder = self.embedding = encoder
 
         self.H = H
         self.bidirectional = bidirectional
