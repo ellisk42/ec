@@ -1962,9 +1962,9 @@ class RecurrentFeatureExtractor(nn.Module):
 
         #x = variable(es, cuda=self.use_cuda)
         #x = self.encoder(x)
-        x = self.encoder(es, cuda=self.use_cuda)
+        x = self.encoder(es, cuda=self.use_cuda) # [num_exs,padded_ex_length,H]
         # x: (batch size, maximum length, E)
-        x = x.permute(1, 0, 2)
+        x = x.permute(1, 0, 2) # [padded_ex_length,num_exs,H]
         # x: TxBxE
         x = pack_padded_sequence(x, sizes)
         return x, sizes
@@ -1973,7 +1973,7 @@ class RecurrentFeatureExtractor(nn.Module):
         examples = sorted(examples, key=lambda xs_y: sum(
             len(z) + 1 for z in xs_y[0]) + len(xs_y[1]), reverse=True)
         x, sizes = self.packExamples(examples)
-        outputs, hidden = self.model(x)
+        outputs, hidden = self.model(x) 
         # outputs, sizes = pad_packed_sequence(outputs)
         # I don't know whether to return the final output or the final hidden
         # activations...
@@ -1988,6 +1988,7 @@ class RecurrentFeatureExtractor(nn.Module):
             return None
 
         if hasattr(self, 'MAXINPUTS') and len(tokenized) > self.MAXINPUTS:
+            assert False # I just wanna be warned if this is happening
             tokenized = list(tokenized)
             random.shuffle(tokenized)
             tokenized = tokenized[:self.MAXINPUTS]

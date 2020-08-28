@@ -14,7 +14,7 @@ from dreamcoder.domains.tower.towerPrimitives import *
 import itertools
 
 from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
-from dreamcoder.domains.list.main import LearnedFeatureExtractor
+from dreamcoder.domains.list.main import ListFeatureExtractor
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
 from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
@@ -38,20 +38,24 @@ class FakeFrontier:
         self.program = self # trick for frontier.sample().program._fullProg
     def sample(self):
         return self
-def extractor(group,H):
-    """
-    Returns an extractor object. Reuses the same one it gave previously if shared=True
-    """
-    new_extractor = lambda: LearnedFeatureExtractor([], testingTasks=[], H=H, cuda=True)
-    if not group in extractor._groups:
-        extractor._groups[group] = new_extractor()
-    return extractor._groups[group]
-extractor._groups = {}
+
+class ExtractorGenerator:
+    def __init__(self,H,maximumLength):
+        self.H = H
+        self.maximumLength = maximumLength
+        self._groups = {}
+    def __call__(self, group):
+        """
+        Returns an extractor object. If called twice with the same group (an int or string or anything) the same object will be returned (ie share weights)
+        """
+        if group not in self._groups:
+            self._groups[group] = ListFeatureExtractor(maximumLength=self.maximumLength, H=self.H, cuda=True)
+        return self._groups[group]
 
 def test_trainListREPL(
     T=2,
-    train='rnn',
-    test='rnn',
+    train='repl',
+    test='repl',
     repeat=True,
     freeze_examples=False,
     print_every=200,
@@ -111,22 +115,25 @@ def test_trainListREPL(
         repeat=False,
         micro=None, # load only 3 tasks
         )
+
+    extractor = ExtractorGenerator(H=H, maximumLength = taskloader.L+2)
+
     num_test = 5 if T==1 else 10
     test_tasks = [testloader.getTask()[1] for _ in range(num_test)] if test_every is not None else None
     g = Grammar.uniform(deepcoderPrimitives())
 
-    rnn_ph = RNNPolicyHead(g, extractor(0,H), H=H, encodeTargetHole=False) if policy else None
+    rnn_ph = RNNPolicyHead(g, extractor(0), H=H, encodeTargetHole=False) if policy else None
     #pHead = BasePolicyHead()
     if value == 'tied':
         rnn_vh = rnn_ph.RNNHead
     else:
-        rnn_vh = SimpleRNNValueHead(g, extractor(0,H), H=H) if value else SampleDummyValueHead()
+        rnn_vh = SimpleRNNValueHead(g, extractor(0), H=H) if value else SampleDummyValueHead()
 
-    repl_ph = ListREPLPolicyHead(g, extractor(1,H), H=H, encodeTargetHole=False)
+    repl_ph = ListREPLPolicyHead(g, extractor(1), H=H, encodeTargetHole=False)
     if value == 'tied':
         repl_vh = repl_ph.RNNHead
     else:
-        repl_vh = ListREPLValueHead(g, extractor(1,H), H=H) if value else SampleDummyValueHead()
+        repl_vh = ListREPLValueHead(g, extractor(1), H=H) if value else SampleDummyValueHead()
     
     if 'rnn' not in train:
         rnn_vh = rnn_ph = None

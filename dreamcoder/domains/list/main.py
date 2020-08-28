@@ -6,6 +6,7 @@ import os
 import datetime
 import torch
 import numpy as np
+from torch import nn
 
 from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
@@ -152,79 +153,50 @@ def isIntFunction(tp):
         return False
 
 
-class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+class ListFeatureExtractor(RecurrentFeatureExtractor):
     special = None
-    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
-        T=3
-        self.deepcoder_taskloader = DeepcoderTaskloader(
-           f'dreamcoder/domains/list/DeepCoder_data/T{3}_A2_V512_L10_train_perm.txt',
-           allowed_requests=[arrow(tlist(tint),tlist(tint))],
-           repeat=True,
-           micro=None,
-           )
-        #_, task = next(self.deepcoder_taskloader)
-        #self.lexicon = set(flatten(task.examples, abort=lambda x: isinstance(x,str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
+    def __init__(self, maximumLength, cuda=True, H=64):
+        #T=3
+        # self.deepcoder_taskloader = DeepcoderTaskloader(
+        #    f'dreamcoder/domains/list/DeepCoder_data/T{3}_A2_V512_L10_train_perm.txt',
+        #    allowed_requests=[arrow(tlist(tint),tlist(tint))],
+        #    repeat=True,
+        #    micro=None,
+        #    )
         self.lexicon = {"LIST_START", "LIST_END", "?"}.union(set(range(-64, 64)))
         # add all non-arrow primitives ie things that should count as concrete values as opposed to arrows that are represented with NMs
         self.lexicon = self.lexicon.union({p.value for p in deepcoderPrimitives() if not p.tp.isArrow()})
 
+        self.maximumLength = maximumLength
 
-        # Calculate the maximum length
-        self.maximumLength = self.deepcoder_taskloader.L+2
-        #if len(testingTasks + tasks) == 0:
-        #else:
-        #    self.maximumLength = float('inf') # Believe it or not this is actually important to have here
-            # self.maximumLength = max(len(l)
-            #                         for t in tasks + testingTasks
-            #                         for xs, y in self.tokenize(t.examples)
-            #                         for l in [y] + [x for x in xs])
+        # encodes a [int]
+        self.list_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
 
-        self.recomputeTasks = True
+        # encodes a task (set of inputs and outputs)
+        self.task_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
 
-        super(
-            LearnedFeatureExtractor,
-            self).__init__(
-            lexicon=list(
-                self.lexicon),
-            tasks=tasks,
+        #self.recomputeTasks = True
+
+        super().__init__(
+            lexicon=list(self.lexicon),
+            tasks=[],
             cuda=cuda,
             H=H,
             bidirectional=True)
 
         self.lexicon = set(self.lexicon)
 
-    def sampleHelmholtzTask(self, request, motifs=[]):
-        # NOTE: we ignore the `request` argument
-        if motifs != []:
-            raise NotImplementedError
-        try:
-            program, task = self.deepcoder_taskloader.getTask()
-        except StopIteration:
-            return None,None
-        return program, task
-
     def tokenize(self, examples):
         def sanitize(l): 
-            #print("L LIST", l)
             ret = []
             for z_ in l:
                 for z in (z_ if isinstance(z_, list) else [z_]):
-                    # print("Z", z)
-                    # print(self.lexicon)
-                    # print(type(self.lexicon))
-                    # print(z in self.lexicon)
                     if (z in self.lexicon) or isinstance(z, torch.Tensor):
                         ret.append(z)
                     else:
-                        ###print (f"WARNING: the following token was not tokenized: {z}")
-                        #assert 0
+                        #print (f"WARNING: the following token was not tokenized: {z}")
                         ret.append("?")
-                    #ret.append(z if  else "?")
             return ret
-
-            #return [z if ((z in self.lexicon) or isinstance(z, torch.Tensor)) else "?" #for hole vectors
-                                 #for z_ in l
-                                 #for z in (z_ if isinstance(z_, list) else [z_])]
 
         tokenized = []
         for xs, y in examples:
@@ -250,6 +222,24 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             tokenized.append((tuple(serializedInputs), y))
 
         return tokenized
+    def inputFeatures(self,task):
+        tokenized = self.tokenize(task.examples)
+        assert tokenized
+
+        # this deletes any LIST_START LIST_END inserted by .tokenize()
+        tokenized = [(ex[0],[]) for ex in tokenized]
+
+        e = self.examplesEncoding(tokenized)
+        return e
+    def outputFeatures(self,task):
+        tokenized = self.tokenize(task.examples)
+        assert tokenized
+
+        # this deletes any LIST_START LIST_END inserted by .tokenize()
+        tokenized = [([],ex[1]) for ex in tokenized]
+
+        e = self.examplesEncoding(tokenized)
+        return e
     
     def encodeValue(self, val):
         """
@@ -265,12 +255,13 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         is_bool = lambda v: isinstance(v,(bool,np.bool_))
 
         assert is_list(val)
-        assert len(val) == self.deepcoder_taskloader.N
+        #assert len(val) == self.deepcoder_taskloader.N
         if is_list(val[0]):
             assert len(val[0]) == 0 or is_int(val[0][0]) # make sure its [[int]]
-            fakeExamples = [((v,),[]) for v in val] # :: [(([Int],),[])] in the single argument case
-            vec = self(fakeExamples,merge_examples=False,ignore_output=True) # [5,H]
-            assert vec is not None
+            class FakeTask: pass
+            fake_task = FakeTask()
+            fake_task.examples = [((v,),[]) for v in val] # :: [(([Int],),[])] in the single argument case
+            vec = self.inputFeatures(fake_task) # [5,H]
             return vec
         
         # val is one concrete non-list value per example
@@ -280,6 +271,18 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                 v[i] = "?"
         res = self.encoder([self.symbolToIndex[v] for v in val],cuda=self.use_cuda)
         return res
+
+    def sampleHelmholtzTask(self, request, motifs=[]):
+        assert False # disabling for now
+        # NOTE: we ignore the `request` argument
+        if motifs != []:
+            raise NotImplementedError
+        try:
+            program, task = self.deepcoder_taskloader.getTask()
+        except StopIteration:
+            return None,None
+        return program, task
+
 
 
 def train_necessary(t):

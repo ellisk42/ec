@@ -262,7 +262,7 @@ class ListREPLPolicyHead(NeuralPolicyHead):
             i += 1
 
         self.output = nn.Sequential(
-                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.Linear(H, H),
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
@@ -272,7 +272,7 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         self.lossFn = nn.NLLLoss(reduction='sum')
 
 
-        print("num of params in rnn policy model", count_parameters(self))
+        print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
         if self.use_cuda: self.cuda()
 
@@ -294,8 +294,8 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         if self.encodeTargetHole:
             assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
-        compared = self.RNNHead._compare(sketches,task,reduce='max')
-        dist = self.output(features)
+        compared = self.RNNHead._compare(sketches,task,reduce='max') # [num_sks,H]
+        dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
         return dist

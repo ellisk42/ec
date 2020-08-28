@@ -815,7 +815,7 @@ class ListREPLValueHead(BaseValueHead):
             if holeModule.nArgs == 1:
                 # hole could have a program input as a subtree so lets pass in extractor(taskinputs)
                 # we use ignore_output=True to delete the outputs of each example
-                arg = self.featureExtractor(task.examples, merge_examples=False,ignore_output=True)
+                arg = self.featureExtractor.inputFeatures(task)
                 return holeModule(arg).expand(len(task.examples),-1)
             assert holeModule.nArgs == 0
             return holeModule().expand(len(task.examples),-1)
@@ -873,9 +873,9 @@ class ListREPLValueHead(BaseValueHead):
 
         compared = self.compareModule(compare_input) # [num_sketches,num_exs,H]
         if reduce == 'max':
-            compared = compare.max(1).values
+            compared = compared.max(1).values
         elif reduce == 'mean':
-            compared = compare.mean(1).values
+            compared = compared.mean(1).values
         else:
             assert reduce is None
         return compared
