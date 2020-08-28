@@ -1979,8 +1979,11 @@ class RecurrentFeatureExtractor(nn.Module):
         # activations...
         return hidden[0, :, :] + hidden[1, :, :]
 
-    def forward(self, examples):
+    def forward(self, examples, merge_examples=True, ignore_output=False):
         tokenized = self.tokenize(examples)
+        if ignore_output:
+            # this deletes any LIST_START LIST_END inserted by .tokenize()
+            tokenized = [(ex[0],[]) for ex in tokenized]
         if not tokenized:
             return None
 
@@ -1995,7 +1998,8 @@ class RecurrentFeatureExtractor(nn.Module):
         # take the average activations across all of the examples
         # I think this might be better because we might be testing on data
         # which has far more o far fewer examples then training
-        e = e.mean(dim=0)
+        if merge_examples:
+            e = e.mean(dim=0)
         return e
 
     def featuresOfTask(self, t):

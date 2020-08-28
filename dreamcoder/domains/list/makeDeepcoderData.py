@@ -104,6 +104,7 @@ class DeepcoderTaskloader:
         self.V = V
         self.repeat = repeat
         self.micro = micro
+        self.eof = False
         with open(self.file,'r') as f:
             f.readline() # skip first line of file
             self.offset_in_file = f.tell()
@@ -119,8 +120,10 @@ class DeepcoderTaskloader:
                 line = f.readline().rstrip()
                 if line == '': # readline never errors out, it returns empty string on EOF
                     if not self.repeat:
-                        raise EOFError
+                        self.eof = True
+                        return # only paritally filled the buffer
                     f.seek(self.file_start) # repeat
+                    continue
                 program,task = task_of_line(line,N=self.N,L=self.L,V=self.V)
                 if program is None: continue
                 if task.request not in self.allowed_requests: continue
@@ -131,6 +134,8 @@ class DeepcoderTaskloader:
             self.offset_in_file = f.tell()
     def getTask(self):
         if len(self.buf) == 0:
+            if self.eof:
+                raise EOFError
             self.reloadBuffer()
         return self.buf.pop()
 

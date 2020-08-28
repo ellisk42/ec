@@ -1,10 +1,11 @@
 #test apis
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence
-from dreamcoder.program import Hole
+from dreamcoder.program import Hole,Program
 from dreamcoder.grammar import *
 from dreamcoder.zipper import *
 from dreamcoder.utilities import RunWithTimeout
@@ -18,6 +19,7 @@ from dreamcoder.program import Index, Program
 import types 
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
+from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 
 
 class computeValueError(Exception):
@@ -226,13 +228,17 @@ class SimpleRNNValueHead(BaseValueHead):
         nNeg = len(negTrace)
         nTot = nPos + nNeg
 
-        sketchEncodings = self._encodeSketches(posTrace + negTrace)
+        sketchEncodings = self._encodeSketches(posTrace + negTrace) # [10,128]
 
         # copy features a bunch
         distance = self._distance(torch.cat([sketchEncodings, features.expand(nTot, -1)], dim=1)).squeeze(1)
+        # features :: [1,128] -> expand to [10,128]
+        # result of cat is [10,256]
+        # result of _distance is [10,1] -> squeeze to [10]
+        
 
         targets = [1.0]*nPos + [0.0]*nNeg
-        targets = torch.tensor(targets)
+        targets = torch.tensor(targets) # :: [10]
         if self.use_cuda:
             targets = targets.cuda()
         #import pdb; pdb.set_trace()
@@ -726,6 +732,190 @@ class RBPrefixValueHead(BaseValueHead):
             prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, Index(0)) 
         return prev, scratch
 
+class NM(nn.Module):
+    def __init__(self, nArgs, H=512):
+        super().__init__()
+        self.nArgs = nArgs
+        if nArgs > 0:
+            self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
+        else:
+            self.params = nn.Parameter(torch.randn(1, H))
+        
+    def forward(self, *args):
+        if self.nArgs == 0:
+            assert len(args) == 0
+            return self.params
+
+        args = torch.cat(args,dim=1) # cat along example dimension. Harmless if only one thing in args anyways
+        return self.params(args)
+class ListREPLValueHead(BaseValueHead):
+
+    def __init__(self, g, featureExtractor, H=64, canonicalOrdering=True, allow_concrete_eval=True):
+        super().__init__()
+        self.use_cuda = torch.cuda.is_available() #FIX THIS
+        self.canonicalOrdering = canonicalOrdering
+        self.featureExtractor = featureExtractor
+        self.allow_concrete_eval = allow_concrete_eval
+        self.H = H
+        #self.outputDimensionality = H
+        assert self.H == featureExtractor.H
+
+        # populate fnModules
+        self.fnModules = nn.ModuleDict()
+        for p in g.primitives:
+            assert p.isPrimitive
+            argc = len(p.tp.functionArguments())
+            self.fnModules[p.name] = NM(argc, H)
+
+        # populate holeModules
+        self.holeModules = nn.ModuleDict()
+        for tp in [tlist(tint), tint]: # these ones can be functions of the input (e.g. tint as a result of Access())
+            self.holeModules[tp.show(True)] = NM(1, H)
+        for tp in [int_to_int, int_to_bool, int_to_int_to_int]: # these holes are always lambdas and never functions of the argument
+            self.holeModules[tp.show(True)] = NM(0, H)
+
+        self._distance = nn.Sequential(
+                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.ReLU(),
+                nn.Linear(H, 1),
+                nn.Softplus())
+
+        if self.use_cuda:
+            self.cuda()
+
+    def rep(self,sk,task,ctxs):
+        """
+        ctxs :: a list of tuples. The outer list iterates over examples, and the
+            inner tuple is a context where the 0th thing is the value of $0 etc.
+            Pass in None initially to initialize it. Note that this isn't a "default"
+            argument for ctxs because that would make it very easy to forget to
+            pass in the existing one when recursing.
+        returns :: Tensor[num_exs,H] or a list of concrete values (one per example)
+            in which case the type is [int] or [[int]] or [bool] where the outermost list
+            is always iterating over examples.
+        """
+
+        # first, if this was called at the top level (ctx=0),
+        # we clear out as many abstractions as there are top level inputs
+        if ctxs is None: # pull initial context out of the task inputs
+            inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
+            ctxs = tuple(reversed(inputs))
+            i = 0
+            while sk.isAbstraction:
+                sk = sk.body
+                i += 1
+            assert len(ctxs[0]) == i, "Mismatch between num args passed in and num lambda abstractions"
+
+
+        # if a node is a hole, encode it
+        if sk.isHole:
+            holeModule = self.holeModules[sk.tp.show(True)]
+            if holeModule.nArgs == 1:
+                # hole could have a program input as a subtree so lets pass in extractor(taskinputs)
+                # we use ignore_output=True to delete the outputs of each example
+                arg = self.featureExtractor(task.examples, merge_examples=False,ignore_output=True)
+                return holeModule(arg).expand(len(task.examples),-1)
+            assert holeModule.nArgs == 0
+            return holeModule().expand(len(task.examples),-1)
+
+        # if a node has no holes, evalute it concretely
+        if not sk.hasHoles and self.allow_concrete_eval:
+            res = [sk.evaluate(ctx) for ctx in ctxs] # will this work? we'll see
+            return res
+        
+        if not sk.isApplication:
+            # only happens when concrete eval is turned off
+            # in which case constants and indexes can show up here
+            assert not self.allow_concrete_eval
+            assert sk.isPrimitive or sk.isIndex
+            raise NotImplementedError
+
+        # sk is an Application
+        fn, args = sk.applicationParse()
+        assert len(args) > 0
+        # recurse on children
+        reps = [self.rep(arg,task,ctxs) for arg in args]
+        for i,rep in enumerate(reps):
+            if not torch.is_tensor(rep):
+                reps[i] = self.featureExtractor.encodeValue(rep).expand(len(task.examples),-1)
+        # rep :: [num_exs,H]
+
+        if fn.isAbstraction:
+            # never the case in vanilla deepcoder
+            # note that we only ever approach abstractions from this higher level of
+            # the applicationParse so that we already know what args it takes
+            assert len(args) == 1 # i think abstractions can only take one argument?
+            ctxs = [(arg,)+ctx for ctx,arg in zip(ctxs,args[0])]
+            raise NotImplementedError # TODO I'm gonna hold off on this until we actually need it in case details when we actually need it affect things
+            return self.rep(fn.body)() # unfinished
+
+        return self.fnModules[fn.name](*reps)
+
+    def computeValue(self, sketch, task):
+        distance = self._compute_distance(sketch,task)
+        return distance
+    
+    def _compute_distance(self,sks, task, return_features=False):
+        """
+        encodes tasks and sketches, cats them, runs them through _distance
+        return_features=True means we stop early and return dist_input. Used by policyHead.
+        """
+        assert isinstance(sks,(list,tuple,Program)) # can take a program or list thereof
+        single_sk=False
+        if isinstance(sks,Program):
+            sks = [sks]
+            single_sk=True
+
+        task_features = self.featureExtractor.featuresOfTask(task)
+        assert task_features is not None
+        task_features = task_features.expand(len(sks),len(task.examples),-1) # [num_sketches,num_exs,H]
+
+        encodings = torch.stack([self.rep(sk,task,None) for sk in sks]) # [num_sketches,num_exs,H]
+        dist_input = torch.cat((encodings,task_features),dim=2) # [num_sketches,num_exs,H*2]
+
+        dist_input = dist_input.max(1).values # [num_sketches,H*2]
+
+        if return_features:
+            return dist_input
+
+        distance = self._distance(dist_input).squeeze(1)
+        #distance = self._distance(dist_input).mean(1).squeeze(1) # mean over examples #TODO should we actually do MIN bc if one example fails they all do?
+        if single_sk:
+            distance = distance.squeeze(0)
+        return distance
+
+    def valueLossFromFrontier(self, frontier, g):
+        """
+        given a frontier, should sample a postive trace and a negative trace
+        and then train value head on those
+        """
+
+        # Monte Carlo estimate: draw a sample from the frontier
+        entry = frontier.sample()
+        tp = frontier.task.request
+        fullProg = entry.program._fullProg
+        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+
+        #discard negative sketches which overlap with positive
+        negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
+
+        # TODO I added this bc otherwise we dont get tensor outputs from rep(). Idk if it makes sense tho
+        posTrace = [sk for sk in posTrace if sk.hasHoles]
+        negTrace = [sk for sk in negTrace if sk.hasHoles]
+        #negTrace = [] # TODO TEMP
+
+        nPos = len(posTrace)
+        nNeg = len(negTrace)
+        nTot = nPos + nNeg
+
+        distance = self._compute_distance(posTrace+negTrace,frontier.task)
+
+        targets = torch.tensor([1.0]*nPos + [0.0]*nNeg)
+        if self.use_cuda:
+            targets = targets.cuda()
+
+        loss = binary_cross_entropy(-distance, targets, average=False) #average?
+        return loss
 
 
 

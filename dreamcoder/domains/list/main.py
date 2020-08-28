@@ -5,7 +5,7 @@ import math
 import os
 import datetime
 import torch
-from inspect import getgeneratorlocals
+import numpy as np
 
 from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
@@ -153,9 +153,45 @@ def isIntFunction(tp):
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    H = 64
-    
     special = None
+    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
+        T=3
+        self.deepcoder_taskloader = DeepcoderTaskloader(
+           f'dreamcoder/domains/list/DeepCoder_data/T{3}_A2_V512_L10_train_perm.txt',
+           allowed_requests=[arrow(tlist(tint),tlist(tint))],
+           repeat=True,
+           micro=None,
+           )
+        #_, task = next(self.deepcoder_taskloader)
+        #self.lexicon = set(flatten(task.examples, abort=lambda x: isinstance(x,str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
+        self.lexicon = {"LIST_START", "LIST_END", "?"}.union(set(range(-64, 64)))
+        # add all non-arrow primitives ie things that should count as concrete values as opposed to arrows that are represented with NMs
+        self.lexicon = self.lexicon.union({p.value for p in deepcoderPrimitives() if not p.tp.isArrow()})
+
+
+        # Calculate the maximum length
+        self.maximumLength = self.deepcoder_taskloader.L+2
+        #if len(testingTasks + tasks) == 0:
+        #else:
+        #    self.maximumLength = float('inf') # Believe it or not this is actually important to have here
+            # self.maximumLength = max(len(l)
+            #                         for t in tasks + testingTasks
+            #                         for xs, y in self.tokenize(t.examples)
+            #                         for l in [y] + [x for x in xs])
+
+        self.recomputeTasks = True
+
+        super(
+            LearnedFeatureExtractor,
+            self).__init__(
+            lexicon=list(
+                self.lexicon),
+            tasks=tasks,
+            cuda=cuda,
+            H=H,
+            bidirectional=True)
+
+        self.lexicon = set(self.lexicon)
 
     def sampleHelmholtzTask(self, request, motifs=[]):
         # NOTE: we ignore the `request` argument
@@ -180,7 +216,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                     if (z in self.lexicon) or isinstance(z, torch.Tensor):
                         ret.append(z)
                     else:
-                        print (f"WARNING: the following token was not tokenized: {z}")
+                        ###print (f"WARNING: the following token was not tokenized: {z}")
                         #assert 0
                         ret.append("?")
                     #ret.append(z if  else "?")
@@ -214,43 +250,37 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             tokenized.append((tuple(serializedInputs), y))
 
         return tokenized
+    
+    def encodeValue(self, val):
+        """
+        val :: a concrete value that shows up as an intermediate value
+            during computation and converts it to a vector. Note that this is
+            always a list of N such values sine we're evaluating on all N examples
+            at once. val :: [int] or [bool] or [[int]] where the outer list
+            is always the list of examples.
+        returns :: Tensor[num_exs,H]
+        """
+        is_list = lambda v: isinstance(v,(list,tuple))
+        is_int = lambda v: isinstance(v,(int,np.integer))
+        is_bool = lambda v: isinstance(v,(bool,np.bool_))
 
-    def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.deepcoder_taskloader = DeepcoderTaskloader(
-           'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt',
-           #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train_perm.txt',
-           #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_train_perm.txt',
-           allowed_requests=[arrow(tlist(tint),tlist(tint))],
-           repeat=True,
-           micro=3,
-           )
-        #_, task = next(self.deepcoder_taskloader)
-        #self.lexicon = set(flatten(task.examples, abort=lambda x: isinstance(x,str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
-        self.lexicon = {"LIST_START", "LIST_END", "?"}.union(set(range(-64, 64)))
+        assert is_list(val)
+        assert len(val) == self.deepcoder_taskloader.N
+        if is_list(val[0]):
+            assert len(val[0]) == 0 or is_int(val[0][0]) # make sure its [[int]]
+            fakeExamples = [((v,),[]) for v in val] # :: [(([Int],),[])] in the single argument case
+            vec = self(fakeExamples,merge_examples=False,ignore_output=True) # [5,H]
+            assert vec is not None
+            return vec
+        
+        # val is one concrete non-list value per example
+        for i,v in enumerate(val):
+            if v not in self.symbolToIndex:
+                print("converthing {v} to <UNK>")
+                v[i] = "?"
+        res = self.encoder([self.symbolToIndex[v] for v in val],cuda=self.use_cuda)
+        return res
 
-        # Calculate the maximum length
-        if len(testingTasks + tasks) == 0:
-            self.maximumLength = getgeneratorlocals(self.deepcoder_taskloader)['L']+2 # ok this is a little over the top. Note +2 is for the LIST_START and LIST_END
-        else:
-            self.maximumLength = float('inf') # Believe it or not this is actually important to have here
-            self.maximumLength = max(len(l)
-                                    for t in tasks + testingTasks
-                                    for xs, y in self.tokenize(t.examples)
-                                    for l in [y] + [x for x in xs])
-
-        self.recomputeTasks = True
-
-        super(
-            LearnedFeatureExtractor,
-            self).__init__(
-            lexicon=list(
-                self.lexicon),
-            tasks=tasks,
-            cuda=cuda,
-            H=self.H,
-            bidirectional=True)
-
-        self.lexicon = set(self.lexicon)
 
 def train_necessary(t):
     if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail", "keep primes", "keep squares"}:
@@ -454,16 +484,17 @@ def main(args):
         train = tasks
         test = []
     
+    T=3
     testing_taskloader = DeepcoderTaskloader(
-        'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train_perm.txt', #TODO <- careful this is set to `train` instead of `test` for an ultra simple baseline
+        #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test_perm.txt', #TODO <- careful this is set to `train` instead of `test` for an ultra simple baseline
         #'dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test_perm.txt',
         #'dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_test_perm.txt',
-        #'dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_test_perm.txt',
+        f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_test_perm.txt',
         allowed_requests=[arrow(tlist(tint),tlist(tint))],
         repeat=True,
-        micro=3,
+        micro=None,
         )
 
-    test = [testing_taskloader.getTask()[1] for _ in range(5)]
+    test = [testing_taskloader.getTask()[1] for _ in range(8)]
 
     explorationCompression(baseGrammar,[], testingTasks=test, **args)

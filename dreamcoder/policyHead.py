@@ -56,7 +56,7 @@ import torch
 from torch import nn
 
 from dreamcoder.zipper import sampleSingleStep, enumSingleStep
-from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead, ListREPLValueHead
 from dreamcoder.program import Index, Program
 from dreamcoder.zipper import *
 from dreamcoder.utilities import count_parameters
@@ -129,9 +129,9 @@ class NeuralPolicyHead(nn.Module):
                                                         onlyPos=True, returnNextNode=True,
                                                         canonicalOrdering=self.canonicalOrdering)
         maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g) #TODO
-
+        # maskedDist :: [5,49]
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
-        targets = torch.tensor(targets)
+        targets = torch.tensor(targets) # :: [5]
         if self.use_cuda:
             targets = targets.cuda()
         loss = self.lossFn(maskedDist, targets)
@@ -140,7 +140,9 @@ class NeuralPolicyHead(nn.Module):
     def _computeDist(): raise NotImplementedError
 
     def _designateTargetHole(self, zipper, sk):
-        specialHole = Hole(target=True)
+        tmpHole = Hole() # loll silly workaround im sorry i dont know how to just visit a node
+        newSk,hole = NewExprPlacer(returnInnerObj=True).execute(sk, zipper.path, tmpHole) #TODO
+        specialHole = Hole(target=True,tp=hole.tp)
         newSk = NewExprPlacer().execute(sk, zipper.path, specialHole) #TODO
         return newSk
 
@@ -224,8 +226,9 @@ class RNNPolicyHead(NeuralPolicyHead):
         #need raw dist, and then which are valid and which is correct ... 
         if self.encodeTargetHole:
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
-        sketchEncodings = self.RNNHead._encodeSketches(sketches)
-        features = self.featureExtractor.featuresOfTask(task)
+            # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
+        sketchEncodings = self.RNNHead._encodeSketches(sketches) # [5,64]
+        features = self.featureExtractor.featuresOfTask(task) 
         features = features.unsqueeze(0)
         x = features.expand(len(sketches), -1)
         features = torch.cat([sketchEncodings, x ], dim=1)
@@ -234,6 +237,66 @@ class RNNPolicyHead(NeuralPolicyHead):
         dist = dist + mask
         return dist
 
+class ListREPLPolicyHead(NeuralPolicyHead):
+    def __init__(self, g, featureExtractor, H=512, maxVar=15, encodeTargetHole=True, canonicalOrdering=False):
+        super().__init__() #should have featureExtractor?
+        self.use_cuda = torch.cuda.is_available()
+        self.featureExtractor = featureExtractor
+        self.H = H
+        self.RNNHead = ListREPLValueHead(g, featureExtractor, H=self.H)
+        self.encodeTargetHole = encodeTargetHole
+        self.canonicalOrdering = canonicalOrdering
+
+        self.indexToProduction = {}
+        self.productionToIndex = {}
+        i = 0
+        for _, _, expr in g.productions:
+            self.indexToProduction[i] = expr
+            self.productionToIndex[expr] = i
+            i += 1
+
+        for v in range(maxVar):
+            self.indexToProduction[i] = Index(v)
+            self.productionToIndex[Index(v)] = i
+            i += 1
+
+        self.output = nn.Sequential(
+                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.ReLU(),
+                nn.Linear(H, H),
+                nn.ReLU(),
+                nn.Linear(H, len(self.productionToIndex) ),
+                nn.LogSoftmax(dim=1))
+
+        self.lossFn = nn.NLLLoss(reduction='sum')
+
+
+        print("num of params in rnn policy model", count_parameters(self))
+
+        if self.use_cuda: self.cuda()
+
+    def cuda(self, device=None):
+        self.use_cuda = True
+        self.RNNHead.use_cuda = True
+        self.featureExtractor.use_cuda = True
+        self.featureExtractor.CUDA = True
+        super().cuda(device=device)
+
+    def cpu(self):
+        self.use_cuda = False
+        self.RNNHead.use_cuda = False
+        self.featureExtractor.use_cuda = False
+        self.featureExtractor.CUDA = False
+        super().cpu()
+
+    def _computeDist(self, sketches, zippers, task, g):
+        if self.encodeTargetHole:
+            sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
+        features = self.RNNHead._compute_distance(sketches,task,return_features=True)
+        dist = self.output(features)
+        mask = self._buildMask(sketches, zippers, task, g)
+        dist = dist + mask
+        return dist
 
 class REPLPolicyHead(NeuralPolicyHead):
     """
@@ -437,7 +500,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         
 
         outputRep = self.featureExtractor.outputsRepresentation(task).unsqueeze(0)
-        outputRep = outputRep.expand(len(sketches), -1, -1)
+        outputRep = outputRep.expand(len(sketches), -1, -1) # :: 14,4,512
         #print("outrep shape", outputRep.shape)
 
         currentState = [self._buildCurrentState(sk, zp, task) for sk, zp in zip(sketches, zippers)] 
