@@ -225,6 +225,7 @@ class RNNPolicyHead(NeuralPolicyHead):
     def _computeDist(self, sketches, zippers, task, g):
         #need raw dist, and then which are valid and which is correct ... 
         if self.encodeTargetHole:
+            assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
             # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
         sketchEncodings = self.RNNHead._encodeSketches(sketches) # [5,64]
@@ -291,8 +292,9 @@ class ListREPLPolicyHead(NeuralPolicyHead):
 
     def _computeDist(self, sketches, zippers, task, g):
         if self.encodeTargetHole:
+            assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
-        features = self.RNNHead._compute_distance(sketches,task,return_features=True)
+        compared = self.RNNHead._compare(sketches,task,reduce='max')
         dist = self.output(features)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask

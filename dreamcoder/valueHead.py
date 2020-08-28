@@ -774,6 +774,8 @@ class ListREPLValueHead(BaseValueHead):
         for tp in [int_to_int, int_to_bool, int_to_int_to_int]: # these holes are always lambdas and never functions of the argument
             self.holeModules[tp.show(True)] = NM(0, H)
 
+        self.compareModule = NM(2, H)
+
         self._distance = nn.Sequential(
                 nn.Linear(featureExtractor.outputDimensionality + H, H),
                 nn.ReLU(),
@@ -852,37 +854,31 @@ class ListREPLValueHead(BaseValueHead):
         return self.fnModules[fn.name](*reps)
 
     def computeValue(self, sketch, task):
-        distance = self._compute_distance(sketch,task)
+        compared = self._compare([sketch], task, reduce='max')
+        distance = self._distance(compared).squeeze(1)
         return distance
     
-    def _compute_distance(self,sks, task, return_features=False):
+    def _compare(self,sks, task, reduce='max'):
         """
-        encodes tasks and sketches, cats them, runs them through _distance
-        return_features=True means we stop early and return dist_input. Used by policyHead.
+        encodes tasks and sketches, cats them, runs them through compareModule
+        applies `reduce` over the examples dimension (None means no reduction)
         """
-        assert isinstance(sks,(list,tuple,Program)) # can take a program or list thereof
-        single_sk=False
-        if isinstance(sks,Program):
-            sks = [sks]
-            single_sk=True
+        assert isinstance(sks,(list,tuple))
 
-        task_features = self.featureExtractor.featuresOfTask(task)
-        assert task_features is not None
-        task_features = task_features.expand(len(sks),len(task.examples),-1) # [num_sketches,num_exs,H]
+        output_feats = self.featureExtractor.outputFeatures(task)
+        output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
 
-        encodings = torch.stack([self.rep(sk,task,None) for sk in sks]) # [num_sketches,num_exs,H]
-        dist_input = torch.cat((encodings,task_features),dim=2) # [num_sketches,num_exs,H*2]
+        sk_reps = torch.stack([self.rep(sk,task,None) for sk in sks]) # [num_sketches,num_exs,H]
+        compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
 
-        dist_input = dist_input.max(1).values # [num_sketches,H*2]
-
-        if return_features:
-            return dist_input
-
-        distance = self._distance(dist_input).squeeze(1)
-        #distance = self._distance(dist_input).mean(1).squeeze(1) # mean over examples #TODO should we actually do MIN bc if one example fails they all do?
-        if single_sk:
-            distance = distance.squeeze(0)
-        return distance
+        compared = self.compareModule(compare_input) # [num_sketches,num_exs,H]
+        if reduce == 'max':
+            compared = compare.max(1).values
+        elif reduce == 'mean':
+            compared = compare.mean(1).values
+        else:
+            assert reduce is None
+        return compared
 
     def valueLossFromFrontier(self, frontier, g):
         """
@@ -908,7 +904,8 @@ class ListREPLValueHead(BaseValueHead):
         nNeg = len(negTrace)
         nTot = nPos + nNeg
 
-        distance = self._compute_distance(posTrace+negTrace,frontier.task)
+        compared = self._compare(posTrace+negTrace, frontier.task, reduce='max')
+        distance = self._distance(compared).squeeze(1)
 
         targets = torch.tensor([1.0]*nPos + [0.0]*nNeg)
         if self.use_cuda:

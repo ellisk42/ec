@@ -16,7 +16,7 @@ import itertools
 from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 from dreamcoder.domains.list.main import LearnedFeatureExtractor
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
-from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
 from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
 from dreamcoder.Astar import Astar
 from likelihoodModel import AllOrNothingLikelihoodModel
@@ -48,7 +48,20 @@ def extractor(group,H):
     return extractor._groups[group]
 extractor._groups = {}
 
-def test_trainListREPL(T=1, repeat=True, freeze_examples=False, print_every=200, H=64, test_every=1000, batch_size=1000, num_tasks=None, value='tied',policy=True):
+def test_trainListREPL(
+    T=2,
+    train='rnn',
+    test='rnn',
+    repeat=True,
+    freeze_examples=False,
+    print_every=200,
+    H=64,
+    test_every=1000,
+    batch_size=1000,
+    num_tasks=None,
+    value=False,
+    policy=True,
+    ):
     """
     share_extractor means all value/policy heads will share the same LearnedFeatureExtractor which is often what you want unless
     comparing multiple value functions side by side.
@@ -102,21 +115,23 @@ def test_trainListREPL(T=1, repeat=True, freeze_examples=False, print_every=200,
     test_tasks = [testloader.getTask()[1] for _ in range(num_test)] if test_every is not None else None
     g = Grammar.uniform(deepcoderPrimitives())
 
-    rnn_ph = RNNPolicyHead(g, extractor(0,H), H=H) if policy else None
+    rnn_ph = RNNPolicyHead(g, extractor(0,H), H=H, encodeTargetHole=False) if policy else None
     #pHead = BasePolicyHead()
     if value == 'tied':
         rnn_vh = rnn_ph.RNNHead
     else:
-        rnn_vh = SimpleRNNValueHead(g, extractor(0,H), H=H) if value else None
+        rnn_vh = SimpleRNNValueHead(g, extractor(0,H), H=H) if value else SampleDummyValueHead()
 
-    repl_ph = ListREPLPolicyHead(g, extractor(1,H), H=H, encodeTargetHole=True)
+    repl_ph = ListREPLPolicyHead(g, extractor(1,H), H=H, encodeTargetHole=False)
     if value == 'tied':
         repl_vh = repl_ph.RNNHead
     else:
-        repl_vh = ListREPLValueHead(g, extractor(1,H), H=H) if value else None
+        repl_vh = ListREPLValueHead(g, extractor(1,H), H=H) if value else SampleDummyValueHead()
     
-    rnn_vh = rnn_ph = None
-    #repl_vh = repl_ph = None
+    if 'rnn' not in train:
+        rnn_vh = rnn_ph = None
+    if 'repl' not in train:
+        repl_vh = repl_ph = None
 
     
     heads = list(filter(None,[repl_ph, repl_vh, rnn_ph, rnn_vh]))
@@ -128,8 +143,13 @@ def test_trainListREPL(T=1, repeat=True, freeze_examples=False, print_every=200,
 
     rnn_astar = {'value':rnn_vh, 'policy':rnn_ph}
     repl_astar = {'value':repl_vh, 'policy':repl_ph}
-    #astars = [rnn_astar]
-    astars = [repl_astar]
+    astars = []
+    if 'rnn' in test:
+        assert 'rnn' in train
+        astars.append(rnn_astar)
+    if 'repl' in test:
+        assert 'repl' in train
+        astars.append(repl_astar)
 
     j=0
     tstart = time.time()
