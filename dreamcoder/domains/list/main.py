@@ -268,6 +268,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         for i,token in enumerate(token_list):
             if token not in self.symbolToIndex:
                 if unk == 0:
+                    assert False
                     mlb.yellow(f"converting {token} to <UNK>. suppressing future warnings")
                 unk += 1
                 token_list[i] = "?"
@@ -312,6 +313,12 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 vec = self.inputFeatures(fake_task) # [5,H]
                 return vec
 
+            if len(val[0]) > 0 and is_bool(val[0][0]):
+                # if this happens you wanna go back and add true/false to lexicon but you can't do that directly, you need to 
+                # use the "True" and "False" strings (to avoid clash with 0/1 hashes) 
+                # and then here in encodeValue you can map a translation from bool to string "True"/"False" over the lists
+                raise NotImplementedError
+
             indices_lists = []
             for int_list in val:
                 tokens = ["LIST_START"] + int_list + ["LIST_END"]
@@ -337,6 +344,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             return res
             # XXX next we run thru list_encoder examplewise batched also we pack them
 
+        if is_bool(val[0]):
+            # see comment in a similar if statement above. I dont think this should ever fire anyways though
+            raise NotImplementedError
         
         # val is one concrete non-list value per example
         # no LIST_START or anything needed here! Bc the list is examplewise

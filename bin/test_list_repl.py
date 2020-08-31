@@ -53,14 +53,14 @@ class ExtractorGenerator:
         return self._groups[group]
 
 def test_trainListREPL(
-    T=2,
-    train='repl',
-    test='repl',
+    T=3,
+    train='repl_rnn',
+    test='repl_rnn',
     repeat=True,
     freeze_examples=False,
     print_every=200,
     H=64,
-    test_every=1000,
+    test_every=2000,
     batch_size=1000,
     num_tasks=None,
     value=False,
