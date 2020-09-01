@@ -16,4 +16,6 @@ if __name__ == '__main__':
         helmholtzRatio=0.5, structurePenalty=1.,
         CPUs=numberOfCPUs(),
         extras=list_options)
-    main(args)
+    import torch
+    with torch.cuda.device(6):
+        main(args)

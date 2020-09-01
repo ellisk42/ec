@@ -298,7 +298,7 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
-        return dist
+        return dist # [num_sks,49]
 
 class REPLPolicyHead(NeuralPolicyHead):
     """

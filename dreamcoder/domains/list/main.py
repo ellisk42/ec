@@ -268,7 +268,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         for i,token in enumerate(token_list):
             if token not in self.symbolToIndex:
                 if unk == 0:
-                    assert False
+                    #assert False
                     mlb.yellow(f"converting {token} to <UNK>. suppressing future warnings")
                 unk += 1
                 token_list[i] = "?"

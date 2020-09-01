@@ -116,8 +116,8 @@ class Astar(Solver):
             # signal.signal(signal.SIGVTALRM, timeoutCallBack)
             # signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
 
-            signal.signal(signal.SIGALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_REAL, timeout)
+            #signal.signal(signal.SIGALRM, timeoutCallBack)
+            #signal.setitimer(signal.ITIMER_REAL, timeout) ##TODO TEMP DISABLED
 
 
             while time.time() - starting < timeout:
@@ -165,9 +165,10 @@ class Astar(Solver):
                 #print('\t num neighbors', nNei)
 
         except InferenceTimeout:
-            print("Timed out while evaluating, timeout", timeout)
-            print("time elapsed")
-            print(time.time() - starting)
+            #print("Timed out while evaluating, timeout", timeout)
+            #print("time elapsed")
+            #print(time.time() - starting)
+            pass
         finally:
             # signal.signal(signal.SIGVTALRM, lambda *_: None)
             # signal.setitimer(signal.ITIMER_VIRTUAL, 0)

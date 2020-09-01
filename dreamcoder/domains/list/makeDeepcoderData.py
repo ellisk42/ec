@@ -1,6 +1,7 @@
 # generate deepcoder data
 import sys
 import os
+import contextlib
 # sys.path.append(os.path.abspath('./'))
 # sys.path.append(os.path.abspath('./ec'))
 
@@ -95,7 +96,7 @@ def task_of_line(line, N=5, L=10, V=63):
 
 
 class DeepcoderTaskloader:
-    def __init__(self,file,allowed_requests,N=5,L=10,V=63,repeat=False,micro=None):
+    def __init__(self,file,allowed_requests,N=5,L=10,V=63,repeat=False,num_tasks=None):
         self.buf = [] # buffer of (program,task) tuples
         self.file = file
         self.allowed_requests = allowed_requests
@@ -103,7 +104,7 @@ class DeepcoderTaskloader:
         self.L = L
         self.V = V
         self.repeat = repeat
-        self.micro = micro
+        self.num_tasks = num_tasks
         self.eof = False
         with open(self.file,'r') as f:
             f.readline() # skip first line of file
@@ -128,7 +129,7 @@ class DeepcoderTaskloader:
                 if program is None: continue
                 if task.request not in self.allowed_requests: continue
                 self.buf.append((program,task))
-                if self.micro and len(self.buf) % self.micro == 0:
+                if self.num_tasks and len(self.buf) % self.num_tasks == 0:
                     assert len(self.buf) != 0
                     f.seek(self.file_start) # this should always
             self.offset_in_file = f.tell()
@@ -138,6 +139,17 @@ class DeepcoderTaskloader:
                 raise EOFError
             self.reloadBuffer()
         return self.buf.pop()
+    def getTasks(self, n, ignore_eof=False):
+        ret = []
+        for i in range(n):
+            try:
+                ret.append(self.getTask())
+            except EOFError:
+                if ignore_eof:
+                    return ret
+                raise
+        return ret
+            
 
 if __name__ == '__main__':
     pass
