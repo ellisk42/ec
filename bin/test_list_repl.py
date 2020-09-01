@@ -536,9 +536,9 @@ def plot_model_results(model_results, file=None, salt=''):
         plot.show()
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser(description='Test the List REPL')
-    # parser.add_argument('integers', metavar='N', type=int, nargs='+',
-    #                     help='an integer for the accumulator')
+    #parser = argparse.ArgumentParser(description='Test the List REPL')
+    #parser.add_argument('integers', metavar='N', type=int, nargs='+',
+    #                    help='an integer for the accumulator')
     # parser.add_argument('--train', nargs='+',
     #                     const=sum, default=max,
     #                     help='sum the integers (default: find the max)')

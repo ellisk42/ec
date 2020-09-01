@@ -127,7 +127,7 @@ class DeepcoderTaskloader:
                     continue
                 program,task = task_of_line(line,N=self.N,L=self.L,V=self.V)
                 if program is None: continue
-                if task.request not in self.allowed_requests: continue
+                if self.allowed_requests is not None and task.request not in self.allowed_requests: continue
                 self.buf.append((program,task))
                 if self.num_tasks and len(self.buf) % self.num_tasks == 0:
                     assert len(self.buf) != 0
