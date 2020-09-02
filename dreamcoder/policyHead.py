@@ -171,12 +171,16 @@ class NeuralPolicyHead(nn.Module):
 
 
 class RNNPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, featureExtractor, H=512, maxVar=15, encodeTargetHole=True, canonicalOrdering=False):
-        super(RNNPolicyHead, self).__init__() #should have featureExtractor?
+    def __init__(self, g, extractor, cfg=None, H=512, maxVar=15, encodeTargetHole=False, canonicalOrdering=True):
+        super().__init__() #should have featureExtractor?
+        if cfg is not None:
+            H = cfg.model.H
+            encodeTargetHole = cfg.model.encodeTargetHole
+            canonicalOrdering = cfg.model.canonicalOrdering
         self.use_cuda = torch.cuda.is_available()
-        self.featureExtractor = featureExtractor
+        self.featureExtractor = extractor
         self.H = H
-        self.RNNHead = SimpleRNNValueHead(g, featureExtractor, H=self.H, encodeTargetHole=encodeTargetHole) #hack
+        self.vhead = SimpleRNNValueHead(g=g, extractor=extractor, cfg=cfg) #hack
         self.encodeTargetHole = encodeTargetHole
         self.canonicalOrdering = canonicalOrdering
 
@@ -194,7 +198,7 @@ class RNNPolicyHead(NeuralPolicyHead):
             i += 1
 
         self.output = nn.Sequential(
-                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.Linear(extractor.outputDimensionality + H, H),
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
@@ -210,14 +214,14 @@ class RNNPolicyHead(NeuralPolicyHead):
 
     def cuda(self, device=None):
         self.use_cuda = True
-        self.RNNHead.use_cuda = True
+        self.vhead.use_cuda = True
         self.featureExtractor.use_cuda = True
         self.featureExtractor.CUDA = True
         super(RNNPolicyHead, self).cuda(device=device)
 
     def cpu(self):
         self.use_cuda = False
-        self.RNNHead.use_cuda = False
+        self.vhead.use_cuda = False
         self.featureExtractor.use_cuda = False
         self.featureExtractor.CUDA = False
         super(RNNPolicyHead, self).cpu()
@@ -228,7 +232,7 @@ class RNNPolicyHead(NeuralPolicyHead):
             assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
             # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
-        sketchEncodings = self.RNNHead._encodeSketches(sketches) # [5,64]
+        sketchEncodings = self.vhead._encodeSketches(sketches) # [5,64]
         features = self.featureExtractor.featuresOfTask(task) 
         features = features.unsqueeze(0)
         x = features.expand(len(sketches), -1)
@@ -239,12 +243,18 @@ class RNNPolicyHead(NeuralPolicyHead):
         return dist
 
 class ListREPLPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, featureExtractor, H=512, maxVar=15, encodeTargetHole=True, canonicalOrdering=False):
+    def __init__(self, g, extractor, cfg=None, H=512, maxVar=10, encodeTargetHole=False, canonicalOrdering=True):
         super().__init__() #should have featureExtractor?
+
+        if cfg is not None:
+            H = cfg.model.H
+            encodeTargetHole = cfg.model.encodeTargetHole
+            canonicalOrdering = cfg.model.canonicalOrdering
+
         self.use_cuda = torch.cuda.is_available()
-        self.featureExtractor = featureExtractor
+        self.featureExtractor = extractor
         self.H = H
-        self.RNNHead = ListREPLValueHead(g, featureExtractor, H=self.H)
+        self.vhead = ListREPLValueHead(g=g, extractor=extractor, cfg=cfg)
         self.encodeTargetHole = encodeTargetHole
         self.canonicalOrdering = canonicalOrdering
 
@@ -278,14 +288,14 @@ class ListREPLPolicyHead(NeuralPolicyHead):
 
     def cuda(self, device=None):
         self.use_cuda = True
-        self.RNNHead.use_cuda = True
+        self.vhead.use_cuda = True
         self.featureExtractor.use_cuda = True
         self.featureExtractor.CUDA = True
         super().cuda(device=device)
 
     def cpu(self):
         self.use_cuda = False
-        self.RNNHead.use_cuda = False
+        self.vhead.use_cuda = False
         self.featureExtractor.use_cuda = False
         self.featureExtractor.CUDA = False
         super().cpu()
@@ -294,7 +304,7 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         if self.encodeTargetHole:
             assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
-        compared = self.RNNHead._compare(sketches,task,reduce='max') # [num_sks,H]
+        compared = self.vhead._compare(sketches,task,reduce='max') # [num_sks,H]
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask

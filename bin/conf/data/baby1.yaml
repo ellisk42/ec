@@ -1,0 +1,8 @@
+# @package _group_
+info: single T1 program with frozen inputs
+repeat: True
+freeze_examples: True
+T: 1
+num_tasks: 1
+allow_complex_requests: False
+expressive_lambdas: False

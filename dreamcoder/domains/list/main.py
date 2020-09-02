@@ -157,23 +157,29 @@ def isIntFunction(tp):
 
 class ListFeatureExtractor(RecurrentFeatureExtractor):
     special = None
-    def __init__(self, maximumLength, cuda=True, H=64):
-        #T=3
-        # self.deepcoder_taskloader = DeepcoderTaskloader(
-        #    f'dreamcoder/domains/list/DeepCoder_data/T{3}_A2_V512_L10_train_perm.txt',
-        #    allowed_requests=[arrow(tlist(tint),tlist(tint))],
-        #    repeat=True,
-        #    micro=None,
-        #    )
-        self.lexicon = {"LIST_START", "LIST_END", "?"}.union(set(range(-64, 64)))
+    def __init__(self, maximumLength, cfg=None, cuda=True, H=64, modular=True, bidir_ctx=False):
+        if cfg is not None:
+            c = cfg.model.extractor.H
+            modular = c.modular
+            bidir_ctx = c.bidir_ctx
+            bidir_int = c.bidir_int
+            digitwise = c.digitwise
+            H = cfg.model.H
+
+        self.lexicon = {"LIST_START", "LIST_END", "?"}
+        if self.digitwise:
+            self.lexicon = self.lexicon.union(set(range(-9,10)))
+        else:
+            self.lexicon = self.lexicon.union(set(range(-64,65)))
         # add all non-arrow primitives ie things that should count as concrete values as opposed to arrows that are represented with NMs
         self.lexicon = self.lexicon.union({p.value for p in deepcoderPrimitives() if not p.tp.isArrow()})
 
         self.maximumLength = maximumLength
 
-
-
-        self.modular = True
+        self.modular = modular
+        self.digitwise = digitwise
+        if digitwise:
+            assert modular
 
         #self.recomputeTasks = True
 
@@ -187,9 +193,11 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         self.lexicon = set(self.lexicon)
 
         # encodes a [int]
-        self.list_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
-
-        self.ctx_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=False)
+        if self.modular:
+            self.list_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=True)
+            self.ctx_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_ctx)
+        if self.digitwise:
+            self.int_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_int)
 
 
 
@@ -287,6 +295,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         for i, indices_list in enumerate(indices_lists):
             indices_lists[i] += [self.endingIndex] * (pad_till - len(indices_list))
         return indices_lists, torch.tensor(sizes)
+    def encode_int(self,val):
+        if not self.digitwise:
+            pass
 
     def encodeValue(self, val):
         """

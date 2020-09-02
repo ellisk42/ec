@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - data: curr
+  - loop: curr
+  - optim: curr
+  - model: repl
+
+load: null
+mode: resume

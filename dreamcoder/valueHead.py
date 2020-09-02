@@ -145,9 +145,13 @@ class SampleDummyValueHead(BaseValueHead):
 
 class SimpleRNNValueHead(BaseValueHead):
 
-    def __init__(self, g, featureExtractor, H=512, encodeTargetHole=False):
+    def __init__(self, g, extractor, cfg=None, H=512, encodeTargetHole=False):
+        super().__init__()
+        if cfg is not None:
+            H = cfg.model.H
+            encodeTargetHole = cfg.model.encodeTargetHole
+            
         #specEncoder can be None, meaning you dont use the spec at all to encode objects
-        super(SimpleRNNValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available() #FIX THIS
 
         extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(15)] 
@@ -164,12 +168,12 @@ class SimpleRNNValueHead(BaseValueHead):
         self.outputDimensionality = H
 
         self._distance = nn.Sequential(
-                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.Linear(extractor.outputDimensionality + H, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
 
-        self.featureExtractor = featureExtractor
+        self.featureExtractor = extractor
 
         if self.use_cuda:
             self.cuda()
@@ -750,15 +754,20 @@ class NM(nn.Module):
         return self.params(args)
 class ListREPLValueHead(BaseValueHead):
 
-    def __init__(self, g, featureExtractor, H=64, canonicalOrdering=True, allow_concrete_eval=True):
+    def __init__(self, g, extractor, cfg=None, H=64, canonicalOrdering=True, allow_concrete_eval=True):
         super().__init__()
+        if cfg is not None:
+            H = cfg.model.H
+            canonicalOrdering = cfg.model.canonicalOrdering
+            allow_concrete_eval = cfg.model.allow_concrete_eval
+
         self.use_cuda = torch.cuda.is_available() #FIX THIS
         self.canonicalOrdering = canonicalOrdering
-        self.featureExtractor = featureExtractor
+        self.featureExtractor = extractor
         self.allow_concrete_eval = allow_concrete_eval
         self.H = H
         #self.outputDimensionality = H
-        assert self.H == featureExtractor.H
+        assert self.H == extractor.H
 
         # populate fnModules
         self.fnModules = nn.ModuleDict()
@@ -777,7 +786,7 @@ class ListREPLValueHead(BaseValueHead):
         self.compareModule = NM(2, H)
 
         self._distance = nn.Sequential(
-                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.Linear(extractor.outputDimensionality + H, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())

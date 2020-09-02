@@ -1,0 +1,3 @@
+# @package _group_
+lr: .001
+# put scheduler here

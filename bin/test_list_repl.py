@@ -3,8 +3,13 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
+import shutil
 import sys
 sys.path.append('/afs/csail.mit.edu/u/m/mlbowers/clones') # needed for tmux sudo workaround
+
+import hydra
+from hydra import utils
+from omegaconf import DictConfig,OmegaConf
 
 
 import argparse
@@ -47,44 +52,34 @@ class FakeRecognitionModel(nn.Module):
 class Poisoned: pass
 class State:
     def __init__(self):
-        self.as_kwargs = self.__dict__
-        self.state = self
         self.no_pickle = []
-    def new(
-            self,
-            T=2,
-            train='repl_rnn',
-            test='repl_rnn',
-            repeat=True,
-            freeze_examples=False,
-            print_every=200,
-            H=64,
-            test_every=2000,
-            save_every=2000,
-            batch_size=1000,
-            num_tasks=None,
-            value=False,
-            policy=True,
-            ):
-
-        assert value or policy
-
-        #w.add_image('colorful boi', torch.rand(3, 20, 20), dataformats='CHW')
+    # these @properties are kinda important. Putting them in __init sometimes gives weird behavior after loading
+    @property
+    def state(self):
+        return self
+    @property
+    def as_kwargs(self):
+        kwargs = {'state': self.state}
+        kwargs.update(self.__dict__)
+        return kwargs
+    def new(self,cfg):
+        self.cwd = os.getcwd()
+        allowed_requests = None if cfg.data.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
 
         taskloader = DeepcoderTaskloader(
-            f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_train_perm.txt',
-            allowed_requests=[arrow(tlist(tint),tlist(tint))],
-            repeat=True,
-            num_tasks=num_tasks,
+            utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_train_perm.txt'),
+            allowed_requests=allowed_requests,
+            repeat=cfg.data.repeat,
+            num_tasks=cfg.data.num_tasks,
             )
         testloader = DeepcoderTaskloader(
-            f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_test_perm.txt',
-            allowed_requests=[arrow(tlist(tint),tlist(tint))],
+            utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_test_perm.txt'),
+            allowed_requests=allowed_requests,
             repeat=False,
             num_tasks=None,
             )
 
-        extractor = ExtractorGenerator(H=H, maximumLength = taskloader.L+2)
+        extractor = ExtractorGenerator(cfg=cfg, maximumLength = taskloader.L+2)
 
         test_tasks = testloader.getTasks(100, ignore_eof=True)
         print(f'Got {len(test_tasks)} testing tasks')
@@ -92,68 +87,69 @@ class State:
 
         g = Grammar.uniform(deepcoderPrimitives())
 
-        rnn_ph = RNNPolicyHead(g, extractor(0), H=H, encodeTargetHole=False, canonicalOrdering=True) if policy else None
-        #pHead = BasePolicyHead()
-        if value == 'tied':
-            rnn_vh = rnn_ph.RNNHead
-        else:
-            rnn_vh = SimpleRNNValueHead(g, extractor(0), H=H) if value else SampleDummyValueHead()
 
-        repl_ph = ListREPLPolicyHead(g, extractor(1), H=H, encodeTargetHole=False, canonicalOrdering=True)
-        if value == 'tied':
-            repl_vh = repl_ph.RNNHead
-        else:
-            repl_vh = ListREPLValueHead(g, extractor(1), H=H) if value else SampleDummyValueHead()
-        
-        if 'rnn' not in train:
-            rnn_vh = rnn_ph = None
-        if 'repl' not in train:
-            repl_vh = repl_ph = None
 
-        
-        heads = list(filter(None,[repl_ph, repl_vh, rnn_ph, rnn_vh]))
-        vheads = list(filter(lambda h: isinstance(h,BaseValueHead),heads))
-        pheads = list(filter(lambda h: isinstance(h,NeuralPolicyHead),heads))
+        if cfg.model.policy:
+            phead = {
+                'rnn': RNNPolicyHead,
+                'repl': ListREPLPolicyHead,
+            }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
+        else:
+            phead = BasePolicyHead()
+        if cfg.model.value:
+            if cfg.model.tied:
+                assert cfg.model.policy
+                vhead = phead.vhead
+            else:
+                vhead = {
+                    'rnn': SimpleRNNValueHead,
+                    'repl': ListREPLValueHead,
+                }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
+        else:
+            vhead = SampleDummyValueHead()
+
+        heads = [vhead,phead]
 
         max_depth = 10
 
         params = itertools.chain.from_iterable([head.parameters() for head in heads])
-        optimizer = torch.optim.Adam(params, lr=0.001, eps=1e-3, amsgrad=True)
+        optimizer = torch.optim.Adam(params, lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
-        rnn_astar = Astar(FakeRecognitionModel(rnn_vh, rnn_ph), maxDepth=max_depth)
-        repl_astar = Astar(FakeRecognitionModel(repl_vh, repl_ph), maxDepth=max_depth)
-        astars = []
-        if 'rnn' in test:
-            assert 'rnn' in train
-            astars.append(rnn_astar)
-        if 'repl' in test:
-            assert 'repl' in train
-            astars.append(repl_astar)
-
+        astar = Astar(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
         j=0
         frontiers = None
         self.update(locals()) # do self.* = * for everything
         self.post_load()
     
-    def save(self, locs, path):
+    def save(self, locs, name):
         """
-        use like state.save(locals(),"path/to/file")
+        use like state.save(locals(),"name_of_save")
         """
+        self.update(locs)
         temp = {}
         for key in self.no_pickle:
             temp[key] = self[key]
             self[key] = Poisoned
-        torch.save(self, f'experimentOutputs/{path}')
+        if not os.path.isdir('saves'):
+            os.mkdir('saves')
+        path = f'saves/{name}'
+        print(f"saving state to {path}...")
+        torch.save(self, f'{path}.tmp')
+        print('critical step, do not interrupt...')
+        shutil.move(f'{path}.tmp',f'{path}')
+        print("done")
         for key in self.no_pickle:
             self[key] = temp[key]
     def load(self, path):
-        state = torch.load(f'experimentOutputs/{path}')
+        state = torch.load(path)
         self.update(state.__dict__)
         self.post_load()
     def post_load(self):
+        print(f"chdir to {self.cwd}")
+        os.chdir(self.cwd)
         print("intializing tensorboard")
         w = SummaryWriter(
-            log_dir='runs/test',
+            log_dir='tb',
             max_queue=10,
         )
         print("done")
@@ -173,82 +169,74 @@ class State:
         return f"State(\n\t{body}\n)"
     def update(self,dict):
         for k,v in dict.items():
+            if hasattr(type(self), k) and isinstance(getattr(type(self),k), property):
+                continue # dont overwrite properties (throws error)
             self[k] = v
 
 def train_model(
     state,
-    freeze_examples,
+    cfg,
     taskloader,
-    vheads,
-    pheads,
+    vhead,
+    phead,
     heads,
-    batch_size,
-    print_every,
-    save_every,
     w,
     g,
     optimizer,
-    test_every,
-    astars,
+    astar,
     test_tasks_mini,
     test_tasks,
     frontiers=None,
     j=0,
     **kwargs,
         ):
-    tstart = time.time()
+    print(f"j:{j}")
     while True:
+        tstart = time.time()
+
+        if cfg.loop.max_steps and j > cfg.loop.max_steps:
+            break
+
         # TODO you should really rename getTask to getProgramAndTask or something
-        if frontiers is None or not freeze_examples:
-            prgms_and_tasks = [taskloader.getTask() for _ in range(batch_size)]
+        if frontiers is None or not cfg.data.freeze_examples:
+            prgms_and_tasks = [taskloader.getTask() for _ in range(1000)]
             tasks = [task for program,task in prgms_and_tasks]
             frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
         for f in frontiers: # work thru batch of `batch_size` examples
             for head in heads:
                 head.zero_grad()
-            # TODO TEMP
-            losses = []
-            for head in vheads:
-                loss = head.valueLossFromFrontier(f, g)
-                losses.append(loss)
-            for head in pheads:
-                loss = head.policyLossFromFrontier(f, g)
-                losses.append(loss)
-            
-            sum(losses).backward()
+            vloss = vhead.valueLossFromFrontier(f, g)
+            ploss = phead.policyLossFromFrontier(f, g)
+            loss = vloss + ploss
+            loss.backward()
             optimizer.step()
 
             # printing and logging
-            if j % print_every == 0:
-                for head,loss in zip(vheads+pheads,losses): # important that the right things zip together (both lists ordered same way)
+            if j % cfg.loop.print_every == 0:
+                for head,loss in zip([vhead,phead],[vloss,ploss]): # important that the right things zip together (both lists ordered same way)
                     print(f"[{j}] {head.__class__.__name__} {loss.item()}")
                     w.add_scalar(head.__class__.__name__, loss.item(), j)
                 print()
                 w.flush()
 
-            if j % save_every == 0:
-                print("saving...")
-                state.save(locals(),'test_save')
-                print("done")
-
             # testing
-            if test_every is not None and j % test_every == 0:
+            if cfg.loop.test_every is not None and j % cfg.loop.test_every == 0:
                 if j != 0:
                     elapsed = time.time()-tstart
                     print(f"{test_every} steps in {elapsed:.1f}s ({test_every/elapsed:.1f} steps/sec)")
-                model_results = test_models(astars, test_tasks_mini, timeout=3, verbose=True)
+                model_results = test_models([astar], test_tasks_mini, timeout=3, verbose=True)
                 plot_model_results(model_results, file='mini_test', salt=j)
                 tstart = time.time()
-            j += 1
-            def fn():
+            def run_tests():
                 model_results = test_models(astars,test_tasks,timeout=3, verbose=True)
                 plot_model_results(model_results, file='plots')
-            mlb.callback('test',fn)
+            mlb.callback('test',run_tests)
+            state.no_pickle.append('run_tests')
 
-
-
-
-
+            j += 1 # increment before saving so we resume on the next iteration
+            if (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
+                state.save(locals(),'autosave')
+            
 
     #def __getstate__(self):
         #Classes can further influence how their instances are pickled; if the class defines the method __getstate__(), it is called and the returned object is pickled as the contents for the instance, instead of the contents of the instance’s dictionary. If the __getstate__() method is absent, the instance’s __dict__ is pickled as usual.
@@ -266,8 +254,8 @@ class FakeFrontier:
         return self
 
 class ExtractorGenerator:
-    def __init__(self,H,maximumLength):
-        self.H = H
+    def __init__(self,cfg,maximumLength):
+        self.H = cfg.model.H
         self.maximumLength = maximumLength
         self._groups = {}
     def __call__(self, group):
@@ -277,170 +265,6 @@ class ExtractorGenerator:
         if group not in self._groups:
             self._groups[group] = ListFeatureExtractor(maximumLength=self.maximumLength, H=self.H, cuda=True)
         return self._groups[group]
-
-
-
-
-
-
-# def test_trainListREPL(
-#     T=1,
-#     train='repl',
-#     test='repl',
-#     repeat=True,
-#     freeze_examples=False,
-#     print_every=200,
-#     H=64,
-#     test_every=2000,
-#     save_every=10,
-#     batch_size=1000,
-#     num_tasks=None,
-#     value=False,
-#     policy=True,
-#     ):
-#     """
-#     share_extractor means all value/policy heads will share the same LearnedFeatureExtractor which is often what you want unless
-#     comparing multiple value functions side by side.
-
-#     Test 1: a single super simple program and the training examples are all the same
-#         T=1
-#         freeze_examples=True
-#         batch_size=1 # this is important
-#         num_tasks=1
-#         repeat=True
-#         test_every=None
-#     Test 2: same as test 1 but training examples change for that one program
-#         T=1
-#         freeze_examples=False
-#         # (batch_size no longer matters)
-#         num_tasks=1
-#         repeat=True
-#         test_every=None
-#     Test 3:
-#         num_tasks = 3
-#     Test 4:
-#         T=1
-#         num_tasks = None
-#         test_every = 1000
-
-
-#     """
-#     assert value or policy
-
-#     print("intializing tensorboard")
-#     w = SummaryWriter(
-#         log_dir='runs/test',
-#         max_queue=10,
-#     )
-#     print("done")
-#     #w.add_image('colorful boi', torch.rand(3, 20, 20), dataformats='CHW')
-
-#     taskloader = DeepcoderTaskloader(
-#         f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_train_perm.txt',
-#         allowed_requests=[arrow(tlist(tint),tlist(tint))],
-#         repeat=True,
-#         num_tasks=num_tasks,
-#         )
-#     testloader = DeepcoderTaskloader(
-#         f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_test_perm.txt',
-#         allowed_requests=[arrow(tlist(tint),tlist(tint))],
-#         repeat=False,
-#         num_tasks=None,
-#         )
-
-#     extractor = ExtractorGenerator(H=H, maximumLength = taskloader.L+2)
-
-#     test_tasks = testloader.getTasks(100, ignore_eof=True)
-#     test_tasks_mini = test_tasks[:10]
-
-#     g = Grammar.uniform(deepcoderPrimitives())
-
-#     rnn_ph = RNNPolicyHead(g, extractor(0), H=H, encodeTargetHole=False, canonicalOrdering=True) if policy else None
-#     #pHead = BasePolicyHead()
-#     if value == 'tied':
-#         rnn_vh = rnn_ph.RNNHead
-#     else:
-#         rnn_vh = SimpleRNNValueHead(g, extractor(0), H=H) if value else SampleDummyValueHead()
-
-#     repl_ph = ListREPLPolicyHead(g, extractor(1), H=H, encodeTargetHole=False, canonicalOrdering=True)
-#     if value == 'tied':
-#         repl_vh = repl_ph.RNNHead
-#     else:
-#         repl_vh = ListREPLValueHead(g, extractor(1), H=H) if value else SampleDummyValueHead()
-    
-#     if 'rnn' not in train:
-#         rnn_vh = rnn_ph = None
-#     if 'repl' not in train:
-#         repl_vh = repl_ph = None
-
-    
-#     heads = list(filter(None,[repl_ph, repl_vh, rnn_ph, rnn_vh]))
-#     vheads = list(filter(lambda h: isinstance(h,BaseValueHead),heads))
-#     pheads = list(filter(lambda h: isinstance(h,NeuralPolicyHead),heads))
-
-#     max_depth = 10
-
-#     params = itertools.chain.from_iterable([head.parameters() for head in heads])
-#     optimizer = torch.optim.Adam(params, lr=0.001, eps=1e-3, amsgrad=True)
-
-#     rnn_astar = Astar(FakeRecognitionModel(rnn_vh, rnn_ph), maxDepth=max_depth)
-#     repl_astar = Astar(FakeRecognitionModel(repl_vh, repl_ph), maxDepth=max_depth)
-#     astars = []
-#     if 'rnn' in test:
-#         assert 'rnn' in train
-#         astars.append(rnn_astar)
-#     if 'repl' in test:
-#         assert 'repl' in train
-#         astars.append(repl_astar)
-
-#     j=0
-#     tstart = time.time()
-#     frontiers = None
-#     while True:
-#         # TODO you should really rename getTask to getProgramAndTask or something
-#         if frontiers is None or not freeze_examples:
-#             prgms_and_tasks = [taskloader.getTask() for _ in range(batch_size)]
-#             tasks = [task for program,task in prgms_and_tasks]
-#             frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
-#         for f in frontiers: # work thru batch of `batch_size` examples
-#             #mlb.green(f._fullProg)
-#             for head in heads:
-#                 head.zero_grad()
-#             # TODO TEMP
-#             losses = []
-#             for head in vheads:
-#                 loss = head.valueLossFromFrontier(f, g)
-#                 losses.append(loss)
-#             for head in pheads:
-#                 loss = head.policyLossFromFrontier(f, g)
-#                 losses.append(loss)
-            
-#             sum(losses).backward()
-#             optimizer.step()
-
-#             # printing and logging
-#             if j % print_every == 0:
-#                 for head,loss in zip(vheads+pheads,losses): # important that the right things zip together (both lists ordered same way)
-#                     print(f"[{j}] {head.__class__.__name__} {loss.item()}")
-#                     w.add_scalar(head.__class__.__name__, loss.item(), j)
-#                 print()
-#                 w.flush()
-#             if j % save_every == 0:
-#                 print("saving...")
-#                 w.close()
-#                 s.save_locals()
-#                 torch.save(locals(),'experimentOutputs/testlocals')
-#                 print("done")
-
-#             # testing
-#             if test_every is not None and j % test_every == 0:
-#                 if j != 0:
-#                     elapsed = time.time()-tstart
-#                     print(f"{test_every} steps in {elapsed:.1f}s ({test_every/elapsed:.1f} steps/sec)")
-#                 model_results = test_models(astars, test_tasks_mini, timeout=3, verbose=True)
-#                 plot_model_results(model_results, file='experimentOutputs/test')
-#                 tstart = time.time()
-#             j += 1
 
 
 def test_models(astars, test_tasks, timeout, verbose=True):
@@ -494,6 +318,8 @@ class ModelResult:
         return len(valid)/self.num_tests*100
 
 def plot_model_results(model_results, file=None, salt=''):
+    if not os.path.isdir('plots'):
+        os.mkdir('plots')
     assert isinstance(model_results, list)
     assert isinstance(model_results[0], ModelResult)
 
@@ -511,8 +337,8 @@ def plot_model_results(model_results, file=None, salt=''):
     plot.legend()
 
     if file:
-        plot.savefig(f"experimentOutputs/{file}_time.png")
-        mlb.yellow(f"saved plot to experimentOutputs/{file}_time.png")
+        plot.savefig(f"plots/{file}_time.png")
+        mlb.yellow(f"saved plot to plots/{file}_time.png")
     else:
         plot.show()
 
@@ -530,22 +356,45 @@ def plot_model_results(model_results, file=None, salt=''):
     plot.legend()
 
     if file:
-        plot.savefig(f"experimentOutputs/{file}_evals@{salt}.png")
+        plot.savefig(f"plots/{file}_evals@{salt}.png")
         mlb.yellow(f"saved plot to experimentOutputs/{file}_evals@{salt}.png\n")
     else:
         plot.show()
 
-if __name__ == '__main__':
-    #parser = argparse.ArgumentParser(description='Test the List REPL')
-    #parser.add_argument('integers', metavar='N', type=int, nargs='+',
-    #                    help='an integer for the accumulator')
-    # parser.add_argument('--train', nargs='+',
-    #                     const=sum, default=max,
-    #                     help='sum the integers (default: find the max)')
 
 
-
+@hydra.main(config_path="conf", config_name='config')
+def hydra_main(cfg):
+    print()
+    print(OmegaConf.to_yaml(cfg))
+    print(os.getcwd())
     with torch.cuda.device(6):
-        s = State()
-        s.new()
-        train_model(**s.as_kwargs)
+        state = State()
+        if cfg.load is None:
+            print("no file to load from, creating new state...")
+            state.new(cfg=cfg)
+        else:
+            #HydraConfig.instance().set_config(cfg)
+            print(f"loading from {cfg.load}...")
+            #state.load(cfg.load)
+            state.load(
+                '/afs/csail.mit.edu/u/m/mlbowers/proj/ec/outputs/2020-09-02/13-49-11/saves/autosave')
+            print("loaded")
+        state.cfg.mode = cfg.mode
+        if cfg.mode == 'resume':
+            print("Entering training loop...")
+            train_model(**state.as_kwargs)
+        if cfg.mode == 'test':
+            raise NotImplementedError
+        if cfg.mode == 'inspect':
+            print()
+            print("=== Inspecting State ===")
+            print(OmegaConf.to_yaml(state.cfg))
+            print(os.getcwd())
+            print(state)
+            raise Exception("Take a look around!") # intentional Exception so you can look at `state` and debug it.
+        # not really sure if this is needed
+        #hydra.core.hydra_config.HydraConfig.set_config(cfg)
+
+if __name__ == '__main__':
+    hydra_main()

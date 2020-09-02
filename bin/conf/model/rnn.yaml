@@ -1,0 +1,12 @@
+# @package _group_
+type: rnn
+H: 64
+tied: True
+policy: True
+value: False
+encodeTargetHole: False
+canonicalOrdering: True
+extractor:
+  modular: False
+  bidir_ctx: null # not used bc not modular
+  digitwise: False
