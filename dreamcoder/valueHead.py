@@ -761,7 +761,6 @@ class ListREPLValueHead(BaseValueHead):
             canonicalOrdering = cfg.model.canonicalOrdering
             allow_concrete_eval = cfg.model.allow_concrete_eval
 
-        self.use_cuda = torch.cuda.is_available() #FIX THIS
         self.canonicalOrdering = canonicalOrdering
         self.featureExtractor = extractor
         self.allow_concrete_eval = allow_concrete_eval
@@ -790,9 +789,6 @@ class ListREPLValueHead(BaseValueHead):
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
-
-        if self.use_cuda:
-            self.cuda()
 
     def rep(self,sk,task,ctxs):
         """

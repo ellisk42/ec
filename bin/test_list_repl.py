@@ -81,9 +81,8 @@ class State:
 
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = taskloader.L+2)
 
-        test_tasks = testloader.getTasks(100, ignore_eof=True)
+        test_tasks = testloader.getTasks(cfg.data.num_tests, ignore_eof=True)
         print(f'Got {len(test_tasks)} testing tasks')
-        test_tasks_mini = test_tasks[:20]
 
         g = Grammar.uniform(deepcoderPrimitives())
 
@@ -109,6 +108,10 @@ class State:
             vhead = SampleDummyValueHead()
 
         heads = [vhead,phead]
+
+        if cfg.cuda:
+            heads = [h.cuda() for h in heads]
+
 
         max_depth = 10
 
@@ -184,15 +187,15 @@ def train_model(
     g,
     optimizer,
     astar,
-    test_tasks_mini,
     test_tasks,
     frontiers=None,
     j=0,
     **kwargs,
         ):
     print(f"j:{j}")
+    tstart = None
+    exit_now = False
     while True:
-        tstart = time.time()
 
         if cfg.loop.max_steps and j > cfg.loop.max_steps:
             break
@@ -211,6 +214,15 @@ def train_model(
             loss.backward()
             optimizer.step()
 
+            mlb.freezer('pause')
+
+            def end_profile():
+                nonlocal exit_now
+                exit_now = True
+            mlb.callback('return',end_profile)
+            if exit_now:
+                return
+
             # printing and logging
             if j % cfg.loop.print_every == 0:
                 for head,loss in zip([vhead,phead],[vloss,ploss]): # important that the right things zip together (both lists ordered same way)
@@ -221,17 +233,17 @@ def train_model(
 
             # testing
             if cfg.loop.test_every is not None and j % cfg.loop.test_every == 0:
-                if j != 0:
+                if tstart is not None:
                     elapsed = time.time()-tstart
-                    print(f"{test_every} steps in {elapsed:.1f}s ({test_every/elapsed:.1f} steps/sec)")
-                model_results = test_models([astar], test_tasks_mini, timeout=3, verbose=True)
+                    print(f"{cfg.loop.test_every} steps in {elapsed:.1f}s ({cfg.loop.test_every/elapsed:.1f} steps/sec)")
+                model_results = test_models([astar], test_tasks[:cfg.loop.num_mini_tests], timeout=3, verbose=True)
                 plot_model_results(model_results, file='mini_test', salt=j)
                 tstart = time.time()
             def run_tests():
                 model_results = test_models(astars,test_tasks,timeout=3, verbose=True)
                 plot_model_results(model_results, file='plots')
             mlb.callback('test',run_tests)
-            state.no_pickle.append('run_tests')
+            state.no_pickle.extend(['run_tests','end_profile'])
 
             j += 1 # increment before saving so we resume on the next iteration
             if (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
@@ -255,7 +267,7 @@ class FakeFrontier:
 
 class ExtractorGenerator:
     def __init__(self,cfg,maximumLength):
-        self.H = cfg.model.H
+        self.cfg = cfg
         self.maximumLength = maximumLength
         self._groups = {}
     def __call__(self, group):
@@ -263,7 +275,7 @@ class ExtractorGenerator:
         Returns an extractor object. If called twice with the same group (an int or string or anything) the same object will be returned (ie share weights)
         """
         if group not in self._groups:
-            self._groups[group] = ListFeatureExtractor(maximumLength=self.maximumLength, H=self.H, cuda=True)
+            self._groups[group] = ListFeatureExtractor(maximumLength=self.maximumLength, cfg=self.cfg)
         return self._groups[group]
 
 
@@ -368,7 +380,7 @@ def hydra_main(cfg):
     print()
     print(OmegaConf.to_yaml(cfg))
     print(os.getcwd())
-    with torch.cuda.device(6):
+    with torch.cuda.device(cfg.device):
         state = State()
         if cfg.load is None:
             print("no file to load from, creating new state...")
@@ -386,6 +398,21 @@ def hydra_main(cfg):
             train_model(**state.as_kwargs)
         if cfg.mode == 'test':
             raise NotImplementedError
+        if cfg.mode == 'profile':
+            mlb.purple('[profiling]')
+            import cProfile,pstats
+            from pstats import SortKey as sort
+            cProfile.runctx('train_model(**state.as_kwargs)',globals(),locals(),'profiled')
+            p = pstats.Stats('profiled')
+            p.strip_dirs()
+            p.sort_stats(sort.CUMULATIVE)
+            p.reverse_order()
+            p.print_stats()
+            print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
+            print('tottime: doesnt include subfunctions')
+            print('percall: previous column divided by num calls')
+            
+            raise Exception("Take a look around!")
         if cfg.mode == 'inspect':
             print()
             print("=== Inspecting State ===")

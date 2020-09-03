@@ -8,6 +8,7 @@ import torch
 import numpy as np
 from torch import nn
 from torch.nn.utils.rnn import pack_padded_sequence
+import itertools
 import mlb
 
 from dreamcoder.dreamcoder import explorationCompression
@@ -155,24 +156,90 @@ def isIntFunction(tp):
         return False
 
 
+class Lexicon(nn.Embedding):
+    """
+    roughly use like:
+        idxs_list = idxs_of_toks(tok_list)
+        idxs
+    """
+    def __init__(self, lexicon, H=64, cuda=True, cfg=None, *args, **kwargs):
+        if cfg is not None:
+            cuda = cfg.cuda
+            H = cfg.model.H
+        self.lexicon = lexicon.union({'<UNK>','<PAD>'})
+        self.length = len(self.lexicon)
+        self.idx_of_tok = {tok:torch.tensor(idx,dtype=torch.long) for idx,tok in enumerate(self.lexicon)}
+        if cuda:
+            self.idx_of_tok = {k:v.cuda() for k,v in self.idx_of_tok.items()}
+        self.pad = self.idx_of_tok['<PAD>']
+        self.unk = self.idx_of_tok['<UNK>']
+        self.H = H
+        self.use_cuda = cuda
+        super().__init__(num_embeddings=self.length, embedding_dim=H, padding_idx=int(self.pad), *args, **kwargs)
+        """
+        actual number of embeddings will be length+2 where an extra one is added
+        """
+    def idxs_of_toks(self,tok_list):
+        """
+        works on arbitrarily many nested lists as well
+        [tok] -> [longtensor]
+        """
+        res = []
+        # sanitize
+        unk = 0
+        for tok in tok_list:
+            if isinstance(tok,(list,tuple)):
+                res.append(self.idxs_of_toks(tok))
+            elif tok not in self.lexicon:
+                if unk == 0:
+                    mlb.yellow(f"converting {tok} to <UNK>. suppressing future warnings")
+                unk += 1
+                res.append(self.unk)
+            else:
+                res.append(self.idx_of_tok[tok])
+        if unk > 0:
+            mlb.yellow(f"Total <UNK>s: {unk}")
+        # convert to indices for embeddings
+        return res
+    def pad_idxs_lists(self,idxs_lists):
+        assert isinstance(idxs_lists,list)
+        assert isinstance(idxs_lists[0],list)
+        sizes = [len(idxs_list) for idxs_list in idxs_lists]
+        pad_till = max(sizes)
+
+        # padding
+        for i, idxs_list in enumerate(idxs_lists):
+            idxs_lists[i] += [self.pad] * (pad_till - len(idxs_list))
+        return idxs_lists, torch.tensor(sizes)
+    def sort_and_pack(self,embeddings,sizes):
+        assert embeddings.dim() == 3
+        sizes,sorter = sizes.sort(descending=True)
+        _,unsorter = sorter.sort() # fun trick
+        embeddings = embeddings[sorter] # sort by decreasing size
+        embeddings = embeddings.permute(1,0,2) # swap first two dims. [padded_ex_length, num_exs, H]
+        packed = pack_padded_sequence(embeddings,sizes)
+        return packed,unsorter
+
+
 class ListFeatureExtractor(RecurrentFeatureExtractor):
     special = None
-    def __init__(self, maximumLength, cfg=None, cuda=True, H=64, modular=True, bidir_ctx=False):
+    def __init__(self, maximumLength, cfg=None, cuda=True, H=64, modular=True, bidir_ctx=False, digitwise=True):
         if cfg is not None:
-            c = cfg.model.extractor.H
+            c = cfg.model.extractor
             modular = c.modular
             bidir_ctx = c.bidir_ctx
             bidir_int = c.bidir_int
             digitwise = c.digitwise
+            cuda = cfg.cuda
             H = cfg.model.H
 
-        self.lexicon = {"LIST_START", "LIST_END", "?"}
-        if self.digitwise:
-            self.lexicon = self.lexicon.union(set(range(-9,10)))
+        self.lexicon = {"LIST_START", "LIST_END", "INT_START", "INT_END", 'CTX_START', 'CTX_END', "?"}
+        if digitwise:
+            self.lexicon = self.lexicon | set(map(str,range(0,10))) | {'-'}
         else:
-            self.lexicon = self.lexicon.union(set(range(-64,65)))
+            self.lexicon = self.lexicon | set(range(-64,65))
         # add all non-arrow primitives ie things that should count as concrete values as opposed to arrows that are represented with NMs
-        self.lexicon = self.lexicon.union({p.value for p in deepcoderPrimitives() if not p.tp.isArrow()})
+        self.lexicon = self.lexicon | {p.value for p in deepcoderPrimitives() if not p.tp.isArrow()}
 
         self.maximumLength = maximumLength
 
@@ -198,6 +265,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             self.ctx_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_ctx)
         if self.digitwise:
             self.int_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_int)
+            self.digit_embedder = Lexicon(self.lexicon, cfg=cfg)
 
 
 
@@ -330,6 +398,50 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 # and then here in encodeValue you can map a translation from bool to string "True"/"False" over the lists
                 raise NotImplementedError
 
+
+            if self.digitwise:
+                exs = val # :: [num_exs,num_ints] - num_ints is number of ints in an example list
+                exs = [[['INT_START']+list(str(_int))+['INT_END'] for _int in ex] for ex in exs] # convert 100 -> ['1','0','0']
+                # exs :: [num_exs,num_ints,num_digits] = num_digits is number of digits in an int
+                before_idxs_of_toks = exs # in case you want to inspect during debugging
+                exs = self.digit_embedder.idxs_of_toks(exs) # ::[[[longtensor]]] (num_exs,list_len,num_digits)
+                ints_per_ex = [len(l) for l in exs]
+                # flatten over examples (so its one massive list of ints each represented as a list of digits)
+                ints = list(itertools.chain.from_iterable(exs)) # ::[[longtensor]] (num_exs*list_len, num_digits)
+                if len(ints) > 0:
+                    # pad it to a constant number of digits per int
+                    ints, digits_per_int = self.digit_embedder.pad_idxs_lists(ints)
+                    ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs*list_len, longest_num_digits]
+                    ints_embedded = self.digit_embedder(ints) # pointwise, converts indices -> embeddings. [num_exs*list_len, longest_num_digits, H]
+                    packed, unsorter = self.digit_embedder.sort_and_pack(ints_embedded, digits_per_int)
+                    _, hidden = self.int_encoder(packed)
+                    int_encodings = hidden.sum(0)[unsorter] # sum over bidirectionality [num_exs*list_len, H]
+                else:
+                    int_encodings = None
+                # undo the flattening
+                pad_till = max(ints_per_ex)+2 # +2 for LIST_START and LIST_END
+                # make our examplewise tensor with padding already inserted as zeros
+                exs_tensor = torch.zeros(len(exs),pad_till,self.H) # [num_exs,longest_list_len,H]
+                if self.use_cuda:
+                    exs_tensor = exs_tensor.cuda()
+                j = 0
+                # add LIST_START
+                start_embedding = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_START'])
+                end_embedding = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_END'])
+                exs_tensor[:,0] = start_embedding.expand(len(exs),-1)
+                for i,num_ints in enumerate(ints_per_ex):
+                    if int_encodings is not None: # only None if the input was an empty list of ints
+                        exs_tensor[i,1:num_ints+1] = int_encodings[j:j+num_ints]
+                    exs_tensor[i,num_ints+1] = end_embedding # add LIST_END
+                    j += num_ints
+                sizes = torch.tensor([x+2 for x in ints_per_ex]) # +2 bc list start and list end
+                # exs_tensor :: [num_exs, longest_list_len, H]
+                packed,unsorter = self.digit_embedder.sort_and_pack(exs_tensor,sizes)
+                _, hidden = self.list_encoder(packed)
+                list_encodings = hidden.sum(0)[unsorter] # sum over bidirectionaliy. [num_exs,H]
+                return list_encodings
+
+
             indices_lists = []
             for int_list in val:
                 tokens = ["LIST_START"] + int_list + ["LIST_END"]
@@ -359,6 +471,26 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             # see comment in a similar if statement above. I dont think this should ever fire anyways though
             raise NotImplementedError
         
+
+        if self.digitwise:
+            if is_int(val[0]):
+                ints = val # :: [num_exs,]
+                ints = [['INT_START']+list(str(_int))+['INT_END'] for _int in ints] # convert 100 -> ['1','0','0']
+                before_idxs_of_toks = ints # in case you want to inspect during debugging
+                ints = self.digit_embedder.idxs_of_toks(ints)
+                # pad it to a constant number of digits per int
+                ints, digits_per_int = self.digit_embedder.pad_idxs_lists(ints)
+                ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs, longest_num_digits]
+                ints_embedded = self.digit_embedder(ints) # pointwise, converts indices -> embeddings
+                packed, unsorter = self.digit_embedder.sort_and_pack(ints_embedded, digits_per_int)
+                _, hidden = self.int_encoder(packed)
+                int_encodings = hidden.sum(0)[unsorter] # sum over bidirectionality [num_exs*list_len, H]
+                return int_encodings
+            # it's a list of functions or other non-int things
+            idxs = torch.stack(self.digit_embedder.idxs_of_toks(val))
+            res = self.digit_embedder(idxs)
+            return res
+
         # val is one concrete non-list value per example
         # no LIST_START or anything needed here! Bc the list is examplewise
         indices = self.tokensToIndices(val) # [int]
