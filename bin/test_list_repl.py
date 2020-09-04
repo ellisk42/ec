@@ -202,7 +202,7 @@ def train_model(
 
         # TODO you should really rename getTask to getProgramAndTask or something
         if frontiers is None or not cfg.data.freeze_examples:
-            prgms_and_tasks = [taskloader.getTask() for _ in range(1000)]
+            prgms_and_tasks = taskloader.getTasks(1000)
             tasks = [task for program,task in prgms_and_tasks]
             frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
         for f in frontiers: # work thru batch of `batch_size` examples
@@ -246,7 +246,7 @@ def train_model(
             state.no_pickle.extend(['run_tests','end_profile'])
 
             j += 1 # increment before saving so we resume on the next iteration
-            if (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
+            if cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
                 state.save(locals(),'autosave')
             
 
@@ -380,6 +380,8 @@ def hydra_main(cfg):
     print()
     print(OmegaConf.to_yaml(cfg))
     print(os.getcwd())
+    if cfg.verbose:
+        mlb.set_verbose()
     with torch.cuda.device(cfg.device):
         state = State()
         if cfg.load is None:

@@ -212,11 +212,15 @@ class Lexicon(nn.Embedding):
             idxs_lists[i] += [self.pad] * (pad_till - len(idxs_list))
         return idxs_lists, torch.tensor(sizes)
     def sort_and_pack(self,embeddings,sizes):
+        mlb.log(f'using these sizes for gru: {sizes.tolist()}')
+        assert sizes.max() == embeddings.shape[1]
         assert embeddings.dim() == 3
         sizes,sorter = sizes.sort(descending=True)
         _,unsorter = sorter.sort() # fun trick
+        mlb.log(f'sorting embeddings by sorter: {sorter.tolist()}')
         embeddings = embeddings[sorter] # sort by decreasing size
         embeddings = embeddings.permute(1,0,2) # swap first two dims. [padded_ex_length, num_exs, H]
+        mlb.log(f'permuted to {tuple(embeddings.shape)} :: (padded_length, batch_size, H)')
         packed = pack_padded_sequence(embeddings,sizes)
         return packed,unsorter
 
@@ -316,11 +320,26 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
 
             e = self.examplesEncoding(tokenized)
             return e
+        mlb.log('in inputFeatures()')
         inputs = [ex[0] for ex in task.examples] # [num_exs,num_args]
         argwise = list(zip(*inputs)) # [num_args,num_exs]
+        mlb.log('inputs (argwise):')
+        for i,arg in enumerate(argwise):
+            mlb.log(f'\targ {i}:')
+            for j,ex in enumerate(arg):
+                mlb.log(f'\t\tex {j}: {ex}')
+        
         inputs = torch.stack([self.encodeValue(arg) for arg in argwise]) # [num_args,num_exs,H]
+        mlb.log(f'stacked arg encodings :: {tuple(inputs.shape)} :: (num_args,5,H) :: (seq_length, batch, H) which is correct for non-packed GRU')
+        mlb.log('running ctx_encoder() gru on stacked results of encodeValue')
+        ctx_start_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['CTX_START']).expand(1,len(task.examples),-1)
+        ctx_end_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['CTX_END']).expand(1,len(task.examples),-1)
+        inputs = torch.cat((ctx_start_vec,inputs,ctx_end_vec))
+        mlb.log('catted on ctx_start and ctx_end vectors')
+        mlb.log(f'input to ctx_encoder: {tuple(inputs.shape)}')
         _, res = self.ctx_encoder(inputs)
-        res = res.squeeze(0) # [num_exs,H]
+        res = res.sum(0) # sum over bidirectionality (if any) [num_exs,H]
+        mlb.log(f'inputFeatures returning {tuple(res.shape)}')
         return res
         
     def outputFeatures(self,task):
@@ -335,7 +354,13 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             e = self.examplesEncoding(tokenized)
             return e
         outputs = [ex[1] for ex in task.examples] # [num_exs]
+        mlb.log('in outputFeatures()')
+        mlb.log('outputs:')
+        for i,output in enumerate(outputs):
+            mlb.log(f'\tex {i}: {output}')
+        mlb.log('running encodeValue() on outputs')
         res = self.encodeValue(outputs)
+        mlb.log('outputFeatures() is returning')
         return res
         
     def tokensToIndices(self,token_list):
@@ -376,6 +401,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             is always the list of examples.
         returns :: Tensor[num_exs,H]
         """
+        mlb.log('in encodeValue()')
         is_list = lambda v: isinstance(v,(list,tuple))
         is_int = lambda v: isinstance(v,(int,np.integer))
         is_bool = lambda v: isinstance(v,(bool,np.bool_))
@@ -404,7 +430,20 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 exs = [[['INT_START']+list(str(_int))+['INT_END'] for _int in ex] for ex in exs] # convert 100 -> ['1','0','0']
                 # exs :: [num_exs,num_ints,num_digits] = num_digits is number of digits in an int
                 before_idxs_of_toks = exs # in case you want to inspect during debugging
+                mlb.log('digitified examples:')
+                for i,ex in enumerate(before_idxs_of_toks):
+                    mlb.log(f'\tex {i}:')
+                    for _int in ex:
+                        mlb.log(f'\t\t{_int}')
                 exs = self.digit_embedder.idxs_of_toks(exs) # ::[[[longtensor]]] (num_exs,list_len,num_digits)
+
+                if mlb.get_verbose():
+                    mlb.log('to indices:')
+                    for i,ex in enumerate(exs):
+                        mlb.log(f'\tex {i}:')
+                        for _int in ex:
+                            mlb.log(f'\t\t{list(map(int,_int))}')
+
                 ints_per_ex = [len(l) for l in exs]
                 # flatten over examples (so its one massive list of ints each represented as a list of digits)
                 ints = list(itertools.chain.from_iterable(exs)) # ::[[longtensor]] (num_exs*list_len, num_digits)
@@ -412,10 +451,24 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                     # pad it to a constant number of digits per int
                     ints, digits_per_int = self.digit_embedder.pad_idxs_lists(ints)
                     ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs*list_len, longest_num_digits]
+                    mlb.log('flattened, padded, stacked:')
+                    mlb.log(ints)
+                    mlb.log(f'shape:{tuple(ints.shape)} :: (ints, longest_num_digits)')
+                    mlb.log('running pointwise digit_embedder()')
                     ints_embedded = self.digit_embedder(ints) # pointwise, converts indices -> embeddings. [num_exs*list_len, longest_num_digits, H]
+                    mlb.log(f'ints_embedded :: {tuple(ints_embedded.shape)} :: (ints, longest_num_digits, H)')
+                    mlb.log(f'Heres the ints_embedded[0] which is the digitwise encoding of the first int of the first example:')
+                    mlb.log(f'ints_embedded :: {tuple(ints_embedded.shape)} :: (ints, longest_num_digits, H)')
+                    mlb.log(f'Heres the ints_embedded[0] which is the digitwise encoding of the first int of the first example. You may see the zero padding. :')
+                    mlb.log(ints_embedded[0])
                     packed, unsorter = self.digit_embedder.sort_and_pack(ints_embedded, digits_per_int)
+                    mlb.log('running thru int_encoder() gru')
                     _, hidden = self.int_encoder(packed)
+                    mlb.log(f'unsorting by unsorter: {unsorter.tolist()}')
                     int_encodings = hidden.sum(0)[unsorter] # sum over bidirectionality [num_exs*list_len, H]
+                    mlb.log(f'int_encodings :: {tuple(int_encodings.shape)} :: (ints, H)')
+                    mlb.log(f'int_encodings[:3] the first 3 int encodings (feed in dummies to make sure they come out right!):')
+                    mlb.log(int_encodings[:3])
                 else:
                     int_encodings = None
                 # undo the flattening
@@ -426,19 +479,27 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                     exs_tensor = exs_tensor.cuda()
                 j = 0
                 # add LIST_START
-                start_embedding = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_START'])
-                end_embedding = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_END'])
-                exs_tensor[:,0] = start_embedding.expand(len(exs),-1)
+                list_start_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_START'])
+                list_end_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_END'])
+                exs_tensor[:,0] = list_start_vec.expand(len(exs),-1)
                 for i,num_ints in enumerate(ints_per_ex):
                     if int_encodings is not None: # only None if the input was an empty list of ints
                         exs_tensor[i,1:num_ints+1] = int_encodings[j:j+num_ints]
-                    exs_tensor[i,num_ints+1] = end_embedding # add LIST_END
+                    exs_tensor[i,num_ints+1] = list_end_vec # add LIST_END
                     j += num_ints
                 sizes = torch.tensor([x+2 for x in ints_per_ex]) # +2 bc list start and list end
                 # exs_tensor :: [num_exs, longest_list_len, H]
+                mlb.log(f'exs_tensor :: {tuple(exs_tensor.shape)} :: (num_exs, longest_list_len, H)')
+                mlb.log(f'note that at this point LIST_START and LIST_END were added, along with lots of zero padding')
+                mlb.log(f'the first example is exs_tensor[0]:')
+                mlb.log(exs_tensor[0])
+                assert exs_tensor[0][0].equal(exs_tensor[1][0]) # both shd be LIST_START
                 packed,unsorter = self.digit_embedder.sort_and_pack(exs_tensor,sizes)
+                mlb.log(f'running list_encoder gru')
                 _, hidden = self.list_encoder(packed)
+                mlb.log(f'unsorting with unsorter: {unsorter.tolist()}')
                 list_encodings = hidden.sum(0)[unsorter] # sum over bidirectionaliy. [num_exs,H]
+                mlb.log(f'encodeValue() is returning list_encodings :: {tuple(list_encodings.shape)} :: (num_exs,H)')
                 return list_encodings
 
 

@@ -11,6 +11,7 @@ from dreamcoder.zipper import *
 from dreamcoder.utilities import RunWithTimeout
 import random
 import time
+import mlb
 from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
 from dreamcoder.domains.tower.tower_common import renderPlan
 from dreamcoder.Astar import InferenceTimeout
@@ -801,6 +802,7 @@ class ListREPLValueHead(BaseValueHead):
             in which case the type is [int] or [[int]] or [bool] where the outermost list
             is always iterating over examples.
         """
+        mlb.log(f'rep() being called on sk={sk}')
 
         # first, if this was called at the top level (ctx=0),
         # we clear out as many abstractions as there are top level inputs

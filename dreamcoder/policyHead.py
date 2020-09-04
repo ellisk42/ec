@@ -55,6 +55,7 @@ REPL HEAD:
 import torch
 from torch import nn
 
+import mlb
 from dreamcoder.zipper import sampleSingleStep, enumSingleStep
 from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead, ListREPLValueHead
 from dreamcoder.program import Index, Program
@@ -119,16 +120,26 @@ class NeuralPolicyHead(nn.Module):
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
         tp = frontier.task.request
+        mlb.log('entering policyLossFromFrontier')
         
         if isinstance(entry.program, Program):
             fullProg = entry.program
         else:
             fullProg = entry.program._fullProg
 
+        mlb.log(f'program: {fullProg}')
+        mlb.log(f'request: {tp}')
         posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, 
                                                         onlyPos=True, returnNextNode=True,
                                                         canonicalOrdering=self.canonicalOrdering)
+        mlb.log('pos traces:')
+        for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
+            mlb.log(f'\t{trace}')
+            mlb.log(f'\t\thole={hole}')
+            mlb.log(f'\t\ttarget={target}')
+
         maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g) #TODO
+        
         # maskedDist :: [5,49]
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
         targets = torch.tensor(targets) # :: [5]

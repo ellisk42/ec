@@ -1,8 +1,6 @@
 # @package _group_
 type: repl
 H: 64
-bidirectional_ctx: True
-bidirectional_list: True
 allow_concrete_eval: True
 tied: True
 value: False # dummy will be used
@@ -11,6 +9,6 @@ encodeTargetHole: False
 canonicalOrdering: True
 extractor:
   modular: True
-  bidir_ctx: False
-  digitwise: True
+  bidir_ctx: True
   bidir_int: True
+  digitwise: True

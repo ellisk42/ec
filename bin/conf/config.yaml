@@ -6,6 +6,7 @@ defaults:
   - model: repl
 
 load: null
-mode: profile
+mode: resume
 device: 6
 cuda: True
+verbose: True

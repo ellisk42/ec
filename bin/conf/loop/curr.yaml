@@ -1,5 +1,5 @@
 # @package _group_
-test_every: null
+test_every: 1000
 save_every: 2000
 print_every: 200
 max_steps: null
