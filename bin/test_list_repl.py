@@ -195,6 +195,7 @@ def train_model(
     print(f"j:{j}")
     tstart = None
     exit_now = False
+    phead.featureExtractor.run_tests()
     while True:
 
         if cfg.loop.max_steps and j > cfg.loop.max_steps:

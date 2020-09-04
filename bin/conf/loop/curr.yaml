@@ -1,6 +1,6 @@
 # @package _group_
-test_every: 3000
-save_every: 3000
-print_every: 500
+test_every: null
+save_every: 500
+print_every: 100
 max_steps: null
-num_mini_tests: 50
+num_mini_tests: 10

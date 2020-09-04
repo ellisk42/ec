@@ -341,7 +341,33 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         res = res.sum(0) # sum over bidirectionality (if any) [num_exs,H]
         mlb.log(f'inputFeatures returning {tuple(res.shape)}')
         return res
-        
+    def run_tests(self):
+        x = [[1,2,3,4],[1,2,3,4]]
+        res = self.encodeValue(x)
+        assert res[0].allclose(res[1]), "encodeValue is not acting independently on each example"
+
+        x1 = [[1,2,3,4],[1,1,1,1]]
+        x2 = [[1,2,3,4],[2,2,3,6]] # vary the 2nd example
+        x3 = [[1,2,3,4],[2,2]] # vary length of 2nd example
+        res1 = self.encodeValue(x1)
+        res2 = self.encodeValue(x2)
+        res3 = self.encodeValue(x3)
+        assert res1[0].allclose(res2[0]), "contents of 2nd example is affecting 1st"
+        assert res1[0].allclose(res3[0]), "length of 2nd example is affecting 1st"
+        assert not res1[0].allclose(res1[1]), "your allclose() metric is not good for telling if things are equal"
+
+        x = [1,1]
+        res = self.encodeValue(x)
+        assert res[0].allclose(res[1])
+
+        x1 = [1,2]
+        x2 = [1,3] # vary the 2nd example
+        res1 = self.encodeValue(x1)
+        res2 = self.encodeValue(x2)
+        assert res1[0].allclose(res2[0]), "contents of 2nd example is affecting 1st"
+        assert not res1[0].allclose(res1[1]), "your allclose() metric is not good for telling if things are equal"
+
+        return
     def outputFeatures(self,task):
         if not self.modular:
             # TODO old code just kept for comparison
@@ -364,6 +390,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         return res
         
     def tokensToIndices(self,token_list):
+        # TODO note this is not used in digitwise i think
+        assert not self.digitwise
         # sanitize
         unk = 0
         for i,token in enumerate(token_list):
@@ -379,6 +407,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         return [self.symbolToIndex[token] for token in token_list]
 
     def pad_indices_lists(self,indices_lists):
+        # TODO note this is not used in digitwise i think
+        assert not self.digitwise
         assert isinstance(indices_lists,list)
         assert isinstance(indices_lists[0],list)
         sizes = [len(indices_list) for indices_list in indices_lists]
@@ -388,9 +418,6 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         for i, indices_list in enumerate(indices_lists):
             indices_lists[i] += [self.endingIndex] * (pad_till - len(indices_list))
         return indices_lists, torch.tensor(sizes)
-    def encode_int(self,val):
-        if not self.digitwise:
-            pass
 
     def encodeValue(self, val):
         """
