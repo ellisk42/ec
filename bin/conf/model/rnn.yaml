@@ -8,5 +8,6 @@ encodeTargetHole: False
 canonicalOrdering: True
 extractor:
   modular: False
-  bidir_ctx: null # not used bc not modular
   digitwise: False
+  bidir_ctx: null # not used bc not modular
+  bidir_int: null # not used bc not digitwise

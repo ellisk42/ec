@@ -146,14 +146,15 @@ class SampleDummyValueHead(BaseValueHead):
 
 class SimpleRNNValueHead(BaseValueHead):
 
-    def __init__(self, g, extractor, cfg=None, H=512, encodeTargetHole=False):
+    def __init__(self, g, extractor, cfg=None, cuda=True, H=512, encodeTargetHole=False):
         super().__init__()
         if cfg is not None:
+            cuda = cfg.cuda
             H = cfg.model.H
             encodeTargetHole = cfg.model.encodeTargetHole
             
         #specEncoder can be None, meaning you dont use the spec at all to encode objects
-        self.use_cuda = torch.cuda.is_available() #FIX THIS
+        self.use_cuda = cuda
 
         extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(15)] 
 
@@ -175,9 +176,6 @@ class SimpleRNNValueHead(BaseValueHead):
                 nn.Softplus())
 
         self.featureExtractor = extractor
-
-        if self.use_cuda:
-            self.cuda()
 
     def _encodeSketches(self, sketches):
         #don't use spec, just there for the API

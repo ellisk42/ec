@@ -182,13 +182,14 @@ class NeuralPolicyHead(nn.Module):
 
 
 class RNNPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, extractor, cfg=None, H=512, maxVar=15, encodeTargetHole=False, canonicalOrdering=True):
+    def __init__(self, g, extractor, cfg=None, cuda=True, H=512, maxVar=15, encodeTargetHole=False, canonicalOrdering=True):
         super().__init__() #should have featureExtractor?
         if cfg is not None:
+            cuda = cfg.cuda
             H = cfg.model.H
             encodeTargetHole = cfg.model.encodeTargetHole
             canonicalOrdering = cfg.model.canonicalOrdering
-        self.use_cuda = torch.cuda.is_available()
+        self.use_cuda = cuda
         self.featureExtractor = extractor
         self.H = H
         self.vhead = SimpleRNNValueHead(g=g, extractor=extractor, cfg=cfg) #hack
@@ -220,22 +221,6 @@ class RNNPolicyHead(NeuralPolicyHead):
 
 
         print("num of params in rnn policy model", count_parameters(self))
-
-        if self.use_cuda: self.cuda()
-
-    def cuda(self, device=None):
-        self.use_cuda = True
-        self.vhead.use_cuda = True
-        self.featureExtractor.use_cuda = True
-        self.featureExtractor.CUDA = True
-        super(RNNPolicyHead, self).cuda(device=device)
-
-    def cpu(self):
-        self.use_cuda = False
-        self.vhead.use_cuda = False
-        self.featureExtractor.use_cuda = False
-        self.featureExtractor.CUDA = False
-        super(RNNPolicyHead, self).cpu()
 
     def _computeDist(self, sketches, zippers, task, g):
         #need raw dist, and then which are valid and which is correct ... 

@@ -9,4 +9,4 @@ load: null
 mode: resume
 device: 6
 cuda: True
-verbose: True
+verbose: False
