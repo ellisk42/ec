@@ -166,6 +166,8 @@ class Lexicon(nn.Embedding):
         if cfg is not None:
             cuda = cfg.cuda
             H = cfg.model.H
+        else:
+            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
         self.lexicon = lexicon.union({'<UNK>','<PAD>'})
         self.length = len(self.lexicon)
         self.idx_of_tok = {tok:torch.tensor(idx,dtype=torch.long) for idx,tok in enumerate(self.lexicon)}
@@ -236,6 +238,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             digitwise = c.digitwise
             cuda = cfg.cuda
             H = cfg.model.H
+        else:
+            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
 
         self.lexicon = {"LIST_START", "LIST_END", "INT_START", "INT_END", 'CTX_START', 'CTX_END', "?"}
         if digitwise:

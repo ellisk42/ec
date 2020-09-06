@@ -152,6 +152,8 @@ class SimpleRNNValueHead(BaseValueHead):
             cuda = cfg.cuda
             H = cfg.model.H
             encodeTargetHole = cfg.model.encodeTargetHole
+        else:
+            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
             
         #specEncoder can be None, meaning you dont use the spec at all to encode objects
         self.use_cuda = cuda
@@ -759,6 +761,8 @@ class ListREPLValueHead(BaseValueHead):
             H = cfg.model.H
             canonicalOrdering = cfg.model.canonicalOrdering
             allow_concrete_eval = cfg.model.allow_concrete_eval
+        else:
+            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
 
         self.canonicalOrdering = canonicalOrdering
         self.featureExtractor = extractor

@@ -189,6 +189,8 @@ class RNNPolicyHead(NeuralPolicyHead):
             H = cfg.model.H
             encodeTargetHole = cfg.model.encodeTargetHole
             canonicalOrdering = cfg.model.canonicalOrdering
+        else:
+            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
         self.use_cuda = cuda
         self.featureExtractor = extractor
         self.H = H
@@ -209,8 +211,9 @@ class RNNPolicyHead(NeuralPolicyHead):
             self.productionToIndex[Index(v)] = i
             i += 1
 
+        inshape = extractor.H*2 + H if extractor.digitwise else extractor.H+H
         self.output = nn.Sequential(
-                nn.Linear(extractor.outputDimensionality + H, H),
+                nn.Linear(inshape, H),
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
@@ -229,8 +232,14 @@ class RNNPolicyHead(NeuralPolicyHead):
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
             # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
         sketchEncodings = self.vhead._encodeSketches(sketches) # [5,64]
-        features = self.featureExtractor.featuresOfTask(task) 
-        features = features.unsqueeze(0)
+        if self.featureExtractor.digitwise:
+            in_feats = self.featureExtractor.inputFeatures(task)
+            in_feats = in_feats.mean(0) # mean over examples
+            out_feats = self.featureExtractor.outputFeatures(task)
+            out_feats = out_feats.mean(0) # mean over examples
+            features = torch.cat((in_feats,out_feats),dim=0) # shape [H*2]
+        else:
+            features = self.featureExtractor.featuresOfTask(task) 
         x = features.expand(len(sketches), -1)
         features = torch.cat([sketchEncodings, x ], dim=1)
         dist = self.output(features)
@@ -247,6 +256,8 @@ class ListREPLPolicyHead(NeuralPolicyHead):
             cuda = cfg.cuda
             encodeTargetHole = cfg.model.encodeTargetHole
             canonicalOrdering = cfg.model.canonicalOrdering
+        else:
+            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
 
         self.use_cuda = cuda
         self.featureExtractor = extractor

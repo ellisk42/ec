@@ -7,7 +7,7 @@ value: False
 encodeTargetHole: False
 canonicalOrdering: True
 extractor:
-  modular: False
-  digitwise: False
-  bidir_ctx: null # not used bc not modular
-  bidir_int: null # not used bc not digitwise
+  modular: True
+  digitwise: True
+  bidir_ctx: True
+  bidir_int: True 
