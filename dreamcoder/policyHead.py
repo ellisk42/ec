@@ -245,14 +245,15 @@ class REPLPolicyHead(NeuralPolicyHead):
     """
     does not specify the target hole at all here
     """
-    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
+    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False, noConcrete=False):
         super(REPLPolicyHead, self).__init__() #should have featureExtractor?
         assert not encodeTargetHole
         self.canonicalOrdering = canonicalOrdering
         self.use_cuda = torch.cuda.is_available()
         self.featureExtractor = featureExtractor
         self.H = H
-        self.REPLHead = TowerREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
+        self.REPLHead = TowerREPLValueHead(g, featureExtractor, H=self.H, noConcrete=noConcrete) #hack #TODO
+        self.noConcrete = noConcrete
 
         self.indexToProduction = {}
         self.productionToIndex = {}
