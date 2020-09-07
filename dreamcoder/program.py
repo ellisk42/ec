@@ -389,13 +389,13 @@ class Application(Program):
             return self.f.evaluateHolesDebug(environment)(self.x.evaluateHolesDebug(environment))
 
 
-    def abstractEval(self, valueHead, environment, parse=None):
+    def abstractEval(self, valueHead, environment, parse=None, noConcrete=False):
         #parse = self.applicationParse()
 
         if parse is None:
             parse = self.applicationParse()
         try:
-            return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
+            return self.f.abstractEval(valueHead, environment, parse=parse, noConcrete=noConcrete)(self.x.abstractEval(valueHead, environment, noConcrete=noConcrete))
         except TypeError:
             print("Got that type error")
             print("f:", self.f)
@@ -405,12 +405,12 @@ class Application(Program):
             raise computeValueError
 
         if self.isConditional and not self.branch.hasHoles:
-            if self.branch.abstractEval(valueHead, environment):
-                return self.trueBranch.abstractEval(valueHead, environment)
+            if self.branch.abstractEval(valueHead, environment, noConcrete=noConcrete):
+                return self.trueBranch.abstractEval(valueHead, environment, noConcrete=noConcrete)
             else:
-                return self.falseBranch.abstractEval(valueHead, environment)
+                return self.falseBranch.abstractEval(valueHead, environment, noConcrete=noConcrete)
         else:
-            return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
+            return self.f.abstractEval(valueHead, environment, parse=parse, noConcrete=noConcrete)(self.x.abstractEval(valueHead, environment, noConcrete=noConcrete))
 
     def inferType(self, context, environment, freeVariables):
         (context, ft) = self.f.inferType(context, environment, freeVariables)
@@ -505,7 +505,7 @@ class Index(Program):
         #print("env of index:", env)
         return environment[self.i]
 
-    def abstractEval(self, valueHead, environment, parse=None):
+    def abstractEval(self, valueHead, environment, parse=None, noConcrete=False):
         if parse:
             assert parse[0] == self
             #print('you hit a parse')
@@ -634,8 +634,8 @@ class Abstraction(Program):
     def evaluateHolesDebug(self, environment):
         return lambda x: self.body.evaluateHolesDebug([x] + environment)
 
-    def abstractEval(self, valueHead, environment, parse=None):
-        return lambda x: self.body.abstractEval(valueHead, [x] + environment)
+    def abstractEval(self, valueHead, environment, parse=None, noConcrete=False):
+        return lambda x: self.body.abstractEval(valueHead, [x] + environment, noConcrete=noConcrete)
 
     def betaReduce(self):
         b = self.body.betaReduce()
@@ -929,9 +929,9 @@ class Invented(Program):
 
     def evaluateHolesDebug(self, e): return self.body.evaluateHolesDebug([])
 
-    def abstractEval(self, valueHead, e, parse=None): 
+    def abstractEval(self, valueHead, e, parse=None, noConcrete=False): 
         #Hopefully don't need parse 
-        return self.body.abstractEval(valueHead, [])
+        return self.body.abstractEval(valueHead, [], noConcrete=noConcrete)
 
 
     def betaReduce(self): 
@@ -1071,7 +1071,7 @@ class Hole(Program):
         return self
 
 
-    def abstractEval(self, valueHead, e):
+    def abstractEval(self, valueHead, e, noConcrete=False):
         from dreamcoder.domains.tower.towerPrimitives import ttower #speed 
 
         #print("HOLE ENV", e)
