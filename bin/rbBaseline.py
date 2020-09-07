@@ -173,7 +173,7 @@ def test_task(m, task, i, timeout):
 
                             searchTime = time.time() - t
                             
-                            print(f"\"CSVc{task.name.split('_')[0]}\",{i_run},{task.name.split('_')[1]},{trial},\"{prettyP}\",{searchTime},{n_cands}")
+                            print(f"\"CSVc{task.name.split('_')[0]}\",{i_run},{task.name.split('_')[1]},{trial+1},\"{prettyP}\",{searchTime},{n_cands}")
                             hit = True
                             break
                         
@@ -194,6 +194,7 @@ if __name__=='__main__':
     parser.add_argument("-w", type=str,)
     parser.add_argument("--type", type=str, default='9') #'9' or '99'
     parser.add_argument("--tasks", type=int, default=0)
+    parser.add_argument("--specialtask", action='store_true')
     arguments = parser.parse_args()
 
     assert arguments.domain == "josh"
@@ -269,11 +270,21 @@ if __name__=='__main__':
         #assumes tasks are the testing tasks
         taskToModel = {t: m99 if (int(t.name.split("_")[0]) >= 81) else m9
                          for t in tasks }
+        #taskToModel = {t: m99 for t in tasks} #this is for special task
         n_tasks = len(tasks)
         print(n_tasks, "tasks")
         n_hits = 0
 
         start = arguments.tasks
+        
+
+        if arguments.specialtask:
+            i = arguments.tasks
+            task = tasks[i]
+            test_task(taskToModel[task], task, i, arguments.timeout)
+            assert 0
+
+
 
         for i in range(start*10, start*10 + 10):
         #for i, task in enumerate(tasks):
