@@ -30,7 +30,7 @@ for num in 3
 
 		#REPLnoConcrete
 		cp ${resume}.pickle ${resume}REPLnoConcrete.pickle
-		cmd="python bin/tower.py --policyType REPLnoConcrete --searchType SMC --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
+		cmd="python bin/tower.py --policyType REPLnoConcrete --searchType SMC --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPLnoConcrete.pickle --singleRoundValueEval --seed 2"
 		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 
 		#RNN
