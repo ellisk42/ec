@@ -80,7 +80,7 @@ FILTER_OUT = [
 
 
 def plotTestResults(testResults, timeout, defaultLoss=None,
-                    names=None, export=None, mode='fractionHit'):
+                    names=None, export=None, mode='fractionHit', maxLens=[],maxEvals=10000000):
     import matplotlib.pyplot as plot
 
     def averageLoss(n, predicate):
@@ -124,7 +124,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(1600))
+        xs = list(range(min(maxLens[n], maxEvals)))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n], linewidth=4)
@@ -230,14 +230,22 @@ if __name__ == '__main__':
     nameSalt = "AstarPseudoResultBoth" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
     runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-
+    maxEvals = 20000
+    useMaxLens = True
     paths = [
-        (f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + value (ours)'),
-        (f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy (ours)'),
-        (f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + value'),
-        (f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy'),
-        (f'experimentOutputs/{ID}PolicyOnly{runType}Sample_SRE=True{graph}.pickle', 'Bigram Policy'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
+        (f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
+        #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
+        (f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
+        #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy only (weights not shared w value)'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
         ]
+
+
 
 
     with open('biasedtasks.p', 'rb') as h: biasedtasks = dill.load(h)
@@ -248,6 +256,7 @@ if __name__ == '__main__':
     for mode in ['test']: #['test', 'train']:
 
         testResults = []
+        maxLens = []
         for path in paths:
             with open(path, 'rb') as h:
                 r = dill.load(h)
@@ -306,6 +315,7 @@ if __name__ == '__main__':
                         minN = min(minN, r.testingNumOfProg[-1][task])
 
                 print("min of max N prog searched is", minN  )
+                maxLens.append(minN)
 
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
@@ -320,4 +330,6 @@ if __name__ == '__main__':
                         defaultLoss=1.,
                         names=names,
                         export=f"{outputDirectory}/{nameSalt}{ID}{mode}_curve.eps",
-                        mode='fractionHit')
+                        mode='fractionHit',
+                        maxLens=maxLens if useMaxLens else [maxEvals] * len(testResults),
+                        maxEvals=maxEvals)

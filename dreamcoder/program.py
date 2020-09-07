@@ -740,7 +740,7 @@ class Primitive(Program):
         return uncurry([], L)
         #return self.value
 
-    def abstractEval(self, valueHead, environment, parse=None):
+    def abstractEval(self, valueHead, environment, parse=None, noConcrete=False):
         if parse:
             f, xs = parse
 
@@ -757,7 +757,7 @@ class Primitive(Program):
                     first_arg = fn( _empty_tower) ( prev )
                     #print("first_arg", first_arg)
 
-                    if isinstance(prev, TowerState) and (not xs[0].hasHoles) and not isinstance(first_arg[0], torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
+                    if (not noConcrete) and isinstance(prev, TowerState) and (not xs[0].hasHoles) and not isinstance(first_arg[0], torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
                         return self.value( fn ) (k) (prev)
                     else:
                         ae = valueHead.convertToVector(prev)
@@ -769,7 +769,7 @@ class Primitive(Program):
             if self.name == 'tower_loopM' :
                 def f(prev):
                     i, fn, k = args
-                    if isinstance(prev, TowerState) and (not (xs[0].hasHoles or xs[1].hasHoles)) and isinstance(i, int):
+                    if (not noConcrete) and isinstance(prev, TowerState) and (not (xs[0].hasHoles or xs[1].hasHoles)) and isinstance(i, int):
                         return self.value(i)(fn)(k)(prev)
                     else:
                         aa = valueHead.convertToVector(prev)
@@ -781,7 +781,7 @@ class Primitive(Program):
 
             if self.name in blocks.keys():
                 def f(prev):
-                    if isinstance(prev, TowerState):
+                    if (not noConcrete) and isinstance(prev, TowerState):
                         return self.value( args[0] ) (prev)
                     else:
                         return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev)]))
@@ -789,7 +789,7 @@ class Primitive(Program):
 
             if self.name == 'reverseHand':
                 def f(prev):
-                    if isinstance(prev, TowerState):
+                    if (not noConcrete) and isinstance(prev, TowerState):
                         return self.value(args[0]) (prev)
                     else:
                         return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev) ] ))
@@ -798,7 +798,7 @@ class Primitive(Program):
             if self.name == 'moveHand': #TODO might need to move this up
                 def f(prev):
                     i, k = args
-                    if isinstance(prev, TowerState) and not xs[0].hasHoles and isinstance(i, int):
+                    if (not noConcrete) and isinstance(prev, TowerState) and not xs[0].hasHoles and isinstance(i, int):
                         return self.value(args[0])(args[1])(prev)
                     else:
                         return k(valueHead.applyModule(self, [valueHead.convertToVector(args[0]), valueHead.convertToVector(prev)]))

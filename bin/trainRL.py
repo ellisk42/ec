@@ -4,14 +4,21 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
+import copy
 import time
 import argparse
 from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
 import torch
 import dill
-from dreamcoder.valueHead import SampleDummyValueHead, TowerREPLValueHead, SimpleRNNValueHead
-from dreamcoder.policyHead import RNNPolicyHead, REPLPolicyHead
+from dreamcoder.valueHead import SampleDummyValueHead, TowerREPLValueHead, SimpleRNNValueHead, RBREPLValueHead
+from dreamcoder.policyHead import RNNPolicyHead, REPLPolicyHead, RBREPLPolicyHead
+
+from dreamcoder.domains.rb.rbPrimitives import *
+
+from dreamcoder.domains.rb.main import makeOldTasks, makeTasks
+
+prims = robustFillPrimitives()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--id', type=str, default='towers3')
@@ -20,8 +27,10 @@ parser.add_argument('--nPerGrad', type=int, default=4)
 parser.add_argument('--nSamples', type=int, default=4)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--resume', action='store_true')
+parser.add_argument('--seperate', action='store_true')
 args = parser.parse_args()
 #imports
+#can use matt's version of this
 class HelmholtzEntry:
     def __init__(self, frontier, owner):
         self.request = frontier.task.request
@@ -74,12 +83,16 @@ def loadRecModel():
     if args.modeltype == 'REPL':
         with open(modelPath, 'rb') as h:
             recModel = torch.load(h)
+            print("getting actual model from", modelPath)
     else: recModel = result.recognitionModel
+
+    recModel.cpu()
     recModel.cuda()
     return result, recModel
 
 def get_rl_loss(frontier, r, nSamples=4):
     r.valueHead.train()
+    #r.policyHead.train()
 
     entry = frontier.sample()
     task = frontier.task
@@ -128,16 +141,34 @@ def get_rl_loss(frontier, r, nSamples=4):
 def createValueHeadFromPolicy(r):
     if isinstance(r.valueHead, SampleDummyValueHead):
         if isinstance(r.policyHead, REPLPolicyHead):
-            r.valueHead = r.policyHead.REPLHead
+            if args.seperate:
+                r.valueHead = copy.deepcopy(r.policyHead.REPLHead)
+                del r.policyHead.REPLHead.RNNHead
+            else:
+                r.valueHead = r.policyHead.REPLHead
+            del r.valueHead.RNNHead
+            del r._MLP
+
             r.valueHead.rl_iterations = 0
         elif isinstance(r.policyHead, RNNPolicyHead):
-            r.valueHead = r.policyHead.RNNHead
+            if args.seperate:
+                r.valueHead = copy.deepcopy(r.policyHead.RNNHead)
+            else:
+                r.valueHead = r.policyHead.RNNHead
             r.valueHead.rl_iterations = 0
+            del r._MLP
+        elif isinstance(r.policyHead, RBREPLPolicyHead):
+            r.valueHead = RBREPLValueHead(r.policyHead)
+            r.valueHead.rl_iterations = 0
+
     elif isinstance(r.valueHead, TowerREPLValueHead):
         pass
     elif isinstance(r.valueHead, SimpleRNNValueHead):
         pass
-    # much more annoying for robustfill
+    elif isinstance(r.valueHead, RBREPLPolicyHead):
+        pass
+    else: assert False, "uncaught type of value or policy head"
+    
 
 
 
@@ -149,6 +180,8 @@ optimizer = torch.optim.Adam(r.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
 
 g = r.generativeModel 
 requests = [frontier.request for frontier in result.allFrontiers]
+if requests == []: requests = [arrow(texpression, texpression)]
+
 
 t = time.time()
 i = 0
@@ -166,8 +199,9 @@ while r.valueHead.rl_iterations <= 16000*4*4:
         for e in frontier: e.program._fullProg = e.program        
         #contrastive_loss = r.valueHead.valueLossFromFrontier(frontier, g) #we do or dont need this    
         Ls, success = get_rl_loss(frontier, r, nSamples=args.nSamples)
-        rl_loss += Ls        
-        policy_loss += r.policyHead.policyLossFromFrontier(frontier, g)
+        rl_loss += Ls
+        if not args.seperate:    
+            policy_loss += r.policyHead.policyLossFromFrontier(frontier, g)
 
     (rl_loss + contrastive_loss + policy_loss).backward()
     optimizer.step()
@@ -177,5 +211,5 @@ while r.valueHead.rl_iterations <= 16000*4*4:
         print(f"iteration: {i}, rl_iterations: {r.valueHead.rl_iterations}, rl loss: {rl_loss.item()}, time: {(time.time() - t)/i}", flush=True)
 
     if i%100==0:
-        torch.save(r, modelPath+'rl')
+        torch.save(r, modelPath+'rl' + f"seperate={args.seperate}")
         print('saved model')

@@ -131,7 +131,7 @@ class BaseValueHead(nn.Module):
 
 class SampleDummyValueHead(BaseValueHead):
     def __init__(self):
-        super(BaseValueHead, self).__init__()
+        super(SampleDummyValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available()
     def computeValue(self, sketch, task):
         return 0.
@@ -606,7 +606,7 @@ class AbstractREPLValueHead(BaseValueHead):
 
 
 class TowerREPLValueHead(AbstractREPLValueHead):
-    def __init__(self, g, featureExtractor, H=512): #should be 512 or something
+    def __init__(self, g, featureExtractor, H=512, noConcrete=False): #should be 512 or something
                 #specEncoder can be None, meaning you dont use the spec at all to encode objects
         super(TowerREPLValueHead, self).__init__(g, featureExtractor, H=H)
 
@@ -617,6 +617,8 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         self.blank_fn_vector = nn.Parameter(torch.randn(H))
 
         self.towerHole = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+
+        self.noConcrete = noConcrete
 
         if self.use_cuda:
             self.cuda()
@@ -768,7 +770,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         try:
             if not sketch.hasHoles:
                 return sketch.evaluate([])
-            return sketch.abstractEval(self, [])
+            return sketch.abstractEval(self, [], noConcrete=self.noConcrete)
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")
             print("sketch", sketch)
@@ -850,6 +852,105 @@ class RBPrefixValueHead(BaseValueHead):
 
 
 
+class RBREPLValueHead(BaseValueHead):
+    def __init__(self, policyHead):
+        super(RBREPLValueHead, self).__init__()
+        self.use_cuda = torch.cuda.is_available()
+        self.policyHead = policyHead
+        self.canonicalOrdering = self.policyHead.canonicalOrdering
+        assert self.canonicalOrdering
+        H = policyHead.H
+        featureExtractor = self.policyHead.featureExtractor
+
+        self._distance = nn.Sequential(
+            nn.Linear(H, H), #This is different from other domains, because comparison already happened
+            nn.ReLU(),
+            nn.Linear(H, 1),
+            nn.Softplus())
+
+    def cuda(self, device=None):
+        self.policyHead.use_cuda = True
+        super(RBREPLValueHead, self).cuda(device=device)
+
+    def cpu(self):
+        self.policyHead.use_cuda = False
+        super(RBREPLValueHead, self).cpu()
+
+    def _computeValue(self, sketch, task, outputRep=None): #TODO
+        features = self.policyHead._computeREPR([sketch], task, zippers=None, outputRep=outputRep)
+        return self._distance(features)
+        #distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
+
+    def computeValue(self, sketch, task):
+        try:
+            return self._computeValue(sketch, task).data.item()
+        except (computeValueError, RuntimeError):
+            return float(10**10)
+
+    def valueLossFromFrontier(self, frontier, g):
+        """
+        given a frontier, should sample a postive trace and a negative trace
+        and then train value head on those
+        TODO: [ ] only a single call to the distance fn
+        """
+        # Monte Carlo estimate: draw a sample from the frontier
+        entry = frontier.sample()
+        task = frontier.task
+        tp = frontier.task.request
+        fullProg = entry.program._fullProg
+        # if frontier in self.mem:
+        #     posTrace, negTrace = self.mem[frontier]
+        # else:
+        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+        #discard negative sketches which overlap with positive
+        negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
+        return self._valueLossFromTraces(posTrace, negTrace, task)
+
+    def _valueLossFromTraces(self, posTrace, negTrace, task):
+        # compute outVectors: 
+        #outVectors = self._computeOutputVectors(task)
+        outputRep = self.policyHead.featureExtractor.outputsRepresentation(task).unsqueeze(0)
+
+        distances = []
+        targets = []
+        for sk in posTrace:
+            try:
+                distance = self._computeValue(sk, task, outputRep=outputRep)
+            except (computeValueError, RuntimeError):
+                continue #TODO
+            distances.append(distance)
+            targets.append(1.0)
+
+        for sk in negTrace:
+            try:
+                distance = self._computeValue(sk, task, outputRep=outputRep)
+            except (computeValueError):#, RuntimeError):
+                print("I HIT RUNTIME ERROR!!!")
+                continue #TODO
+
+            if distance != distance: #checks for nan
+                print("got nan distance value")
+                print("sketch:", sk)
+                print("task:", task)
+                continue
+            distances.append(distance)
+            targets.append(0.0)
+
+        targets = torch.tensor(targets)
+        if self.use_cuda:
+            targets = targets.cuda()
+
+        distance = torch.stack( distances, dim=0 ).squeeze(1).squeeze()
+        try:        
+            loss = binary_cross_entropy(-distance, targets, average=False) #average?
+        except AssertionError:
+            print("assertion ERROR")
+            print("distance:")
+            print(distance)
+            print("targets:")
+            print(targets)
+            assert 0
+        return loss
 
 
 if __name__ == '__main__':

@@ -811,6 +811,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
         elif policyType == "REPL":
             policyHead = REPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
                                         canonicalOrdering=True)
+        elif policyType == "REPLnoConcrete":
+            policyHead = REPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
+                                        canonicalOrdering=True, noConcrete=True)
         elif policyType == "RBREPL":
             policyHead = RBREPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
                                         canonicalOrdering=True)
@@ -1225,7 +1228,7 @@ def commandlineArguments(_=None,
                         help="use value-based search")
     parser.add_argument("--policyType", type=str,
                         default="base",
-                        choices=["base", "tree", "RNN", "REPL", "RBREPL"],
+                        choices=["base", "tree", "RNN", "REPL", "RBREPL", "REPLnoConcrete"],
                         help="what type of policy to use")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',

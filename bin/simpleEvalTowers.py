@@ -19,6 +19,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--useValue', action='store_true')
 parser.add_argument('--useREPLnet', action='store_true')
+parser.add_argument('--useContrastiveValue', action='store_true')
+parser.add_argument('--usePath',type=str, default='')
 args = parser.parse_args()
 
 
@@ -32,11 +34,11 @@ def test_policyTiming():
     sys.setrecursionlimit(50000)
     graph = ""
     ID = 'towers' + str(3)
-    runType = "" #"PolicyOnly" #"Policy"
+    runType = "PolicyOnly" #"Policy"
     #runType =""
     model = "RNN" #"Sample"
     useREPLnet = args.useREPLnet
-    useValue = True
+    useRLValue = False
 
     torch.cuda.set_device(0)
 
@@ -62,7 +64,7 @@ def test_policyTiming():
         r.recognitionModel = repl
         #print(r.recognitionModel.policyHead)
 
-    if useValue:
+    if useRLValue:
         path =f"experimentOutputs/{ID}PolicyOnly{model}.pickle_RecModelOnlyrl"
         with open(path, 'rb') as h:
             recModel = torch.load(h)
@@ -72,6 +74,27 @@ def test_policyTiming():
         if not args.useValue:
             r.recognitionModel.valueHead = SampleDummyValueHead()
 
+    if args.useContrastiveValue:
+        assert not useRLValue
+        #path = f"experimentOutputs/{ID}{model}.pickle_RecModelOnly"
+        path = f'experimentOutputs/{ID}{model}_SRE=True.pickle'
+        with open(path, 'rb') as h:
+            res = dill.load(h)
+            valueModel = res.recognitionModel
+        r.recognitionModel.valueHead = valueModel.valueHead
+        r.recognitionModel.valueHead.cuda()
+
+
+    if args.usePath:
+        path = args.usePath
+        with open(path, 'rb') as h:
+            recModel = torch.load(h)
+        r.recognitionModel = recModel
+        r.recognitionModel.cuda()
+        if not args.useValue:
+            r.recognitionModel.valueHead = SampleDummyValueHead()
+
+    #import pdb; pdb.set_trace()
 
     g = r.grammars[-1]
     print(r.recognitionModel.gradientStepsTaken)
@@ -102,9 +125,10 @@ def test_policyTiming():
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
         #tasks = [frontier.task]
 
-        g = r.recognitionModel.grammarOfTask(tasks[0]).untorch()
+        if isinstance(r.recognitionModel.policyHead, BasePolicyHead):
+            g = r.recognitionModel.grammarOfTask(tasks[0]).untorch()
         fs, searchTimes, totalNumberOfPrograms, reportedSolutions = solver.infer(g, tasks, likelihoodModel, 
-                                            timeout=30,
+                                            timeout=120,
                                             elapsedTime=0,
                                             evaluationTimeout=0.01,
                                             maximumFrontiers={tasks[0]: 2},
@@ -130,7 +154,7 @@ def test_policyTiming():
     pseudoResult.testingSearchStats = [stats]
     pseudoResult.testingNumOfProg = [nums]
 
-    savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}RLValue={useValue}_SRE=True.pickleDebug'
+    savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}RLValue={args.useValue}contrastive={args.useContrastiveValue}seperate=True_SRE=True.pickleDebug'
     with open(savePath, 'wb') as h:
         dill.dump(pseudoResult, h)
     print("saved at", savePath)

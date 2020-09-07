@@ -433,31 +433,27 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         super(RBREPLPolicyHead, self).cpu()
 
     def _computeDist(self, sketches, zippers, task, g):
-        #need raw dist, and then which are valid and which is correct ... 
-        
-        #features = self.featureExtractor.featuresOfTask(task)
-            
-        #should be the same weights here
-        #inputRep = self.featureExtractor.inputsRepresentation(task)
-        
-
-        outputRep = self.featureExtractor.outputsRepresentation(task).unsqueeze(0)
-        outputRep = outputRep.expand(len(sketches), -1, -1)
-        #print("outrep shape", outputRep.shape)
-
-        currentState = [self._buildCurrentState(sk, zp, task) for sk, zp in zip(sketches, zippers)] 
-        #print("currentstate0", currentState[0].shape)
-        currentState = torch.stack(currentState, dim=0)
-        #print("currentstate", currentState.shape)
-
-        features = self.compareModule( torch.cat( [currentState, outputRep], dim=-1 ) ) #TODO batch
-
-
-        dist = self.output(features.max(1)[0])
+        features = self._computeREPR(sketches, task, zippers)
+        dist = self.output(features)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
         return dist
 
+    def _computeREPR(self, sketches, task, zippers=None, outputRep=None):
+        if zippers==None: zippers = [None for _ in sketches] #hack, because we don't need zippers for value
+        if outputRep is None:
+            outputRep = self.featureExtractor.outputsRepresentation(task).unsqueeze(0)
+        outputRep = outputRep.expand(len(sketches), -1, -1)
+        #print("outrep shape", outputRep.shape)
+        currentState = [self._buildCurrentState(sk, zp, task) for sk, zp in zip(sketches, zippers)] 
+        #print("currentstate0", currentState[0].shape)
+        currentState = torch.stack(currentState, dim=0)
+        #print("currentstate", currentState.shape)
+        features = self.compareModule( torch.cat( [currentState, outputRep], dim=-1 ) ) #TODO batch
+        #right now policy and value use same comparator
+        #if we want value and policy comparators to be different,
+        #we can do that by changing the above line and the def of _distance in valuehead
+        return features.max(1)[0]
 
     def _buildCurrentState(self, sketch, zipper, task):
 
@@ -468,7 +464,6 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         currentState = self.appendModule(torch.cat( [prevRep, scratchRep], dim=-1 )) #TODO batch
         #append and compare modules do a lot of work
         return currentState
-
 
     def encodeScratch(self, sk, task, is_inner=False):
         """
