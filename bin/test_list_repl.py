@@ -195,7 +195,6 @@ def train_model(
         ):
     print(f"j:{j}")
     tstart = None
-    exit_now = False
     phead.featureExtractor.run_tests()
     while True:
 
@@ -218,11 +217,7 @@ def train_model(
 
             mlb.freezer('pause')
 
-            def end_profile():
-                nonlocal exit_now
-                exit_now = True
-            mlb.callback('return',end_profile)
-            if exit_now:
+            if mlb.predicate('return'):
                 return
 
             # printing and logging
@@ -241,11 +236,9 @@ def train_model(
                 model_results = test_models([astar], test_tasks[:cfg.loop.num_mini_tests], timeout=3, verbose=True)
                 plot_model_results(model_results, file='mini_test', salt=j)
                 tstart = time.time()
-            def run_tests():
+            if mlb.predicate('test'):
                 model_results = test_models(astars,test_tasks,timeout=3, verbose=True)
                 plot_model_results(model_results, file='plots')
-            mlb.callback('test',run_tests)
-            state.no_pickle.extend(['run_tests','end_profile'])
 
             j += 1 # increment before saving so we resume on the next iteration
             if cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
@@ -381,9 +374,6 @@ def plot_model_results(model_results, file=None, salt=''):
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
-    print()
-    print(OmegaConf.to_yaml(cfg))
-    print(os.getcwd())
     if cfg.verbose:
         mlb.set_verbose()
     with torch.cuda.device(cfg.device):
@@ -399,7 +389,28 @@ def hydra_main(cfg):
                 'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
                 )
             print("loaded")
-        state.cfg.mode = cfg.mode
+            assert all(['=' in arg for arg in sys.argv[1:]])
+            overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
+            print_overrides = []
+            for override in overrides:
+                if override == 'load': continue
+                # eg override = 'data.T'
+                dotpath = override.split('.')
+                target = state.cfg # the old cfg
+                source = cfg # the cfg that contains the overrides
+                for attr in dotpath[:-1]: # all but the last one (which we'll use setattr on)
+                    target = getattr(target,attr)
+                    source = getattr(source,attr)
+                overrided_val = getattr(source,dotpath[-1])
+                print_overrides.append(f'overriding {override} to {overrided_val}')
+                setattr(target,dotpath[-1],overrided_val)
+                    
+        print()
+        print(OmegaConf.to_yaml(cfg))
+        print(os.getcwd())
+        for string in print_overrides: # just want this to print after the big wall of yaml
+            mlb.purple(string)
+
         if cfg.mode == 'resume':
             print("Entering training loop...")
             train_model(**state.as_kwargs)
