@@ -60,6 +60,7 @@ def test_policyTiming():
         with open(path, 'rb') as h:
             repl = torch.load(h)
         model = "REPL"
+        print("real path", path)
         #import pdb; pdb.set_trace()
 
         r.recognitionModel = repl
@@ -96,8 +97,9 @@ def test_policyTiming():
         if not args.useValue:
             r.recognitionModel.valueHead = SampleDummyValueHead()
 
-        print("no concrete?", r.recognitionModel.policyHead.noConcrete)
+        #print("no concrete?", r.recognitionModel.policyHead.noConcrete)
     #import pdb; pdb.set_trace()
+    r.recognitionModel.policyHead.REPLHead.noConcrete = False
 
     g = r.grammars[-1]
     print(r.recognitionModel.gradientStepsTaken)

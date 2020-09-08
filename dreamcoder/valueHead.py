@@ -707,10 +707,15 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         return objectEncodings.squeeze(0)
 
     def encodeTowerHole(self, hole, env, state):
+
+        #print("ENVIRONMENT:", [e for e in env])
+        #print("STATE:", state)
+
         stateVec = self.convertToVector(state)
         #assert env == [_empty_tower], f"env for this tower hole: {env}"
         #env = [e for e in env if not ( callable(e) and e is _empty_tower) ]
         #print("WARNING: env of tower hole not encoded. ENV:", env)
+
         env = [self.convertToVector(e) for e in env]
         envEncoding = self._encodeStack(env)
         #if len(env) > 1: assert False

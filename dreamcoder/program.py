@@ -790,8 +790,13 @@ class Primitive(Program):
             if self.name == 'reverseHand':
                 def f(prev):
                     if (not noConcrete) and isinstance(prev, TowerState):
+                        #print("hit concrete path in reverseHand")
                         return self.value(args[0]) (prev)
                     else:
+                        # print("type of prev", type(prev))
+                        # print("prev", prev)
+                        # print("args:", args)
+                        # print("xs", xs)
                         return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev) ] ))
                 return f
 
@@ -799,6 +804,7 @@ class Primitive(Program):
                 def f(prev):
                     i, k = args
                     if (not noConcrete) and isinstance(prev, TowerState) and not xs[0].hasHoles and isinstance(i, int):
+                        #print("hit concrete path in moveHand")
                         return self.value(args[0])(args[1])(prev)
                     else:
                         return k(valueHead.applyModule(self, [valueHead.convertToVector(args[0]), valueHead.convertToVector(prev)]))
