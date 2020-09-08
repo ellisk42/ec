@@ -36,8 +36,8 @@ for num in ""
 		#REPLNoConcrete
 		cp ${resume}.pickle ${resume}REPLNoConcrete.pickle
 		cmd="python bin/rb.py --dataset old --policyType RBREPLnoConcrete --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 864000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPLNoConcrete.pickle --singleRoundValueEval --seed 5"
-		#sbatch -e rbREPL${salt}.out -o rbREPL${salt}.out execute_gpu_new.sh ${cmd}
-		eval "${cmd}"
+		sbatch -e rbREPL${salt}.out -o rbREPL${salt}.out execute_gpu_new.sh ${cmd}
+		#eval "${cmd}"
 
 		#RNN
 		#cp ${resume}.pickle ${resume}RNN.pickle

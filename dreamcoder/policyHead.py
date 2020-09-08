@@ -464,7 +464,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         prevSk, scratchSk = self._seperatePrevAndScratch(sketch, task.request, noConcrete=self.noConcrete)
 
         if self.noConcrete:
-            prevRep = self.getPrevEncodingConcrete(sketch, task, task.request)
+            prevRep = self.getPrevEncodingConcrete(prevSk, task, task.request)
         else: prevRep = self.getPrevEncoding(prevSk, task)
         scratchRep = self.encodeScratch(scratchSk, task)
 
@@ -595,12 +595,11 @@ class RBREPLPolicyHead(NeuralPolicyHead):
 
         zippers = findHoles(sk, request)
         commonPath = zippers[0].path[:-1]
-        print("Cpath", commonPath)
+        #print("Cpath", commonPath)
 
-        print(sk)
+        #print(sk)
         prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, Hole(tp=texpression)) 
-        print(prev)
-        print(scratch)
+        #print(prev, scratch)
 
         return prev, scratch
 
