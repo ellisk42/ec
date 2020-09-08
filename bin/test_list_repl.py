@@ -144,6 +144,7 @@ class State:
         for key in self.no_pickle:
             self[key] = temp[key]
     def load(self, path):
+        path = utils.to_absolute_path(path)
         state = torch.load(path)
         self.update(state.__dict__)
         self.post_load()
@@ -341,8 +342,9 @@ def plot_model_results(model_results, file=None, salt=''):
     plot.xlabel('Time')
     plot.ylabel('percent correct')
     plot.ylim(bottom=0., top=100.)
+    x_max = min([model_result.max_time for model_result in model_results])
     for model_result in model_results:
-        xs = list(np.arange(0,model_result.max_time,0.1)) # start,stop,step
+        xs = list(np.arange(0,x_max,0.1)) # start,stop,step
         plot.plot(xs,
                 [model_result.fraction_hit(lambda r: r.time < x) for x in xs],
                 label=model_result.name,
@@ -360,8 +362,9 @@ def plot_model_results(model_results, file=None, salt=''):
     plot.xlabel('Evaluations')
     plot.ylabel('percent correct')
     plot.ylim(bottom=0., top=100.)
+    x_max = min([model_result.max_evals for model_result in model_results])
     for model_result in model_results:
-        xs = list(range(model_result.max_evals))
+        xs = list(range(x_max))
         plot.plot(xs,
                 [model_result.fraction_hit(lambda r: r.evaluations <= x) for x in xs],
                 label=model_result.name,
@@ -390,10 +393,11 @@ def hydra_main(cfg):
             state.new(cfg=cfg)
         else:
             #HydraConfig.instance().set_config(cfg)
-            print(f"loading from {cfg.load}...")
+            print(f"loading from outputs/{cfg.load}...")
             #state.load(cfg.load)
             state.load(
-                '/afs/csail.mit.edu/u/m/mlbowers/proj/ec/outputs/2020-09-02/13-49-11/saves/autosave')
+                'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
+                )
             print("loaded")
         state.cfg.mode = cfg.mode
         if cfg.mode == 'resume':
