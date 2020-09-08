@@ -359,9 +359,11 @@ class RBREPLPolicyHead(NeuralPolicyHead):
     """
     does not specify the target hole at all here
     """
-    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
+    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False, noConcrete=False):
         super(RBREPLPolicyHead, self).__init__() #should have featureExtractor?
         assert not encodeTargetHole
+        self.noConcrete = noConcrete
+
         self.canonicalOrdering = canonicalOrdering
         self.use_cuda = torch.cuda.is_available()
         self.featureExtractor = featureExtractor
@@ -405,14 +407,15 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         self.fnModules = nn.ModuleDict()
         for _, _, p in g.productions:
             if not p.isPrimitive: continue
-            if p.tp == arrow(texpression, texpression): continue
+            if p.tp == arrow(texpression, texpression):
+                if self.noConcrete: self.fnModules[p.name] = SimpleNM(1, H)
+                continue
             nArgs = len(p.tp.functionArguments())
             if p.tp.functionArguments() and p.tp.functionArguments()[0].isArrow():
                nArgs -= 1 
             
             self.fnModules[p.name] = SimpleNM(nArgs, H)
     
-
         self.encodeExprHole = SimpleNM(1, H)
         self.toFinishMarker = SimpleNM(1, H)
 
@@ -458,8 +461,11 @@ class RBREPLPolicyHead(NeuralPolicyHead):
 
     def _buildCurrentState(self, sketch, zipper, task):
 
-        prevSk, scratchSk = self._seperatePrevAndScratch(sketch, task.request)
-        prevRep = self.getPrevEncoding(prevSk, task)
+        prevSk, scratchSk = self._seperatePrevAndScratch(sketch, task.request, noConcrete=self.noConcrete)
+
+        if self.noConcrete:
+            prevRep = self.getPrevEncodingConcrete(sketch, task, task.request)
+        else: prevRep = self.getPrevEncoding(prevSk, task)
         scratchRep = self.encodeScratch(scratchSk, task)
 
         currentState = self.appendModule(torch.cat( [prevRep, scratchRep], dim=-1 )) #TODO batch
@@ -468,7 +474,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
 
     def encodeScratch(self, sk, task, is_inner=False):
         """
-        asssume that sk is an e -> e sketch with stuff unfinished
+        assume that sk is an e -> e sketch with stuff unfinished
 
         if it's not an n prim, need to insert a first arg, which is input
         if it is an nPrim, 
@@ -545,7 +551,17 @@ class RBREPLPolicyHead(NeuralPolicyHead):
             assert False, "this should have been taken care of by valueHead"
             return self.featureExtractor.encodeString(previousWords) #TODO
 
-    def _seperatePrevAndScratch(self, sk, request):
+    def getPrevEncodingConcrete(self, sk, task, request):
+
+        prev, scratchSk = self._seperatePrevAndScratchNoConcrete(sk, request)
+        if prev == baseHoleOfType(request): #TODO:
+            return self.encodeScratch(scratchSk, task)
+
+        prevRep = self.getPrevEncodingConcrete(prev, task, request)
+        scratchRep = self.encodeScratch(scratchSk, task)
+        return self.appendModule(torch.cat( [prevRep, scratchRep], dim=-1 )) #TODO batch
+
+    def _seperatePrevAndScratch(self, sk, request, noConcrete=False):
         """
         prev should be full prog
         scratch is not
@@ -554,7 +570,8 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         if len(zippers) == 1:
             assert zippers[0].tp == texpression
             scratch = Hole(tp=texpression)
-            prev = NewExprPlacer().execute(sk, zippers[0].path, Index(0))
+            newExpr = Hole(tp=texpression) if noConcrete else Index(0)
+            prev = NewExprPlacer().execute(sk, zippers[0].path, newExpr)
 
         else: 
             commonPath = []
@@ -562,7 +579,31 @@ class RBREPLPolicyHead(NeuralPolicyHead):
                 if all(move == group[0] for move in group ):
                     commonPath.append(group[0])
                 else: break
-
-            prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, Index(0)) 
+            newExpr = Hole(tp=texpression) if noConcrete else Index(0) 
+            prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, newExpr) 
 
         return prev, scratch
+
+
+    def _seperatePrevAndScratchNoConcrete(self, sk, request):
+        """
+        prev should be full prog
+        scratch is not
+        """
+        if sk == baseHoleOfType(request):
+            return sk, Hole(tp=texpression)
+
+        zippers = findHoles(sk, request)
+        commonPath = zippers[0].path[:-1]
+        print("Cpath", commonPath)
+
+        print(sk)
+        prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, Hole(tp=texpression)) 
+        print(prev)
+        print(scratch)
+
+        return prev, scratch
+
+
+
+

@@ -9,6 +9,7 @@ from dreamcoder.domains.list.listPrimitives import *
 from dreamcoder.program import Program
 from dreamcoder.valueHead import *
 from dreamcoder.zipper import *
+from dreamcoder.policyHead import RBREPLPolicyHead
 
 from dreamcoder.domains.tower.towerPrimitives import *
 import time
@@ -673,6 +674,51 @@ def test_policyTiming():
     print("saved at", savePath)
 
 
+def test_noConcreteRBREPL():
+    from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives
+
+    robustFillPrimitives()
+
+    graph = ""
+    ID = 'rb'
+    runType = "PolicyOnly" #"Policy"
+    #runType =""
+    model = "Bigram"
+    useREPLnet = False
+    path = f'experimentOutputs/{ID}{runType}{model}_SRE=True{graph}.pickle'
+
+    print(path)
+    with open(path, 'rb') as h:
+        r = dill.load(h)
+
+
+
+    ID = 'rb'
+    model = 'REPL'
+    path=f"experimentOutputs/{ID}PolicyOnly{model}.pickle_RecModelOnly"
+    with open(path, 'rb') as h:
+        repl = torch.load(h)
+    print(path)
+
+
+
+    g = r.grammars[-1]
+    tp = r.grammars[-1].continuationType
+    req = arrow(tp, tp)
+    p = r.recognitionModel.sampleHelmholtz([req]).sample().program
+
+
+    pos, neg = getTracesFromProg(p, req, r.grammars[-1] , canonicalOrdering=True)
+    sk = pos[-3]
+    print(sk)
+    print(repl.policyHead._seperatePrevAndScratch(sk, req))
+
+    print(sk)
+    x = RBREPLPolicyHead(g, repl.featureExtractor, repl.featureExtractor.H, canonicalOrdering=True)   
+    print(x._seperatePrevAndScratchNoConcrete(sk, req) )
+    import pdb; pdb.set_trace()
+
+
 if __name__=='__main__':
     #findError()
     #testSampleWithHoles()
@@ -692,9 +738,10 @@ if __name__=='__main__':
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
     # test_abstractHolesTower()
     # test_abstractHolesTowerValue()
-    test_policyTiming()
+    # test_policyTiming()
     # test_TowerREPLValueConvergence()
     # test_TowerRNNPolicyConvergence()
     # test_TowerREPLPolicyConvergence()
     # finetuneAndTestPolicy()
     # test_abstraction_bug()
+    test_noConcreteRBREPL()

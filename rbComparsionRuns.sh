@@ -21,15 +21,21 @@ for num in ""
 		#cp ${oldResume}.pickle ${resume}.pickle
 
 
-		#Bigram
-		#cp ${resume}.pickle ${resume}Bigram.pickle
-		cmd="python bin/rb.py --dataset old --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 864000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python -c ${ncores} --useValue Sample -i 2 --resume ${resume}Bigram.pickle  --singleRoundValueEval --seed 5"
-		#sbatch -e rbBigram${salt}.out -o rbBigram${salt}.out execute_gpu_new.sh ${cmd}
-		#eval "${cmd}"
+		# #Bigram
+		# #cp ${resume}.pickle ${resume}Bigram.pickle
+		# cmd="python bin/rb.py --dataset old --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 864000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python -c ${ncores} --useValue Sample -i 2 --resume ${resume}Bigram.pickle  --singleRoundValueEval --seed 5"
+		# #sbatch -e rbBigram${salt}.out -o rbBigram${salt}.out execute_gpu_new.sh ${cmd}
+		# #eval "${cmd}"
 
 		#REPL
 		#cp ${resume}.pickle ${resume}REPL.pickle
 		cmd="python bin/rb.py --dataset old --policyType RBREPL --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 864000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 5"
+		# #sbatch -e rbREPL${salt}.out -o rbREPL${salt}.out execute_gpu_new.sh ${cmd}
+		# eval "${cmd}"
+
+		#REPLNoConcrete
+		cp ${resume}.pickle ${resume}REPLNoConcrete.pickle
+		cmd="python bin/rb.py --dataset old --policyType RBREPLnoConcrete --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 864000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPLNoConcrete.pickle --singleRoundValueEval --seed 5"
 		#sbatch -e rbREPL${salt}.out -o rbREPL${salt}.out execute_gpu_new.sh ${cmd}
 		eval "${cmd}"
 
