@@ -9,7 +9,7 @@ sys.path.append('/afs/csail.mit.edu/u/m/mlbowers/clones') # needed for tmux sudo
 
 import hydra
 from hydra import utils
-from omegaconf import DictConfig,OmegaConf
+from omegaconf import DictConfig,OmegaConf,open_dict
 
 
 import argparse
@@ -24,6 +24,7 @@ from dreamcoder.SMC import SearchResult
 from dreamcoder.domains.tower.towerPrimitives import *
 import itertools
 import torch
+import numpy as np
 
 from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 from dreamcoder.domains.list.main import ListFeatureExtractor
@@ -83,6 +84,11 @@ class State:
 
         test_tasks = testloader.getTasks(cfg.data.num_tests, ignore_eof=True)
         print(f'Got {len(test_tasks)} testing tasks')
+        num_valid = int(cfg.data.valid_frac*len(test_tasks))
+        validation_tasks = test_tasks[:num_valid]
+        test_tasks = test_tasks[num_valid:]
+        print(f'Split into {len(test_tasks)} testing tasks and {len(validation_tasks)} validation tasks')
+        validation_frontiers = [FakeFrontier(program, task) for program, task in validation_tasks]
 
         g = Grammar.uniform(deepcoderPrimitives())
 
@@ -189,7 +195,9 @@ def train_model(
     optimizer,
     astar,
     test_tasks,
+    validation_frontiers,
     frontiers=None,
+    best_validation_loss=np.inf,
     j=0,
     **kwargs,
         ):
@@ -219,6 +227,9 @@ def train_model(
 
             if mlb.predicate('return'):
                 return
+            if mlb.predicate('which'):
+                print(OmegaConf.to_yaml(cfg))
+                print(os.getcwd())
 
             # printing and logging
             if j % cfg.loop.print_every == 0:
@@ -228,17 +239,44 @@ def train_model(
                 print()
                 w.flush()
 
-            # testing
+            # validation
             if cfg.loop.test_every is not None and j % cfg.loop.test_every == 0:
+                # timer
                 if tstart is not None:
                     elapsed = time.time()-tstart
                     print(f"{cfg.loop.test_every} steps in {elapsed:.1f}s ({cfg.loop.test_every/elapsed:.1f} steps/sec)")
-                model_results = test_models([astar], test_tasks[:cfg.loop.num_mini_tests], timeout=3, verbose=True)
-                plot_model_results(model_results, file='mini_test', salt=j)
+                # get valid loss
+                with torch.no_grad():
+                    vloss = ploss = 0
+                    for f in validation_frontiers:
+                        vloss += vhead.valueLossFromFrontier(f, g)
+                        ploss += phead.policyLossFromFrontier(f, g)
+                    vloss /= len(validation_frontiers)
+                    ploss /= len(validation_frontiers)
+                # print valid loss
+                for head, loss in zip([vhead,phead],[vloss,ploss]):
+                    mlb.blue(f"Validation Loss [{j}] {head.__class__.__name__} {loss.item()}")
+                    w.add_scalar(head.__class__.__name__+' Validation Loss', loss.item(), j)
+
+                # test on valid set
+                model_results = test_models([astar], validation_frontiers, timeout=cfg.loop.timeout, verbose=True)
+                accuracy = len(model_results[0].search_results) / len(validation_frontiers) * 100
+                w.add_scalar(head.__class__.__name__+' Validation Accuracy', accuracy, j)
+                plot_model_results(model_results, file='validation', salt=j)
+
+                # save model if new record for lowest validation loss
+                val_loss = (vloss+ploss).item()
+                if val_loss < best_validation_loss:
+                    best_validation_loss = val_loss
+                    state.save(locals(),'best_validation')
+                    mlb.green('new lowest validation loss!')
+                    w.add_scalar(head.__class__.__name__+' Validation Loss (best)', loss, j)
+                    w.add_scalar(head.__class__.__name__+' Validation Accuracy (best)', accuracy, j)
+
                 tstart = time.time()
             if mlb.predicate('test'):
-                model_results = test_models(astars,test_tasks,timeout=3, verbose=True)
-                plot_model_results(model_results, file='plots')
+                model_results = test_models([astar],test_tasks,timeout=cfg.loop.timeout, verbose=True)
+                plot_model_results(model_results, file='test', salt=j)
 
             j += 1 # increment before saving so we resume on the next iteration
             if cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
@@ -275,13 +313,17 @@ class ExtractorGenerator:
 
 
 def test_models(astars, test_tasks, timeout, verbose=True):
+    if len(test_tasks) > 0 and isinstance(test_tasks[0], FakeFrontier):
+        test_tasks = [f.task for f in test_tasks]
+    if len(test_tasks) > 0 and isinstance(test_tasks[0], (tuple, list)):
+        test_tasks = [task for program,task in test_tasks]
     model_results = []
     for astar in astars:
         name = f"{astar.owner.policyHead.__class__.__name__}_&&_{astar.owner.valueHead.__class__.__name__}"
         print(f"Testing: {name}")
         search_results = []
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-        for program, task in test_tasks:
+        for task in test_tasks:
             g = Grammar.uniform(deepcoderPrimitives())
             fs, times, num_progs, solns = astar.infer(
                     g, 
@@ -327,6 +369,8 @@ class ModelResult:
 def plot_model_results(model_results, file=None, salt=''):
     if not os.path.isdir('plots'):
         os.mkdir('plots')
+    if not os.path.isdir('model_results'):
+        os.mkdir('model_results')
     assert isinstance(model_results, list)
     assert isinstance(model_results[0], ModelResult)
 
@@ -370,6 +414,32 @@ def plot_model_results(model_results, file=None, salt=''):
     else:
         plot.show()
 
+    print(f"saving model_results used in plotting to model_results/{file}_model_results@{salt}")
+    torch.save(model_results,f"model_results/{file}_model_results@{salt}")
+
+def t4(state):
+    """
+    The model in `state` should be tested on t4 data.
+    Uses `cfg.data.num_tests`, `cfg.loop.timeout`
+    """
+    cfg = state.cfg
+    assert cfg.load is not None, "youre running T4 without loading a model to test it on"
+    timeout = cfg.loop.timeout # should get overridden if fed by commandline
+    print(f"Running T4 tests on {cfg.load} with timeout={timeout}")
+
+    t4_loader = DeepcoderTaskloader(
+        utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt'),
+        allowed_requests=state.allowed_requests,
+        repeat=False,
+        num_tasks=None,
+        )
+    t4_tasks = t4_loader.getTasks(cfg.data.num_tests)
+    model_results = test_models([state.astar],t4_tasks,timeout=timeout, verbose=True)
+    plot_model_results(model_results, file='t4', salt=state.j)
+
+
+
+
 
 
 @hydra.main(config_path="conf", config_name='config')
@@ -378,32 +448,31 @@ def hydra_main(cfg):
         mlb.set_verbose()
     with torch.cuda.device(cfg.device):
         state = State()
+        print_overrides = []
         if cfg.load is None:
             print("no file to load from, creating new state...")
             state.new(cfg=cfg)
-        else:
+        elif cfg.mode != 'plot':
             #HydraConfig.instance().set_config(cfg)
             print(f"loading from outputs/{cfg.load}...")
-            #state.load(cfg.load)
             state.load(
                 'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
                 )
             print("loaded")
             assert all(['=' in arg for arg in sys.argv[1:]])
             overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
-            print_overrides = []
             for override in overrides:
-                if override == 'load': continue
                 # eg override = 'data.T'
                 dotpath = override.split('.')
                 target = state.cfg # the old cfg
                 source = cfg # the cfg that contains the overrides
                 for attr in dotpath[:-1]: # all but the last one (which we'll use setattr on)
-                    target = getattr(target,attr)
-                    source = getattr(source,attr)
-                overrided_val = getattr(source,dotpath[-1])
+                    target = target[attr]
+                    source = source[attr]
+                overrided_val = source[dotpath[-1]]
                 print_overrides.append(f'overriding {override} to {overrided_val}')
-                setattr(target,dotpath[-1],overrided_val)
+                with open_dict(target): # disable strict mode
+                    target[dotpath[-1]] = overrided_val
                     
         print()
         print(OmegaConf.to_yaml(cfg))
@@ -411,12 +480,22 @@ def hydra_main(cfg):
         for string in print_overrides: # just want this to print after the big wall of yaml
             mlb.purple(string)
 
+        # big switch statement over cfg.mode
         if cfg.mode == 'resume':
             print("Entering training loop...")
             train_model(**state.as_kwargs)
-        if cfg.mode == 'test':
-            raise NotImplementedError
-        if cfg.mode == 'profile':
+        elif cfg.mode == 'test':
+            model_results = test_models([state.astar],state.test_tasks,timeout=state.cfg.loop.timeout, verbose=True)
+            plot_model_results(model_results, file='test', salt=state.j)
+        elif cfg.mode == 'plot':
+            assert isinstance(cfg.load,list)
+            model_results = []
+            for file in cfg.load:
+                model_results.append(torch.load('outputs/'+file))
+            plot_model_results(model_results)
+        elif cfg.mode == 'T4':
+            t4(state)
+        elif cfg.mode == 'profile':
             mlb.purple('[profiling]')
             import cProfile,pstats
             from pstats import SortKey as sort
@@ -431,7 +510,7 @@ def hydra_main(cfg):
             print('percall: previous column divided by num calls')
             
             raise Exception("Take a look around!")
-        if cfg.mode == 'inspect':
+        elif cfg.mode == 'inspect':
             print()
             print("=== Inspecting State ===")
             print(OmegaConf.to_yaml(state.cfg))

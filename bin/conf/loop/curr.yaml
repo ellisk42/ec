@@ -3,4 +3,5 @@ test_every: null
 save_every: 500
 print_every: 100
 max_steps: null
-num_mini_tests: 10
+#num_mini_tests: 10
+timeout: 3
