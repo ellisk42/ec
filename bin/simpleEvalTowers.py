@@ -21,6 +21,7 @@ parser.add_argument('--useValue', action='store_true')
 parser.add_argument('--useREPLnet', action='store_true')
 parser.add_argument('--useContrastiveValue', action='store_true')
 parser.add_argument('--usePath',type=str, default='')
+parser.add_argument('--name',type=str, default='')
 args = parser.parse_args()
 
 
@@ -89,11 +90,13 @@ def test_policyTiming():
         path = args.usePath
         with open(path, 'rb') as h:
             recModel = torch.load(h)
+        print("new path", path)
         r.recognitionModel = recModel
         r.recognitionModel.cuda()
         if not args.useValue:
             r.recognitionModel.valueHead = SampleDummyValueHead()
 
+        print("no concrete?", r.recognitionModel.policyHead.noConcrete)
     #import pdb; pdb.set_trace()
 
     g = r.grammars[-1]
@@ -154,7 +157,7 @@ def test_policyTiming():
     pseudoResult.testingSearchStats = [stats]
     pseudoResult.testingNumOfProg = [nums]
 
-    savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}RLValue={args.useValue}contrastive={args.useContrastiveValue}seperate=True_SRE=True.pickleDebug'
+    savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}RLValue={args.useValue}contrastive={args.useContrastiveValue}seperate=True_SRE=True.pickleDebug{args.name}'
     with open(savePath, 'wb') as h:
         dill.dump(pseudoResult, h)
     print("saved at", savePath)
