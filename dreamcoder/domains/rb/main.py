@@ -294,10 +294,11 @@ def main(arguments):
     outputDirectory = "experimentOutputs/text/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
 
-    generator = ecIterator(baseGrammar, train,
-                           testingTasks=test,
+    generator = ecIterator(baseGrammar, train[:10],
+                           testingTasks=test[:10],
                            outputPrefix="%s/text"%outputDirectory,
                            evaluationTimeout=evaluationTimeout,
                            **arguments)
-    for result in generator:
-        pass
+    with torch.cuda.device(6):
+        for result in generator:
+            pass

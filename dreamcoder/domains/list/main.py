@@ -346,9 +346,11 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         mlb.log(f'inputFeatures returning {tuple(res.shape)}')
         return res
     def run_tests(self):
+        atol = 1e-7
+        close = lambda t1, t2: t1.allclose(t2,atol=atol)
         x = [[1,2,3,4],[1,2,3,4]]
         res = self.encodeValue(x)
-        assert res[0].allclose(res[1]), "encodeValue is not acting independently on each example"
+        assert close(res[0],res[1]), "encodeValue is not acting independently on each example"
 
         x1 = [[1,2,3,4],[1,1,1,1]]
         x2 = [[1,2,3,4],[2,2,3,6]] # vary the 2nd example
@@ -356,20 +358,20 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         res1 = self.encodeValue(x1)
         res2 = self.encodeValue(x2)
         res3 = self.encodeValue(x3)
-        assert res1[0].allclose(res2[0]), "contents of 2nd example is affecting 1st"
-        assert res1[0].allclose(res3[0]), "length of 2nd example is affecting 1st"
-        assert not res1[0].allclose(res1[1]), "your allclose() metric is not good for telling if things are equal"
+        assert close(res1[0],res2[0]), "contents of 2nd example is affecting 1st"
+        assert close(res1[0],res3[0]), "length of 2nd example is affecting 1st"
+        assert not close(res1[0],res1[1]), "your allclose() metric is not good for telling if things are equal"
 
         x = [1,1]
         res = self.encodeValue(x)
-        assert res[0].allclose(res[1])
+        assert close(res[0],res[1])
 
         x1 = [1,2]
         x2 = [1,3] # vary the 2nd example
         res1 = self.encodeValue(x1)
         res2 = self.encodeValue(x2)
-        assert res1[0].allclose(res2[0]), "contents of 2nd example is affecting 1st"
-        assert not res1[0].allclose(res1[1]), "your allclose() metric is not good for telling if things are equal"
+        assert close(res1[0],res2[0]), "contents of 2nd example is affecting 1st"
+        assert not close(res1[0],res1[1]), "your allclose() metric is not good for telling if things are equal"
 
         return
     def outputFeatures(self,task):

@@ -10,6 +10,8 @@ sys.path.append('/afs/csail.mit.edu/u/m/mlbowers/clones') # needed for tmux sudo
 import hydra
 from hydra import utils
 from omegaconf import DictConfig,OmegaConf,open_dict
+import omegaconf
+from datetime import datetime
 
 
 import argparse
@@ -91,8 +93,6 @@ class State:
         validation_frontiers = [FakeFrontier(program, task) for program, task in validation_tasks]
 
         g = Grammar.uniform(deepcoderPrimitives())
-
-
 
         if cfg.model.policy:
             phead = {
@@ -205,16 +205,19 @@ def train_model(
     tstart = None
     phead.featureExtractor.run_tests()
     while True:
-
-        if cfg.loop.max_steps and j > cfg.loop.max_steps:
-            break
-
         # TODO you should really rename getTask to getProgramAndTask or something
         if frontiers is None or not cfg.data.freeze_examples:
             prgms_and_tasks = taskloader.getTasks(1000)
             tasks = [task for program,task in prgms_and_tasks]
             frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
         for f in frontiers: # work thru batch of `batch_size` examples
+
+            # abort if reached end
+            if cfg.loop.max_steps and j > cfg.loop.max_steps:
+                mlb.purple(f'Exiting because reached maximum step for the above run (step: {j}, max: {cfg.loop.max_steps})')
+                return
+            
+            # train the model
             for head in heads:
                 head.zero_grad()
             vloss = vhead.valueLossFromFrontier(f, g)
@@ -228,8 +231,7 @@ def train_model(
             if mlb.predicate('return'):
                 return
             if mlb.predicate('which'):
-                print(OmegaConf.to_yaml(cfg))
-                print(os.getcwd())
+                which(cfg)
 
             # printing and logging
             if j % cfg.loop.print_every == 0:
@@ -282,7 +284,6 @@ def train_model(
             if cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
                 state.save(locals(),'autosave')
             
-
     #def __getstate__(self):
         #Classes can further influence how their instances are pickled; if the class defines the method __getstate__(), it is called and the returned object is pickled as the contents for the instance, instead of the contents of the instance’s dictionary. If the __getstate__() method is absent, the instance’s __dict__ is pickled as usual.
     #def __setstate__(self,state):
@@ -366,7 +367,7 @@ class ModelResult:
         valid = [r for r in self.search_results if predicate(r)]
         return len(valid)/self.num_tests*100
 
-def plot_model_results(model_results, file=None, salt=''):
+def plot_model_results(model_results, file, title=None, salt='', save_model_results=True):
     if not os.path.isdir('plots'):
         os.mkdir('plots')
     if not os.path.isdir('model_results'):
@@ -374,8 +375,14 @@ def plot_model_results(model_results, file=None, salt=''):
     assert isinstance(model_results, list)
     assert isinstance(model_results[0], ModelResult)
 
+    if title is None:
+        title = file
+
+    print(f'Plotting {len(model_results)} model results')
+
     # plot vs time
     plot.figure()
+    plot.title(title)
     plot.xlabel('Time')
     plot.ylabel('percent correct')
     plot.ylim(bottom=0., top=100.)
@@ -388,14 +395,12 @@ def plot_model_results(model_results, file=None, salt=''):
                 linewidth=4)
     plot.legend()
 
-    if file:
-        plot.savefig(f"plots/{file}_time.png")
-        mlb.yellow(f"saved plot to plots/{file}_time.png")
-    else:
-        plot.show()
+    plot.savefig(f"plots/{file}_time.png")
+    mlb.yellow(f"saved plot to plots/{file}_time.png")
 
     # plot vs evaluations
     plot.figure()
+    plot.title(title)
     plot.xlabel('Evaluations')
     plot.ylabel('percent correct')
     plot.ylim(bottom=0., top=100.)
@@ -408,14 +413,17 @@ def plot_model_results(model_results, file=None, salt=''):
                 linewidth=4)
     plot.legend()
 
-    if file:
-        plot.savefig(f"plots/{file}_evals@{salt}.png")
-        mlb.yellow(f"saved plot to experimentOutputs/{file}_evals@{salt}.png\n")
-    else:
-        plot.show()
+    plot.savefig(f"plots/{file}_evals@{salt}.png")
+    mlb.yellow(f"saved plot to experimentOutputs/{file}_evals@{salt}.png\n")
 
-    print(f"saving model_results used in plotting to model_results/{file}_model_results@{salt}")
-    torch.save(model_results,f"model_results/{file}_model_results@{salt}")
+    if save_model_results:
+        print(f"saving model_results used in plotting to model_results/{file}_{salt}")
+        torch.save(model_results,f"model_results/{file}_{salt}")
+
+def which(cfg):
+    print(OmegaConf.to_yaml(cfg))
+    print(os.getcwd())
+    print("curr time:",datetime.now())
 
 def t4(state):
     """
@@ -435,90 +443,102 @@ def t4(state):
         )
     t4_tasks = t4_loader.getTasks(cfg.data.num_tests)
     model_results = test_models([state.astar],t4_tasks,timeout=timeout, verbose=True)
-    plot_model_results(model_results, file='t4', salt=state.j)
+    plot_model_results(model_results, file=f't4_{timeout}s', salt=state.j)
 
 
 
 
 
+def cleanup():
+    path = utils.to_absolute_path('outputs')
+    files = os.listdir(path)
+    pass # TODO continue
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
     if cfg.verbose:
         mlb.set_verbose()
-    with torch.cuda.device(cfg.device):
-        state = State()
-        print_overrides = []
-        if cfg.load is None:
-            print("no file to load from, creating new state...")
-            state.new(cfg=cfg)
-        elif cfg.mode != 'plot':
-            #HydraConfig.instance().set_config(cfg)
-            print(f"loading from outputs/{cfg.load}...")
-            state.load(
-                'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
-                )
-            print("loaded")
-            assert all(['=' in arg for arg in sys.argv[1:]])
-            overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
-            for override in overrides:
-                # eg override = 'data.T'
-                dotpath = override.split('.')
-                target = state.cfg # the old cfg
-                source = cfg # the cfg that contains the overrides
-                for attr in dotpath[:-1]: # all but the last one (which we'll use setattr on)
-                    target = target[attr]
-                    source = source[attr]
-                overrided_val = source[dotpath[-1]]
-                print_overrides.append(f'overriding {override} to {overrided_val}')
-                with open_dict(target): # disable strict mode
-                    target[dotpath[-1]] = overrided_val
-                    
-        print()
-        print(OmegaConf.to_yaml(cfg))
-        print(os.getcwd())
-        for string in print_overrides: # just want this to print after the big wall of yaml
-            mlb.purple(string)
 
-        # big switch statement over cfg.mode
-        if cfg.mode == 'resume':
-            print("Entering training loop...")
-            train_model(**state.as_kwargs)
-        elif cfg.mode == 'test':
-            model_results = test_models([state.astar],state.test_tasks,timeout=state.cfg.loop.timeout, verbose=True)
-            plot_model_results(model_results, file='test', salt=state.j)
-        elif cfg.mode == 'plot':
-            assert isinstance(cfg.load,list)
-            model_results = []
-            for file in cfg.load:
-                model_results.append(torch.load('outputs/'+file))
-            plot_model_results(model_results)
-        elif cfg.mode == 'T4':
-            t4(state)
-        elif cfg.mode == 'profile':
-            mlb.purple('[profiling]')
-            import cProfile,pstats
-            from pstats import SortKey as sort
-            cProfile.runctx('train_model(**state.as_kwargs)',globals(),locals(),'profiled')
-            p = pstats.Stats('profiled')
-            p.strip_dirs()
-            p.sort_stats(sort.CUMULATIVE)
-            p.reverse_order()
-            p.print_stats()
-            print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
-            print('tottime: doesnt include subfunctions')
-            print('percall: previous column divided by num calls')
-            
-            raise Exception("Take a look around!")
-        elif cfg.mode == 'inspect':
+    cleanup()
+    
+    with mlb.debug(do_debug=cfg.mlb_debug):
+        with torch.cuda.device(cfg.device):
+            state = State()
+            print_overrides = []
+            if cfg.load is None:
+                print("no file to load from, creating new state...")
+                state.new(cfg=cfg)
+            elif cfg.mode != 'plot':
+                #HydraConfig.instance().set_config(cfg)
+                print(f"loading from outputs/{cfg.load}...")
+                state.load(
+                    'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
+                    )
+                print("loaded")
+                assert all(['=' in arg for arg in sys.argv[1:]])
+                overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
+                for override in overrides:
+                    # eg override = 'data.T'
+                    dotpath = override.split('.')
+                    target = state.cfg # the old cfg
+                    source = cfg # the cfg that contains the overrides
+                    for attr in dotpath[:-1]: # all but the last one (which we'll use setattr on)
+                        target = target[attr]
+                        source = source[attr]
+                    overrided_val = source[dotpath[-1]]
+                    print_overrides.append(f'overriding {override} to {overrided_val}')
+                    with open_dict(target): # disable strict mode
+                        target[dotpath[-1]] = overrided_val
+                        
             print()
-            print("=== Inspecting State ===")
-            print(OmegaConf.to_yaml(state.cfg))
-            print(os.getcwd())
-            print(state)
-            raise Exception("Take a look around!") # intentional Exception so you can look at `state` and debug it.
+            which(state.cfg) # TODO idk maybe you wanna print state.cfg instead. Maybe we should do cfg=state.cfg?
+            for string in print_overrides: # just want this to print after the big wall of yaml
+                mlb.purple(string)
+            mlb.yellow("===START===")
+
+            # big switch statement over cfg.mode
+            if cfg.mode == 'resume':
+                print("Entering training loop...")
+                train_model(**state.as_kwargs)
+            elif cfg.mode == 'test':
+                model_results = test_models([state.astar],state.test_tasks,timeout=state.cfg.loop.timeout, verbose=True)
+                plot_model_results(model_results, file='test', salt=state.j)
+            elif cfg.mode == 'plot':
+                assert isinstance(cfg.load, omegaconf.listconfig.ListConfig)
+                model_results = []
+                for file in cfg.load:
+                    model_results.extend(torch.load(utils.to_absolute_path('outputs/'+file)))
+                plot_model_results(model_results, file=cfg.plot.file, title=cfg.plot.title, save_model_results=False)
+            elif cfg.mode.lower() == 't4':
+                t4(state)
+            elif cfg.mode == 'profile':
+                mlb.purple('[profiling]')
+                import cProfile,pstats
+                from pstats import SortKey as sort
+                cProfile.runctx('train_model(**state.as_kwargs)',globals(),locals(),'profiled')
+                p = pstats.Stats('profiled')
+                p.strip_dirs()
+                p.sort_stats(sort.CUMULATIVE)
+                p.reverse_order()
+                p.print_stats()
+                print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
+                print('tottime: doesnt include subfunctions')
+                print('percall: previous column divided by num calls')
+                
+                raise Exception("Take a look around!")
+
+            elif cfg.mode == 'inspect':
+                print()
+                print("=== Inspecting State ===")
+                which(state.cfg)
+                print(state)
+                raise Exception("Take a look around!") # intentional Exception so you can look at `state` and debug it.
+            else:
+                raise Exception("Mode not recognized:", cfg.mode)
         # not really sure if this is needed
         #hydra.core.hydra_config.HydraConfig.set_config(cfg)
+        mlb.yellow("===END===")
+        which(state.cfg)
 
 if __name__ == '__main__':
     hydra_main()

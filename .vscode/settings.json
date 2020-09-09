@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/afs/csail.mit.edu/u/m/mlbowers/python/bin/python",
+    "python.pythonPath": "/scratch/mlbowers/python/bin/python",
     "python.linting.enabled": true,
     "editor.formatOnSave": false,
 }
