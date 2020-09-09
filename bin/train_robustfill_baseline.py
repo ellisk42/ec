@@ -62,11 +62,6 @@ def stringify(line):
             string += char      
     return lst
 
-def makeBatch(batchsize):
-    
-    return inps, tgts
-
-
 def getDatum(n_ex):
     #tsk = random.choice(tasks)
     #tp = tsk.request
@@ -132,8 +127,6 @@ m.iter = 0
 
 t = time.time()
 for i in range(int(args.num_training_programs/args.batchsize)):
-
-    #inps, tgts = makeBatch(batchsize)
 
     batch = [getDatum(4) for _ in range(batchsize)]
     inputs, targets = zip(*batch)
