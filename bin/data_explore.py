@@ -46,4 +46,7 @@ taskloader = DeepcoderTaskloader(
     num_mutated_tasks=NUM_MUTATIONS,
     )
 
-tasks = taskloader.getTasks(100, ignore_eof=True)
+tasks = taskloader.getTasks(100, ignore_eof=True) # changing 100 wont affect much btw
+if args.original:
+    for program, task in tasks:
+        print(program)
