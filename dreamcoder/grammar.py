@@ -169,8 +169,8 @@ class Grammar(object):
                        for t, p, k in variableCandidates]
         if candidates == []:
 
-            print("request", request)
-            print("mustBeLeaf", mustBeLeaf)
+            #print("request", request)
+            #print("mustBeLeaf", mustBeLeaf)
             raise NoCandidates()
         #eprint("candidates inside buildCandidates before norm:")
         #eprint(candidates)

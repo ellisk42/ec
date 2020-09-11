@@ -209,14 +209,19 @@ def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
         except NeedsIndexException:
             #print(f"rejecting {sampled}, resampling...")
             continue # resample
-        #TODO mutate the task to be right
         # now lets modify the task
         inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
         ctxs = tuple([list(reversed(args)) for args in inputs])
 
+        #TODO modify task output to be correct
+        # if either of these is true we can abort:
+            # filter for identity function (all outputs == inputs)
+            # filter for constant functions (all outputs == same)
+
         new_task = task
         res.append((sampled,new_task))
-        mlb.green(f"accepting {sampled}")
+        #mlb.green(f"accepting {sampled}")
+        print(f"accepting {sampled}")
         if len(res) >= n:
             break
     # g.sampleFromSketch(arrow(list, list), sk)
