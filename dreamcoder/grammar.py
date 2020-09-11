@@ -27,6 +27,8 @@ class Grammar(object):
         self.expression2likelihood = dict((p, l) for l, _, p in productions)
         self.expression2likelihood[Index(0)] = self.logVariable
 
+        self.max_hole_depth = None
+
     def randomWeights(self, r):
         """returns a new grammar with random weights drawn from r. calls `r` w/ old weight"""
         return Grammar(logVariable=r(self.logVariable),
@@ -798,6 +800,8 @@ class Grammar(object):
         '''samples sketches from sketches'''
 
         if sk.isHole:
+            if self.max_hole_depth is not None:
+                maximumDepth = self.max_hole_depth
             return self._sample(request, context, environment,
                                         maximumDepth=maximumDepth,
                                         sampleHoleProb=sampleHoleProb) 

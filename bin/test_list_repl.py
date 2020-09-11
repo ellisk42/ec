@@ -30,7 +30,7 @@ import numpy as np
 
 from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 from dreamcoder.domains.list.main import ListFeatureExtractor
-from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
+from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
 from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
 from dreamcoder.Astar import Astar
@@ -74,12 +74,14 @@ class State:
             allowed_requests=allowed_requests,
             repeat=cfg.data.repeat,
             num_tasks=cfg.data.num_tasks,
+            expressive_lambdas=cfg.data.expressive_lambdas,
             )
         testloader = DeepcoderTaskloader(
             utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_test_perm.txt'),
             allowed_requests=allowed_requests,
             repeat=False,
             num_tasks=None,
+            expressive_lambdas=cfg.data.expressive_lambdas,
             )
 
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = taskloader.L+2)
@@ -92,7 +94,11 @@ class State:
         print(f'Split into {len(test_tasks)} testing tasks and {len(validation_tasks)} validation tasks')
         validation_frontiers = [FakeFrontier(program, task) for program, task in validation_tasks]
 
-        g = Grammar.uniform(deepcoderPrimitives())
+        if cfg.data.expressive_lambdas:
+            prims = deepcoderPrimitivesPlusPlus()
+        else:
+            prims = deepcoderPrimitives()
+        g = Grammar.uniform(prims)
 
         if cfg.model.policy:
             phead = {
@@ -261,7 +267,7 @@ def train_model(
                     w.add_scalar(head.__class__.__name__+' Validation Loss', loss.item(), j)
 
                 # test on valid set
-                model_results = test_models([astar], validation_frontiers, timeout=cfg.loop.timeout, verbose=True)
+                model_results = test_models([astar], validation_frontiers, g, timeout=cfg.loop.timeout, verbose=True)
                 accuracy = len(model_results[0].search_results) / len(validation_frontiers) * 100
                 w.add_scalar(head.__class__.__name__+' Validation Accuracy', accuracy, j)
                 plot_model_results(model_results, file='validation', salt=j)
@@ -277,7 +283,7 @@ def train_model(
 
                 tstart = time.time()
             if mlb.predicate('test'):
-                model_results = test_models([astar],test_tasks,timeout=cfg.loop.timeout, verbose=True)
+                model_results = test_models([astar],test_tasks, g, timeout=cfg.loop.timeout, verbose=True)
                 plot_model_results(model_results, file='test', salt=j)
 
             j += 1 # increment before saving so we resume on the next iteration
@@ -313,7 +319,7 @@ class ExtractorGenerator:
         return self._groups[group]
 
 
-def test_models(astars, test_tasks, timeout, verbose=True):
+def test_models(astars, test_tasks, g, timeout, verbose=True):
     if len(test_tasks) > 0 and isinstance(test_tasks[0], FakeFrontier):
         test_tasks = [f.task for f in test_tasks]
     if len(test_tasks) > 0 and isinstance(test_tasks[0], (tuple, list)):
@@ -325,7 +331,6 @@ def test_models(astars, test_tasks, timeout, verbose=True):
         search_results = []
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
         for task in test_tasks:
-            g = Grammar.uniform(deepcoderPrimitives())
             fs, times, num_progs, solns = astar.infer(
                     g, 
                     [task],
@@ -442,7 +447,7 @@ def t4(state):
         num_tasks=None,
         )
     t4_tasks = t4_loader.getTasks(cfg.data.num_tests)
-    model_results = test_models([state.astar],t4_tasks,timeout=timeout, verbose=True)
+    model_results = test_models([state.astar],t4_tasks, state.g, timeout=timeout, verbose=True)
     plot_model_results(model_results, file=f't4_{timeout}s', salt=state.j)
 
 
@@ -501,7 +506,7 @@ def hydra_main(cfg):
                 print("Entering training loop...")
                 train_model(**state.as_kwargs)
             elif cfg.mode == 'test':
-                model_results = test_models([state.astar],state.test_tasks,timeout=state.cfg.loop.timeout, verbose=True)
+                model_results = test_models([state.astar],state.test_tasks, state.g, timeout=state.cfg.loop.timeout, verbose=True)
                 plot_model_results(model_results, file='test', salt=state.j)
             elif cfg.mode == 'plot':
                 assert isinstance(cfg.load, omegaconf.listconfig.ListConfig)

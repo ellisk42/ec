@@ -1,6 +1,6 @@
 from dreamcoder.program import Primitive, prettyProgram
 from dreamcoder.grammar import Grammar
-from dreamcoder.type import tlist, tint, arrow, baseType #, t0, t1, t2
+from dreamcoder.type import tlist, tint, tbool, arrow, baseType #, t0, t1, t2
 
 #from functools import reduce
 
@@ -10,6 +10,7 @@ int_to_int = baseType("int_to_int")
 int_to_bool = baseType("int_to_bool")
 int_to_int_to_int = baseType("int_to_int_to_int")
 
+int_to_int_to_int = baseType("int_to_int_to_int")
 
 #deepcoderPrimitives
 Null = 300 #or perhaps something else, like "an integer outside the working range"?
@@ -64,6 +65,61 @@ def _sub(x): return lambda y: x - y
 def _mult(x): return lambda y: x * y
 def _min(x): return lambda y: _minimum([x,y])
 def _max(x): return lambda y: _maximum([x,y])
+
+def _gt(x): return lambda y: x > y
+def _or(x): return lambda y: x or y
+def _and(x): return lambda y: x and y
+def _divisible(x): return lambda y: x % y == 0
+
+def get_lambdas():
+    return [
+        Primitive("+", arrow(tint,tint,tint), _add),
+        Primitive("*", arrow(tint,tint,tint), _mult),
+        #Primitive("-", arrow(tint,tint,tint), _sub),
+        Primitive("MIN", arrow(tint,tint,tint), _min),
+        Primitive("MAX", arrow(tint,tint,tint), _max),
+        Primitive(">", arrow(tint,tint,tbool), _gt),
+        Primitive("OR", arrow(tbool,tbool,tbool), _or),
+        Primitive("AND", arrow(tbool,tbool,tbool), _and),
+        Primitive("DIVISIBLE", arrow(tint,tint,tbool), _divisible), # note this is ($0 % int == 0)
+    ] + [Primitive(str(num), tint, num) for num in (-2,-1,0,1,2)]
+
+def deepcoderPrimitivesPlusPlus():
+    return [
+        Primitive("HEAD", arrow(tlist(tint), tint), _head), 
+        Primitive("LAST", arrow(tlist(tint), tint), _tail),
+        Primitive("TAKE", arrow(tint, tlist(tint), tlist(tint)), _take),
+        Primitive("DROP", arrow(tint, tlist(tint), tlist(tint)), _drop),
+        Primitive("ACCESS", arrow(tint, tlist(tint), tint), _access),
+        Primitive("MINIMUM", arrow(tlist(tint), tint), _minimum),
+        Primitive("MAXIMUM", arrow(tlist(tint), tint), _maximum),
+        Primitive("REVERSE", arrow(tlist(tint), tlist(tint)), _reverse),
+        Primitive("SORT", arrow(tlist(tint), tlist(tint)), _sort),
+        Primitive("SUM", arrow(tlist(tint), tint), _sum)
+        ] + [
+        Primitive("MAP", arrow(arrow(tint,tint), tlist(tint), tlist(tint)), _map), #is this okay???
+        Primitive("FILTER", arrow(arrow(tint,tbool), tlist(tint), tlist(tint)), _filter), #is this okay???
+        Primitive("COUNT", arrow(arrow(tint,tbool), tlist(tint), tint), _count), #is this okay???
+        Primitive("ZIPWITH", arrow(arrow(tint,tint,tint), tlist(tint), tlist(tint), tlist(tint)), _zipwith), #is this okay???
+        Primitive("SCANL1", arrow(arrow(tint,tint,tint), tlist(tint), tlist(tint)), _scanl1), #is this okay???
+        ] + [
+        # Primitive("INC", arrow(tint,tint), _succ),
+        # Primitive("DEC", arrow(tint,tint), _pred),
+        # Primitive("SHL", arrow(tint,tint), _double),
+        # Primitive("SHR", arrow(tint,tint), _half),
+        # Primitive("doNEG", arrow(tint,tint), _negate),
+        # Primitive("SQR", arrow(tint,tint), _square),
+        # Primitive("MUL3", arrow(tint,tint), _triple),
+        # Primitive("DIV3", arrow(tint,tint), _third),
+        # Primitive("MUL4", arrow(tint,tint), _quad),
+        # Primitive("DIV4", arrow(tint,tint), _quarter),
+        ] + [
+        #Primitive("isPOS", arrow(tint,tbool), _pos),
+        #Primitive("isNEG", arrow(tint,tbool), _neg),
+        #Primitive("isEVEN", arrow(tint,tbool), _even),
+        #Primitive("isODD", arrow(tint,tbool), _odd),
+        ] + [
+    ] + get_lambdas()
 
 def deepcoderPrimitives():
     return [
