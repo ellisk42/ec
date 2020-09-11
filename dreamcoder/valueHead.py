@@ -810,7 +810,7 @@ class ListREPLValueHead(BaseValueHead):
         # we clear out as many abstractions as there are top level inputs
         if ctxs is None: # pull initial context out of the task inputs
             inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
-            ctxs = tuple(reversed(inputs))
+            ctxs = tuple([list(reversed(args)) for args in inputs])
             i = 0
             while sk.isAbstraction:
                 sk = sk.body

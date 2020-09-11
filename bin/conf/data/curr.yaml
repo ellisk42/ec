@@ -2,9 +2,10 @@
 info: curr setup
 repeat: True
 freeze_examples: False
-T: 2
+T: 3
 num_tasks: null
 num_tests: 100
 valid_frac: .2
 allow_complex_requests: False
-expressive_lambdas: True
+expressive_lambdas: False
+lambda_depth: 2

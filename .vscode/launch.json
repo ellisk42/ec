@@ -11,6 +11,7 @@
             "program": "bin/test_list_repl.py",
             "args":[
                 "data.expressive_lambdas=True",
+                "data.lambda_depth=3",
                 //"model=rnn",
                 //"loop=full",
                 //"mode=profile",

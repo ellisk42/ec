@@ -1,6 +1,7 @@
 # generate deepcoder data
 import sys
 import os
+import mlb
 import contextlib
 # sys.path.append(os.path.abspath('./'))
 # sys.path.append(os.path.abspath('./ec'))
@@ -97,12 +98,8 @@ def task_of_line(line, N=5, L=10, V=63):
 
 
 _pp = deepcoderPrimitivesPlusPlus()
-_lambdas = get_lambdas()
 prims_pp = {prim.name:prim for prim in _pp}
 g_pp = Grammar.uniform(_pp)
-g_lambdas = Grammar.uniform(_lambdas)
-#g_pp.max_hole_depth = 3
-g_lambdas.max_hole_depth = 3
 
 class ToPlusPlusVisitor:
     def __init__(self):
@@ -128,34 +125,71 @@ class ToPlusPlusVisitor:
     def abstraction(self,e):
         return Abstraction(e.body.visit(self))
 
-class PostprocessVisitor:
-    def __init__(self):
-        super().__init__()
-    def primitive(self,prim):
-        if prim.name in [str(num) for num in range(-10,10)]:
-        return prim
-    def invented(self,e):
-        assert False
-    def index(self,e):
-        return e
-    def application(self,e):
-        raise NotImplementedError
-        if (prim := e.f) in g_lambdas.primitives:
-            if prim.name in ['+','*']:
-                # these primitives can have arbitrary children
-                # so we just ignore them and recurse on them
-                return Application(e.f.visit(self),e.x.visit(self))
-            elif prim.name in ['MIN','MAX','>','DIVISIBLE','AND','OR']:
-                
-                pass
-            else:
-                assert False, "this new primitive needs"
-        return Application(e.f.visit(self),e.x.visit(self))
-    def abstraction(self,e):
-        return Abstraction(e.body.visit(self))
+
+def get_primitive(app):
+    if app.isPrimitive:
+        return app
+    if app.isApplication:
+        return get_primitive(app.f)
+    if app.isAbstraction:
+        assert False, "Abstractions shouldnt be applied in this DSL, theyre only ever either top level or passed into higher order functions"
+    assert False
+# class PostprocessVisitor:
+#     def __init__(self, g_lambdas):
+#         super().__init__()
+#         self.g_lambdas = g_lambdas
+#     def primitive(self,prim):
+#         #if prim.name in [str(num) for num in range(-10,10)]:
+#         return False
+#     def invented(self,e):
+#         assert False
+#     def index(self,e):
+#         return True
+#     def application(self,e):
+#         p = get_primitive(e)
+#         if p in self.g_lambdas.primitives:
+#             if p.name in ['+','*']:
+#                 # these primitives can have arbitrary children
+#                 # so we just ignore them and recurse on them
+#                 return e.f.visit(self) or e.x.visit(self)
+#             elif p.name in ['MIN','MAX','>','DIVISIBLE','AND','OR']:
+#                 # these primitives need at least one $0 one of their subtrees
+#                 pass
+#             else:
+#                 assert False, "please add the new primitive to a branch in this function"
+#         return e.f.visit(self) or e.x.visit(self)
+#     def abstraction(self,e):
+#         return Abstraction(e.body.visit(self))
+
+def verify_tree(e):
+    if e.isIndex:
+        return True
+    if e.isPrimitive:
+        return False
+    if e.isAbstraction:
+        # all abstractions need to use their variable somewhere
+        # this handles both lambdas like those that are passed to MAP
+        # as well as top level lambdas (tho those should already be fine)
+        if not verify_tree(e.body):
+            raise NeedsIndexException()
+        if e.body.isIndex: # the identity function:(
+            raise NeedsIndexException()
+        return True # body verified so we can return True
+    if e.isApplication:
+        verified = verify_tree(e.f) or verify_tree(e.x)
+        # XXX commenting this out bc it's broken
+        #prim = get_primitive(e)
+        # if prim.name in ['MIN','MAX','>','DIVISIBLE','AND','OR']:
+        #     # these primitives must have a $0 in their subtree
+        #     if not verified:
+        #         raise NeedsIndexException()
+        return verified
+    assert False
+
+class NeedsIndexException(Exception): pass
 
 
-def convert_to_deepcoder_plus_plus(program,task, n, mutate=True):
+def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
     assert mutate
 
     visitor = ToPlusPlusVisitor()
@@ -168,21 +202,29 @@ def convert_to_deepcoder_plus_plus(program,task, n, mutate=True):
     assert program_plus_plus.hasHoles
     res = []
 
-
-
-    for i in range(n):
+    while True:
         sampled = g_lambdas.sampleFromSketch(arrow(tlist(tint), tlist(tint)), program_plus_plus, maximumDepth = 20) # this max depth wont be hit bc of Grammar.max_hole_depth
-        visitor = PostprocessVisitor()
-        processed = sampled.visit(visitor)
+        try:
+            verify_tree(sampled)
+        except NeedsIndexException:
+            #print(f"rejecting {sampled}, resampling...")
+            continue # resample
         #TODO mutate the task to be right
-        res.append((processed,task))
-        print(processed)
+        # now lets modify the task
+        inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
+        ctxs = tuple([list(reversed(args)) for args in inputs])
+
+        new_task = task
+        res.append((sampled,new_task))
+        mlb.green(f"accepting {sampled}")
+        if len(res) >= n:
+            break
     # g.sampleFromSketch(arrow(list, list), sk)
 
     return res
 
 class DeepcoderTaskloader:
-    def __init__(self,file,allowed_requests,N=5,L=10,V=63,repeat=False,num_tasks=None, num_mutated_tasks=10, expressive_lambdas=False):
+    def __init__(self,file,allowed_requests,N=5,L=10,V=63,repeat=False,num_tasks=None, num_mutated_tasks=10, expressive_lambdas=False, lambda_depth = 3):
         self.buf = [] # buffer of (program,task) tuples
         self.file = file
         self.allowed_requests = allowed_requests
@@ -191,6 +233,7 @@ class DeepcoderTaskloader:
         self.L = L
         self.V = V
         self.expressive_lambdas = expressive_lambdas
+        self.lambda_depth = lambda_depth
         self.repeat = repeat
         self.num_tasks = num_tasks
         self.eof = False
@@ -198,6 +241,13 @@ class DeepcoderTaskloader:
             f.readline() # skip first line of file
             self.offset_in_file = f.tell()
             self.file_start = self.offset_in_file
+        
+        _lambdas = get_lambdas()
+        g_lambdas = Grammar.uniform(_lambdas)
+        g_lambdas.max_hole_depth = self.lambda_depth
+        self.g_lambdas = g_lambdas
+
+
     def reloadBuffer(self):
         assert len(self.buf) == 0
         with open(self.file,'r') as f:
@@ -217,7 +267,7 @@ class DeepcoderTaskloader:
                 if program is None: continue
                 if self.allowed_requests is not None and task.request not in self.allowed_requests: continue
                 if self.expressive_lambdas:
-                    programs_tasks = convert_to_deepcoder_plus_plus(program,task, n=self.num_mutated_tasks)
+                    programs_tasks = convert_to_deepcoder_plus_plus(program,task, g_lambdas=self.g_lambdas, n=self.num_mutated_tasks)
                     self.buf.extend(programs_tasks)
                 else:
                     self.buf.append((program,task))

@@ -75,6 +75,7 @@ class State:
             repeat=cfg.data.repeat,
             num_tasks=cfg.data.num_tasks,
             expressive_lambdas=cfg.data.expressive_lambdas,
+            lambda_depth=cfg.data.lambda_depth,
             )
         testloader = DeepcoderTaskloader(
             utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_test_perm.txt'),
@@ -82,6 +83,7 @@ class State:
             repeat=False,
             num_tasks=None,
             expressive_lambdas=cfg.data.expressive_lambdas,
+            lambda_depth=cfg.data.lambda_depth,
             )
 
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = taskloader.L+2)
@@ -445,6 +447,8 @@ def t4(state):
         allowed_requests=state.allowed_requests,
         repeat=False,
         num_tasks=None,
+        expressive_lambdas=cfg.data.expressive_lambdas,
+        lambda_depth=cfg.data.lambda_depth,
         )
     t4_tasks = t4_loader.getTasks(cfg.data.num_tests)
     model_results = test_models([state.astar],t4_tasks, state.g, timeout=timeout, verbose=True)
