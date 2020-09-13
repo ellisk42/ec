@@ -63,6 +63,7 @@ from dreamcoder.zipper import *
 from dreamcoder.utilities import count_parameters
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
+from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
@@ -111,7 +112,10 @@ class NeuralPolicyHead(nn.Module):
                         holeZipper=None,
                         maximumDepth=4):
 
-        dist = self._computeDist([sk], [holeZipper], task, g)
+        try:
+            dist = self._computeDist([sk], [holeZipper], task, g)
+        except InvalidSketchError:
+            yield from [] # pretend there are no expansions off of it
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
         yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)

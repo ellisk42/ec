@@ -7,6 +7,7 @@ import contextlib
 # sys.path.append(os.path.abspath('./ec'))
 
 import pickle
+from dreamcoder import valueHead
 #from util.algolisp_util import make_holey_algolisp
 #from util.deepcoder_util import basegrammar
 import time
@@ -187,7 +188,11 @@ def verify_tree(e):
     assert False
 
 class NeedsIndexException(Exception): pass
+class InvalidSketchError(Exception): pass
 
+class FakeVHead:
+    allow_concrete_eval=True
+fake_vhead = FakeVHead()
 
 def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
     assert mutate
@@ -208,20 +213,41 @@ def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
             verify_tree(sampled)
         except NeedsIndexException:
             #print(f"rejecting {sampled}, resampling...")
-            continue # resample
-        # now lets modify the task
-        inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
-        ctxs = tuple([list(reversed(args)) for args in inputs])
+            continue # rejection sample
+        #inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
+        #ctxs = tuple([list(reversed(args)) for args in inputs])
 
-        #TODO modify task output to be correct
-        # if either of these is true we can abort:
-            # filter for identity function (all outputs == inputs)
-            # filter for constant functions (all outputs == same)
+        # calculate correct outputs for inputs now that we've modified the program
+        assert not sampled.hasHoles
+        try:
+            outputs = valueHead.ListREPLValueHead.rep(fake_vhead, sampled, task, None)
+        except InvalidSketchError:
+            continue # e.g. division by zero during concrete eval
 
-        new_task = task
+        # check if its a constant function (output same for any input)
+        if all([output == outputs[0] for output in outputs[1:]]):
+            continue # rejection sample
+
+        # check for really large or small numbers
+        # if max([max(output) for output in outputs]) > 99 or min([min(output) for output in outputs]) < -99:
+        #     continue # rejection sample
+
+        # if its a [int] -> [int] function, check if its the identity
+        if task.request == arrow(tlist(tint),tlist(tint)):
+            # note ex is an input,output tuple, ex[0] is the tuple of input arguments which is a singleton list in this case so we do ex[0][0] to get the actual [int] input
+            if all([ex[0][0] == output for ex,output in zip(task.examples,outputs)]):
+                continue # rejection sample
+        
+
+        new_examples = [(ex[0],output) for ex,output in zip(task.examples,outputs)]
+        new_task = Task(task.name, task.request, new_examples)
+
+
         res.append((sampled,new_task))
         #mlb.green(f"accepting {sampled}")
         print(f"accepting {sampled}")
+        for ex in new_task.examples:
+            print(f"\t{ex[0][0]} -> {ex[1]}")
         if len(res) >= n:
             break
     # g.sampleFromSketch(arrow(list, list), sk)

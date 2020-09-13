@@ -468,6 +468,7 @@ def hydra_main(cfg):
     if cfg.verbose:
         mlb.set_verbose()
 
+    np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     cleanup()
     
     with mlb.debug(do_debug=cfg.mlb_debug):

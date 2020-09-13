@@ -21,6 +21,7 @@ import types
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
+from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
 
 class computeValueError(Exception):
@@ -831,7 +832,13 @@ class ListREPLValueHead(BaseValueHead):
 
         # if a node has no holes, evalute it concretely
         if not sk.hasHoles and self.allow_concrete_eval:
-            res = [sk.evaluate(ctx) for ctx in ctxs] # will this work? we'll see
+            try:
+                res = [sk.evaluate(ctx) for ctx in ctxs] # will this work? we'll see
+            except (ZeroDivisionError,FloatingPointError):
+                raise InvalidSketchError
+            if (num:=max([max(output,default=0) for output in res]))  > 99 or (num:=min([min(output,default=0) for output in res])) < -99:
+                mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {num}')
+                raise InvalidSketchError
             return res
         
         if not sk.isApplication:
@@ -848,6 +855,7 @@ class ListREPLValueHead(BaseValueHead):
         reps = [self.rep(arg,task,ctxs) for arg in args]
         for i,rep in enumerate(reps):
             if not torch.is_tensor(rep):
+                # encode concrete values
                 reps[i] = self.featureExtractor.encodeValue(rep).expand(len(task.examples),-1)
         # rep :: [num_exs,H]
 
