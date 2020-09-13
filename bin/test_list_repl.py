@@ -227,6 +227,7 @@ def train_model(
             
             # train the model
             for head in heads:
+                head.train()
                 head.zero_grad()
             vloss = vhead.valueLossFromFrontier(f, g)
             ploss = phead.policyLossFromFrontier(f, g)
@@ -269,6 +270,8 @@ def train_model(
                     w.add_scalar(head.__class__.__name__+' Validation Loss', loss.item(), j)
 
                 # test on valid set
+                for head in heads:
+                    head.eval()
                 model_results = test_models([astar], validation_frontiers, g, timeout=cfg.loop.timeout, verbose=True)
                 accuracy = len(model_results[0].search_results) / len(validation_frontiers) * 100
                 w.add_scalar(head.__class__.__name__+' Validation Accuracy', accuracy, j)
@@ -285,6 +288,8 @@ def train_model(
 
                 tstart = time.time()
             if mlb.predicate('test'):
+                for head in heads:
+                    head.eval()
                 model_results = test_models([astar],test_tasks, g, timeout=cfg.loop.timeout, verbose=True)
                 plot_model_results(model_results, file='test', salt=j)
 
@@ -328,6 +333,8 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
         test_tasks = [task for program,task in test_tasks]
     model_results = []
     for astar in astars:
+        astar.owner.policyHead.eval()
+        astar.owner.valueHead.eval()
         name = f"{astar.owner.policyHead.__class__.__name__}_&&_{astar.owner.valueHead.__class__.__name__}"
         print(f"Testing: {name}")
         search_results = []

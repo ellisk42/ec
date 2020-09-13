@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "bin/test_list_repl.py",
             "args":[
-                "data.expressive_lambdas=True",
+                "data.expressive_lambdas=False",
                 "data.lambda_depth=2",
                 //"model=rnn",
                 //"loop=full",
@@ -22,7 +22,7 @@
                 //"load=2020-09-05/00-13-47/saves/autosave",
                 //"load=[2020-09-05/00-13-47/saves/autosave]",
                 //"load=boop",
-                //"verbose=False",
+                "verbose=True",
                 "loop.test_every=null",
                 "loop.print_every=100",
                 "data.valid_frac=.5",
