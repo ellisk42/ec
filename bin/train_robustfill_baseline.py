@@ -135,10 +135,11 @@ if __name__=='__main__':
         score, syntax_score = m.optimiser_step(inputs,targets) #syntax or not, idk
         m.iter += 1
 
-        print(f"total time: {time.time() - t}, total num ex processed: {(i+1)*batchsize}, avg time per ex: {(time.time() - t)/((i+1)*batchsize)}, score: {score}")
+<<<<<<< HEAD
+    print(f"total time: {time.time() - t}, total num ex processed: {(i+1)*batchsize}, avg time per ex: {(time.time() - t)/((i+1)*batchsize)}, score: {score}", flush=True)
 
-        if i%args.save_freq==0:
-            torch.save(m, args.save_path)
-            print('saved model')
-        if i%args.save_old_freq==0:
-            torch.save(m, args.save_path+str(m.iter))
+    if i%args.save_freq==0:
+        torch.save(m, args.save_path)
+        print('saved model')
+    if i%args.save_old_freq==0:
+        torch.save(m, args.save_path+str(m.iter))
