@@ -337,7 +337,7 @@ class DenseBlock(nn.Module):
 
 
 class SimpleNM(nn.Module):
-    def __init__(self, nArgs, H=128, useDense=True):
+    def __init__(self, nArgs, H=128, char_embed_dim=None, useDense=True):
         super(SimpleNM, self).__init__()
         self.nArgs = nArgs
         if nArgs > 0: #TODO
@@ -358,11 +358,44 @@ class SimpleNM(nn.Module):
             inp = args[0]
             return self.params(inp)
 
+import string
+STR_LEN = 36
+
+class ConvNM(nn.Module):
+    def __init__(self, nArgs, H=128, char_embed_dim=32, kernel_size=5):
+        super(ConvNM, self).__init__()
+        self.nArgs = nArgs
+        if nArgs > 0: #TODO
+            #can just do a stack I think ...
+
+            self.params = torch.nn.Conv1d(in_channels=char_embed_dim*nArgs,
+                                        out_channels=char_embed_dim,
+                                        kernel_size=(kernel_size,),
+                                        padding=int((kernel_size-1)/2) )
+        else:
+            self.params = nn.Parameter(torch.randn(1, char_embed_dim).expand(STR_LEN, char_embed_dim))
+        
+    def forward(self, *args):
+        #print(self.operator.name)
+        if self.nArgs == 0:
+            return self.params
+        else:
+            #print(type(args))
+            inp = args[0]
+            inp = inp.transpose(-1, -2)
+            return self.params(inp).relu().transpose(-1, -2)
+
+
 class RBREPLPolicyHead(NeuralPolicyHead):
     """
     does not specify the target hole at all here
     """
-    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False, noConcrete=False):
+    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False, noConcrete=False, useConvs=True):
+        self.useConvs = useConvs
+
+        if useConvs: NeuralModule = ConvNM
+        else: NeuralModule = SimpleNM
+
         super(RBREPLPolicyHead, self).__init__() #should have featureExtractor?
         assert not encodeTargetHole
         self.noConcrete = noConcrete
@@ -370,6 +403,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         self.canonicalOrdering = canonicalOrdering
         self.use_cuda = torch.cuda.is_available()
         self.featureExtractor = featureExtractor
+        self.char_embed_dim = featureExtractor.char_embed_dim
         self.H = H
         #self.REPLHead = RBREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
 
@@ -399,28 +433,31 @@ class RBREPLPolicyHead(NeuralPolicyHead):
 
 
         #modules:
-        self.appendModule = SimpleNM(2, H)
-        self.compareModule = SimpleNM(2, H)
+        self.appendModule = NeuralModule(2, H=H, char_embed_dim=self.char_embed_dim)
+        self.compareModule = NeuralModule(2, H=H, char_embed_dim=self.char_embed_dim)
+
+        if useConvs:
+            self.dense = DenseBlock(10, int(H/2), STR_LEN*self.char_embed_dim, H)
 
 
         self.encodeSimpleHole = nn.ModuleDict()
         for tp in [tposition, tregex, tindex, tboundary, tdelimiter, ttype]:
-            self.encodeSimpleHole['t' + tp.show(True)] = SimpleNM(0, H)
+            self.encodeSimpleHole['t' + tp.show(True)] = NeuralModule(0, H=H, char_embed_dim=self.char_embed_dim)
 
         self.fnModules = nn.ModuleDict()
         for _, _, p in g.productions:
             if not p.isPrimitive: continue
             if p.tp == arrow(texpression, texpression):
-                if self.noConcrete: self.fnModules[p.name] = SimpleNM(1, H)
+                if self.noConcrete: self.fnModules[p.name] = NeuralModule(1, H=H, char_embed_dim=self.char_embed_dim)
                 continue
             nArgs = len(p.tp.functionArguments())
             if p.tp.functionArguments() and p.tp.functionArguments()[0].isArrow():
                nArgs -= 1 
             
-            self.fnModules[p.name] = SimpleNM(nArgs, H)
+            self.fnModules[p.name] = NeuralModule(nArgs, H=H, char_embed_dim=self.char_embed_dim)
     
-        self.encodeExprHole = SimpleNM(1, H)
-        self.toFinishMarker = SimpleNM(1, H)
+        self.encodeExprHole = NeuralModule(1, H=H, char_embed_dim=self.char_embed_dim)
+        self.toFinishMarker = NeuralModule(1, H=H, char_embed_dim=self.char_embed_dim)
 
         print("num of params in repl policy model", count_parameters(self))
         if self.use_cuda: self.cuda()
@@ -450,13 +487,26 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         if zippers==None: zippers = [None for _ in sketches] #hack, because we don't need zippers for value
         if outputRep is None:
             outputRep = self.featureExtractor.outputsRepresentation(task).unsqueeze(0)
-        outputRep = outputRep.expand(len(sketches), -1, -1)
+        if self.useConvs: outputRep = outputRep.expand(len(sketches), -1, -1, -1)
+        else: outputRep = outputRep.expand(len(sketches), -1, -1)
         #print("outrep shape", outputRep.shape)
         currentState = [self._buildCurrentState(sk, zp, task) for sk, zp in zip(sketches, zippers)] 
         #print("currentstate0", currentState[0].shape)
         currentState = torch.stack(currentState, dim=0)
         #print("currentstate", currentState.shape)
-        features = self.compareModule( torch.cat( [currentState, outputRep], dim=-1 ) ) #TODO batch
+
+
+        if self.useConvs:
+            fts = torch.cat( [currentState, outputRep], dim=-1 )
+            features = fts.view(-1, fts.size(-2), fts.size(-1))
+
+            features = self.compareModule(features).view(fts.size(0), fts.size(1), fts.size(2), int(fts.size(3)/2))
+
+        else: 
+            features = self.compareModule( torch.cat( [currentState, outputRep], dim=-1 ) ) #TODO batch
+
+        if self.useConvs:
+            features = self.dense( features.contiguous().view(features.size(0), features.size(1), -1)  ) #hopefully okay
         #right now policy and value use same comparator
         #if we want value and policy comparators to be different,
         #we can do that by changing the above line and the def of _distance in valuehead
@@ -506,9 +556,15 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         #deal with rest of args
         for arg in args:
             if arg.isHole:
-                neuralArgs.append( self.encodeSimpleHole['t' + arg.tp.show(True)]().expand(4, -1) ) #TODO
+                if self.useConvs:
+                    p = self.encodeSimpleHole['t' + arg.tp.show(True)]()
+                    neuralArgs.append( p.expand(4, p.size(0), p.size(1)) ) #TODO
+                else: neuralArgs.append( self.encodeSimpleHole['t' + arg.tp.show(True)]().expand(4, -1) ) #TODO
             else:
-                neuralArgs.append( self.fnModules[arg.name]().expand(4, -1) ) #TODO
+                if self.useConvs:
+                    p = self.fnModules[arg.name]()
+                    neuralArgs.append( p.expand(4, p.size(0), p.size(1)) ) 
+                else: neuralArgs.append( self.fnModules[arg.name]().expand(4, -1) ) #TODO
 
         fn_input = torch.cat(neuralArgs, dim=-1)
         return self.fnModules[f.name](fn_input) #TODO

@@ -5,7 +5,7 @@ from dreamcoder.domains.list.listPrimitives import bootstrapTarget
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives, texpression
-from dreamcoder.policyHead import SimpleNM, DenseBlock
+from dreamcoder.policyHead import SimpleNM, DenseBlock, ConvNM
 from dreamcoder.utilities import count_parameters
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 
@@ -96,16 +96,18 @@ class RBTask():
 
 class RBFeatureExtractor(nn.Module):
 
-    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=256):
+    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=256, useConvs=True):
         super(RBFeatureExtractor, self).__init__()
         #self.outputDimensionality 
         self.H = H
         self.nChars = len(string.printable[:-4]) + 1
         self.strLen = 36
-        
-        self.embedding = nn.Embedding(self.nChars, 20)                                    
+        self.char_embed_dim = 32 #20
+        self.useConvs = useConvs
+
+        self.embedding = nn.Embedding(self.nChars, self.char_embed_dim)                                    
         #self.stringEncoding = nn.Sequential(nn.Linear(self.strLen*20 , H), nn.ReLU()) #TODO if change
-        self.stringEncoding = DenseBlock(5, int(H/2), self.strLen*20, H)
+        self.stringEncoding = DenseBlock(5, int(H/2), self.strLen*self.char_embed_dim, H)
 
         
         self.exRepresentation = SimpleNM(2, H)
@@ -178,6 +180,7 @@ class RBFeatureExtractor(nn.Module):
         inputTensors = torch.tensor(inputArrays).long()
         if self.use_cuda: inputTensors = inputTensors.cuda()
         inputEmb = self.embedding(inputTensors)
+        if self.useConvs: return inputEmb
         inputEnc = self.stringEncoding(inputEmb.view(inputEmb.size(0), -1) ) #TODO
         return inputEnc        
 
@@ -188,8 +191,8 @@ class RBFeatureExtractor(nn.Module):
         inputArrays = state.str_to_np(state.inputs)
         inputTensors = torch.tensor(inputArrays).long()
         if self.use_cuda: inputTensors = inputTensors.cuda()
-
         inputEmb = self.embedding(inputTensors)
+        if self.useConvs: return inputEmb
         inputEnc = self.stringEncoding(inputEmb.view(inputEmb.size(0), -1) ) #TODO
         return inputEnc
 
@@ -204,8 +207,125 @@ class RBFeatureExtractor(nn.Module):
         if self.use_cuda: outputTensors = outputTensors.cuda()
 
         outputEmb = self.embedding(outputTensors)
+        if self.useConvs: return outputEmb
         outputEnc = self.stringEncoding(outputEmb.view(outputEmb.size(0), -1) ) #TODO
         return outputEnc
+
+
+class ConvRBFeatureExtractor(nn.Module):
+
+    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=128):
+        super(ConvRBFeatureExtractor, self).__init__()
+        #self.outputDimensionality 
+        self.H = H
+        self.nChars = len(string.printable[:-4]) + 1
+        self.strLen = 36
+        self.char_embed_dim = 32
+
+        self.embedding = nn.Embedding(self.nChars, self.char_embed_dim)                                    
+        #self.stringEncoding = nn.Sequential(nn.Linear(self.strLen*20 , H), nn.ReLU()) #TODO if change
+        self.stringEncoding = DenseBlock(5, int(H/2), self.strLen*self.char_embed_dim, H)
+
+        
+        self.exRepresentation = SimpleNM(2, H)
+        self.taskRepresentation = SimpleNM(1, H)
+
+        print("num of params in featureExtractor", count_parameters(self))
+
+        #dense = DenseBlock(10, 128, 2*512, 2*512)
+        #print("num of params in dense", count_parameters(dense))
+        #print("num of params in relu", count_parameters(nn.Linear(2*H, 2*H)))
+
+        self.use_cuda=cuda
+        if cuda:
+            self.cuda()
+
+
+    def sampleHelmholtzTask(self, request, motifs=[]):
+        assert request == arrow(texpression, texpression)
+        p, I, O = ROB.generate_FIO(4, limit_p_size=LIMIT_P_SIZE)
+        program = p.ecProg()
+        if motifs:
+            for _, expr in program.walkUncurried():
+                if any( f(expr) for f in motifs):
+                    return None, None
+
+        examples = list(zip(I, O))
+        task = RBTask("rb dream", request, examples, supervision=program)
+        return program, task 
+
+    @property
+    def outputDimensionality(self): return self.H
+
+    def forward(self, examples):
+        I, O = zip(*examples)
+        state = BUTT.RobState.new( list(I) , list(O) ) #TODO import
+        inputArrays = state.str_to_np(state.inputs)
+        outputArrays = state.str_to_np(state.outputs) 
+
+        inputTensors = torch.tensor(inputArrays).long()
+        if self.use_cuda: inputTensors = inputTensors.cuda()
+        outputTensors = torch.tensor(outputArrays).long()
+        if self.use_cuda: outputTensors = outputTensors.cuda()
+
+        inputEmb = self.embedding(inputTensors)
+        inputEnc = self.stringEncoding(inputEmb.view(inputEmb.size(0), -1) ) #TODO
+ 
+        outputEmb = self.embedding(outputTensors)
+        outputEnc = self.stringEncoding(outputEmb.view(outputEmb.size(0), -1) ) #TODO
+
+
+        x = self.exRepresentation(torch.cat((inputEnc, outputEnc), dim=1) )
+        x = self.taskRepresentation(x.max(0)[0])
+        return x 
+
+    def featuresOfTask(self, t):
+        if hasattr(self, 'useFeatures'):
+            f = self(t.features)
+        else:
+            # Featurize the examples directly.
+            f = self(t.examples)
+        return f
+
+    def taskOfProgram(self, p, tp):
+        assert False, "Shouldn't be using task of program here"
+
+    def encodeString(self, lst):
+        state = BUTT.RobState.new( lst, ["" for _ in lst])
+
+        inputArrays = state.str_to_np(state.inputs)
+        inputTensors = torch.tensor(inputArrays).long()
+        if self.use_cuda: inputTensors = inputTensors.cuda()
+        inputEmb = self.embedding(inputTensors)
+        #inputEnc = self.stringEncoding(inputEmb.view(inputEmb.size(0), -1) ) #TODO
+        return inputEmb        
+
+
+    def inputsRepresentation(self, task):
+        I, O = zip(*task.examples)
+        state = BUTT.RobState.new( list(I) , list(O) ) #TODO import
+        inputArrays = state.str_to_np(state.inputs)
+        inputTensors = torch.tensor(inputArrays).long()
+        if self.use_cuda: inputTensors = inputTensors.cuda()
+
+        inputEmb = self.embedding(inputTensors)
+        #inputEnc = self.stringEncoding(inputEmb.view(inputEmb.size(0), -1) ) #TODO
+        return inputEmb
+
+    def outputsRepresentation(self, task):
+        I, O = zip(*task.examples)
+        state = BUTT.RobState.new( list(I) , list(O) ) #TODO import
+        #inputArrays = state.str_to_np(state.inputs)
+        outputArrays = state.str_to_np(state.outputs) 
+        # inputTensors = torch.tensor(inputArrays).long()
+        # if self.use_cuda: inputTensors = inputTensors.cuda()
+        outputTensors = torch.tensor(outputArrays).long()
+        if self.use_cuda: outputTensors = outputTensors.cuda()
+
+        outputEmb = self.embedding(outputTensors)
+        #outputEnc = self.stringEncoding(outputEmb.view(outputEmb.size(0), -1) ) #TODO
+        return outputEmb
+
 
 
 def makeTasks():
