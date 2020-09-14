@@ -42,19 +42,21 @@ from dreamcoder.SMC import SearchResult
 from dreamcoder.utilities import ParseFailure
 
 def check_candidate(task, raw_candidate):
-    print(raw_candidate)
+    p = None
+    #print(raw_candidate)
     try:
         p = Program.parse(" ".join(raw_candidate))
-        print(p)
+        #print(p)
         ll = task.logLikelihood(p, timeout=1)
         
         if ll == 0.0:
-            return True
-        return False
-    except IndexError: return False
-    except AssertionError: return False
-    except ParseFailure: return False
-    except TypeError: return False
+            return True, p
+        return False, p
+    except IndexError: return False, p
+    except AssertionError: return False, p
+    except ParseFailure: return False, p
+    except TypeError: return False, p
+    except KeyError: return False, p
 
 def get_num_nodes(raw_candidate):
     return len( [x for x in raw_candidate if x not in ['(', ')', 'lambda']] )
@@ -64,7 +66,7 @@ parser.add_argument('--batchsize', type=int, default=32 )
 parser.add_argument('--path', type=str, default='robustfill_baseline0.p')
 parser.add_argument('--results_path', type=str, default='robustfill_baseline_results.p')
 parser.add_argument('--gpu', type=int, default=None)
-parser.add_argument('--timeout', type=int, default=120)
+parser.add_argument('--timeout', type=int, default=30)
 args = parser.parse_args()
 
 if args.gpu is not None:
@@ -87,7 +89,7 @@ print("problems from:", problemPath)
 with open(problemPath, 'rb') as h:
     r = dill.load(h)
 
-
+assert 0
 times = []
 ttasks = r.getTestingTasks()
 ttasks = makeOldTasks(synth=False, challenge=True)
@@ -144,7 +146,7 @@ for i, t in enumerate(ttasks):
         candidates, scores, _ = m.sampleAndScore([inputs]*args.batchsize)
         for candidate, score in zip(candidates, scores):
             totalNumberOfPrograms += get_num_nodes(candidate)
-            hit = check_candidate(t, candidate)
+            hit, p = check_candidate(t, candidate)
             if hit:
                 dt =  time.time() - start
                 searchTimes = {t:dt}                
@@ -153,7 +155,7 @@ for i, t in enumerate(ttasks):
 
     print("done")
     print("total prog", totalNumberOfPrograms)  
-    print("searchTimes", searchTimes)
+    print("searchTimes", searchTimes, flush=True)
     print()
     print()
     
