@@ -12,7 +12,7 @@ from hydra import utils
 from omegaconf import DictConfig,OmegaConf,open_dict
 import omegaconf
 from datetime import datetime
-
+from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 import argparse
 from dreamcoder.grammar import *
@@ -534,6 +534,7 @@ def hydra_main(cfg):
             print('chdir to outputs/')
             if not os.path.isdir('../outputs_trash'):
                 os.mkdir('../outputs_trash')
+            import readline # simply by importing readline we now have scrollable history in input()!!
             results = None
             while True: # exit with ctrl-D
                 try:
@@ -543,14 +544,41 @@ def hydra_main(cfg):
                 [cmd, *args] = line.split(' ')
                 args_line = ' '.join(args)
 
+                def process(tb):
+                    """
+                    Process a tensorboard directory to get all its events. Doesn't work recursively from higher directories (that wouldnt really make sense)
+                    """
+                    try:
+                        tboard = EventAccumulator(tb)
+                    except Exception as e:
+                        print("unable to load file {tb}: {e}")
+                        return
+                    tboard.Reload() # make sure data is all loaded
+                    ret = {}
+                    scalars = tboard.Tags()['scalars']
+                    for scalar in scalars: # eg scalar = 'SampleDummyValueHead'
+                        events = tboard.Scalars(scalar)
+                        ret['scalar'] = events
+                    return ret
+
+
                 def glob_all(args):
-                    for predicate in [arg for arg in args if '=' in arg]:
-                        lhs,rhs = predicate.split('=')
-                        raise NotImplementedError
+                    # first glob the results
                     results = []
                     for arg in args:
                         results.extend(glob.glob(f'**/*{arg}*',recursive=True))
                     results = sorted(results)
+
+                    # then filter using predicates
+                    for predicate in [arg for arg in args if '=' in arg]:
+                        lhs,rhs = predicate.split('=')
+                        # TODO WAIT FIRST JUST FOLLOW THIS https://github.com/tensorflow/tensorboard/issues/785
+                        # idk it might be better.
+                        # TODO first navigate to the actual folder that the tb files are in bc thats 
+                        # what process() should take as input (e.g. 'tb' or whatever prefix+name is)
+                        process(result)
+                        raise NotImplementedError
+
                     return results
 
                 if cmd == 'list':

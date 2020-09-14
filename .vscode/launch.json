@@ -13,7 +13,7 @@
                 "data.expressive_lambdas=False",
                 "data.lambda_depth=2",
                 "model.allow_concrete_eval=True",
-                "mode=cmd",
+                //"mode=cmd",
                 //"model=rnn",
                 //"loop=full",
                 //"mode=profile",
