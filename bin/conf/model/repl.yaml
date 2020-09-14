@@ -1,13 +1,13 @@
 # @package _group_
 type: repl
 H: 64
-allow_concrete_eval: False
+allow_concrete_eval: True
 encode_index_as: constant # inputs | constant
 tied: True
 value: False # dummy will be used
 policy: True
 encodeTargetHole: False
-canonicalOrdering: True
+ordering: last
 extractor:
   modular: True
   bidir_ctx: True

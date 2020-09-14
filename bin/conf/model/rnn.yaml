@@ -5,7 +5,7 @@ tied: True
 policy: True
 value: False
 encodeTargetHole: False
-canonicalOrdering: True
+ordering: last
 extractor:
   modular: True
   digitwise: True

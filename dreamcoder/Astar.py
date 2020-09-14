@@ -53,8 +53,14 @@ class Astar(Solver):
     def _getNextNodes(self, task, node, g, request):
         totalCost, policyCost, sketch, zippers = node
         #print("TOTAL COSTS", totalCost)
-        if self.canonicalOrdering:
-            zippers = [zippers[0]] #only use the first zipper if cannonicalOrdering
+        if self.ordering == 'first':
+            zippers = [zippers[0]]
+        elif self.ordering == 'last':
+            zippers = [zippers[-1]]
+        elif self.ordering == 'random':
+            pass
+        else:
+            raise ValueError
         for zipper in zippers:
             try:
                 for stepCost, newZippers, newSketch in self.owner.policyHead.enumSingleStep(task, g, sketch, request, 
@@ -74,9 +80,8 @@ class Astar(Solver):
                               evaluationTimeout=None, 
                               maximumFrontiers=None): #IDK what this is...
         
-        if hasattr(self.owner.policyHead, 'canonicalOrdering') and self.owner.policyHead.canonicalOrdering:
-            self.canonicalOrdering = True
-        else: self.canonicalOrdering = False
+        assert hasattr(self.owner.policyHead,'ordering')
+        self.ordering = self.owner.policyHead.ordering
 
             
         sys.setrecursionlimit(5000)

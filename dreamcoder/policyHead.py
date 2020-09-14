@@ -95,8 +95,14 @@ class NeuralPolicyHead(nn.Module):
                         request, holeZippers=None,
                         maximumDepth=4):
 
-        if self.canonicalOrdering: zipper = holeZippers[0]
-        else: zipper = random.choice(holeZippers)
+        if self.ordering == 'first':
+            zipper = holeZippers[0]
+        elif self.ordering == 'last':
+            zipper = holeZippers[-1]
+        elif self.ordering == 'random':
+            zipper = random.choice(holeZippers)
+        else:
+            raise ValueError
         dist = self._computeDist([sk], [zipper], task, g) #TODO
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
@@ -135,7 +141,7 @@ class NeuralPolicyHead(nn.Module):
         mlb.log(f'request: {tp}')
         posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, 
                                                         onlyPos=True, returnNextNode=True,
-                                                        canonicalOrdering=self.canonicalOrdering)
+                                                        ordering=self.ordering)
         mlb.log('pos traces:')
         for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
             mlb.log(f'\t{trace}')
@@ -186,22 +192,20 @@ class NeuralPolicyHead(nn.Module):
 
 
 class RNNPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, extractor, cfg=None, cuda=True, H=512, maxVar=15, encodeTargetHole=False, canonicalOrdering=True):
+    def __init__(self, g, extractor, cfg, maxVar=15):
         super().__init__() #should have featureExtractor?
-        if cfg is not None:
-            cuda = cfg.cuda
-            H = cfg.model.H
-            encodeTargetHole = cfg.model.encodeTargetHole
-            canonicalOrdering = cfg.model.canonicalOrdering
-        else:
-            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+        cuda = cfg.cuda
+        H = cfg.model.H
+        encodeTargetHole = cfg.model.encodeTargetHole
+        ordering = cfg.model.ordering
+
         self.cfg = cfg
         self.use_cuda = cuda
         self.featureExtractor = extractor
         self.H = H
         self.vhead = SimpleRNNValueHead(g=g, extractor=extractor, cfg=cfg) #hack
         self.encodeTargetHole = encodeTargetHole
-        self.canonicalOrdering = canonicalOrdering
+        self.ordering = ordering
 
         self.indexToProduction = {}
         self.productionToIndex = {}
@@ -262,16 +266,12 @@ class RNNPolicyHead(NeuralPolicyHead):
         return dist
 
 class ListREPLPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, extractor, cfg=None, cuda=True, H=512, maxVar=10, encodeTargetHole=False, canonicalOrdering=True):
+    def __init__(self, g, extractor, cfg, maxVar=10):
         super().__init__() #should have featureExtractor?
-
-        if cfg is not None:
-            H = cfg.model.H
-            cuda = cfg.cuda
-            encodeTargetHole = cfg.model.encodeTargetHole
-            canonicalOrdering = cfg.model.canonicalOrdering
-        else:
-            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+        H = cfg.model.H
+        cuda = cfg.cuda
+        encodeTargetHole = cfg.model.encodeTargetHole
+        ordering = cfg.model.ordering
         
         self.cfg = cfg
 
@@ -280,7 +280,7 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         self.H = H
         self.vhead = ListREPLValueHead(g=g, extractor=extractor, cfg=cfg)
         self.encodeTargetHole = encodeTargetHole
-        self.canonicalOrdering = canonicalOrdering
+        self.ordering = ordering
 
         self.indexToProduction = {}
         self.productionToIndex = {}
@@ -320,73 +320,73 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         dist = dist + mask
         return dist # [num_sks,49]
 
-class REPLPolicyHead(NeuralPolicyHead):
-    """
-    does not specify the target hole at all here
-    """
-    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
-        super(REPLPolicyHead, self).__init__() #should have featureExtractor?
-        assert not encodeTargetHole
-        self.canonicalOrdering = canonicalOrdering
-        self.use_cuda = torch.cuda.is_available()
-        self.featureExtractor = featureExtractor
-        self.H = H
-        self.REPLHead = TowerREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
+# class REPLPolicyHead(NeuralPolicyHead):
+#     """
+#     does not specify the target hole at all here
+#     """
+#     def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
+#         super(REPLPolicyHead, self).__init__() #should have featureExtractor?
+#         assert not encodeTargetHole
+#         self.canonicalOrdering = canonicalOrdering
+#         self.use_cuda = torch.cuda.is_available()
+#         self.featureExtractor = featureExtractor
+#         self.H = H
+#         self.REPLHead = TowerREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
 
-        self.indexToProduction = {}
-        self.productionToIndex = {}
-        i = 0
-        for _, _, expr in g.productions:
-            self.indexToProduction[i] = expr
-            self.productionToIndex[expr] = i
-            i += 1
+#         self.indexToProduction = {}
+#         self.productionToIndex = {}
+#         i = 0
+#         for _, _, expr in g.productions:
+#             self.indexToProduction[i] = expr
+#             self.productionToIndex[expr] = i
+#             i += 1
 
-        for v in range(maxVar):
-            self.indexToProduction[i] = Index(v)
-            self.productionToIndex[Index(v)] = i
-            i += 1
+#         for v in range(maxVar):
+#             self.indexToProduction[i] = Index(v)
+#             self.productionToIndex[Index(v)] = i
+#             i += 1
 
-        self.output = nn.Sequential(
-                nn.Linear(featureExtractor.outputDimensionality + H, H),
-                nn.ReLU(),
-                nn.Linear(H, H),
-                nn.ReLU(),
-                nn.Linear(H, len(self.productionToIndex) ),
-                nn.LogSoftmax(dim=1))
+#         self.output = nn.Sequential(
+#                 nn.Linear(featureExtractor.outputDimensionality + H, H),
+#                 nn.ReLU(),
+#                 nn.Linear(H, H),
+#                 nn.ReLU(),
+#                 nn.Linear(H, len(self.productionToIndex) ),
+#                 nn.LogSoftmax(dim=1))
 
-        self.lossFn = nn.NLLLoss(reduction='sum')
-        if self.use_cuda: self.cuda()
+#         self.lossFn = nn.NLLLoss(reduction='sum')
+#         if self.use_cuda: self.cuda()
 
-    def cuda(self, device=None):
-        self.use_cuda = True
-        self.REPLHead.use_cuda = True
-        self.featureExtractor.use_cuda = True
-        self.featureExtractor.CUDA = True
-        super(REPLPolicyHead, self).cuda(device=device)
+#     def cuda(self, device=None):
+#         self.use_cuda = True
+#         self.REPLHead.use_cuda = True
+#         self.featureExtractor.use_cuda = True
+#         self.featureExtractor.CUDA = True
+#         super(REPLPolicyHead, self).cuda(device=device)
 
-    def cpu(self):
-        self.use_cuda = False
-        self.REPLHead.use_cuda = False
-        self.featureExtractor.use_cuda = False
-        self.featureExtractor.CUDA = False
-        super(REPLPolicyHead, self).cpu()
+#     def cpu(self):
+#         self.use_cuda = False
+#         self.REPLHead.use_cuda = False
+#         self.featureExtractor.use_cuda = False
+#         self.featureExtractor.CUDA = False
+#         super(REPLPolicyHead, self).cpu()
 
-    def _computeDist(self, sketches, zippers, task, g):
-        #need raw dist, and then which are valid and which is correct ... 
-        features = self.featureExtractor.featuresOfTask(task)
-        if features is None: return None, None
-        features = features.unsqueeze(0)
+#     def _computeDist(self, sketches, zippers, task, g):
+#         #need raw dist, and then which are valid and which is correct ... 
+#         features = self.featureExtractor.featuresOfTask(task)
+#         if features is None: return None, None
+#         features = features.unsqueeze(0)
         
-        sketchEncodings = [self.REPLHead._computeSketchRepresentation(sk.betaNormalForm()) for sk in sketches]
-        sketchEncodings = torch.stack(sketchEncodings, dim=0)
-        features = self.featureExtractor.featuresOfTask(task)
-        features = features.unsqueeze(0)
-        x = features.expand(len(sketches), -1)
-        features = torch.cat([sketchEncodings, x ], dim=1)
-        dist = self.output(features)
-        mask = self._buildMask(sketches, zippers, task, g)
-        dist = dist + mask
-        return dist
+#         sketchEncodings = [self.REPLHead._computeSketchRepresentation(sk.betaNormalForm()) for sk in sketches]
+#         sketchEncodings = torch.stack(sketchEncodings, dim=0)
+#         features = self.featureExtractor.featuresOfTask(task)
+#         features = features.unsqueeze(0)
+#         x = features.expand(len(sketches), -1)
+#         features = torch.cat([sketchEncodings, x ], dim=1)
+#         dist = self.output(features)
+#         mask = self._buildMask(sketches, zippers, task, g)
+#         dist = dist + mask
+#         return dist
 
 class DenseLayer(nn.Module):
     def __init__(self, input_size, output_size):
@@ -438,10 +438,10 @@ class RBREPLPolicyHead(NeuralPolicyHead):
     """
     does not specify the target hole at all here
     """
-    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
+    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, ordering='first'):
         super(RBREPLPolicyHead, self).__init__() #should have featureExtractor?
         assert not encodeTargetHole
-        self.canonicalOrdering = canonicalOrdering
+        self.ordering = ordering
         self.use_cuda = torch.cuda.is_available()
         self.featureExtractor = featureExtractor
         self.H = H

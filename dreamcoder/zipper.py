@@ -574,17 +574,29 @@ def findHoles(sk, tp):
     return findHolesEnum(tp, sk)
 
 #will be a method of grammar
-def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4, canonicalOrdering=False):
+def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4, ordering='random'):
+    #if ordering != 'last':
+    #    print(f"warning, ordering is {ordering} in sampleSingleStep")
     #choose hole to expandz
     if holeZippers is None: holeZippers = findHoles(sk, tp)
 
-    if canonicalOrdering: zipper = holeZippers[0]
-    else: zipper = random.choice(holeZippers)
+    if ordering == 'first':
+        zipper = holeZippers[0]
+    elif ordering == 'last':
+        zipper = holeZippers[-1]
+    elif ordering == 'random':
+        zipper = random.choice(holeZippers)
+    else:
+        raise ValueError
+
     #some sort of sample visitor, walks down to the hole with a visitor (like sketchSample), then calls sample
     newSk, newZippers = sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth)
     return newSk, newZippers
 
-def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False, canonicalOrdering=False):
+def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False, ordering='random'):
+    #if ordering != 'last':
+    #    print(f"warning, ordering is {ordering} in getTracesFromProg")
+
     last = baseHoleOfType(tp) #this sets it up with first hole
 
     trace = []
@@ -593,8 +605,16 @@ def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False, canonica
     zippers = findHoles(last, tp) #TODO
     targetNodes = []
     while zippers:
-        if canonicalOrdering: zipper = zippers[0]
-        else: zipper = random.choice(zippers)
+        if ordering == 'first':
+            zipper = zippers[0]
+        elif ordering == 'last':
+            zipper = zippers[-1]
+        elif ordering == 'random':
+            zipper = random.choice(zippers)
+        else:
+            raise ValueError
+
+
         holesToExpand.append(zipper)
 
         newLast, excludeProd, parentInfo, nextNode = followPathOneStep(zipper, last, full, tp) #TODO

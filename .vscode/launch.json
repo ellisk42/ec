@@ -18,7 +18,7 @@
                 //"loop=full",
                 //"mode=profile",
                 "name=ted",
-                "data.T=2",
+                "data.T=3",
                 "debug.channel=False",
                 "debug.zero_output_feats=False",
                 "debug.zero_concrete_eval=False",

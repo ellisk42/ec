@@ -9,6 +9,7 @@ from dreamcoder.program import Hole,Program
 from dreamcoder.grammar import *
 from dreamcoder.zipper import *
 from dreamcoder.utilities import RunWithTimeout
+from collections import defaultdict
 import random
 import time
 import mlb
@@ -756,17 +757,14 @@ class NM(nn.Module):
         return self.params(args)
 class ListREPLValueHead(BaseValueHead):
 
-    def __init__(self, g, extractor, cfg=None, H=64, canonicalOrdering=True, allow_concrete_eval=True):
+    def __init__(self, g, extractor, cfg):
         super().__init__()
-        if cfg is not None:
-            H = cfg.model.H
-            canonicalOrdering = cfg.model.canonicalOrdering
-            allow_concrete_eval = cfg.model.allow_concrete_eval
-        else:
-            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+        H = cfg.model.H
+        ordering = cfg.model.ordering
+        allow_concrete_eval = cfg.model.allow_concrete_eval
 
         self.cfg = cfg
-        self.canonicalOrdering = canonicalOrdering
+        self.ordering = ordering
         self.featureExtractor = extractor
         self.allow_concrete_eval = allow_concrete_eval
         self.H = H
@@ -795,6 +793,8 @@ class ListREPLValueHead(BaseValueHead):
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
+
+        self.concrete_count = defaultdict(int)
 
     def rep(self,sk,task,ctxs):
         """
@@ -851,7 +851,7 @@ class ListREPLValueHead(BaseValueHead):
                     raise InvalidSketchError
             if sk.size() > 1:
                 #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
-                pass
+                self.concrete_count[task] += sk.size()
             return res
         
         if not sk.isApplication:
@@ -916,6 +916,11 @@ class ListREPLValueHead(BaseValueHead):
             output_feats = torch.zeros_like(output_feats)
 
         sk_reps = torch.stack([self.rep(sk,task,None) for sk in sks]) # [num_sketches,num_exs,H]
+        total_size = sum([sk.size() for sk in sks])
+        concrete_ratio = self.concrete_count[task]/total_size
+        #print(f"concrete ratio: {concrete_ratio:.3f}")
+        #for sk in sks:
+        #    print(f'\t{sk}')
 
         if self.cfg.debug.zero_sk:
             sk_reps = torch.zeros_like(sk_reps)
