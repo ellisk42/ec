@@ -5,7 +5,7 @@ from dreamcoder.domains.list.listPrimitives import bootstrapTarget
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives, texpression
-from dreamcoder.policyHead import SimpleNM
+from dreamcoder.policyHead import SimpleNM, DenseBlock
 from dreamcoder.utilities import count_parameters
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 
@@ -96,7 +96,7 @@ class RBTask():
 
 class RBFeatureExtractor(nn.Module):
 
-    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=512):
+    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=256):
         super(RBFeatureExtractor, self).__init__()
         #self.outputDimensionality 
         self.H = H
@@ -104,7 +104,9 @@ class RBFeatureExtractor(nn.Module):
         self.strLen = 36
         
         self.embedding = nn.Embedding(self.nChars, 20)                                    
-        self.stringEncoding = nn.Sequential(nn.Linear(self.strLen*20 , H), nn.ReLU()) #TODO if change
+        #self.stringEncoding = nn.Sequential(nn.Linear(self.strLen*20 , H), nn.ReLU()) #TODO if change
+        self.stringEncoding = DenseBlock(5, int(H/2), self.strLen*20, H)
+
         
         self.exRepresentation = SimpleNM(2, H)
         self.taskRepresentation = SimpleNM(1, H)

@@ -337,12 +337,15 @@ class DenseBlock(nn.Module):
 
 
 class SimpleNM(nn.Module):
-    def __init__(self, nArgs, H=128):
+    def __init__(self, nArgs, H=128, useDense=True):
         super(SimpleNM, self).__init__()
         self.nArgs = nArgs
         if nArgs > 0: #TODO
             #can just do a stack I think ...
-            self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
+            if useDense:
+                self.params = DenseBlock(5, int(H/2), nArgs*H, H)
+            else:
+                self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
         else:
             self.params = nn.Parameter(torch.randn(1, H))
         

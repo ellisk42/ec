@@ -62,11 +62,6 @@ def stringify(line):
             string += char      
     return lst
 
-def makeBatch(batchsize):
-    
-    return inps, tgts
-
-
 def getDatum(n_ex):
     #tsk = random.choice(tasks)
     #tp = tsk.request
@@ -86,61 +81,61 @@ def makeExamples(task):
     #print(examples)
     return examples
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--num_training_programs', type=int, default=20000000, help='number of episodes for training')
-parser.add_argument('--batchsize', type=int, default=32 )
-parser.add_argument('--use_saved_val', action='store_true', help='use saved validation problems')
-parser.add_argument('--save_path', type=str, default='robustfill_baseline0.p')
-parser.add_argument('--print_freq', type=int, default=100)
-parser.add_argument('--save_freq', type=int, default=50)
-parser.add_argument('--save_old_freq', type=int, default=10000)
-parser.add_argument('--positional', action='store_true')
-parser.add_argument('--gpu', type=int, default=None)
-args = parser.parse_args()
+if __name__=='__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_training_programs', type=int, default=20000000, help='number of episodes for training')
+    parser.add_argument('--batchsize', type=int, default=32 )
+    parser.add_argument('--use_saved_val', action='store_true', help='use saved validation problems')
+    parser.add_argument('--save_path', type=str, default='robustfill_baseline0.p')
+    parser.add_argument('--print_freq', type=int, default=100)
+    parser.add_argument('--save_freq', type=int, default=50)
+    parser.add_argument('--save_old_freq', type=int, default=10000)
+    parser.add_argument('--positional', action='store_true')
+    parser.add_argument('--gpu', type=int, default=None)
+    args = parser.parse_args()
 
-if args.gpu is not None:
-    torch.cuda.set_device(args.gpu)
-batchsize = args.batchsize
-
-
-#sys.setrecursionlimit(50000)
-graph = ""
-ID = 'rb'
-runType = "PolicyOnly" #"Policy"
-#runType =""
-model = "Bigram"
-useREPLnet = False
-path = f'experimentOutputs/{ID}{runType}{model}_SRE=True{graph}.pickle'
-
-print(path)
-with open(path, 'rb') as h:
-    r = dill.load(h)
-
-fe = r.recognitionModel.featureExtractor
-
-extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
+    if args.gpu is not None:
+        torch.cuda.set_device(args.gpu)
+    batchsize = args.batchsize
 
 
-input_vocabularies = [list(string.printable[:-4]) + ['EOE'], string.printable[:-4]]
-target_vocabulary = [str(p) for p in g.primitives] + extras
+    #sys.setrecursionlimit(50000)
+    graph = ""
+    ID = 'rb'
+    runType = "PolicyOnly" #"Policy"
+    #runType =""
+    model = "Bigram"
+    useREPLnet = False
+    path = f'experimentOutputs/{ID}{runType}{model}_SRE=True{graph}.pickle'
 
-m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
-                            target_vocabulary=target_vocabulary)
-m.cuda()
-m.iter = 0
+    print(path)
+    with open(path, 'rb') as h:
+        r = dill.load(h)
+
+    fe = r.recognitionModel.featureExtractor
+
+    extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
 
 
-t = time.time()
-for i in range(int(args.num_training_programs/args.batchsize)):
+    input_vocabularies = [list(string.printable[:-4]) + ['EOE'], string.printable[:-4]]
+    target_vocabulary = [str(p) for p in g.primitives] + extras
 
-    #inps, tgts = makeBatch(batchsize)
+    m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
+                                target_vocabulary=target_vocabulary)
+    m.cuda()
+    m.iter = 0
 
-    batch = [getDatum(4) for _ in range(batchsize)]
-    inputs, targets = zip(*batch)
 
-    score, syntax_score = m.optimiser_step(inputs,targets) #syntax or not, idk
-    m.iter += 1
+    t = time.time()
+    for i in range(int(args.num_training_programs/args.batchsize)):
 
+        batch = [getDatum(4) for _ in range(batchsize)]
+        inputs, targets = zip(*batch)
+
+        score, syntax_score = m.optimiser_step(inputs,targets) #syntax or not, idk
+        m.iter += 1
+
+<<<<<<< HEAD
     print(f"total time: {time.time() - t}, total num ex processed: {(i+1)*batchsize}, avg time per ex: {(time.time() - t)/((i+1)*batchsize)}, score: {score}", flush=True)
 
     if i%args.save_freq==0:
