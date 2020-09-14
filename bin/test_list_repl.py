@@ -4,8 +4,8 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 import shutil
-import sys
-sys.path.append('/afs/csail.mit.edu/u/m/mlbowers/clones') # needed for tmux sudo workaround
+import sys,os
+import glob
 
 import hydra
 from hydra import utils
@@ -27,6 +27,7 @@ from dreamcoder.domains.tower.towerPrimitives import *
 import itertools
 import torch
 import numpy as np
+import random
 
 from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 from dreamcoder.domains.list.main import ListFeatureExtractor
@@ -53,6 +54,11 @@ class FakeRecognitionModel(nn.Module):
     #     return torch.load
 
 class Poisoned: pass
+
+def window_avg(window):
+    window = list(filter(lambda x: x is not None, window))
+    return sum(window)/len(window)
+
 class State:
     def __init__(self):
         self.no_pickle = []
@@ -68,6 +74,9 @@ class State:
     def new(self,cfg):
         self.cwd = os.getcwd()
         allowed_requests = None if cfg.data.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
+        self.name = cfg.name
+        if cfg.prefix is not None:
+            self.name = cfg.prefix + '.' + self.name
 
         taskloader = DeepcoderTaskloader(
             utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_train_perm.txt'),
@@ -135,6 +144,11 @@ class State:
         astar = Astar(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
         j=0
         frontiers = None
+
+        loss_window = 1
+        plosses = [None]*loss_window
+        vlosses = [None]*loss_window
+
         self.update(locals()) # do self.* = * for everything
         self.post_load()
     
@@ -165,16 +179,32 @@ class State:
     def post_load(self):
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
+        self.init_tensorboard()
+    def init_tensorboard(self):
         print("intializing tensorboard")
-        w = SummaryWriter(
-            log_dir='tb',
-            max_queue=10,
+        self.w = SummaryWriter(
+            log_dir=self.name,
+            max_queue=1,
         )
+        print("writer for",self.name)
         print("done")
         self.no_pickle.append('w')
-        self.update(locals())
-        
+    def rename(self,name):
+        if self.name == name:
+            return
+        old_name = self.name
+        self.name = name
 
+        # shut down tensorboard since it was using the old name
+        if hasattr(self,w) and self.w is not Poisoned:
+            self.w.flush()
+            self.w.close()
+            del self.w
+
+        # move old tensorboard files
+        os.rename(old_name,self.name)
+        
+        self.init_tensorboard() # reboot tensorboard
     def __getitem__(self,key):
         return getattr(self,key)
     def __setitem__(self,key,val):
@@ -204,6 +234,9 @@ def train_model(
     astar,
     test_tasks,
     validation_frontiers,
+    loss_window,
+    vlosses,
+    plosses,
     frontiers=None,
     best_validation_loss=np.inf,
     j=0,
@@ -233,6 +266,10 @@ def train_model(
             ploss = phead.policyLossFromFrontier(f, g)
             loss = vloss + ploss
             loss.backward()
+
+            # for printing later
+            plosses[j % loss_window] = ploss.item()
+            vlosses[j % loss_window] = vloss.item()
             optimizer.step()
 
             mlb.freezer('pause')
@@ -241,12 +278,20 @@ def train_model(
                 return
             if mlb.predicate('which'):
                 which(cfg)
+            if mlb.predicate('rename'):
+                name = input('Enter new name:')
+                state.rename(name)
+                # VERY important to do this:
+                w = state.w
+                name = state.name
 
             # printing and logging
             if j % cfg.loop.print_every == 0:
-                for head,loss in zip([vhead,phead],[vloss,ploss]): # important that the right things zip together (both lists ordered same way)
-                    print(f"[{j}] {head.__class__.__name__} {loss.item()}")
-                    w.add_scalar(head.__class__.__name__, loss.item(), j)
+                vloss_avg = window_avg(vlosses)
+                ploss_avg = window_avg(plosses)
+                for head,loss in zip([vhead,phead],[vloss_avg,ploss_avg]): # important that the right things zip together (both lists ordered same way)
+                    print(f"[{j}] {head.__class__.__name__} {loss}")
+                    w.add_scalar(head.__class__.__name__, loss, j)
                 print()
                 w.flush()
 
@@ -270,12 +315,15 @@ def train_model(
                     w.add_scalar(head.__class__.__name__+' Validation Loss', loss.item(), j)
 
                 # test on valid set
-                for head in heads:
-                    head.eval()
-                model_results = test_models([astar], validation_frontiers, g, timeout=cfg.loop.timeout, verbose=True)
-                accuracy = len(model_results[0].search_results) / len(validation_frontiers) * 100
-                w.add_scalar(head.__class__.__name__+' Validation Accuracy', accuracy, j)
-                plot_model_results(model_results, file='validation', salt=j)
+                if cfg.loop.search_valid:
+                    for head in heads:
+                        head.eval()
+                    model_results = test_models([astar], validation_frontiers, g, timeout=cfg.loop.timeout, verbose=True)
+                    accuracy = len(model_results[0].search_results) / len(validation_frontiers) * 100
+                    w.add_scalar(head.__class__.__name__+' Validation Accuracy', accuracy, j)
+                    plot_model_results(model_results, file='validation', salt=j)
+                else:
+                    accuracy = None
 
                 # save model if new record for lowest validation loss
                 val_loss = (vloss+ploss).item()
@@ -284,7 +332,8 @@ def train_model(
                     state.save(locals(),'best_validation')
                     mlb.green('new lowest validation loss!')
                     w.add_scalar(head.__class__.__name__+' Validation Loss (best)', loss, j)
-                    w.add_scalar(head.__class__.__name__+' Validation Accuracy (best)', accuracy, j)
+                    if accuracy is not None:
+                        w.add_scalar(head.__class__.__name__+' Validation Accuracy (best)', accuracy, j)
 
                 tstart = time.time()
             if mlb.predicate('test'):
@@ -472,20 +521,64 @@ def cleanup():
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
-    if cfg.verbose:
+    if cfg.debug.verbose:
         mlb.set_verbose()
 
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     cleanup()
     
-    with mlb.debug(do_debug=cfg.mlb_debug):
+    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=(lambda: which(state.cfg))):
+        if cfg.mode == 'cmd':
+            mlb.purple("Entered cmd mode")
+            os.chdir(utils.to_absolute_path(f'outputs/'))
+            print('chdir to outputs/')
+            if not os.path.isdir('../outputs_trash'):
+                os.mkdir('../outputs_trash')
+            results = None
+            while True: # exit with ctrl-D
+                try:
+                    line = input('>>> ').strip()
+                except EOFError:
+                    return
+                [cmd, *args] = line.split(' ')
+                args_line = ' '.join(args)
+
+                def glob_all(args):
+                    for predicate in [arg for arg in args if '=' in arg]:
+                        lhs,rhs = predicate.split('=')
+                        raise NotImplementedError
+                    results = []
+                    for arg in args:
+                        results.extend(glob.glob(f'**/*{arg}*',recursive=True))
+                    results = sorted(results)
+                    return results
+
+                if cmd == 'list':
+                    results = glob_all(args)
+                    for result in results:
+                        print(result)
+                if cmd == 'delete':
+                    if len(args) == 0 and result is not None and len(result) > 0:
+                        print("deleting result of previous `list` command")
+                    else:
+                        results = glob_all(args)
+                        if len(results) == 0:
+                            print('glob returned no files to delete')
+                            continue
+
+                    for result in results:
+                        dir = os.path.dirname(result)
+                        dir = utils.to_absolute_path(f'outputs_trash/{dir}')
+                        os.makedirs(dir,exist_ok=True)
+                        os.rename(result,dir+'/'+os.path.basename(result))
+                        print(f'moved {result} -> {dir}')
         with torch.cuda.device(cfg.device):
             state = State()
             print_overrides = []
             if cfg.load is None:
                 print("no file to load from, creating new state...")
                 state.new(cfg=cfg)
-            elif cfg.mode != 'plot':
+            elif cfg.load is not None and cfg.mode not in ['plot']:
                 #HydraConfig.instance().set_config(cfg)
                 print(f"loading from outputs/{cfg.load}...")
                 state.load(
@@ -509,9 +602,24 @@ def hydra_main(cfg):
                         
             print()
             which(state.cfg) # TODO idk maybe you wanna print state.cfg instead. Maybe we should do cfg=state.cfg?
+
             for string in print_overrides: # just want this to print after the big wall of yaml
                 mlb.purple(string)
+            
+            if state.cfg.seed is not None:
+                print("Setting evaluation to deterministic (roughly) and seeding RNG")
+                torch.manual_seed(state.cfg.seed)
+                # warning: these may slow down your model
+                torch.backends.cudnn.deterministic = True
+                torch.backends.cudnn.benchmark = False
+                np.random.seed(state.cfg.seed)
+                random.seed(state.cfg.seed)
+            
             mlb.yellow("===START===")
+
+            if cfg.print:
+                print("cfg.print was set, aborting...")
+                return
 
             # big switch statement over cfg.mode
             if cfg.mode == 'resume':

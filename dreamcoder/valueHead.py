@@ -765,6 +765,7 @@ class ListREPLValueHead(BaseValueHead):
         else:
             print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
 
+        self.cfg = cfg
         self.canonicalOrdering = canonicalOrdering
         self.featureExtractor = extractor
         self.allow_concrete_eval = allow_concrete_eval
@@ -787,6 +788,7 @@ class ListREPLValueHead(BaseValueHead):
             self.holeModules[tp.show(True)] = NM(0, H)
 
         self.compareModule = NM(2, H)
+        self.indexModule = NM(0, H)
 
         self._distance = nn.Sequential(
                 nn.Linear(extractor.outputDimensionality + H, H),
@@ -826,26 +828,50 @@ class ListREPLValueHead(BaseValueHead):
                 # hole could have a program input as a subtree so lets pass in extractor(taskinputs)
                 # we use ignore_output=True to delete the outputs of each example
                 arg = self.featureExtractor.inputFeatures(task)
-                return holeModule(arg).expand(len(task.examples),-1)
+                if self.cfg.debug.zero_input_feats:
+                    arg = torch.zeros_like(arg)
+                res = holeModule(arg)
+                return res
             assert holeModule.nArgs == 0
             return holeModule().expand(len(task.examples),-1)
 
         # if a node has no holes, evalute it concretely
         if not sk.hasHoles and self.allow_concrete_eval:
             try:
-                res = [sk.evaluate(ctx) for ctx in ctxs] # will this work? we'll see
+                res = [sk.evaluate(ctx) for ctx in ctxs]
             except (ZeroDivisionError,FloatingPointError):
                 raise InvalidSketchError
-            if (num:=max([max(output,default=0) for output in res]))  > 99 or (num:=min([min(output,default=0) for output in res])) < -99:
-                mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {num}')
-                raise InvalidSketchError
+            if isinstance(res[0],(int,np.integer)):
+                if (num:=max(res)) > 99 or (num:=min(res)) < -99:
+                    mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {num}')
+                    raise InvalidSketchError
+            if isinstance(res[0],list):
+                if (num:=max([max(output,default=0) for output in res]))  > 99 or (num:=min([min(output,default=0) for output in res])) < -99:
+                    mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {num}')
+                    raise InvalidSketchError
+            if sk.size() > 1:
+                #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
+                pass
             return res
         
         if not sk.isApplication:
             # only happens when concrete eval is turned off
-            # in which case constants and indexes can show up here
+            # in which case constants (eg functions like _half) and indexes can show up here
             assert not self.allow_concrete_eval
             assert sk.isPrimitive or sk.isIndex
+
+            if sk.isPrimitive and callable(sk.value):
+                # primitive function!
+                return [sk.value for _ in range(len(task.examples))]
+            if sk.isIndex:
+                assert sk.i == 0
+                mode = self.cfg.model.encode_index_as
+                if mode == 'inputs':
+                    return self.featureExtractor.inputFeatures(task)
+                elif mode == 'constant':
+                    return self.indexModule().expand(len(task.examples),-1)
+                else:
+                    raise ValueError
             raise NotImplementedError
 
         # sk is an Application
@@ -856,7 +882,9 @@ class ListREPLValueHead(BaseValueHead):
         for i,rep in enumerate(reps):
             if not torch.is_tensor(rep):
                 # encode concrete values
-                reps[i] = self.featureExtractor.encodeValue(rep).expand(len(task.examples),-1)
+                reps[i] = self.featureExtractor.encodeValue(rep)
+                if self.cfg.debug.zero_concrete_eval:
+                    reps[i] = torch.zeros_like(reps[i])
         # rep :: [num_exs,H]
 
         if fn.isAbstraction:
@@ -884,11 +912,27 @@ class ListREPLValueHead(BaseValueHead):
 
         output_feats = self.featureExtractor.outputFeatures(task)
         output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
+        if self.cfg.debug.zero_output_feats:
+            output_feats = torch.zeros_like(output_feats)
 
         sk_reps = torch.stack([self.rep(sk,task,None) for sk in sks]) # [num_sketches,num_exs,H]
+
+        if self.cfg.debug.zero_sk:
+            sk_reps = torch.zeros_like(sk_reps)
+
         compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
 
         compared = self.compareModule(compare_input) # [num_sketches,num_exs,H]
+
+        if self.cfg.debug.channel and not self.cfg.debug.zero_output_feats:
+            # check for mixing between sketches
+            x = torch.autograd.grad(
+                outputs=compared[0].sum(),
+                inputs=[output_feats])[0]
+            assert x[0].sum() != 0
+            assert x[1:].sum() == 0
+            print(x)
+
         if reduce == 'max':
             compared = compared.max(1).values
         elif reduce == 'mean':

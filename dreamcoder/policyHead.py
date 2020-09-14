@@ -142,7 +142,7 @@ class NeuralPolicyHead(nn.Module):
             mlb.log(f'\t\thole={hole}')
             mlb.log(f'\t\ttarget={target}')
 
-        maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g) #TODO
+        maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
         
         # maskedDist :: [5,49]
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
@@ -195,6 +195,7 @@ class RNNPolicyHead(NeuralPolicyHead):
             canonicalOrdering = cfg.model.canonicalOrdering
         else:
             print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+        self.cfg = cfg
         self.use_cuda = cuda
         self.featureExtractor = extractor
         self.H = H
@@ -237,10 +238,19 @@ class RNNPolicyHead(NeuralPolicyHead):
             # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
         sketchEncodings = self.vhead._encodeSketches(sketches) # [5,64]
         if self.featureExtractor.digitwise:
+            # input feats
             in_feats = self.featureExtractor.inputFeatures(task)
             in_feats = in_feats.mean(0) # mean over examples
+            if self.cfg.debug.zero_input_feats:
+                in_feats = torch.zeros_like(in_feats)
+
+            # output feats
             out_feats = self.featureExtractor.outputFeatures(task)
             out_feats = out_feats.mean(0) # mean over examples
+            if self.cfg.debug.zero_output_feats:
+                out_feats = torch.zeros_like(out_feats)
+            
+            # combine them
             features = torch.cat((in_feats,out_feats),dim=0) # shape [H*2]
         else:
             features = self.featureExtractor.featuresOfTask(task) 
@@ -262,6 +272,8 @@ class ListREPLPolicyHead(NeuralPolicyHead):
             canonicalOrdering = cfg.model.canonicalOrdering
         else:
             print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+        
+        self.cfg = cfg
 
         self.use_cuda = cuda
         self.featureExtractor = extractor

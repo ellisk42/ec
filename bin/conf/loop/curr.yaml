@@ -1,7 +1,8 @@
 # @package _group_
-test_every: null
-save_every: 500
-print_every: 100
+test_every: 200
+search_valid: False
+save_every: 1000
+print_every: 200
 max_steps: null
 #num_mini_tests: 10
 timeout: 3

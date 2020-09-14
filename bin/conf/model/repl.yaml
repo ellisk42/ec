@@ -1,7 +1,8 @@
 # @package _group_
 type: repl
 H: 64
-allow_concrete_eval: True
+allow_concrete_eval: False
+encode_index_as: constant # inputs | constant
 tied: True
 value: False # dummy will be used
 policy: True
