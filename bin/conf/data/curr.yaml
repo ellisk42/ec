@@ -9,3 +9,5 @@ valid_frac: .8
 allow_complex_requests: False
 expressive_lambdas: False
 lambda_depth: 2
+buf_size: 500
+num_mutated_tasks: 10

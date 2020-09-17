@@ -1,5 +1,7 @@
 # generate deepcoder data
 import sys
+import mlb
+import numpy as np
 import os
 #import mlb
 import contextlib
@@ -101,6 +103,8 @@ def task_of_line(line, N=5, L=10, V=63):
 _pp = deepcoderPrimitivesPlusPlus()
 prims_pp = {prim.name:prim for prim in _pp}
 g_pp = Grammar.uniform(_pp)
+for name,prim in prims_pp.items():
+    Primitive.GLOBALS[name] = prim # so Program.parse() etc will use it
 
 class ToPlusPlusVisitor:
     def __init__(self):
@@ -162,37 +166,192 @@ def get_primitive(app):
 #     def abstraction(self,e):
 #         return Abstraction(e.body.visit(self))
 
-def verify_tree(e):
+
+
+def has_index(e, i):
     if e.isIndex:
-        return True
+        if i is None:
+            return True
+        return e.i == i # true if the index is right else false
     if e.isPrimitive:
         return False
+    if e.isAbstraction:
+        return has_index(e.body,i)
+    if e.isApplication:
+        return has_index(e.f,i) or has_index(e.x,i)
+    assert False
+
+def is_constant(e):
+    return e.isPrimitive and e.value in list(range(-10,10))
+
+def insert_index(e,i):
+    """
+    Replaces a single numeric constant in the tree with an index (uniformly)
+    Note that this constant will always be an argument to an application (by nature of the DSL)
+    Also note that this recurses into Abstractions directly without incrementing i or anything like that
+
+    Logic:
+        - count number of constants in e
+        - traverse e (in any order) and each time you see a new constant replace it with an index
+            with probability (1/unseen_constants). This will end up being a uniform distribution.
+    """
+    num_constants = count_constants(e)
+    if num_constants == 0:
+        raise InvalidSketchError
+    unseen_constants = num_constants # reamining_constants will be a shared nonlocal value
+
+    def helper(e): # recursive helper
+        nonlocal unseen_constants
+        assert unseen_constants > 0
+        if e.isIndex or e.isPrimitive:
+            return False # ignore these. Note that the primitive constant case is handled by the abtraction or application above it.
+        assert e.isApplication or e.isAbstraction
+        if e.isAbstraction and not is_constant(e.body):
+            return helper(e.body) # simply recurse on body
+        elif e.isApplication and not is_constant(e.x):
+            return helper(e.f) or helper(e.x) # note that actually both f and x can be complicated subtrees so we must recurse on both
+
+        # we found a constant! Now let's flip a weighted coin
+        if random.random() <= 1 - (1/unseen_constants):
+            # 1/unseen_constants is the probability that we accept. This if-branch is the rejection branch.
+            unseen_constants -= 1 # we've seen a new constant
+            if e.isApplication:
+                return helper(e.f) # still need to recurse on f, though e.x and e.body are clearly constants so no recursion needed
+            return # no need to recurse, everything around us is constants
+        
+        # we're changing the constant!
+        if e.isAbstraction:
+            e.body = Index(i)
+        else:
+            e.x = Index(i)
+        unseen_constants = None # ensure an error if we do anything other than recursing all the way out
+        return True
+    
+    success = helper(e)
+    assert success
+    assert count_constants(e) == num_constants-1
+    assert has_index(e,i)
+
+
+def count_constants(e):
+    if e.isIndex:
+        return 0
+    elif e.isPrimitive:
+        if is_constant(e):
+            return 1
+        return 0
+    elif e.isAbstraction:
+        return count_constants(e.body)
+    elif e.isApplication:
+        return count_constants(e.f) + count_constants(e.x)
+    else:
+        raise ValueError
+
+def verify_tree(e):
+    """
+    verifies that a Program has:
+        - for each lambda, there's an index in the subtree (we don't actually check the index number)
+        - we also handle (lambda (lambda ...)) must contain both $0 and $1
+            - note we specifically handle this exact case where the body of the outer abstraction is itself an abstraction, it wont work
+                for any more complicated ways of nesting lambdas. The entire body of the first lambda must be the second.
+
+    """
+    if e.isIndex:
+        return
+    if e.isPrimitive:
+        return
     if e.isAbstraction:
         # all abstractions need to use their variable somewhere
         # this handles both lambdas like those that are passed to MAP
         # as well as top level lambdas (tho those should already be fine)
-        if not verify_tree(e.body):
-            raise NeedsIndexException()
-        if e.body.isIndex: # the identity function:(
-            raise NeedsIndexException()
-        return True # body verified so we can return True
+        if not has_index(e,0):
+            insert_index(e,0)
+        if e.body.isAbstraction: # lambda( lambda( ...))
+            if not has_index(e,1):
+                insert_index(e,1)
+        if e.body.isIndex: # the identity lambda function
+            raise InvalidSketchError()
+        verify_tree(e.body)
+        return
     if e.isApplication:
-        verified = verify_tree(e.f) or verify_tree(e.x)
-        # XXX commenting this out bc it's broken
+        #f,xs = e.applicationParse()
+        verify_tree(e.f)
+        verify_tree(e.x)
         #prim = get_primitive(e)
         # if prim.name in ['MIN','MAX','>','DIVISIBLE','AND','OR']:
         #     # these primitives must have a $0 in their subtree
         #     if not verified:
         #         raise NeedsIndexException()
-        return verified
+
+        return
     assert False
 
-class NeedsIndexException(Exception): pass
+
+def check_in_range(res):
+    """
+    check if all the values in a len(num_examples) list of values (eg ints or int lists) are within the range -99,99.
+    Raises an InvalidSketchError if this is not the case
+    """
+    if isinstance(res,(int,np.integer)):
+        if res > 99 or res < -99:
+            mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {res}')
+            raise InvalidSketchError
+    if isinstance(res,(list,tuple)):
+        if len(res) == 0:
+            return
+        assert not isinstance(res[0],(list,tuple)), "check_in_range should not be used examplewise"
+        maxx = max(res)
+        minn = min(res)
+        if maxx > 99 or minn < -99:
+            mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: list min={minn}; list max={maxx}')
+            raise InvalidSketchError
+
+
+def ctxs_of_examples(examples):
+    """
+    convert task.examples to a list of contexts that evaluate() will take
+    """
+    inputs = [ex[0] for ex in examples] # nested list w shape (num_examples,argc)
+    ctxs = tuple([list(reversed(args)) for args in inputs])
+    return ctxs
+
+def strip_lambdas(sk):
+    i = 0
+    while sk.isAbstraction:
+        sk = sk.body
+        i += 1
+    return sk,i
+    
+def evaluate_ctxs(e, ctxs):
+    """
+    evaluate multiple contexts (e.g. all examples)
+    """
+    try:
+        res = [evaluate(e,ctx) for ctx in ctxs]
+    except (ZeroDivisionError,FloatingPointError):
+        raise InvalidSketchError
+    return res
+
+def evaluate(e, ctx):
+    """
+    like Program.evaluate() but calls check_in_range() on each intermediate result
+    """
+    if e.isIndex:
+        res = ctx[e.i]
+    elif e.isAbstraction:
+        res = lambda x: evaluate(e.body,[x] + ctx)
+    elif e.isPrimitive:
+        res = e.value
+    elif e.isApplication:
+        res = evaluate(e.f,ctx)(evaluate(e.x,ctx))
+    else:
+        assert False, "should never happen"
+    check_in_range(res) # may raise InvalidSketchError
+    return res
+
+
 class InvalidSketchError(Exception): pass
 
-class FakeVHead:
-    allow_concrete_eval=True
-fake_vhead = FakeVHead()
 
 def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
     assert mutate
@@ -211,21 +370,26 @@ def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
         sampled = g_lambdas.sampleFromSketch(arrow(tlist(tint), tlist(tint)), program_plus_plus, maximumDepth = 20) # this max depth wont be hit bc of Grammar.max_hole_depth
         try:
             verify_tree(sampled)
-        except NeedsIndexException:
-            #print(f"rejecting {sampled}, resampling...")
+        except InvalidSketchError:
+            #print(f"rejecting {sampled} bc missing index or has (lambda $0) identity")
             continue # rejection sample
-        #inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
-        #ctxs = tuple([list(reversed(args)) for args in inputs])
 
         # calculate correct outputs for inputs now that we've modified the program
         assert not sampled.hasHoles
+        ctxs = ctxs_of_examples(task.examples)
         try:
-            outputs = valueHead.ListREPLValueHead.rep(fake_vhead, sampled, task, None)
+            #outputs = valueHead.ListREPLValueHead.rep(fake_vhead, sampled, task, None)
+            stripped,num_lambdas = strip_lambdas(sampled)
+            assert len(ctxs[0]) == num_lambdas, "Mismatch between num args passed in and num lambda abstractions"
+            outputs = evaluate_ctxs(stripped,ctxs)
         except InvalidSketchError:
+            #print(f"rejecting {sampled} bc out of range values or zero division")
             continue # e.g. division by zero during concrete eval
+
 
         # check if its a constant function (output same for any input)
         if all([output == outputs[0] for output in outputs[1:]]):
+            #print(f"rejecting {sampled} bc output is constant")
             continue # rejection sample
 
         # check for really large or small numbers
@@ -236,6 +400,7 @@ def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
         if task.request == arrow(tlist(tint),tlist(tint)):
             # note ex is an input,output tuple, ex[0] is the tuple of input arguments which is a singleton list in this case so we do ex[0][0] to get the actual [int] input
             if all([ex[0][0] == output for ex,output in zip(task.examples,outputs)]):
+                #print(f"rejecting {sampled} bc it's the identity function")
                 continue # rejection sample
         
 
@@ -255,62 +420,66 @@ def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
     return res
 
 class DeepcoderTaskloader:
-    def __init__(self,file,allowed_requests,N=5,L=10,V=63,repeat=False,num_tasks=None, num_mutated_tasks=10, expressive_lambdas=False, lambda_depth = 3):
-        self.buf = [] # buffer of (program,task) tuples
+    def __init__(self,file,allowed_requests,N=5,L=10,V=63,buf_size=500,repeat=False,num_tasks=None, num_mutated_tasks=10, expressive_lambdas=False, lambda_depth = 3):
         self.file = file
         self.allowed_requests = allowed_requests
         self.N = N
         self.num_mutated_tasks = num_mutated_tasks
         self.L = L
         self.V = V
+        self.buf_size = buf_size
         self.expressive_lambdas = expressive_lambdas
         self.lambda_depth = lambda_depth
         self.repeat = repeat
         self.num_tasks = num_tasks
-        self.eof = False
+
+        self.buf = [] # buffer of (program,task) tuples
         with open(self.file,'r') as f:
             f.readline() # skip first line of file
             self.offset_in_file = f.tell()
             self.file_start = self.offset_in_file
         
+        # make a lambda grammar to sample lambdas from
         _lambdas = get_lambdas()
         g_lambdas = Grammar.uniform(_lambdas)
         g_lambdas.max_hole_depth = self.lambda_depth
         self.g_lambdas = g_lambdas
 
-
     def reloadBuffer(self):
         assert len(self.buf) == 0
         with open(self.file,'r') as f:
             f.seek(self.offset_in_file) # pick up where we left off
-            # note we can't use next(f) as this disables f.tell(), so we do f.readline()
             while True:
-                if len(self.buf) >= 500:
-                    break
-                line = f.readline().rstrip()
-                if line == '': # readline never errors out, it returns empty string on EOF
-                    if not self.repeat:
-                        self.eof = True
-                        return # only paritally filled the buffer
-                    f.seek(self.file_start) # repeat
-                    continue
-                program,task = task_of_line(line,N=self.N,L=self.L,V=self.V)
-                if program is None: continue
-                if self.allowed_requests is not None and task.request not in self.allowed_requests: continue
-                if self.expressive_lambdas:
-                    programs_tasks = convert_to_deepcoder_plus_plus(program,task, g_lambdas=self.g_lambdas, n=self.num_mutated_tasks)
-                    self.buf.extend(programs_tasks)
-                else:
-                    self.buf.append((program,task))
-                if self.num_tasks and len(self.buf) % self.num_tasks == 0:
-                    assert len(self.buf) != 0
-                    f.seek(self.file_start) # this should always
-            self.offset_in_file = f.tell()
+                try:
+                    if len(self.buf) >= self.buf_size:
+                        return # we've filled our buffer
+                    # note we can't use next(f) as this disables f.tell(), so we do f.readline()
+                    line = f.readline().rstrip()
+                    if line == '': # readline never errors out, it returns empty string on EOF
+                        if not self.repeat:
+                            raise EOFError
+                        f.seek(self.file_start) # repeat
+                        continue
+                    program,task = task_of_line(line,N=self.N,L=self.L,V=self.V)
+                    if program is None:
+                        continue
+                    if self.allowed_requests is not None and task.request not in self.allowed_requests:
+                        continue
+                    if all([ex[0] == task.examples[0][0] for ex in task.examples]):
+                        continue # for some reason this happens sometimes (all inputs are the same)
+                    if self.expressive_lambdas:
+                        programs_tasks = convert_to_deepcoder_plus_plus(program,task, g_lambdas=self.g_lambdas, n=self.num_mutated_tasks)
+                        self.buf.extend(programs_tasks) # this may exceed buf_len and that's ok
+                    else:
+                        self.buf.append((program,task))
+                    if self.num_tasks is not None and len(self.buf) % self.num_tasks == 0:
+                        assert len(self.buf) != 0
+                        f.seek(self.file_start)
+                finally:
+                    self.offset_in_file = f.tell()
     def getTask(self):
         if len(self.buf) == 0:
-            if self.eof:
-                raise EOFError
-            self.reloadBuffer()
+            self.reloadBuffer() # may raise EOFError
         return self.buf.pop()
     def getTasks(self, n, ignore_eof=False):
         ret = []

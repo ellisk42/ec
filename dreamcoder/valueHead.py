@@ -22,7 +22,8 @@ import types
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
-from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
+#from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError,check_in_range,evaluate_ctxs,ctxs_of_examples, strip_lambdas, has_index
+from dreamcoder.domains.list.makeDeepcoderData import *
 
 
 class computeValueError(Exception):
@@ -787,6 +788,13 @@ class ListREPLValueHead(BaseValueHead):
 
         self.compareModule = NM(2, H)
         self.indexModule = NM(0, H)
+        self.lambdaIndexModules = nn.ModuleList([NM(0,H) for _ in range(2)])
+
+        self.lambdaHoleModules = nn.ModuleDict()
+        for tp in [tint,tbool]:
+            self.lambdaHoleModules[tp.show(True)] = NM(0, H)
+
+
 
         self._distance = nn.Sequential(
                 nn.Linear(extractor.outputDimensionality + H, H),
@@ -796,7 +804,7 @@ class ListREPLValueHead(BaseValueHead):
 
         self.concrete_count = defaultdict(int)
 
-    def rep(self,sk,task,ctxs):
+    def rep(self,sk,task,ctxs, in_lambda):
         """
         ctxs :: a list of tuples. The outer list iterates over examples, and the
             inner tuple is a context where the 0th thing is the value of $0 etc.
@@ -812,17 +820,18 @@ class ListREPLValueHead(BaseValueHead):
         # first, if this was called at the top level (ctx=0),
         # we clear out as many abstractions as there are top level inputs
         if ctxs is None: # pull initial context out of the task inputs
-            inputs = [ex[0] for ex in task.examples] # nested list w shape (num_examples,argc)
-            ctxs = tuple([list(reversed(args)) for args in inputs])
-            i = 0
-            while sk.isAbstraction:
-                sk = sk.body
-                i += 1
-            assert len(ctxs[0]) == i, "Mismatch between num args passed in and num lambda abstractions"
+            assert not in_lambda
+            ctxs = ctxs_of_examples(task.examples)
+            sk,num_lambdas = strip_lambdas(sk)
+            assert len(ctxs[0]) == num_lambdas, "Mismatch between num args passed in and num lambda abstractions"
 
 
         # if a node is a hole, encode it
         if sk.isHole:
+            if in_lambda:
+                holeModule = self.lambdaHoleModules[sk.tp.show(True)]
+                res = holeModule().expand(len(task.examples),-1)
+                return res
             holeModule = self.holeModules[sk.tp.show(True)]
             if holeModule.nArgs == 1:
                 # hole could have a program input as a subtree so lets pass in extractor(taskinputs)
@@ -837,48 +846,55 @@ class ListREPLValueHead(BaseValueHead):
 
         # if a node has no holes, evalute it concretely
         if not sk.hasHoles and self.allow_concrete_eval:
-            try:
-                res = [sk.evaluate(ctx) for ctx in ctxs]
-            except (ZeroDivisionError,FloatingPointError):
-                raise InvalidSketchError
-            if isinstance(res[0],(int,np.integer)):
-                if (num:=max(res)) > 99 or (num:=min(res)) < -99:
-                    mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {num}')
-                    raise InvalidSketchError
-            if isinstance(res[0],list):
-                if (num:=max([max(output,default=0) for output in res]))  > 99 or (num:=min([min(output,default=0) for output in res])) < -99:
-                    mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {num}')
-                    raise InvalidSketchError
-            if sk.size() > 1:
-                #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
-                self.concrete_count[task] += sk.size()
-            return res
+            if not (in_lambda and has_index(sk,None)):
+                # we dont run this if we're inside a lambda and we contain an index
+                # since those can't be concrete evaluated in a lambda
+                res = evaluate_ctxs(sk,ctxs)
+                if sk.size() > 1 and hasattr(self,'concrete_count'):
+                    #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
+                    self.concrete_count[task] += sk.size()
+                return res
         
-        if not sk.isApplication:
+        # primitive like HALF
+        if sk.isPrimitive:
             # only happens when concrete eval is turned off
-            # in which case constants (eg functions like _half) and indexes can show up here
-            assert not self.allow_concrete_eval
-            assert sk.isPrimitive or sk.isIndex
+            # in which case constants (eg functions like _half) can show up here
+            assert not self.allow_concrete_eval or in_lambda
+            assert callable(sk.value)
+            return [sk.value for _ in range(len(task.examples))]
 
-            if sk.isPrimitive and callable(sk.value):
-                # primitive function!
-                return [sk.value for _ in range(len(task.examples))]
-            if sk.isIndex:
+        # index like $0
+        if sk.isIndex:
+            if in_lambda:
+                assert sk.i != 2
+                res = self.lambdaIndexModules[sk.i]().expand(len(task.examples),-1)
+                return res
+            # not in lambda
+            assert not self.allow_concrete_eval
+            assert sk.i == 0 # just bc im not being careful of other cases and I wanna know when they show up
+            mode = self.cfg.model.encode_index_as
+            if mode == 'inputs':
+                return self.featureExtractor.inputFeatures(task)
+            elif mode == 'constant':
                 assert sk.i == 0
-                mode = self.cfg.model.encode_index_as
-                if mode == 'inputs':
-                    return self.featureExtractor.inputFeatures(task)
-                elif mode == 'constant':
-                    return self.indexModule().expand(len(task.examples),-1)
-                else:
-                    raise ValueError
-            raise NotImplementedError
+                return self.indexModule().expand(len(task.examples),-1)
+            else:
+                raise ValueError
+
+        if sk.isAbstraction:
+            # deepcoder++ only
+            assert self.cfg.data.expressive_lambdas
+            assert not in_lambda, "nested lambda should never happen"
+            sk,i = strip_lambdas(sk)
+            assert i <= 2
+            return self.rep(sk,task,ctxs,in_lambda=True)
+            
 
         # sk is an Application
         fn, args = sk.applicationParse()
         assert len(args) > 0
         # recurse on children
-        reps = [self.rep(arg,task,ctxs) for arg in args]
+        reps = [self.rep(arg,task,ctxs,in_lambda) for arg in args]
         for i,rep in enumerate(reps):
             if not torch.is_tensor(rep):
                 # encode concrete values
@@ -888,6 +904,8 @@ class ListREPLValueHead(BaseValueHead):
         # rep :: [num_exs,H]
 
         if fn.isAbstraction:
+            assert False
+            ## note this wont even show up with deepcocder++ lambdas bc theyre always simply arguments to higher order functions like MAP
             # never the case in vanilla deepcoder
             # note that we only ever approach abstractions from this higher level of
             # the applicationParse so that we already know what args it takes
@@ -915,7 +933,7 @@ class ListREPLValueHead(BaseValueHead):
         if self.cfg.debug.zero_output_feats:
             output_feats = torch.zeros_like(output_feats)
 
-        sk_reps = torch.stack([self.rep(sk,task,None) for sk in sks]) # [num_sketches,num_exs,H]
+        sk_reps = torch.stack([self.rep(sk,task,None,False) for sk in sks]) # [num_sketches,num_exs,H]
         total_size = sum([sk.size() for sk in sks])
         concrete_ratio = self.concrete_count[task]/total_size
         #print(f"concrete ratio: {concrete_ratio:.3f}")

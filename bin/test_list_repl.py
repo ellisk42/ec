@@ -13,6 +13,7 @@ from omegaconf import DictConfig,OmegaConf,open_dict
 import omegaconf
 from datetime import datetime
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
 import argparse
 from dreamcoder.grammar import *
@@ -85,6 +86,8 @@ class State:
             num_tasks=cfg.data.num_tasks,
             expressive_lambdas=cfg.data.expressive_lambdas,
             lambda_depth=cfg.data.lambda_depth,
+            buf_size=cfg.data.buf_size,
+            num_mutated_tasks=cfg.data.num_mutated_tasks,
             )
         testloader = DeepcoderTaskloader(
             utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_test_perm.txt'),
@@ -93,6 +96,8 @@ class State:
             num_tasks=None,
             expressive_lambdas=cfg.data.expressive_lambdas,
             lambda_depth=cfg.data.lambda_depth,
+            buf_size=cfg.data.buf_size,
+            num_mutated_tasks=cfg.data.num_mutated_tasks,
             )
 
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = taskloader.L+2)
@@ -132,9 +137,18 @@ class State:
 
         heads = [vhead,phead]
 
+
         if cfg.cuda:
             heads = [h.cuda() for h in heads]
 
+        # TEMP
+        # prog = Program.parse('(lambda (MAP (lambda (+ 1 $0)) $0))')
+        # f = FakeFrontier(prog, test_tasks[0][1])
+        # phead.policyLossFromFrontier(f,g)
+        # for f in test_tasks:
+        #     phead.policyLossFromFrontier(f,g)
+        #     print(f"ran on {f._fullProg}")
+        #     print()
 
         max_depth = 10
 
@@ -248,7 +262,7 @@ def train_model(
     while True:
         # TODO you should really rename getTask to getProgramAndTask or something
         if frontiers is None or not cfg.data.freeze_examples:
-            prgms_and_tasks = taskloader.getTasks(1000)
+            prgms_and_tasks = taskloader.getTasks(taskloader.num_tasks if taskloader.num_tasks is not None else 1000)
             tasks = [task for program,task in prgms_and_tasks]
             frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
         for f in frontiers: # work thru batch of `batch_size` examples
@@ -262,8 +276,13 @@ def train_model(
             for head in heads:
                 head.train()
                 head.zero_grad()
-            vloss = vhead.valueLossFromFrontier(f, g)
-            ploss = phead.policyLossFromFrontier(f, g)
+            try:
+                vloss = vhead.valueLossFromFrontier(f, g)
+                ploss = phead.policyLossFromFrontier(f, g)
+                print(f'trained {f._fullProg}')
+            except InvalidSketchError:
+                print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
+                continue
             loss = vloss + ploss
             loss.backward()
 
@@ -438,6 +457,8 @@ def plot_model_results(model_results, file, title=None, salt='', save_model_resu
     assert isinstance(model_results, list)
     assert isinstance(model_results[0], ModelResult)
 
+    torch.set_num_threads(1) # or else it gets unnecessarily crazy
+
     if title is None:
         title = file
 
@@ -486,6 +507,8 @@ def plot_model_results(model_results, file, title=None, salt='', save_model_resu
 def which(cfg):
     print(OmegaConf.to_yaml(cfg))
     print(os.getcwd())
+    timestamp = os.path.basename(os.path.dirname(os.getcwd())) + '%2F' + os.path.basename(os.getcwd())
+    print(f'http://localhost:6696/#scalars&regexInput={timestamp}')
     print("curr time:",datetime.now())
 
 def t4(state):
@@ -527,7 +550,7 @@ def hydra_main(cfg):
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     cleanup()
     
-    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=(lambda: which(state.cfg))):
+    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=os.getcwd, crash=os.getcwd):
         if cfg.mode == 'cmd':
             mlb.purple("Entered cmd mode")
             os.chdir(utils.to_absolute_path(f'outputs/'))

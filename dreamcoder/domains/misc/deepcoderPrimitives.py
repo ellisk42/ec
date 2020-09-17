@@ -13,15 +13,23 @@ int_to_int_to_int = baseType("int_to_int_to_int")
 int_to_int_to_int = baseType("int_to_int_to_int")
 
 #deepcoderPrimitives
-Null = 300 #or perhaps something else, like "an integer outside the working range"?
+Null = 10000000 #or perhaps something else, like "an integer outside the working range"?
 
-def _head(xs): return xs[0] if len(xs)>0 else Null
-def _tail(xs): return xs[-1] if len(xs)>0 else Null
-def _take(n): return lambda xs: xs[:n]
-def _drop(n): return lambda xs: xs[n:]
-def _access(n): return lambda xs: xs[n] if n>=0 and len(xs)>n else Null
-def _minimum(xs): return min(xs) if len(xs)>0 else Null
-def _maximum(xs): return max(xs) if len(xs)>0 else Null
+def _head(xs):
+    return xs[0] if len(xs)>0 else Null
+def _tail(xs):
+    return xs[-1] if len(xs)>0 else Null
+def _take(n):
+    return lambda xs: xs[:n]
+def _drop(n):
+    return lambda xs: xs[n:]
+def _access(n):
+    return lambda xs: xs[n] if n>=0 and len(xs)>n else Null
+def _minimum(xs):
+    return min(xs) if len(xs)>0 else Null
+def _maximum(xs):
+    return max(xs) if len(xs)>0 else Null
+
 def _reverse(xs): return list(reversed(xs))
 def _sort(xs): return sorted(xs)
 def _sum(xs): return sum(xs)
@@ -240,7 +248,7 @@ def flatten_program(p):
     for i in range(num_inputs):
         string = string.replace('$' + str(num_inputs-i-1),'input_' + str(i))
     string = string.split(' ')
-    string = list(filter(lambda x: x is not '', string))
+    string = list(filter(lambda x: x != '', string))
     return string
 
 if __name__ == "__main__":
