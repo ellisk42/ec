@@ -28,6 +28,7 @@ parser.add_argument('--nSamples', type=int, default=4)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--resume', action='store_true')
 parser.add_argument('--seperate', action='store_true')
+parser.add_argument('--usePath',type=str, default='')
 args = parser.parse_args()
 #imports
 #can use matt's version of this
@@ -67,7 +68,11 @@ model = 'RNN'
 path = f'experimentOutputs/{ID}PolicyOnly{model}_SRE=True{graph}.pickle'
 
 model = args.modeltype
-modelPath=f"experimentOutputs/{ID}PolicyOnly{model}.pickle_RecModelOnly"
+if args.usePath:
+    oldModelPath = modelPath = args.usePath
+else: 
+    oldModelPath=f"experimentOutputs/{ID}PolicyOnly{model}.pickle_RecModelOnly"
+    modelPath=f"experimentOutputs/{ID}PolicyOnly{model}.pickle_RecModelOnly" + 'rl'
 
 def loadRecModel():
     print(path)
@@ -75,15 +80,15 @@ def loadRecModel():
         result = dill.load(h)
 
     if args.resume:
-        recModel = torch.load(modelPath+'rl') 
-        print(f"resuming, from {modelPath+'rl'}, number of rl steps taken so far is {recModel.valueHead.rl_iterations}")
+        recModel = torch.load(modelPath) 
+        print(f"resuming, from {modelPath}, number of rl steps taken so far is {recModel.valueHead.rl_iterations}")
         recModel.cuda()
         return result, recModel
 
     if args.modeltype == 'REPL':
-        with open(modelPath, 'rb') as h:
+        with open(oldModelPath, 'rb') as h:
             recModel = torch.load(h)
-            print("getting actual model from", modelPath)
+            print("getting actual model from", oldModelPath)
     else: recModel = result.recognitionModel
 
     recModel.cpu()
@@ -211,5 +216,5 @@ while r.valueHead.rl_iterations <= 16000*8*4:
         print(f"iteration: {i}, rl_iterations: {r.valueHead.rl_iterations}, rl loss: {rl_loss.item()}, time: {(time.time() - t)/i}", flush=True)
 
     if i%100==0:
-        torch.save(r, modelPath+'rl' + f"seperate={args.seperate}")
+        torch.save(r, modelPath)
         print('saved model')
