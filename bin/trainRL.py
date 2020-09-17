@@ -84,6 +84,12 @@ def loadRecModel():
         recModel = torch.load(modelPath) 
         print(f"resuming, from {modelPath}, number of rl steps taken so far is {recModel.valueHead.rl_iterations}")
         recModel.cuda()
+
+        print("WARNGING: forcing blended exec")
+        recModel.policyHead.REPLHead.noConcrete = False
+        if not hasattr(recModel.valueHead, 'noConcrete'):
+            recModel.valueHead.noConcrete =False
+
         return result, recModel
 
     if args.modeltype == 'REPL':
