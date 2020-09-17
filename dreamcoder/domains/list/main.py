@@ -229,19 +229,16 @@ class Lexicon(nn.Embedding):
 
 class ListFeatureExtractor(RecurrentFeatureExtractor):
     special = None
-    def __init__(self, maximumLength, cfg=None, cuda=True, H=64, modular=True, bidir_ctx=False, digitwise=True):
-        if cfg is not None:
-            c = cfg.model.extractor
-            modular = c.modular
-            bidir_ctx = c.bidir_ctx
-            bidir_int = c.bidir_int
-            digitwise = c.digitwise
-            cuda = cfg.cuda
-            H = cfg.model.H
-        else:
-            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+    def __init__(self, maximumLength, cfg):
+        c = cfg.model.extractor
+        modular = c.modular
+        bidir_ctx = c.bidir_ctx
+        bidir_int = c.bidir_int
+        digitwise = c.digitwise
+        cuda = cfg.cuda
+        H = cfg.model.H
 
-        self.lexicon = {"LIST_START", "LIST_END", "INT_START", "INT_END", 'CTX_START', 'CTX_END', "?"}
+        self.lexicon = {"LIST_START", "LIST_END", "INT_START", "INT_END", 'CTX_START', 'CTX_END', "?", "<True>", "<False>"}
         if digitwise:
             self.lexicon = self.lexicon | set(map(str,range(0,10))) | {'-'}
         else:
@@ -396,11 +393,13 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         return res
         
     def tokensToIndices(self,token_list):
-        # TODO note this is not used in digitwise i think
-        assert not self.digitwise
+        assert not self.digitwise or isinstance(token_list[0],bool)
         # sanitize
         unk = 0
         for i,token in enumerate(token_list):
+            if isinstance(token,bool):
+                token = '<'+str(token)+'>' # True -> "<True>". Needed bc dictionaries can't tell the difference between 1 and True
+                token_list[i] = token
             if token not in self.symbolToIndex:
                 if unk == 0:
                     #assert False
@@ -535,7 +534,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 mlb.log(f'encodeValue() is returning list_encodings :: {tuple(list_encodings.shape)} :: (num_exs,H)')
                 return list_encodings
 
-
+            # [non-digitwise]
             indices_lists = []
             for int_list in val:
                 tokens = ["LIST_START"] + int_list + ["LIST_END"]
@@ -559,12 +558,18 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             sizes = sizes[unsorter]
             res = res[unsorter] # undo the sorting so the examples line up with what were passed in originally
             return res
-            # XXX next we run thru list_encoder examplewise batched also we pack them
+            # [END non-digitwise]
 
+        # [non-list]
         if is_bool(val[0]):
-            # see comment in a similar if statement above. I dont think this should ever fire anyways though
-            raise NotImplementedError
+            indices = self.tokensToIndices(val) # [int]
+            res = self.embedding(indices, cuda=self.use_cuda) # [num_exs,H]
+            return res
         
+
+        assert is_int(val[0])
+        # val is one concrete non-list value per example
+        # no LIST_START or anything needed here! Bc the list is examplewise
 
         if self.digitwise:
             if is_int(val[0]):
@@ -585,22 +590,21 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             res = self.digit_embedder(idxs)
             return res
 
-        # val is one concrete non-list value per example
-        # no LIST_START or anything needed here! Bc the list is examplewise
+        # [non-digitwise]
         indices = self.tokensToIndices(val) # [int]
         res = self.embedding(indices, cuda=self.use_cuda) # [num_exs,H]
         return res
 
-    def sampleHelmholtzTask(self, request, motifs=[]):
-        assert False # disabling for now
-        # NOTE: we ignore the `request` argument
-        if motifs != []:
-            raise NotImplementedError
-        try:
-            program, task = self.deepcoder_taskloader.getTask()
-        except StopIteration:
-            return None,None
-        return program, task
+    # def sampleHelmholtzTask(self, request, motifs=[]):
+    #     assert False # disabling for now
+    #     # NOTE: we ignore the `request` argument
+    #     if motifs != []:
+    #         raise NotImplementedError
+    #     try:
+    #         program, task = self.deepcoder_taskloader.getTask()
+    #     except StopIteration:
+    #         return None,None
+    #     return program, task
 
 
 

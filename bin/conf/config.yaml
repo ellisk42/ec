@@ -5,9 +5,6 @@ defaults:
   - optim: curr
   - model: repl
 
-
-print: False # just print the cfg and exit
-
 prefix: null
 name: tb
 load: null
@@ -15,6 +12,7 @@ mode: resume
 device: 6
 cuda: True
 seed: 100 # null means random
+print: False # just print the cfg and exit
 
 debug:
   verbose: False
@@ -24,9 +22,6 @@ debug:
   zero_input_feats: False # replace inputFeatures(task) with all zeros. This means holes are no longer a function of the input features.
   zero_concrete_eval: False # Take the result of encodeValue(rep) and turn it to all zeros
   zero_sk: False # Take the result of rep(sk) and turn it to all zeros so _compare(all_zeros,outputFeatures) is run
-  
-  
-  
 
 plot:
   file: multiplot

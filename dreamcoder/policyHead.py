@@ -63,7 +63,7 @@ from dreamcoder.zipper import *
 from dreamcoder.utilities import count_parameters
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
-from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
+from dreamcoder.domains.list.makeDeepcoderData import *
 
 class BasePolicyHead(nn.Module):
     #this is the single step type

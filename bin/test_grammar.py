@@ -216,14 +216,6 @@ def test_trainListREPL(T=2, repeat=True, freeze_examples=False, print_every=200,
         def __init__(self,valueHead,policyHead):
             self.policyHead = policyHead
             self.valueHead = valueHead
-    class FakeFrontier:
-        # pretends to be whatever valueLossFromFrontier wants for simplicity
-        def __init__(self,program,task):
-            self.task = task # satisfies frontier.task call
-            self._fullProg = program
-            self.program = self # trick for frontier.sample().program._fullProg
-        def sample(self):
-            return self
 
     taskloader = DeepcoderTaskloader(
         f'dreamcoder/domains/list/DeepCoder_data/T{T}_A2_V512_L10_train_perm.txt',

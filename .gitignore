@@ -30,3 +30,16 @@ sklearn-container.img
 venv/
 tests/out/
 .DS_Store
+outputs_trash/2020-09-02/15-40-41/.hydra/config.yaml
+outputs_trash/2020-09-02/15-40-41/.hydra/hydra.yaml
+outputs_trash/2020-09-02/15-40-41/.hydra/overrides.yaml
+outputs_trash/2020-09-02/15-40-41/saves/autosave
+outputs_trash/2020-09-02/15-40-41/tb/events.out.tfevents.1599075652.sketch3.31813.0
+outputs_trash/test/boop2/events.out.tfevents.1600017500.sketch3.30476.0
+outputs_trash/test/boop2/events.out.tfevents.1600017912.sketch3.30476.2
+outputs_trash/test/boop2/events.out.tfevents.1600017986.sketch3.30476.3
+exps/real_test
+exps/run.sh
+exps/t3_canonical_reverse
+exps/t3_reverse
+exps/testing

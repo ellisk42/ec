@@ -3,6 +3,8 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
+import contextlib
+import multiprocessing as mp
 import shutil
 import sys,os
 import glob
@@ -13,7 +15,7 @@ from omegaconf import DictConfig,OmegaConf,open_dict
 import omegaconf
 from datetime import datetime
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
+from dreamcoder.domains.list.makeDeepcoderData import *
 
 import argparse
 from dreamcoder.grammar import *
@@ -80,41 +82,34 @@ class State:
             self.name = cfg.prefix + '.' + self.name
 
         taskloader = DeepcoderTaskloader(
-            utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_train_perm.txt'),
-            allowed_requests=allowed_requests,
-            repeat=cfg.data.repeat,
-            num_tasks=cfg.data.num_tasks,
-            expressive_lambdas=cfg.data.expressive_lambdas,
-            lambda_depth=cfg.data.lambda_depth,
-            buf_size=cfg.data.buf_size,
-            num_mutated_tasks=cfg.data.num_mutated_tasks,
+            cfg=cfg,
+            mode='train'
             )
         testloader = DeepcoderTaskloader(
-            utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.data.T}_A2_V512_L10_test_perm.txt'),
-            allowed_requests=allowed_requests,
-            repeat=False,
-            num_tasks=None,
-            expressive_lambdas=cfg.data.expressive_lambdas,
-            lambda_depth=cfg.data.lambda_depth,
-            buf_size=cfg.data.buf_size,
-            num_mutated_tasks=cfg.data.num_mutated_tasks,
+            cfg=cfg,
+            mode='test'
             )
 
-        extractor = ExtractorGenerator(cfg=cfg, maximumLength = taskloader.L+2)
+        extractor = ExtractorGenerator(cfg=cfg, maximumLength = max([cfg.data.train.L,cfg.data.test.L])+2)
 
-        test_tasks = testloader.getTasks(cfg.data.num_tests, ignore_eof=True)
-        print(f'Got {len(test_tasks)} testing tasks')
-        num_valid = int(cfg.data.valid_frac*len(test_tasks))
-        validation_tasks = test_tasks[:num_valid]
-        test_tasks = test_tasks[num_valid:]
-        print(f'Split into {len(test_tasks)} testing tasks and {len(validation_tasks)} validation tasks')
-        validation_frontiers = [FakeFrontier(program, task) for program, task in validation_tasks]
+        taskloader.check()
+        test_frontiers = testloader.getTasks(cfg.data.test.num_tasks, ignore_eof=True)
+        taskloader.check()
+        del testloader # I dont wanna deal w saving it
+        print(f'Got {len(test_frontiers)} testing tasks')
+        num_valid = int(cfg.data.test.valid_frac*len(test_frontiers))
+        validation_frontiers = test_frontiers[:num_valid]
+        test_frontiers = test_frontiers[num_valid:]
+        print(f'Split into {len(test_frontiers)} testing tasks and {len(validation_frontiers)} validation tasks')
 
-        if cfg.data.expressive_lambdas:
+        if cfg.data.train.expressive_lambdas:
+            assert cfg.data.test.expressive_lambdas
             prims = deepcoderPrimitivesPlusPlus()
         else:
             prims = deepcoderPrimitives()
         g = Grammar.uniform(prims)
+
+        taskloader.check()
 
         if cfg.model.policy:
             phead = {
@@ -163,28 +158,54 @@ class State:
         plosses = [None]*loss_window
         vlosses = [None]*loss_window
 
+        taskloader.check()
+
         self.update(locals()) # do self.* = * for everything
         self.post_load()
     
+    @contextlib.contextmanager
+    def saveable(self):
+        temp = {}
+        for key in self.no_pickle:
+            temp[key] = self[key]
+            self[key] = Poisoned
+        
+        saveables = []
+        for k,v in self.__dict__.items():
+            if isinstance(v,State):
+                continue # dont recurse on self
+            if hasattr(v,'saveable'):
+                saveables.append(v)
+        try:
+            with contextlib.ExitStack() as stack:
+                for saveable in saveables:
+                    stack.enter_context(saveable.saveable()) # these contexts stay open until ExitStack context ends
+                yield None
+        finally:
+            for key in self.no_pickle:
+                self[key] = temp[key]
+
     def save(self, locs, name):
         """
         use like state.save(locals(),"name_of_save")
         """
         self.update(locs)
-        temp = {}
-        for key in self.no_pickle:
-            temp[key] = self[key]
-            self[key] = Poisoned
+
         if not os.path.isdir('saves'):
             os.mkdir('saves')
         path = f'saves/{name}'
         print(f"saving state to {path}...")
-        torch.save(self, f'{path}.tmp')
+
+        with self.saveable():
+            torch.save(self, f'{path}.tmp')
+
         print('critical step, do not interrupt...')
         shutil.move(f'{path}.tmp',f'{path}')
         print("done")
-        for key in self.no_pickle:
-            self[key] = temp[key]
+        # self.taskloader.buf = q
+        # self.taskloader.lock = l
+        # if self.taskloader.cfg.threaded:
+        #     self.taskloader.lock.release()
     def load(self, path):
         path = utils.to_absolute_path(path)
         state = torch.load(path)
@@ -194,6 +215,11 @@ class State:
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
         self.init_tensorboard()
+        for k,v in self.__dict__.items():
+            if isinstance(v,State):
+                continue # dont recurse on self
+            if hasattr(v,'post_load'):
+                v.post_load()
     def init_tensorboard(self):
         print("intializing tensorboard")
         self.w = SummaryWriter(
@@ -246,7 +272,7 @@ def train_model(
     g,
     optimizer,
     astar,
-    test_tasks,
+    test_frontiers,
     validation_frontiers,
     loss_window,
     vlosses,
@@ -261,10 +287,8 @@ def train_model(
     phead.featureExtractor.run_tests()
     while True:
         # TODO you should really rename getTask to getProgramAndTask or something
-        if frontiers is None or not cfg.data.freeze_examples:
-            prgms_and_tasks = taskloader.getTasks(taskloader.num_tasks if taskloader.num_tasks is not None else 1000)
-            tasks = [task for program,task in prgms_and_tasks]
-            frontiers = [FakeFrontier(program,task) for program,task in prgms_and_tasks]
+        if frontiers is None or not cfg.data.train.freeze:
+            frontiers = taskloader.getTasks()
         for f in frontiers: # work thru batch of `batch_size` examples
 
             # abort if reached end
@@ -549,8 +573,17 @@ def hydra_main(cfg):
 
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     cleanup()
-    
-    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=os.getcwd, crash=os.getcwd):
+
+    state = State()
+
+    def on_crash():
+        print(os.getcwd())
+        if hasattr(state.taskloader, 'lock'):
+            print("acquiring lock...")
+            state.taskloader.lock.acquire() # force the other thread to block
+            print("done")
+        
+    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=on_crash, crash=on_crash):
         if cfg.mode == 'cmd':
             mlb.purple("Entered cmd mode")
             os.chdir(utils.to_absolute_path(f'outputs/'))
@@ -624,7 +657,6 @@ def hydra_main(cfg):
                         os.rename(result,dir+'/'+os.path.basename(result))
                         print(f'moved {result} -> {dir}')
         with torch.cuda.device(cfg.device):
-            state = State()
             print_overrides = []
             if cfg.load is None:
                 print("no file to load from, creating new state...")

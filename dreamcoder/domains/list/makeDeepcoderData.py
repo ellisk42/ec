@@ -3,7 +3,11 @@ import sys
 import mlb
 import numpy as np
 import os
+from hydra import utils
 #import mlb
+import contextlib
+import multiprocessing as mp
+from queue import Full,Empty
 import contextlib
 # sys.path.append(os.path.abspath('./'))
 # sys.path.append(os.path.abspath('./ec'))
@@ -139,34 +143,6 @@ def get_primitive(app):
     if app.isAbstraction:
         assert False, "Abstractions shouldnt be applied in this DSL, theyre only ever either top level or passed into higher order functions"
     assert False
-# class PostprocessVisitor:
-#     def __init__(self, g_lambdas):
-#         super().__init__()
-#         self.g_lambdas = g_lambdas
-#     def primitive(self,prim):
-#         #if prim.name in [str(num) for num in range(-10,10)]:
-#         return False
-#     def invented(self,e):
-#         assert False
-#     def index(self,e):
-#         return True
-#     def application(self,e):
-#         p = get_primitive(e)
-#         if p in self.g_lambdas.primitives:
-#             if p.name in ['+','*']:
-#                 # these primitives can have arbitrary children
-#                 # so we just ignore them and recurse on them
-#                 return e.f.visit(self) or e.x.visit(self)
-#             elif p.name in ['MIN','MAX','>','DIVISIBLE','AND','OR']:
-#                 # these primitives need at least one $0 one of their subtrees
-#                 pass
-#             else:
-#                 assert False, "please add the new primitive to a branch in this function"
-#         return e.f.visit(self) or e.x.visit(self)
-#     def abstraction(self,e):
-#         return Abstraction(e.body.visit(self))
-
-
 
 def has_index(e, i):
     if e.isIndex:
@@ -274,15 +250,8 @@ def verify_tree(e):
         verify_tree(e.body)
         return
     if e.isApplication:
-        #f,xs = e.applicationParse()
         verify_tree(e.f)
         verify_tree(e.x)
-        #prim = get_primitive(e)
-        # if prim.name in ['MIN','MAX','>','DIVISIBLE','AND','OR']:
-        #     # these primitives must have a $0 in their subtree
-        #     if not verified:
-        #         raise NeedsIndexException()
-
         return
     assert False
 
@@ -294,7 +263,7 @@ def check_in_range(res):
     """
     if isinstance(res,(int,np.integer)):
         if res > 99 or res < -99:
-            mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {res}')
+            #mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {res}')
             raise InvalidSketchError
     if isinstance(res,(list,tuple)):
         if len(res) == 0:
@@ -303,9 +272,8 @@ def check_in_range(res):
         maxx = max(res)
         minn = min(res)
         if maxx > 99 or minn < -99:
-            mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: list min={minn}; list max={maxx}')
+            #mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: list min={minn}; list max={maxx}')
             raise InvalidSketchError
-
 
 def ctxs_of_examples(examples):
     """
@@ -349,19 +317,18 @@ def evaluate(e, ctx):
     check_in_range(res) # may raise InvalidSketchError
     return res
 
-
 class InvalidSketchError(Exception): pass
 
-
-def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
-    assert mutate
+def convert_to_deepcoder_plus_plus(f, n, g_lambdas):
+    program = f.p
+    task = f.t
 
     visitor = ToPlusPlusVisitor()
     program_plus_plus = program.visit(visitor)
     if not visitor.has_lambda:
         # if the program has no lambdas to mutate we should ignore `n`
         # and just return the unmodified program in a singleton list
-        return [(program_plus_plus,task)]
+        return [f]
 
     assert program_plus_plus.hasHoles
     res = []
@@ -408,32 +375,47 @@ def convert_to_deepcoder_plus_plus(program,task, n, g_lambdas, mutate=True):
         new_task = Task(task.name, task.request, new_examples)
 
 
-        res.append((sampled,new_task))
+        res.append(FakeFrontier(sampled,new_task))
         #mlb.green(f"accepting {sampled}")
-        print(f"accepting {sampled}")
-        for ex in new_task.examples:
-            print(f"\t{ex[0][0]} -> {ex[1]}")
+        #print(f"accepting {sampled}")
+        #for ex in new_task.examples:
+        #    print(f"\t{ex[0][0]} -> {ex[1]}")
         if len(res) >= n:
             break
     # g.sampleFromSketch(arrow(list, list), sk)
 
     return res
 
-class DeepcoderTaskloader:
-    def __init__(self,file,allowed_requests,N=5,L=10,V=63,buf_size=500,repeat=False,num_tasks=None, num_mutated_tasks=10, expressive_lambdas=False, lambda_depth = 3):
-        self.file = file
-        self.allowed_requests = allowed_requests
-        self.N = N
-        self.num_mutated_tasks = num_mutated_tasks
-        self.L = L
-        self.V = V
-        self.buf_size = buf_size
-        self.expressive_lambdas = expressive_lambdas
-        self.lambda_depth = lambda_depth
-        self.repeat = repeat
-        self.num_tasks = num_tasks
+class FakeFrontier:
+    # pretends to be whatever valueLossFromFrontier wants for simplicity
+    def __init__(self,program,task):
+        self.task = task # satisfies frontier.task call
+        self._fullProg = program
+        self.program = self # trick for frontier.sample().program._fullProg
 
-        self.buf = [] # buffer of (program,task) tuples
+        # for my own use
+        self.p = program
+        self.t = task
+    def sample(self):
+        return self
+
+class DeepcoderTaskloader:
+    def __init__(self, cfg, mode):
+        if mode == 'train':
+            self.cfg = cfg.data.train
+        elif mode == 'test':
+            self.cfg = cfg.data.test
+        self.mode = mode
+        self.parent_cfg = cfg # in case it's useful
+        cfg = self.cfg # bc we're more likely to use it in the rest of __init__
+        
+        self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
+        self.allowed_requests = None if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
+        self.buf = mp.Queue(self.cfg.buf_size) # buffer of frontiers
+        self.lock = None
+        self.exception = 0
+        self.tasks_seen = 0 # number of tasks seen (pre mutation)
+
         with open(self.file,'r') as f:
             f.readline() # skip first line of file
             self.offset_in_file = f.tell()
@@ -442,46 +424,125 @@ class DeepcoderTaskloader:
         # make a lambda grammar to sample lambdas from
         _lambdas = get_lambdas()
         g_lambdas = Grammar.uniform(_lambdas)
-        g_lambdas.max_hole_depth = self.lambda_depth
+        g_lambdas.max_hole_depth = self.cfg.lambda_depth
         self.g_lambdas = g_lambdas
+        self.post_load()
+    @contextlib.contextmanager
+    def saveable(self):
+        if self.lock is not None:
+            print("locking...")
+            self.lock.acquire() # so the worker doesnt get confused
+            print("acquired lock")
+        l,q,v,e = self.lock, self.buf, self.offset_in_file, self.exception
+        self.lock, self.buf, self.offset_in_file, self.exception = None, None, v.value, e.value
+        try:
+            yield None
+        finally:
+            self.lock,self.buf,self.offset_in_file,self.exception = l,q,v,e
+            if self.lock is not None:
+                self.lock.release()
+                print("lock released")
+    def check(self):
+        if self.exception.value == 1:
+            raise Exception("Worker thread died")
+    def post_load(self):
+        if self.lock is not None:
+            return # ignore redundant loads
+        self.offset_in_file = mp.Value('i',self.offset_in_file)
+        self.exception = mp.Value('i',self.exception)
+        self.lock = mp.Lock()
+        if self.cfg.threaded:
+            self.launch_worker()
+        self.check()
 
-    def reloadBuffer(self):
-        assert len(self.buf) == 0
+    def reloadBuffer(self, lock=None):
         with open(self.file,'r') as f:
-            f.seek(self.offset_in_file) # pick up where we left off
-            while True:
+            cm = lock if lock is not None else contextlib.nullcontext()
+            with cm:
+                f.seek(self.offset_in_file.value) # pick up where we left off
+            while True: # loops until `queue.Full` gets raised by the .put() line (or buf.full() happens)
                 try:
-                    if len(self.buf) >= self.buf_size:
-                        return # we've filled our buffer
+                    if lock is not None:
+                        lock.acquire()
+                    if self.buf.full():
+                        break
                     # note we can't use next(f) as this disables f.tell(), so we do f.readline()
                     line = f.readline().rstrip()
+
+                    # EOF
                     if line == '': # readline never errors out, it returns empty string on EOF
-                        if not self.repeat:
+                        if self.repeat:
+                            f.seek(self.file_start) # repeat
+                            continue
+                        else:
                             raise EOFError
-                        f.seek(self.file_start) # repeat
-                        continue
-                    program,task = task_of_line(line,N=self.N,L=self.L,V=self.V)
-                    if program is None:
+
+                    # get program and task
+                    program,task = task_of_line(line,N=self.cfg.N,L=self.cfg.L,V=self.cfg.V)
+                    ff = FakeFrontier(program,task)
+
+                    # filter out bad programs/tasks
+                    if ff.p is None:
                         continue
                     if self.allowed_requests is not None and task.request not in self.allowed_requests:
                         continue
                     if all([ex[0] == task.examples[0][0] for ex in task.examples]):
                         continue # for some reason this happens sometimes (all inputs are the same)
-                    if self.expressive_lambdas:
-                        programs_tasks = convert_to_deepcoder_plus_plus(program,task, g_lambdas=self.g_lambdas, n=self.num_mutated_tasks)
-                        self.buf.extend(programs_tasks) # this may exceed buf_len and that's ok
+
+                    self.tasks_seen += 1
+
+                    # deepcoder++ conversion
+                    if self.cfg.expressive_lambdas:
+                        frontiers = convert_to_deepcoder_plus_plus(ff, g_lambdas=self.g_lambdas, n=self.cfg.num_mutated_tasks)
                     else:
-                        self.buf.append((program,task))
-                    if self.num_tasks is not None and len(self.buf) % self.num_tasks == 0:
-                        assert len(self.buf) != 0
+                        frontiers = [ff]
+
+                    # add to buffer and potentially exit by throwing exception (this is the only exit point)
+                    for frontier in frontiers:
+                        self.buf.put_nowait(frontier) # may raise queue.Full exception
+                        #print(f"buf {self.mode}:",self.buf.qsize())
+                    
+                    # if we've seen the first `cfg.num_tasks` programs in the file (pre-mutation)
+                    # then loop back to the start of the file
+                    if self.cfg.num_tasks is not None and self.tasks_seen == self.cfg.num_tasks:
                         f.seek(self.file_start)
+                except Full:
+                    pass
                 finally:
-                    self.offset_in_file = f.tell()
+                    self.offset_in_file.value = f.tell()
+                    #time.sleep(.1) # fixes a weird BrokenPipeError from https://stackoverflow.com/questions/36359528/broken-pipe-error-with-multiprocessing-queue
+                    if lock is not None:
+                        lock.release()
+
     def getTask(self):
-        if len(self.buf) == 0:
+        self.check()
+        if not self.cfg.threaded and self.buf.empty():
             self.reloadBuffer() # may raise EOFError
-        return self.buf.pop()
-    def getTasks(self, n, ignore_eof=False):
+        while True:
+            try:
+                return self.buf.get() # may block
+            except Empty:
+                print("buf is empty...")
+                time.sleep(.5)
+                self.check()
+
+    def getTasks(self, n=None, ignore_eof=False):
+        self.check()
+        if n is None:
+            if self.cfg.threaded:
+                n = self.buf.qsize()
+                while n == 0:
+                    print("waiting on buffer to fill...")
+                    time.sleep(.5)
+                    self.check()
+                    n = self.buf.qsize()
+            else:
+                if self.buf.qsize() == 0:
+                    print(f"[main: {self.mode}] filling buffer")
+                    self.reloadBuffer()
+                    print(f"[main: {self.mode}] buffer filled")
+                n = self.buf.qsize()
+        print(f"serving {n} tasks")
         ret = []
         for i in range(n):
             try:
@@ -491,6 +552,26 @@ class DeepcoderTaskloader:
                     return ret
                 raise
         return ret
+
+    def launch_worker(self):
+        print("launching worker")
+        p = mp.Process(target=self._worker, daemon=True)
+        p.start()
+        print("launched")
+    def _worker(self):
+        def set_exc():
+            self.exception.value = 1
+        with mlb.debug(crash=set_exc, ctrlc=set_exc):
+            lock = self.lock
+            assert lock is not None
+            while True:
+                if not self.buf.full():
+                    mlb.gray(f"[worker: {self.mode}] reloading buf")
+                    self.reloadBuffer(lock=lock)
+                    mlb.gray(f"[worker: {self.mode}] reloaded buf")
+                #else:
+                    #print(f"buf {self.mode} seems full, not reloading")
+                time.sleep(1) # alternatively could just have reloadBuffer *never* exit
             
 
 if __name__ == '__main__':
