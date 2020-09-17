@@ -25,7 +25,7 @@ parser.add_argument('--id', type=str, default='towers3')
 parser.add_argument('--modeltype', type=str, default='REPL')
 parser.add_argument('--nPerGrad', type=int, default=4)
 parser.add_argument('--nSamples', type=int, default=4)
-parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--gpu', type=int, default=None)
 parser.add_argument('--resume', action='store_true')
 parser.add_argument('--seperate', action='store_true')
 parser.add_argument('--usePath',type=str, default='')
@@ -58,7 +58,8 @@ class HelmholtzEntry:
         #              task=self.task)
         return f
 
-torch.cuda.set_device(args.gpu)
+if args.gpu is not None:
+    torch.cuda.set_device(args.gpu)
 
 sys.setrecursionlimit(20000)
 ID = args.id
