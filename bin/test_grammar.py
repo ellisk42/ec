@@ -674,6 +674,15 @@ def test_policyTiming():
     print("saved at", savePath)
 
 
+class FakeFrontier:
+    # pretends to be whatever valueLossFromFrontier wants for simplicity
+    def __init__(self,program,task):
+        self.task = task # satisfies frontier.task call
+        self._fullProg = program
+        self.program = self # trick for frontier.sample().program._fullProg
+    def sample(self):
+        return self
+
 def test_noConcreteRBREPL():
     from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives
 
@@ -719,6 +728,66 @@ def test_noConcreteRBREPL():
     import pdb; pdb.set_trace()
 
 
+
+def test_rb_conv_convergence():
+    from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives
+
+    robustFillPrimitives()
+
+    from dreamcoder.policyHead import RBREPLPolicyHead
+    from dreamcoder.domains.rb.main import RBFeatureExtractor
+    from dreamcoder.grammar import Grammar
+
+    fe = RBFeatureExtractor(cuda=True)
+    g = Grammar.uniform(robustFillPrimitives())
+    policyHead = RBREPLPolicyHead(g, fe, fe.H,  canonicalOrdering=True, noConcrete=False, useConvs=True)
+    opt = torch.optim.Adam(policyHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+    trainFrontiers = [] 
+    for i in range(50):
+        p, task = fe.sampleHelmholtzTask(arrow(texpression, texpression))
+        frontier = FakeFrontier(p, task)
+        trainFrontiers.append(frontier)
+
+    for i in range(500):
+        if i == 100:
+            print('decreasing learnign rate')
+            opt = torch.optim.Adam(policyHead.parameters(), lr=0.0001, eps=1e-3, amsgrad=True)
+
+        opt.zero_grad()
+        losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in trainFrontiers ]#+ lst[2:]]
+        loss = sum(losses)
+        print(i, loss.item())
+        loss.backward()
+        opt.step()
+
+
+    posTraces, _, targetNodes, holesToExpand = getTracesFromProg(frontier._fullProg, frontier.task.request, g, 
+                                                    onlyPos=True, returnNextNode=True,
+                                                    canonicalOrdering=True)
+    policyHead.eval()
+
+    n = 4
+    maskedDistFull = policyHead._computeDist(posTraces, holesToExpand, frontier.task, g) #TODO
+
+    #import pdb; pdb.set_trace()
+    maskedDist = policyHead._computeDist(posTraces[:n], holesToExpand[:n], frontier.task, g) #TODO
+
+    #maskedDist2 = policyHead._computeDist(posTraces[:2], holesToExpand[:2], frontier.task, g) #TODO
+
+    #print(maskedDist==maskedDist2)
+    diff = (maskedDistFull[:n] - maskedDist[:n])
+    print(maskedDist[:n]==maskedDistFull[:n])
+
+    #maskedDist == policyHead._computeDist(posTraces[:1], holesToExpand[:1], frontier.task, g)
+    #print(maskedDistDouble)
+    #print(maskedDistFull)
+
+    #diff/sum(diff[diff ==diff]) 
+    import pdb; pdb.set_trace()
+
+
+
 if __name__=='__main__':
     #findError()
     #testSampleWithHoles()
@@ -744,4 +813,5 @@ if __name__=='__main__':
     # test_TowerREPLPolicyConvergence()
     # finetuneAndTestPolicy()
     # test_abstraction_bug()
-    test_noConcreteRBREPL()
+    # test_noConcreteRBREPL()
+    test_rb_conv_convergence()

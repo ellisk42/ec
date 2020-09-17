@@ -769,7 +769,11 @@ class Primitive(Program):
             if self.name == 'tower_loopM' :
                 def f(prev):
                     i, fn, k = args
+                    # if isinstance(prev, tuple):
+                    #     print("TUUUUUPLLLLLLLEEEE")
                     if (not noConcrete) and isinstance(prev, TowerState) and (not (xs[0].hasHoles or xs[1].hasHoles)) and isinstance(i, int):
+                        # print("loop", prev)
+                        # print(xs)
                         return self.value(i)(fn)(k)(prev)
                     else:
                         aa = valueHead.convertToVector(prev)

@@ -488,7 +488,7 @@ def ecIterator(grammar, tasks,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=[],
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
-                               trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
+                               trainOnly=True, saveIter=1000, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
                                seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining,
                                searchType=searchType, filterMotifs=filterMotifs, policyType=policyType,
                                defaultRequest=arrow(grammar.continuationType, grammar.continuationType))

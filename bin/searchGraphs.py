@@ -108,17 +108,21 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
         xs = list(np.arange(0,timeout,0.1))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.time < x) for x in xs],
-                  label=names[n], linewidth=4)
+                  label=names[n], linewidth=8)
             #plot.xscale('log')
         else:
             plot.plot(xs, [averageLoss(n,lambda r: r.time < x) for x in xs],
-                  label=names[n], linewidth=4)
-    plot.legend()
+                  label=names[n], linewidth=8)
+    plot.legend(bbox_to_anchor=(1.05, 1), loc='upper left',)
     if export:
         plot.savefig(export)
     else:
         plot.show()
+
+    #plot.figure(figsize=(16,8))
     plot.figure()
+    ax=plot.subplot()
+
     plot.xlabel('Evaluations')
     plot.ylabel('percent correct')
     if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
@@ -131,8 +135,14 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
             #plot.xscale('log')
         else:
             plot.plot(xs, [averageLoss(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n], linewidth=4)
+                  label=names[n], linewidth=4)  
+
     plot.legend()
+    #box = ax.get_position()
+    #ax.set_position([box.x0, box.y0, box.width * 0.5, box.height])
+    #plot.legend(bbox_to_anchor=(1.05, 1), loc='upper left',)
+
+
     if export:
         plot.savefig(f"{export}_evaluations.eps")
     else:
@@ -231,26 +241,30 @@ if __name__ == '__main__':
         ]
 
 
-    # graph=""
-    # nameSalt = "AstarPseudoResultBoth" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # ID = 'towers' + str(n)
-    # runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # maxEvals = 20000
-    # useMaxLens = True
-    # paths = [
-    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "modular, no repl"),
-    #     (f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
-    #     #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
-    #     #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
-    #     #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
-    #     #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
-    #     (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy only (weights not shared w value)'),
-    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
-    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
-    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
-    #    # (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
-    #    (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Abstract REPL (ours, long run)"),
-    #     ]
+    graph=""
+    nameSalt = "AstarPseudoResultFilteredNoMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    maxEvals = 25000
+    useMaxLens = True
+    maxTasksOnly=False
+    noMaxTasks=True
+    #list of okay tasks:
+    okayList = False #range(29)
+    paths = [
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Abstract REPL (concrete + neural semantics)"),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Abstract REPL (neural semantics only)"),
+        #(f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
+        #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
+        #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
+        #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
+        #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy only (weights not shared w value)'),
+        #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
+        #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
+        #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
+        ]
 
 
 
@@ -281,6 +295,11 @@ if __name__ == '__main__':
             challenge = [t.name for t in makeOldTasks(synth=False) ]
             print("length challenge,", len(challenge))
 
+            from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks, makeNewMaxTasks
+
+            
+            maxTasks = makeMaxTasks() + makeNewMaxTasks()
+
             delTasks = []
             seenBridges = False
 
@@ -291,21 +310,27 @@ if __name__ == '__main__':
                 tnames.append(name)
 
             for task, results in r.testingSearchStats[-1].items():
+                print(task.name)
 
                 if "from bridges" in task.name: 
                     if seenBridges: delTasks.append(task)
-                    seenBridges = True
-                if r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 100:
-                    print(task.name)
+                #     seenBridges = True
+                # if r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 100:
+                #     print(task.name)
                 if "pyramid on top" in task.name: delTasks.append(task)
+
                 if task.name in exclude_lst: delTasks.append(task)
 
+                if task.name in tnames: delTasks.append(task)
 
-                if task.name in tnames:  delTasks.append(task)
+                if maxTasksOnly:
+                    if task not in maxTasks: delTasks.append(task)
 
+                if noMaxTasks:
+                    if task in maxTasks: delTasks.append(task)
                 #if task.name not in challenge: delTasks.append(task)
 
-            for task in delTasks: del r.testingSearchStats[-1][task]
+            for task in list(set(delTasks)): del r.testingSearchStats[-1][task]
 
             # print(path)
             # for task, results in r.testingSearchStats[-1].items():
@@ -332,7 +357,10 @@ if __name__ == '__main__':
             #     print(i, "task", task, "res", bool(v))
 
             # assert 0
-            testResults.append( list(res.values()) )
+            if okayList:
+                testResults.append( [list(res.values())[i] for i in okayList] )
+            else:
+                testResults.append( list(res.values()) )
 
         plotTestResults(testResults, timeout,
                         defaultLoss=1.,

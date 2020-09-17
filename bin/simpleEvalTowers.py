@@ -99,7 +99,10 @@ def test_policyTiming():
 
         #print("no concrete?", r.recognitionModel.policyHead.noConcrete)
     #import pdb; pdb.set_trace()
+    print("WARNGING: forcing blended exec")
     r.recognitionModel.policyHead.REPLHead.noConcrete = False
+    if not hasattr(r.recognitionModel.valueHead, 'noConcrete'):
+        r.recognitionModel.valueHead.noConcrete =False
 
     g = r.grammars[-1]
     print(r.recognitionModel.gradientStepsTaken)
@@ -133,7 +136,7 @@ def test_policyTiming():
         if isinstance(r.recognitionModel.policyHead, BasePolicyHead):
             g = r.recognitionModel.grammarOfTask(tasks[0]).untorch()
         fs, searchTimes, totalNumberOfPrograms, reportedSolutions = solver.infer(g, tasks, likelihoodModel, 
-                                            timeout=120,
+                                            timeout=300,
                                             elapsedTime=0,
                                             evaluationTimeout=0.01,
                                             maximumFrontiers={tasks[0]: 2},

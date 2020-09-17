@@ -904,7 +904,7 @@ class RecognitionModel(nn.Module):
                 entries.append(e)
         return Frontier(entries, task=frontier.task)
 
-    def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
+    def train(self, frontiers, _=None, steps=None, lr=0.0001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
               biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True,
