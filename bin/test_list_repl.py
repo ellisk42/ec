@@ -3,11 +3,19 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
+import os
+os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
+os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
+os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
+os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
+
 import contextlib
 import multiprocessing as mp
 import shutil
 import sys,os
 import glob
+import signal
 
 import hydra
 from hydra import utils
@@ -15,7 +23,12 @@ from omegaconf import DictConfig,OmegaConf,open_dict
 import omegaconf
 from datetime import datetime
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+import dreamcoder
+import dreamcoder.domains
+import dreamcoder.domains.list
+import dreamcoder.domains.list.makeDeepcoderData
 from dreamcoder.domains.list.makeDeepcoderData import *
+from datetime import datetime
 
 import argparse
 from dreamcoder.grammar import *
@@ -43,6 +56,12 @@ from torch.utils.tensorboard import SummaryWriter
 import mlb
 import time
 import matplotlib.pyplot as plot
+
+
+def tmux_closed():
+    sys.exit(1)
+signal.signal(signal.SIGHUP,tmux_closed)
+
 
 class FakeRecognitionModel(nn.Module):
     # pretends to be whatever Astar wants from its RecognitionModel. Which isn't much lol
@@ -95,7 +114,7 @@ class State:
         taskloader.check()
         test_frontiers = testloader.getTasks(cfg.data.test.num_tasks, ignore_eof=True)
         taskloader.check()
-        del testloader # I dont wanna deal w saving it
+        #del testloader # I dont wanna deal w saving it
         print(f'Got {len(test_frontiers)} testing tasks')
         num_valid = int(cfg.data.test.valid_frac*len(test_frontiers))
         validation_frontiers = test_frontiers[:num_valid]
@@ -578,12 +597,18 @@ def hydra_main(cfg):
 
     def on_crash():
         print(os.getcwd())
-        if hasattr(state.taskloader, 'lock'):
-            print("acquiring lock...")
-            state.taskloader.lock.acquire() # force the other thread to block
-            print("done")
-        
-    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=on_crash, crash=on_crash):
+        # if hasattr(state,'taskloader') and hasattr(state.taskloader, 'lock'):
+        #     print("acquiring lock...")
+        #     state.taskloader.lock.acquire() # force the other thread to block
+        #     #state.taskloader.p.kill()
+        #     state.taskloader.lock.release()
+        #     print("done")
+    def on_ctrlc():
+        on_crash()
+        print('exiting')
+        sys.exit(1)
+         
+    with mlb.debug(do_debug=cfg.debug.mlb_debug, ctrlc=on_ctrlc, crash=on_crash):
         if cfg.mode == 'cmd':
             mlb.purple("Entered cmd mode")
             os.chdir(utils.to_absolute_path(f'outputs/'))

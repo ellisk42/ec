@@ -1,4 +1,3 @@
-# generate deepcoder data
 import sys
 import mlb
 import numpy as np
@@ -377,9 +376,9 @@ def convert_to_deepcoder_plus_plus(f, n, g_lambdas):
 
         res.append(FakeFrontier(sampled,new_task))
         #mlb.green(f"accepting {sampled}")
-        #print(f"accepting {sampled}")
-        #for ex in new_task.examples:
-        #    print(f"\t{ex[0][0]} -> {ex[1]}")
+        print(f"accepting {sampled}")
+        for ex in new_task.examples:
+            print(f"\t{ex[0][0]} -> {ex[1]}")
         if len(res) >= n:
             break
     # g.sampleFromSketch(arrow(list, list), sk)
@@ -411,10 +410,11 @@ class DeepcoderTaskloader:
         
         self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
         self.allowed_requests = None if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
-        self.buf = mp.Queue(self.cfg.buf_size) # buffer of frontiers
+        self.buf = None 
         self.lock = None
         self.exception = 0
         self.tasks_seen = 0 # number of tasks seen (pre mutation)
+        self.p = None
 
         with open(self.file,'r') as f:
             f.readline() # skip first line of file
@@ -433,12 +433,12 @@ class DeepcoderTaskloader:
             print("locking...")
             self.lock.acquire() # so the worker doesnt get confused
             print("acquired lock")
-        l,q,v,e = self.lock, self.buf, self.offset_in_file, self.exception
-        self.lock, self.buf, self.offset_in_file, self.exception = None, None, v.value, e.value
+        l,q,v,e,p = self.lock, self.buf, self.offset_in_file, self.exception, self.p
+        self.lock, self.buf, self.offset_in_file, self.exception,p = None, None, v.value, e.value, None
         try:
             yield None
         finally:
-            self.lock,self.buf,self.offset_in_file,self.exception = l,q,v,e
+            self.lock,self.buf,self.offset_in_file,self.exception, self.p = l,q,v,e, p
             if self.lock is not None:
                 self.lock.release()
                 print("lock released")
@@ -451,6 +451,7 @@ class DeepcoderTaskloader:
         self.offset_in_file = mp.Value('i',self.offset_in_file)
         self.exception = mp.Value('i',self.exception)
         self.lock = mp.Lock()
+        self.buf = mp.Queue(self.cfg.buf_size) # buffer of frontiers
         if self.cfg.threaded:
             self.launch_worker()
         self.check()
@@ -471,7 +472,7 @@ class DeepcoderTaskloader:
 
                     # EOF
                     if line == '': # readline never errors out, it returns empty string on EOF
-                        if self.repeat:
+                        if self.cfg.repeat:
                             f.seek(self.file_start) # repeat
                             continue
                         else:
@@ -557,6 +558,7 @@ class DeepcoderTaskloader:
         print("launching worker")
         p = mp.Process(target=self._worker, daemon=True)
         p.start()
+        self.p = p
         print("launched")
     def _worker(self):
         def set_exc():

@@ -21,7 +21,7 @@ from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
-from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
+#from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 
 
 def retrieveJSONTasks(filename, features=False):

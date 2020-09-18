@@ -17,6 +17,9 @@ parser.add_argument('-f',
 parser.add_argument('--no-name',
                     action='store_true',
                     help='suppress inserting name=[window name] at the end of the command')
+parser.add_argument('--kill',
+                    action='store_true',
+                    help='only does the -f killing part and doesnt restart it')
 
 args = parser.parse_args()
 session = os.path.basename(args.file)
@@ -25,12 +28,16 @@ for line in $(tmux ls).split('\n'):
     if not ':' in line:
         continue
     if line.split(':')[0] == session:
-        if args.f:
-            print(f"killing existing tmux session `{args.file}`")
+        if args.f or args.kill:
+            print(f"killing existing tmux session `{session}`")
             tmux kill-session -t @(session)
+            pkill -u mlbowers --full prefix=@(session)
         else:
             print(f"tmux session `{session}` exists. Run with -f to force replacing this session")
             sys.exit(1)
+
+if args.kill:
+    sys.exit(0)
 
 sessions = {}
 
@@ -62,5 +69,8 @@ for i,(name,cmd) in enumerate(sessions.items()):
     # C-m is like <CR>
     time.sleep(1.01) # so that the hydra session gets a different name
 print("done!")
-print(f"attach with tmux a -t {session}")
+cmd = f"tmux a -t {session}"
+print(f"attach with {cmd}")
+tmux a -t @(session)
+
 
