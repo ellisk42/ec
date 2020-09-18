@@ -849,7 +849,7 @@ class ListREPLValueHead(BaseValueHead):
             if not (in_lambda and has_index(sk,None)):
                 # we dont run this if we're inside a lambda and we contain an index
                 # since those can't be concrete evaluated in a lambda
-                res = evaluate_ctxs(sk,ctxs)
+                res = evaluate_ctxs(sk,ctxs,self.cfg.data.train.V)
                 if sk.size() > 1 and hasattr(self,'concrete_count'):
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
                     self.concrete_count[task] += sk.size()

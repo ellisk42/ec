@@ -111,9 +111,9 @@ class State:
 
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = max([cfg.data.train.L,cfg.data.test.L])+2)
 
-        taskloader.check()
-        test_frontiers = testloader.getTasks(cfg.data.test.num_tasks, ignore_eof=True)
-        taskloader.check()
+        #taskloader.check()
+        test_frontiers = testloader.getTasks()
+        #taskloader.check()
         #del testloader # I dont wanna deal w saving it
         print(f'Got {len(test_frontiers)} testing tasks')
         num_valid = int(cfg.data.test.valid_frac*len(test_frontiers))
@@ -128,7 +128,7 @@ class State:
             prims = deepcoderPrimitives()
         g = Grammar.uniform(prims)
 
-        taskloader.check()
+        #taskloader.check()
 
         if cfg.model.policy:
             phead = {
@@ -177,7 +177,7 @@ class State:
         plosses = [None]*loss_window
         vlosses = [None]*loss_window
 
-        taskloader.check()
+        #taskloader.check()
 
         self.update(locals()) # do self.* = * for everything
         self.post_load()
@@ -305,9 +305,9 @@ def train_model(
     tstart = None
     phead.featureExtractor.run_tests()
     while True:
-        # TODO you should really rename getTask to getProgramAndTask or something
         if frontiers is None or not cfg.data.train.freeze:
             frontiers = taskloader.getTasks()
+            assert len(frontiers) > 0
         for f in frontiers: # work thru batch of `batch_size` examples
 
             # abort if reached end

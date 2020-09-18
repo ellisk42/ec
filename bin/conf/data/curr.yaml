@@ -1,7 +1,7 @@
 # @package _group_
 
 train:
-  num_tasks: null
+  num_templates: null
   repeat: True
   buf_size: 200
   threaded: False
@@ -15,9 +15,9 @@ train:
   lambda_depth: ${data.lambda_depth}
   allow_complex_requests: ${data.allow_complex_requests}
 test:
-  num_tasks: 100
+  num_templates: 100
   repeat: False
-  buf_size: ${data.test.num_tasks}
+  buf_size: ${data.test.num_templates}
   threaded: False # do NOT set to true
   valid_frac: .8
   T: ${data.T}
@@ -33,7 +33,7 @@ test:
 T: 2
 N : 5
 L: 10
-V: 63
+V: 32
 expressive_lambdas: True
 lambda_depth: 3
 allow_complex_requests: False
