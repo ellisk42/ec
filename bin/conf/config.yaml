@@ -32,6 +32,7 @@ test: # for mode=test
   from_file: null
   to_file: null
   timeout: 30
+  max_tasks: null
   josh:
     wave: 3 # 1 | 2 | 3 | 3.1 | final
   lucas:

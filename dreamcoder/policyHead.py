@@ -147,6 +147,8 @@ class NeuralPolicyHead(nn.Module):
         posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, 
                                                         onlyPos=True, returnNextNode=True,
                                                         ordering=self.ordering)
+        for zipper in holesToExpand:
+            assert self.cfg.data.max_depth > len([ t for t in zipper.path if t != 'body' ])
         mlb.log('pos traces:')
         for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
             mlb.log(f'\t{trace}')

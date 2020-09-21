@@ -48,7 +48,6 @@ torch.set_num_threads(1) # or else it gets unnecessarily crazy
 import numpy as np
 import random
 
-from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.domains.list.main import ListFeatureExtractor
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
@@ -161,12 +160,10 @@ class State:
         #     print(f"ran on {f._fullProg}")
         #     print()
 
-        max_depth = 10
-
         params = itertools.chain.from_iterable([head.parameters() for head in heads])
         optimizer = torch.optim.Adam(params, lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
-        astar = make_astar(vhead,phead,max_depth)
+        astar = make_astar(vhead,phead,cfg.data.train.max_depth)
         j=0
         frontiers = None
 
@@ -653,7 +650,8 @@ def joshTasks(w):
 @tests.test
 def josh(cfg):
     tasks = joshTasks(str(cfg.test.josh.wave))
-    return tasks
+    frontiers = [FakeFrontier(None,task) for task in tasks]
+    return frontiers
 
 @tests.test
 def lucas(cfg):
@@ -672,7 +670,8 @@ def lucas(cfg):
         tasks = make_list_bootstrap_tasks()
     else:
         raise ValueError
-    return tasks
+    frontiers = [FakeFrontier(None,task) for task in tasks]
+    return frontiers
 
 # def analyze_tasks(tasks):
 #     requests = defaultdict(int)
@@ -752,6 +751,7 @@ def hydra_main(cfg):
                     mlb.red(f"from_fn value not recognized. options are: {list(tests.tests.keys())}")
                     return
                 test_frontiers = tests.tests[cfg.test.from_fn](cfg)
+                test_frontiers = preprocess(test_frontiers,cfg)
                 mlb.purple(f"got {len(test_frontiers)} test frontiers from {cfg.test.from_fn}()")
                 if cfg.test.to_file is not None:
                     print(f"Writing saved tests to {cfg.test.to_file}...")
@@ -913,6 +913,9 @@ def hydra_main(cfg):
                 ### NOTE: this continues from the earlier 'test' section
                 if cfg.test.from_fn == 'deepcoder' or (original_cfg is not None and original_cfg.test.from_fn == 'deepcoder'):
                     cfg_diff(state.cfg.data.train,original_cfg.data.test) # print the differences
+                if cfg.test.max_tasks is not None and len(test_frontiers) > cfg.test.max_tasks:
+                    mlb.red(f"Cutting down test frontiers from {len(test_frontiers)} to {cfg.test.max_tasks}")
+                    test_frontiers = test_frontiers[:cfg.test.max_tasks]
                 mlb.purple("Running tests")
                 model_results = test_models([state.astar],
                                             test_frontiers,

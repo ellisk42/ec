@@ -136,6 +136,37 @@ class ToPlusPlusVisitor:
         return Abstraction(e.body.visit(self))
 
 
+
+def preprocess(test_frontiers,cfg):
+    """
+    Filters out tasks that we don't want, e.g. ones with out of range values, etc
+    """
+    filtered = []
+    for f in test_frontiers:
+        task = f.t
+
+        # filter request type
+        if not cfg.data.test.allow_complex_requests:
+            # only [int] -> [int] allowed
+            if task.request != arrow(tlist(tint),tlist(tint)):
+                continue
+        else:
+            # only [int] -> [int] or [int] -> int allowed
+            if task.request not in [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)]:
+                continue
+        
+        # adjust number of examples
+        for ([i],o) in task.examples:
+            print(len(i), end=' ')
+
+        print()
+        filtered.append(f)
+    return filtered
+
+
+
+
+
 def get_primitive(app):
     if app.isPrimitive:
         return app
