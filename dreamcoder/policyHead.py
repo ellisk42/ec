@@ -105,7 +105,10 @@ class NeuralPolicyHead(nn.Module):
             zipper = random.choice(holeZippers)
         else:
             raise ValueError
-        dist = self._computeDist([sk], [zipper], task, g) #TODO
+        try:
+            dist = self._computeDist([sk], [zipper], task, g) #TODO
+        except InvalidSketchError:
+            raise NoCandidates
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
 

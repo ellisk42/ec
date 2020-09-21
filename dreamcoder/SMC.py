@@ -158,7 +158,7 @@ class SMC(Solver):
                             # print(newZippers)
                             # print()
                         except NoCandidates:
-                            print(f"NoCand error on particle: {p}")
+                            #print(f"NoCand error on particle: {p}")
                             break
 
                         except AssertionError:
