@@ -163,7 +163,7 @@ class State:
         params = itertools.chain.from_iterable([head.parameters() for head in heads])
         optimizer = torch.optim.Adam(params, lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
-        astar = make_astar(vhead,phead,cfg.data.train.max_depth)
+        astar = make_solver(cfg.test.solver,vhead,phead,cfg.data.train.max_depth)
         j=0
         frontiers = None
 
@@ -438,7 +438,7 @@ class ExtractorGenerator:
 def test_models(astars, test_tasks, g, timeout, verbose=True):
     """
     `astars`: a list of one or more Astar objects
-        These can be easily made with makeDeepcoderData.make_astar(vhead,phead,maxDepth)
+        These can be easily made with makeDeepcoderData.make_solver('astar',vhead,phead,maxDepth)
     `test_tasks`: a list of Tasks or FakeFrontiers to run search on
     `g`: Grammar passed to Astar.infer()
     `timeout`: the search timeout
@@ -916,8 +916,9 @@ def hydra_main(cfg):
                 if cfg.test.max_tasks is not None and len(test_frontiers) > cfg.test.max_tasks:
                     mlb.red(f"Cutting down test frontiers from {len(test_frontiers)} to {cfg.test.max_tasks}")
                     test_frontiers = test_frontiers[:cfg.test.max_tasks]
+                solver = make_solver(cfg.data.test.solver,state.vhead,state.phead,cfg.data.test.max_depth)
                 mlb.purple("Running tests")
-                model_results = test_models([state.astar],
+                model_results = test_models([solver],
                                             test_frontiers,
                                             state.g,
                                             timeout=cfg.test.timeout,

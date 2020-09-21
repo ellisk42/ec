@@ -10,7 +10,7 @@ train:
   N: ${data.N}
   L: ${data.L}
   V: ${data.V}
-  num_mutated_tasks: 3
+  num_mutated_tasks: 1
   expressive_lambdas: ${data.expressive_lambdas}
   lambda_depth: ${data.lambda_depth}
   max_depth: ${data.max_depth}
@@ -22,6 +22,7 @@ test:
   buf_size: ${data.test.num_templates}
   threaded: False # do NOT set to true
   valid_frac: .8
+  solver: astar # astar | smc
   T: ${data.T}
   N: ${data.N}
   L: ${data.L}

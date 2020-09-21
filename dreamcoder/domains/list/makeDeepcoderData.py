@@ -4,6 +4,7 @@ import numpy as np
 import os
 from hydra import utils
 from dreamcoder.Astar import Astar
+from dreamcoder.SMC import SMC
 from torch import nn
 #import mlb
 import contextlib
@@ -358,8 +359,15 @@ class FakeRecognitionModel(nn.Module):
         super().__init__()
         self.policyHead = policyHead
         self.valueHead = valueHead
-def make_astar(vhead,phead,max_depth):
-    return Astar(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
+
+def make_solver(type,vhead,phead,max_depth):
+    if type == 'astar':
+        s = Astar
+    if type == 'smc':
+        s = SMC
+    else:
+        raise ValueError
+    return s(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
 
 class FakeFrontier:
     # pretends to be whatever valueLossFromFrontier wants for simplicity
