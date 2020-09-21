@@ -1,4 +1,6 @@
 dreamcoder/domains/list/DeepCoder_data
+exps/*
+list_tests/*
 outputs
 *.aux
 *.out
@@ -43,3 +45,4 @@ exps/run.sh
 exps/t3_canonical_reverse
 exps/t3_reverse
 exps/testing
+exps/run.xsh

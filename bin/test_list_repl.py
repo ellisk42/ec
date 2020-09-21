@@ -10,6 +10,7 @@ os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
 os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
 os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
 
+from collections import defaultdict
 import pathlib
 import contextlib
 import multiprocessing as mp
@@ -571,27 +572,27 @@ def which(cfg):
     print(f'http://localhost:6696/#scalars&regexInput={timestamp}')
     print("curr time:",datetime.now())
 
-def t4(state):
-    """
-    The model in `state` should be tested on t4 data.
-    Uses `cfg.data.num_tests`, `cfg.loop.timeout`
-    """
-    cfg = state.cfg
-    assert cfg.load is not None, "youre running T4 without loading a model to test it on"
-    timeout = cfg.loop.timeout # should get overridden if fed by commandline
-    print(f"Running T4 tests on {cfg.load} with timeout={timeout}")
+# def t4(state):
+#     """
+#     The model in `state` should be tested on t4 data.
+#     Uses `cfg.data.num_tests`, `cfg.loop.timeout`
+#     """
+#     cfg = state.cfg
+#     assert cfg.load is not None, "youre running T4 without loading a model to test it on"
+#     timeout = cfg.loop.timeout # should get overridden if fed by commandline
+#     print(f"Running T4 tests on {cfg.load} with timeout={timeout}")
 
-    t4_loader = DeepcoderTaskloader(
-        utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt'),
-        allowed_requests=state.allowed_requests,
-        repeat=False,
-        num_tasks=None,
-        expressive_lambdas=cfg.data.expressive_lambdas,
-        lambda_depth=cfg.data.lambda_depth,
-        )
-    t4_tasks = t4_loader.getTasks(cfg.data.num_tests)
-    model_results = test_models([state.astar],t4_tasks, state.g, timeout=timeout, verbose=True)
-    plot_model_results(model_results, file=f't4_{timeout}s', salt=state.j)
+#     t4_loader = DeepcoderTaskloader(
+#         utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt'),
+#         allowed_requests=state.allowed_requests,
+#         repeat=False,
+#         num_tasks=None,
+#         expressive_lambdas=cfg.data.expressive_lambdas,
+#         lambda_depth=cfg.data.lambda_depth,
+#         )
+#     t4_tasks = t4_loader.getTasks(cfg.data.num_tests)
+#     model_results = test_models([state.astar],t4_tasks, state.g, timeout=timeout, verbose=True)
+#     plot_model_results(model_results, file=f't4_{timeout}s', salt=state.j)
 
 class Tests:
     def __init__(self):
@@ -606,20 +607,6 @@ tests = Tests()
 @tests.test
 def deepcoder(cfg):
     test_cfg = cfg.data.test
-
-    # cfg = state.cfg
-    # mlb.purple("Training data:")
-    # print(OmegaConf.to_yaml(cfg.data.train))
-    # mlb.purple(f"Original training data was: T{cfg.data.train.T}")
-    # mlb.purple(f"Testing on T3 data")
-    # with open_dict(cfg): # disable strict mode
-    #     cfg.data.test = cfg.data.train # so conditions are the same as during training
-    #     cfg.data.test.T = 3
-    #     cfg.data.test.num_templates = cfg.data.test.buf_size = 100
-    #     cfg.data.test.num_mutated_tasks = 1
-    #     cfg.data.test.print_data = True
-    #     cfg.data.test.repeat = False
-    #     cfg.data.test.threaded = False
     taskloader = DeepcoderTaskloader(
         cfg=cfg,
         mode='test'
@@ -627,6 +614,70 @@ def deepcoder(cfg):
     tasks = taskloader.getTasks()
     assert len(tasks) == cfg.data.test.num_templates
     return tasks
+
+def joshTasks(w):
+    """
+    From https://github.com/ellisk42/ec/blob/Josh/dreamcoder/domains/list/makeListTasks.py
+    """
+    ts = []
+    import json
+    if w == "1":
+        directory = "data/wave1"
+    elif w == "2":
+        directory = "data/wave2"
+    elif w == "3":
+        directory = "data/wave3/json"
+    elif w == "3.1":
+        directory = "data/wave3.1/json"
+    elif w == "final":
+        directory = "data/final_wave"
+    else:
+        assert False
+    directory = utils.to_absolute_path(directory)
+    for fn in os.listdir(directory):
+        if not fn.endswith(".json"):continue
+
+        if w == "final":
+            if not (fn.endswith("_1.json")):
+                continue
+
+        with open(f"{directory}/{fn}") as handle:
+            data = json.load(handle)
+
+            ts.append(Task(data.get("name",fn.split(".")[0][1:]),
+                           arrow(tlist(tint),tlist(tint)),
+                           [((e["i"],),e["o"])
+                            for e in data["data"] ]))
+    return list(sorted(ts,key=lambda t: t.name))
+
+@tests.test
+def josh(cfg):
+    tasks = joshTasks(str(cfg.test.josh.wave))
+    return tasks
+
+@tests.test
+def lucas(cfg):
+    from dreamcoder.domains.list.main import retrieveJSONTasks, sortBootstrap, make_list_bootstrap_tasks
+    def get_tasks(f):
+        return retrieveJSONTasks(utils.to_absolute_path(f))
+    if cfg.test.lucas.version == 1:
+        tasks = get_tasks("data/list_tasks2.json")[:105]
+    elif cfg.test.lucas.version == 2:
+        tasks = get_tasks("data/list_tasks2.json")[:4928]
+    elif cfg.test.lucas.version == 3:
+        tasks = get_tasks("data/list_tasks2.json")
+    elif cfg.test.lucas.version == 'old':
+        tasks = get_tasks("data/list_tasks.json") + sortBootstrap()
+    elif cfg.test.lucas.version == 'boopstrap':
+        tasks = make_list_bootstrap_tasks()
+    else:
+        raise ValueError
+    return tasks
+
+# def analyze_tasks(tasks):
+#     requests = defaultdict(int)
+#     for task in tasks:
+#         task.request
 
 def cfg_diff(train_cfg,test_cfg):
     mlb.magenta("Differences between train and test:")
@@ -695,7 +746,6 @@ def hydra_main(cfg):
         # TEST
         elif cfg.mode == 'test':
             original_cfg = None
-            assert cfg.test.to_file or cfg.load, "Doesnt make sense to generate data and neither save it nor test it on a loaded state"
             tests_from = cfg.test.from_fn or cfg.test.from_file # use fancy python `or` semantics
             if cfg.test.from_fn is not None:
                 if cfg.test.from_fn not in tests.tests:

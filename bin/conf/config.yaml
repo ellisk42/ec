@@ -28,7 +28,11 @@ plot: # for mode=plot
   title: null
 
 test: # for mode=test
-  from_fn: null
+  from_fn: null # deepcoder | josh | lucas
   from_file: null
   to_file: null
   timeout: 30
+  josh:
+    wave: 3 # 1 | 2 | 3 | 3.1 | final
+  lucas:
+    version: 1 # 1 | 2 | 3 | old | bootstrap
