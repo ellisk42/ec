@@ -120,7 +120,9 @@ class State:
             prims = deepcoderPrimitivesPlusPlus()
         else:
             prims = deepcoderPrimitives()
-        g = Grammar.uniform(prims)
+
+        
+        g = Grammar.uniform(prims, g_lambdas = taskloader.g_lambdas)
 
         #taskloader.check()
 
@@ -792,45 +794,48 @@ def hydra_main(cfg):
                         print(f'moved {result} -> {dir}')
             return
 
-        # the part that actually works with / runs models
-        with torch.cuda.device(cfg.device):
-            print_overrides = []
-            if cfg.load is None:
-                print("no file to load from, creating new state...")
+        # LOAD OR NEW
+        print_overrides = []
+        if cfg.load is None:
+            print("no file to load from, creating new state...")
+            with torch.cuda.device(cfg.device):
                 state.new(cfg=cfg)
-            else:
-                print(f"loading from outputs/{cfg.load}...")
-                state.load(
-                    'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
-                    )
-                if cfg.mode == 'device':
-                    mlb.green(f"DEVICE: {state.cfg.device}")
-                    return
-                print("loaded")
-                assert all(['=' in arg for arg in sys.argv[1:]])
-                overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
-                for override in overrides:
-                    try:
-                        # eg override = 'data.T'
-                        dotpath = override.split('.')
-                        target = state.cfg # the old cfg
-                        source = cfg # the cfg that contains the overrides
-                        for attr in dotpath[:-1]: # all but the last one (which we'll use setattr on)
-                            target = target[attr]
-                            source = source[attr]
-                        overrided_val = source[dotpath[-1]]
-                        print_overrides.append(f'overriding {override} to {overrided_val}')
-                        with open_dict(target): # disable strict mode
-                            target[dotpath[-1]] = overrided_val
-                    except Exception as e:
-                        mlb.red(e)
-                        pass
-            print()
-            which(state.cfg) # TODO idk maybe you wanna print state.cfg instead. Maybe we should do cfg=state.cfg?
+        else:
+            print(f"loading from outputs/{cfg.load}...")
+            state.load(
+                'outputs/'+cfg.load # 2020-09-06/13-49-11/saves/autosave'
+                )
+            if cfg.mode == 'device':
+                mlb.green(f"DEVICE: {state.cfg.device}")
+                return
+            print("loaded")
+            assert all(['=' in arg for arg in sys.argv[1:]])
+            overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
+            for override in overrides:
+                try:
+                    # eg override = 'data.T'
+                    dotpath = override.split('.')
+                    if dotpath[-1] == 'device':
+                        raise NotImplementedError
+                    target = state.cfg # the old cfg
+                    source = cfg # the cfg that contains the overrides
+                    for attr in dotpath[:-1]: # all but the last one (which we'll use setattr on)
+                        target = target[attr]
+                        source = source[attr]
+                    overrided_val = source[dotpath[-1]]
+                    print_overrides.append(f'overriding {override} to {overrided_val}')
+                    with open_dict(target): # disable strict mode
+                        target[dotpath[-1]] = overrided_val
+                except Exception as e:
+                    mlb.red(e)
+                    pass
+        print()
+        which(state.cfg)
 
-            for string in print_overrides: # just want this to print after the big wall of yaml
-                mlb.purple(string)
+        for string in print_overrides: # just want this to print after the big wall of yaml
+            mlb.purple(string)
             
+        with torch.cuda.device(state.cfg.device):
             if state.cfg is not None and state.cfg.seed is not None:
                 print("Setting evaluation to deterministic (roughly) and seeding RNG")
                 torch.manual_seed(state.cfg.seed)
@@ -856,7 +861,7 @@ def hydra_main(cfg):
             # TEST
             elif cfg.mode == 'test':
                 ### NOTE: this continues from the earlier 'test' section
-                if cfg.from_fn == 'deepcoder' or (original_cfg is not None and original_cfg.from_fn == 'deepcoder'):
+                if cfg.test.from_fn == 'deepcoder' or (original_cfg is not None and original_cfg.test.from_fn == 'deepcoder'):
                     cfg_diff(state.cfg.data.train,original_cfg.data.test) # print the differences
                 mlb.purple("Running tests")
                 model_results = test_models([state.astar],

@@ -64,6 +64,8 @@ from dreamcoder.utilities import count_parameters
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.list.makeDeepcoderData import *
+from dreamcoder.grammar import NoCandidates
+from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
@@ -124,7 +126,10 @@ class NeuralPolicyHead(nn.Module):
             return # pretend there are no expansions off of it
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
-        yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
+        try:
+            yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
+        except NoCandidates:
+            return
 
     def policyLossFromFrontier(self, frontier, g):
         # Monte Carlo estimate: draw a sample from the frontier
@@ -180,6 +185,15 @@ class NeuralPolicyHead(nn.Module):
     def _buildMask(self, sketches, zippers, task, g):
         masks = []
         for zipper, sk in zip(zippers, sketches):
+
+            # if this is a zipper into a lambda then use lambdas grammar
+            if len(zipper.env) > 1:
+                assert zipper.path[0] == 'body'
+                assert zipper.path[1] != 'body'
+                if g.g_lambdas is None: # backwards compatability. Careful it doesnt carry the max depth thru tho
+                    g.g_lambdas = Grammar.uniform(get_lambdas())
+                g = g.g_lambdas
+
             mask = [0. for _ in range(len(self.productionToIndex))]
             candidates = returnCandidates(zipper, sk, task.request, g)
             for c in candidates:

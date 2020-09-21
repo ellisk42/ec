@@ -18,7 +18,7 @@ class NoCandidates(Exception):
 
 
 class Grammar(object):
-    def __init__(self, logVariable, productions, continuationType=None, max_hole_depth=None):
+    def __init__(self, logVariable, productions, continuationType=None, max_hole_depth=None, g_lambdas=None):
         self.logVariable = logVariable
         self.productions = productions
 
@@ -28,6 +28,7 @@ class Grammar(object):
         self.expression2likelihood[Index(0)] = self.logVariable
 
         self.max_hole_depth = max_hole_depth
+        self.g_lambdas = None
 
     def randomWeights(self, r):
         """returns a new grammar with random weights drawn from r. calls `r` w/ old weight"""
@@ -51,8 +52,9 @@ class Grammar(object):
                 continuationType = baseType("tower")
             else:
                 continuationType = None
-                
-        self.__init__(state['logVariable'], state['productions'], continuationType=continuationType, max_hole_depth=state['max_hole_depth'])
+        if 'g_lambdas' not in state:
+            state['g_lambdas'] = None
+        self.__init__(state['logVariable'], state['productions'], continuationType=continuationType, max_hole_depth=state['max_hole_depth'], g_lambdas=state['g_lambdas'])
 
     @staticmethod
     def fromProductions(productions, logVariable=0.0, continuationType=None):
