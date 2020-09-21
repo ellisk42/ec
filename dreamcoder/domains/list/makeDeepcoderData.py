@@ -3,6 +3,8 @@ import mlb
 import numpy as np
 import os
 from hydra import utils
+from dreamcoder.Astar import Astar
+from torch import nn
 #import mlb
 import contextlib
 import multiprocessing as mp
@@ -319,6 +321,14 @@ def evaluate(e, ctx, V):
 
 class InvalidSketchError(Exception): pass
 
+class FakeRecognitionModel(nn.Module):
+    # pretends to be whatever Astar wants from its RecognitionModel. Which isn't much lol
+    def __init__(self,valueHead,policyHead):
+        super().__init__()
+        self.policyHead = policyHead
+        self.valueHead = valueHead
+def make_astar(vhead,phead,max_depth):
+    return Astar(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
 
 class FakeFrontier:
     # pretends to be whatever valueLossFromFrontier wants for simplicity
@@ -368,10 +378,7 @@ class DeepcoderTaskloader:
             self.file_start = self.offset_in_file
         
         # make a lambda grammar to sample lambdas from
-        _lambdas = get_lambdas()
-        g_lambdas = Grammar.uniform(_lambdas)
-        g_lambdas.max_hole_depth = self.cfg.lambda_depth
-        self.g_lambdas = g_lambdas
+        self.g_lambdas = Grammar.uniform(get_lambdas(), max_hole_depth= self.cfg.lambda_depth)
         #self.post_load()
     # @contextlib.contextmanager
     # def saveable(self):
@@ -608,7 +615,10 @@ class DeepcoderTaskloader:
         num_generated = 0
         while True:
             task = tasks[num_generated]
+            assert self.g_lambdas.max_hole_depth is not None
             sampled = self.g_lambdas.sampleFromSketch(arrow(tlist(tint), tlist(tint)), program_plus_plus, maximumDepth = 20) # this max depth wont be hit bc of Grammar.max_hole_depth
+            if sampled.size() > 30:
+                breakpoint()
             try:
                 verify_tree(sampled)
             except InvalidSketchError:
@@ -646,12 +656,13 @@ class DeepcoderTaskloader:
             
 
             new_examples = [(ex[0],output) for ex,output in zip(task.examples,outputs)]
-            new_task = Task(task.name, task.request, new_examples)
+            new_task = Task(str(sampled), task.request, new_examples)
             res.append(FakeFrontier(sampled,new_task))
             #mlb.green(f"accepting {sampled}")
-            print(f"accepting {sampled}")
-            for ex in new_task.examples:
-                print(f"\t{ex[0][0]} -> {ex[1]}")
+            if self.cfg.print_data:
+                print(f"accepting {sampled}")
+                for ex in new_task.examples:
+                    print(f"\t{ex[0][0]} -> {ex[1]}")
             num_generated += 1
             if num_generated >= self.cfg.num_mutated_tasks:
                 break

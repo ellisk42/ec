@@ -1,8 +1,9 @@
 # @package _group_
-test_every: 200
-search_valid: False
-save_every: 1000
-print_every: 200
-max_steps: null
-#num_mini_tests: 10
-timeout: 3
+print_every: 100
+save_every: 2000
+max_steps: 500000
+# validation
+valid_every: ${loop.print_every}
+search_valid_every: 20000
+search_valid_timeout: 3
+search_valid_num_tasks: 50

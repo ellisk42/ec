@@ -121,7 +121,7 @@ class NeuralPolicyHead(nn.Module):
         try:
             dist = self._computeDist([sk], [holeZipper], task, g)
         except InvalidSketchError:
-            yield from [] # pretend there are no expansions off of it
+            return # pretend there are no expansions off of it
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
         yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)

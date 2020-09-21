@@ -802,7 +802,8 @@ class ListREPLValueHead(BaseValueHead):
                 nn.Linear(H, 1),
                 nn.Softplus())
 
-        self.concrete_count = defaultdict(int)
+        self.concrete_count = 0 # CAREFUL dont make this a task->int dict or itll leak and make the save files gigabytes large
+        self._curr_task_concrete_count = None
 
     def rep(self,sk,task,ctxs, in_lambda):
         """
@@ -850,17 +851,18 @@ class ListREPLValueHead(BaseValueHead):
                 # we dont run this if we're inside a lambda and we contain an index
                 # since those can't be concrete evaluated in a lambda
                 res = evaluate_ctxs(sk,ctxs,self.cfg.data.train.V)
-                if sk.size() > 1 and hasattr(self,'concrete_count'):
+                if sk.size() > 1:
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
-                    self.concrete_count[task] += sk.size()
+                    if self._curr_task_concrete_count == task:
+                        self.concrete_count += sk.size()
                 return res
         
         # primitive like HALF
         if sk.isPrimitive:
             # only happens when concrete eval is turned off
             # in which case constants (eg functions like _half) can show up here
+            # and in lambdas, constants can show up
             assert not self.allow_concrete_eval or in_lambda
-            assert callable(sk.value)
             return [sk.value for _ in range(len(task.examples))]
 
         # index like $0
@@ -933,9 +935,13 @@ class ListREPLValueHead(BaseValueHead):
         if self.cfg.debug.zero_output_feats:
             output_feats = torch.zeros_like(output_feats)
 
+        self.concrete_count = 0
+        self._curr_task_concrete_count = task
         sk_reps = torch.stack([self.rep(sk,task,None,False) for sk in sks]) # [num_sketches,num_exs,H]
         total_size = sum([sk.size() for sk in sks])
-        concrete_ratio = self.concrete_count[task]/total_size
+        concrete_ratio = self.concrete_count/total_size
+        self.concrete_count = 0
+        self._curr_task_concrete_count = None
         #print(f"concrete ratio: {concrete_ratio:.3f}")
         #for sk in sks:
         #    print(f'\t{sk}')

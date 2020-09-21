@@ -23,6 +23,12 @@ debug:
   zero_concrete_eval: False # Take the result of encodeValue(rep) and turn it to all zeros
   zero_sk: False # Take the result of rep(sk) and turn it to all zeros so _compare(all_zeros,outputFeatures) is run
 
-plot:
+plot: # for mode=plot
   file: multiplot
   title: null
+
+test: # for mode=test
+  from_fn: null
+  from_file: null
+  to_file: null
+  timeout: 30
