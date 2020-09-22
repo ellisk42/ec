@@ -363,7 +363,7 @@ class FakeRecognitionModel(nn.Module):
 def make_solver(type,vhead,phead,max_depth):
     if type == 'astar':
         s = Astar
-    if type == 'smc':
+    elif type == 'smc':
         s = SMC
     else:
         raise ValueError

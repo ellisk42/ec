@@ -24,6 +24,22 @@ from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
 #from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 
 
+
+
+class ExtractorGenerator:
+    def __init__(self,cfg,maximumLength):
+        self.cfg = cfg
+        self.maximumLength = maximumLength
+        self._groups = {}
+    def __call__(self, group):
+        """
+        Returns an extractor object. If called twice with the same group (an int or string or anything) the same object will be returned (ie share weights)
+        """
+        if group not in self._groups:
+            self._groups[group] = ListFeatureExtractor(maximumLength=self.maximumLength, cfg=self.cfg)
+        return self._groups[group]
+
+
 def retrieveJSONTasks(filename, features=False):
     """
     For JSON of the form:

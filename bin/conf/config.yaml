@@ -24,8 +24,9 @@ debug:
   zero_sk: False # Take the result of rep(sk) and turn it to all zeros so _compare(all_zeros,outputFeatures) is run
 
 plot: # for mode=plot
-  file: multiplot
-  title: null
+  file: ${plot.suffix}
+  title: ${plot.suffix}
+  suffix: null
 
 test: # for mode=test
   from_fn: null # deepcoder | josh | lucas
