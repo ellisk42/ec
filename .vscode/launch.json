@@ -8,7 +8,7 @@
             "name": "Test List REPL",
             "type": "python",
             "request": "launch",
-            "program": "bin/test_list_repl.py",
+            "program": "bin/matt.py",
             "args":[
                 //"data.expressive_lambdas=False",
                 //"data.lambda_depth=3",
@@ -38,6 +38,7 @@
                 //"data.test.T=3",
                 //"data.test.repeat=True",
                 //"device=4",
+                "print=True",
                 "device=6",
                 //"model=rnn"
                 //"model=rnn",
@@ -70,7 +71,7 @@
                 //"loop.timeout=10",
                 //"mode=T4",
                 //"loop.save_every=null",
-                "loop.print_every=10",
+                //"loop.print_every=10",
                 "name=vscode",
                 "debug.mlb_debug=False",
             ],

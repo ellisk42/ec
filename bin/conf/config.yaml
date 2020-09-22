@@ -13,6 +13,7 @@ device: 6
 cuda: True
 seed: 100 # null means random
 print: False # just print the cfg and exit
+kill_by: null # not used internally for anything, just by the `job` manager
 
 debug:
   verbose: False
