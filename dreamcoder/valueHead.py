@@ -116,7 +116,9 @@ class SemiOracleValueHead(nn.Module):
             try: 
                 val, _ = self.g.sketchLogLikelihood(task.request, sol, sketch)
                 lls.append(val.item())
-            except AssertionError: continue
+            except AssertionError:
+                raise
+                continue
         ll = max(lls + [-50])
         return -ll #TODO
 
@@ -479,6 +481,7 @@ class AbstractREPLValueHead(BaseValueHead):
         try:        
             loss = binary_cross_entropy(-distance, targets, average=False) #average?
         except AssertionError:
+            raise
             print("assertion ERROR")
             print("distance:")
             print(distance)

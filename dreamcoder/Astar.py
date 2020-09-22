@@ -68,6 +68,7 @@ class Astar(Solver):
                                                                     maximumDepth=self.maxDepth):
                     yield policyCost + stepCost, newZippers, newSketch
             except AssertionError:
+                raise
                 #print("SKKKK", sketch)
                 return
 

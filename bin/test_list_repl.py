@@ -452,6 +452,7 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
         name = f"{astar.owner.policyHead.__class__.__name__}_&&_{astar.owner.valueHead.__class__.__name__}"
         print(f"Testing: {name}")
         search_results = []
+        search_failures = []
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
         for task in test_tasks:
             with torch.no_grad():
@@ -474,20 +475,23 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
                 if verbose: mlb.green(f"solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
             else:
                 if verbose: mlb.red(f"failed to solve {task.name} (searched {num_progs} programs)")
-        model_results.append(ModelResult(name, search_results, len(test_tasks), timeout))
+                search_failures.append(num_progs)
+        model_results.append(ModelResult(name, search_results, search_failures, len(test_tasks), timeout))
         if verbose: mlb.blue(f'solved {len(search_results)}/{len(test_tasks)} tasks ({len(search_results)/len(test_tasks)*100:.1f}%)\n')
     return model_results
 
 class ModelResult:
-    def __init__(self, name, search_results, num_tests, timeout):
+    def __init__(self, name, search_results, search_failures, num_tests, timeout):
         self.empty = (len(search_results) == 0)
         if len(search_results) > 0:
             assert isinstance(search_results[0], SearchResult)
         self.timeout = timeout
         self.search_results = search_results
+        self.search_failures = search_failures
         self.num_tests = num_tests
         self.name = name
         if not self.empty:
+            self.eval_lower_bound = min([evals for evals in search_failures]) # TODO RESUME HERE
             self.max_time = max([r.time for r in search_results])
             self.max_evals = max([r.evaluations for r in search_results])
         else:

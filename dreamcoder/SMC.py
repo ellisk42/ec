@@ -162,6 +162,7 @@ class SMC(Solver):
                             break
 
                         except AssertionError:
+                            raise
                             continue
 
                     # for newObject, newZippers in (sampleSingleStep(g, p.trajectory,

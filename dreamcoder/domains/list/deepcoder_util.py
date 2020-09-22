@@ -106,6 +106,7 @@ def buildCandidate(request, context, environment, parsecontext, index_dict={}):
     else: #if it is a hole:
         try: assert chosen_str == '<HOLE>' #TODO, choose correct representation of program
         except AssertionError as e:
+            raise
             print("bad string:", chosen_str)
             assert False
         p = Hole()

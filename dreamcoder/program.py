@@ -1252,6 +1252,7 @@ class Mutator:
             _, summary = self.grammar.likelihoodSummary(Context.EMPTY, env,
                 tp, e, silent=True)
         except AssertionError as err:
+            raise
             #print(f"closedLikelihoodSummary failed on tp={tp}, e={e}, error={err}")
             pass
         if summary is not None:
