@@ -67,6 +67,7 @@ parser.add_argument('--path', type=str, default='robustfill_baseline0.p')
 parser.add_argument('--results_path', type=str, default='robustfill_baseline_results.p')
 parser.add_argument('--gpu', type=int, default=None)
 parser.add_argument('--timeout', type=int, default=30)
+parser.add_argument('--tasks', type=str, default='kevin')
 args = parser.parse_args()
 
 if args.gpu is not None:
@@ -89,10 +90,16 @@ print("problems from:", problemPath)
 with open(problemPath, 'rb') as h:
     r = dill.load(h)
 
-assert 0
+#assert 0
 times = []
 ttasks = r.getTestingTasks()
-ttasks = makeOldTasks(synth=False, challenge=True)
+
+if args.tasks == 'kevin':
+    ttasks = makeOldTasks(synth=True, challenge=True)
+elif args.tasks == 'synth':
+    ttasks = makeOldTasks(synth=True, challenge=False)
+elif args.tasks == 'challenge':
+    ttasks = makeOldTasks(synth=False, challenge=True)
 #ttasks = makeNewMaxTasks() + r.getTestingTasks()
 
 print("number of tasks", len(ttasks))

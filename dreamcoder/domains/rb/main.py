@@ -96,13 +96,13 @@ class RBTask():
 
 class RBFeatureExtractor(nn.Module):
 
-    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=256, useConvs=True):
+    def __init__(self, _=None, tasks=None,  testingTasks=[], cuda=False, lexicon=None, H=256, useConvs=True, char_embed_dim=32):
         super(RBFeatureExtractor, self).__init__()
         #self.outputDimensionality 
         self.H = H
         self.nChars = len(string.printable[:-4]) + 1
         self.strLen = 36
-        self.char_embed_dim = 32 #20
+        self.char_embed_dim = char_embed_dim#32 #20
         self.useConvs = useConvs
 
         self.embedding = nn.Embedding(self.nChars, self.char_embed_dim)                                    
@@ -348,16 +348,18 @@ def rb_options(parser):
 
 
 
-def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False):
+def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False, challenge_path= "PBE_Strings_Track"):
     import dreamcoder.domains.text.makeTextTasks as makeTextTasks
     #import makeTasks, loadPBETasks
 
     from dreamcoder.type import arrow, tlist, tcharacter
     tasks = []
     if synth:
+        print("synth tasks")
         tasks = makeTextTasks.makeTasks() 
     if challenge:
-        challenge_tasks, _ = makeTextTasks.loadPBETasks()
+        print("challenge tasks")
+        challenge_tasks, _ = makeTextTasks.loadPBETasks(challenge_path)
         tasks = tasks + challenge_tasks
 
     tasklist = []
@@ -373,8 +375,8 @@ def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False)
 
 
 
-def makeOldTasks(synth=True, challenge=True):
-    tasklist = makeTestdata(synth=True, challenge=True, max_num_ex=4)
+def makeOldTasks(synth=True, challenge=True, challenge_path= "PBE_Strings_Track"):
+    tasklist = makeTestdata(synth=synth, challenge=challenge, max_num_ex=4, challenge_path=challenge_path)
     tasklist = list(set( (tuple(i), tuple(o)) for i, o in tasklist))
     tasks = []
 

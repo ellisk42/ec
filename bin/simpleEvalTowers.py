@@ -97,12 +97,15 @@ def test_policyTiming():
         if not args.useValue:
             r.recognitionModel.valueHead = SampleDummyValueHead()
 
+        print(type(r.recognitionModel.valueHead))
         #print("no concrete?", r.recognitionModel.policyHead.noConcrete)
-    #import pdb; pdb.set_trace()
+    
     print("WARNGING: forcing blended exec")
     r.recognitionModel.policyHead.REPLHead.noConcrete = False
     if not hasattr(r.recognitionModel.valueHead, 'noConcrete'):
         r.recognitionModel.valueHead.noConcrete =False
+
+    #import pdb; pdb.set_trace()
 
     g = r.grammars[-1]
     print(r.recognitionModel.gradientStepsTaken)

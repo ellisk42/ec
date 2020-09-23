@@ -32,11 +32,13 @@ def getSketchesFromRollout(i, rS, nSamples=1, excludeConcrete=True):
             if newZippers: sketches.add(newOb)
     return list(sketches)
 
+DEVICE = 1
+torch.cuda.set_device(DEVICE)
+
 #load tasks and models
 sys.setrecursionlimit(5000)
 n = 3
 ID = 'towers' + str(n)
-
 nameSalt = "towers"
 
 paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
@@ -49,21 +51,28 @@ paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
 paths, names = zip(*paths)
 with open(paths[0], 'rb') as h:
     rS = dill.load(h)
+    rS.recognitionModel.cuda()
 with open(paths[1], 'rb') as h:
     rRNN = dill.load(h)
+    rRNN.recognitionModel.cuda()
 with open(paths[2], 'rb') as h:
     rR = dill.load(h)
+    rR.recognitionModel.cuda()
+    print("WARNGING: forcing blended exec")
+    rR.recognitionModel.policyHead.REPLHead.noConcrete = False
+    if not hasattr(rR.recognitionModel.valueHead, 'noConcrete'):
+        rR.recognitionModel.valueHead.noConcrete =False
 tasks = rS.getTestingTasks()
 
 ALGOS = ['tsne', 'pca']
-MODES = ['text', 'color', 'image', 'valueText', 'imageValue', 'symbolicOrientation', 'maxH', 'symbolicHand', 'absState']
+MODES = ['text', 'color', 'image', 'valueText', 'imageValue', 'symbolicOrientation', 'maxH', 'symbolicHand', 'absState', 'absStateNum']
 models = ['repl', 'rnn']
 
 
-mode = 'absStateNum' #'absState'
+mode = 'color' #'absState'
 skipValueComp = True
 excludeZeroHist = True
-model = 'rnn'
+model = 'repl'
 
 TASK_IDS = list(range(len(tasks)))
 nImages = 5
@@ -240,7 +249,7 @@ for algo in ALGOS:
                     
                     plt.text(xx/l_x, yy/l_y, str(i), fontsize=4)
 
-        plt.savefig(f'embed_tower/model={model}_TASKS=ALL_WNum_{algo}_{mode}_{j  }.png')
+        plt.savefig(f'embed_tower/model={model}_TASKS=new_WNum_{algo}_{mode}_{j}.png')
         plt.clf()
 
 

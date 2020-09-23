@@ -131,11 +131,11 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
         xs = list(range(min(maxLens[n], maxEvals)))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n], linewidth=4)
+                  label=names[n], linewidth=6)
             #plot.xscale('log')
         else:
             plot.plot(xs, [averageLoss(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n], linewidth=4)  
+                  label=names[n], linewidth=6)  
 
     plot.legend()
     #box = ax.get_position()
@@ -227,44 +227,64 @@ if __name__ == '__main__':
         ]
 
     graph="_graph=True"
-    nameSalt = "SMCpseudoWithSynthBaselines" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "SMCpseudoConvWithSynthBaselinesChallengeOnlyWREPL" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'rb'
     runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    maxEvals = 5000
-    useMaxLens = True
-    paths = [
-        (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPL_SRE=True.pickle', 'Abstract REPL policy (ours)'),
-        (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNN_SRE=True.pickle', 'RNN Policy'),
-        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCBigram_SRE=True.pickle', 'Bigram Policy'),
-        (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPLNoConcrete_SRE=True.pickle', 'modular without concrete semantics'),
-        (f'robustfill_baseline_results.p', 'RobustFill')
-        ]
-
-
-    graph=""
-    nameSalt = "AstarPseudoResultFilteredNoMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    ID = 'towers' + str(n)
-    runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    maxEvals = 25000
+    maxEvals = 3000
     useMaxLens = True
     maxTasksOnly=False
-    noMaxTasks=True
-    #list of okay tasks:
-    okayList = False #range(29)
+    noMaxTasks=False
+    okayList = False
+    challengeOnly=True#False#True
+    synthOnly =False#True
     paths = [
-        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Abstract REPL (concrete + neural semantics)"),
-        (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Abstract REPL (neural semantics only)"),
-        #(f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
-        #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
-        #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
-        #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
-        #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
-        (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy only (weights not shared w value)'),
-        #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
-        #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
-        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
-        #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
+        #(f'experimentOutputs/rbConvPseudoResultSMCREPL_SRE=True.pickle', 'Conv network - blended exec policy (ours) 6M'),
+        (f'experimentOutputs/rbDensePseudoResultSMCREPLtasks=kevin_SRE=True.pickle', 'dense blended exec policy (ours) (2M programs)'),
+        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPL_SRE=True.pickle', 'old blended exec policy (ours) 20MM'),
+        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNN_SRE=True.pickle', 'RNN Policy'),
+        (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNNtasks=challenge_SRE=True.pickle2000000', 'RNN Policy (2M programs)'),
+        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCBigram_SRE=True.pickle', 'Bigram Policy'),
+        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPLNoConcrete_SRE=True.pickle', 'old neural only exec policy'),
+        (f'experimentOutputs/rbDensePseudoResultSMCREPLNoConcretetasks=challenge_SRE=True.pickle', 'dense neural only exec policy (~1M programs)'),
+        #(f'robustfill_baseline_results.p', 'RobustFill'),
+        #(f'robustfill_baseline_results.p60001', 'RobustFill 7.5MM prog'),
+        #(f'robustfill_baseline_results.p10001', 'RobustFill 1.28MM prog'),
+        #(f'robustfill_baseline_results.p10001v2', 'RobustFill 1.28MM prog'),
+        #(f'robustfill_baseline_results.p20001v2', 'RobustFill 2.5MM prog'),
+        #(f'experimentOutputs/rbPolicyOnlyPseudoResultSMCREPLtasks=challenge_SRE=True.pickle2000000', 'old blended exec policy (ours) 2MM')
+        (f'robustfill_baseline_results.p20001', 'RobustFill (2.5M programs)'),
+        (f'experimentOutputs/repl_results.p', 'REPL upper bound')
         ]
+
+
+    # graph=""
+    # nameSalt = "AstarPseudoResultFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    # ID = 'towers' + str(n)
+    # runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    # maxEvals = 25000
+    # useMaxLens = True
+    # maxTasksOnly = True
+    # noMaxTasks=False
+    # #list of okay tasks:
+    # okayList = False #range(29)
+    # paths = [
+    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Abstract REPL (concrete + neural semantics)"),
+    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Abstract REPL (neural semantics only)"),
+    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
+    #     #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
+    #     #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
+    #     #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
+    #     #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
+    #     (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy only (weights not shared w value)'),
+    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
+    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
+    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
+    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebugLong", "Abstract REPL policy + RL value (seperate weights)"),
+    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
+    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
+
+    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
+    #    ]
 
 
 
@@ -292,8 +312,12 @@ if __name__ == '__main__':
             from dreamcoder.domains.rb.main import makeTasks, makeOldTasks
             rbHardTasks = [ t.name for t in makeTasks()]
 
-            challenge = [t.name for t in makeOldTasks(synth=False) ]
+
+            challenge = makeOldTasks(synth=False, challenge=True)
             print("length challenge,", len(challenge))
+
+            synth = makeOldTasks(synth=True, challenge=False)
+            print("length synth,", len(synth))
 
             from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks, makeNewMaxTasks
 
@@ -328,6 +352,12 @@ if __name__ == '__main__':
 
                 if noMaxTasks:
                     if task in maxTasks: delTasks.append(task)
+
+                if challengeOnly:
+                    if task in synth: delTasks.append(task)
+
+                if synthOnly:
+                    if task not in synth: delTasks.append(task)
                 #if task.name not in challenge: delTasks.append(task)
 
             for task in list(set(delTasks)): del r.testingSearchStats[-1][task]
