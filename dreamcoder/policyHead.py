@@ -107,8 +107,8 @@ class NeuralPolicyHead(nn.Module):
             raise ValueError
         try:
             dist = self._computeDist([sk], [zipper], task, g) #TODO
-        except InvalidSketchError:
-            mlb.red("2. Valuehead should have caught this")
+        except InvalidSketchError as e:
+            mlb.red(f"sampleSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
@@ -126,8 +126,8 @@ class NeuralPolicyHead(nn.Module):
 
         try:
             dist = self._computeDist([sk], [holeZipper], task, g)
-        except InvalidSketchError:
-            mlb.red("1. Valuehead should have caught this")
+        except InvalidSketchError as e:
+            mlb.red(f"enumSingleStep Valuehead should have caught this: {e}")
             return # pretend there are no expansions off of it
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}

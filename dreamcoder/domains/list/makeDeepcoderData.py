@@ -310,7 +310,7 @@ def check_in_range(res,V):
         minn = min(res)
         if maxx > V or minn < -V:
             #mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: list min={minn}; list max={maxx}')
-            raise InvalidSketchError
+            raise InvalidSketchError(f"{minn} {maxx}")
 
 def ctxs_of_examples(examples):
     """
@@ -397,7 +397,7 @@ def evaluate_ctxs(e, ctxs, V):
     try:
         res = [evaluate(e,ctx, V) for ctx in ctxs]
     except (ZeroDivisionError,FloatingPointError):
-        raise InvalidSketchError
+        raise InvalidSketchError("zerodiv")
     return res
 
 def evaluate(e, ctx, V):

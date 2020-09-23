@@ -696,10 +696,10 @@ class InvalidIntermediatesValueHead(BaseValueHead):
         try:
             concrete_rep(sketch,task,None,False,self.cfg.data.test.V)
             #concrete_rep(sketch,task,None,False)
-        except InvalidSketchError:
-            print("caught an invalid sketch")
-            #return 100000000000
-            return 0
+        except InvalidSketchError as e:
+            print(f"caught an invalid sketch {e}")
+            return 100000000000
+            #return 0
         return 0
 
 
@@ -872,8 +872,8 @@ class ListREPLValueHead(BaseValueHead):
                 # since those can't be concrete evaluated in a lambda
                 try:
                     res = evaluate_ctxs(sk,ctxs,self.cfg.data.train.V)
-                except InvalidSketchError:
-                    mlb.red('Valuehead validator should have already caught this.')
+                except InvalidSketchError as e:
+                    mlb.red(f'Valuehead validator should have already caught this: {e}')
                     raise
                 if sk.size() > 1:
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
