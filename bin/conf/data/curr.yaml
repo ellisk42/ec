@@ -9,6 +9,8 @@ train:
   T: ${data.T}
   N: ${data.N}
   L: ${data.L}
+  L_min: ${data.L_min}
+  L_max: ${data.L_max}
   V: ${data.V}
   num_mutated_tasks: 1
   expressive_lambdas: ${data.expressive_lambdas}
@@ -26,6 +28,8 @@ test:
   T: ${data.T}
   N: ${data.N}
   L: ${data.L}
+  L_min: ${data.L_min}
+  L_max: ${data.L_max}
   V: ${data.V}
   num_mutated_tasks: 1
   expressive_lambdas: ${data.expressive_lambdas}
@@ -38,10 +42,12 @@ test:
 T: 2
 N : 5
 L: 10
+L_min: null
+L_max: null
 V: 32
 expressive_lambdas: True
 lambda_depth: 3
 allow_complex_requests: False
-max_depth: 10
+max_depth: 12
 #num_mutated_tasks: 3
 #print_data: False

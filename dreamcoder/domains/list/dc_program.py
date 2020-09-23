@@ -234,7 +234,11 @@ def generate_IO_examples(program, N, L, V):
             if input_types[a] == int:
                 input_value[a] = np.random.randint(minv, maxv)
             elif input_types[a] == [int]:
-                input_value[a] = list(np.random.randint(minv, maxv, size=L))
+                if isinstance(L, int):
+                    size = L
+                else:
+                    size = np.random.choice(L) # choose among list of values
+                input_value[a] = list(np.random.randint(minv, maxv, size=size))
             else:
                 raise Exception("Unsupported input type " + input_types[a] + " for random input generation")
         output_value = program.fun(input_value)

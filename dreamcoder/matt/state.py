@@ -86,7 +86,7 @@ class State:
             mode='test'
             )
 
-        extractor = ExtractorGenerator(cfg=cfg, maximumLength = max([cfg.data.train.L,cfg.data.test.L])+2)
+        extractor = ExtractorGenerator(cfg=cfg, maximumLength = max([taskloader.L_big,testloader.L_big])+2)
 
         #taskloader.check()
         test_frontiers = testloader.getTasks()

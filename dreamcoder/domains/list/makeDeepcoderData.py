@@ -80,9 +80,12 @@ def convert_dc_program_to_ec(dc_program, tp):
     return prog
 
 
-def task_of_line(line, N=5, L=10, V=63, num_tasks=1):
+def task_of_line(line, N, L, V, num_tasks=1):
     line = line.replace(' | ', '\n')
-    dc_program = compile(line, V=V, L=L)
+    # compile(L) just uses L for bounds. We'll just feed in the max value
+    # in L bc thats close enough, and we double check our input examples with rejection
+    # sampling later anyways
+    dc_program = compile(line, V=V, L=(L if isinstance(L,int) else max(L)))
 
     if dc_program is None:
         return None,None
@@ -360,6 +363,85 @@ class FakeRecognitionModel(nn.Module):
         self.policyHead = policyHead
         self.valueHead = valueHead
 
+def depth_nolambda(e):
+    """
+    Depth in the T1/T2/T3 sense
+    """
+    while e.isAbstraction:
+        e = e.body
+
+    def helper(e):
+        if e.isIndex:
+            return 0
+        elif e.isAbstraction:
+            return 0
+        elif e.isPrimitive:
+            return 0
+        elif e.isApplication:
+            f, xs = e.applicationParse() # important bc actually changes depth
+            return 1 + max([helper(f)] + [helper(x) for x in xs])
+        assert False
+    return helper(e)
+
+def depth_lambda(e):
+    """
+    Depth in the lambda_depth=1,2,3 sense
+    """
+    while e.isAbstraction:
+        e = e.body
+
+    def helper_outside_lambda(e):
+        if e.isIndex:
+            return 0
+        elif e.isAbstraction:
+            while e.isAbstraction:
+                e = e.body # burrow into the lambda
+            return helper_inside_lambda(e)
+        elif e.isPrimitive:
+            return 0
+        elif e.isApplication:
+            f, xs = e.applicationParse() # important bc actually changes depth
+            return max([helper_outside_lambda(f)] + [helper_outside_lambda(x) for x in xs])
+        assert False
+    def helper_inside_lambda(e):
+        if e.isIndex:
+            return 1
+        elif e.isAbstraction:
+            assert False
+        elif e.isPrimitive:
+            return 1
+        elif e.isApplication:
+            f, xs = e.applicationParse() # important bc actually changes depth
+            return 1 + max([helper_inside_lambda(f)] + [helper_inside_lambda(x) for x in xs])
+        assert False
+    return helper_outside_lambda(e)
+
+def depth_for_solver(e):
+    """
+    Depth in the astar or smc maximumDepth sense
+    """
+
+    def helper(e):
+        if e.isIndex:
+            return 0
+        elif e.isAbstraction:
+            return helper(e.body) # ignores abstractions
+        elif e.isPrimitive:
+            return 0
+        elif e.isApplication:
+            # doesnt do an applicationParse
+            return 1 + max([helper(e.f),helper(e.x)])
+        assert False
+    return helper(e)
+    
+
+def get_depth(p):
+    T = depth_nolambda(p)
+    d = depth_lambda(p)
+    astar = depth_for_solver(p)
+    return T,d,astar
+
+
 def make_solver(type,vhead,phead,max_depth):
     if type == 'astar':
         s = Astar
@@ -391,6 +473,15 @@ class DeepcoderTaskloader:
         self.mode = mode
         self.parent_cfg = cfg # in case it's useful
         cfg = self.cfg # bc we're more likely to use it in the rest of __init__
+
+        if cfg.L is None:
+            assert cfg.L_min is not None and cfg.L_max is not None
+            self.L = list(range(cfg.L_min,cfg.L_max+1))
+            self.L_big = max(self.L)
+        else:
+            assert cfg.L_min is  None and cfg.L_max is  None
+            self.L = cfg.L
+            self.L_big = self.L
 
         # if cfg.repeat is False:
         #     if cfg.expressive_lambdas:
@@ -481,7 +572,8 @@ class DeepcoderTaskloader:
                             raise EOFError
 
                     # get program and task
-                    program,tasks = task_of_line(line,N=self.cfg.N,L=self.cfg.L,V=self.cfg.V, num_tasks=self.cfg.num_mutated_tasks)
+                    # purposefully self.L not self.cfg.L
+                    program,tasks = task_of_line(line,N=self.cfg.N,L=self.L,V=self.cfg.V, num_tasks=self.cfg.num_mutated_tasks)
                     if program is None:
                         continue
                     ff = FakeFrontier(program,tasks[0])
@@ -507,7 +599,7 @@ class DeepcoderTaskloader:
 
                     # add to buffer and potentially exit by throwing exception (this is the only exit point)
                     for frontier in frontiers:
-                        self.buf.append(frontier) # may raise queue.Full exception
+                        self.buf.append(frontier)
                         if len(self.buf) == self.cfg.buf_size:
                             return
                         #print(f"buf {self.mode}:",self.buf.qsize())
@@ -693,6 +785,8 @@ class DeepcoderTaskloader:
                 if all([ex[0][0] == output for ex,output in zip(task.examples,outputs)]):
                     #print(f"rejecting {sampled} bc it's the identity function")
                     continue # rejection sample
+
+            assert self.cfg.max_depth > get_depth(sampled)[2], "You want to increase your max_depth so this program will actually be searchable"
             
 
             new_examples = [(ex[0],output) for ex,output in zip(task.examples,outputs)]

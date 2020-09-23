@@ -151,7 +151,7 @@ class NeuralPolicyHead(nn.Module):
                                                         onlyPos=True, returnNextNode=True,
                                                         ordering=self.ordering)
         for zipper in holesToExpand:
-            assert self.cfg.data.max_depth > len([ t for t in zipper.path if t != 'body' ])
+            assert self.cfg.data.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
         mlb.log('pos traces:')
         for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
             mlb.log(f'\t{trace}')
