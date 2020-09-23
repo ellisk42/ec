@@ -326,6 +326,69 @@ def strip_lambdas(sk):
         sk = sk.body
         i += 1
     return sk,i
+
+
+
+def concrete_rep(sk,task,ctxs,in_lambda,V):
+    """
+    Basically rep() modified to not do the neural bit. You recurse on lambdas and children.
+
+    ctxs :: a list of tuples. The outer list iterates over examples, and the
+        inner tuple is a context where the 0th thing is the value of $0 etc.
+        Pass in None initially to initialize it. Note that this isn't a "default"
+        argument for ctxs because that would make it very easy to forget to
+        pass in the existing one when recursing.
+    returns :: Tensor[num_exs,H] or a list of concrete values (one per example)
+        in which case the type is [int] or [[int]] or [bool] where the outermost list
+        is always iterating over examples.
+    """
+
+    # first, if this was called at the top level (ctx=None),
+    # we clear out as many abstractions as there are top level inputs
+    if ctxs is None: # pull initial context out of the task inputs
+        assert not in_lambda
+        ctxs = ctxs_of_examples(task.examples)
+        sk,num_lambdas = strip_lambdas(sk)
+        assert len(ctxs[0]) == num_lambdas, "Mismatch between num args passed in and num lambda abstractions"
+
+    if sk.isHole:
+        return
+
+    if not sk.hasHoles:
+        if not (in_lambda and has_index(sk,None)):
+            # we dont run this if we're inside a lambda and we contain an index
+            # since those can't be concrete evaluated in a lambda
+            # in that lambda case we do wanna just continue to the Application branch and not return early tho!
+            res = evaluate_ctxs(sk,ctxs,V)
+            # if sk.size() > 1:
+            #     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
+            #     if self._curr_task_concrete_count == task:
+            #         self.concrete_count += sk.size()
+            return res
+    
+    if sk.isPrimitive:
+        return
+    if sk.isIndex:
+        return
+
+    if sk.isAbstraction:
+        #assert not in_lambda, "nested lambda should never happen"
+        sk,i = strip_lambdas(sk)
+        assert i <= 2
+        return concrete_rep(sk,task,ctxs,True,V)
+
+    if sk.isApplication:
+        fn, args = sk.applicationParse()
+        assert len(args) > 0
+        # recurse on children
+        for arg in args:
+            concrete_rep(arg,task,ctxs,in_lambda,V)
+        concrete_rep(fn,task,ctxs,in_lambda,V)
+        return
+    if fn.isAbstraction:
+        assert False
+    assert False
+
     
 def evaluate_ctxs(e, ctxs, V):
     """

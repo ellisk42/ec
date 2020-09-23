@@ -9,7 +9,6 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4
 os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
 os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
 os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
-
 from collections import defaultdict
 import pathlib
 import contextlib
@@ -49,7 +48,7 @@ import random
 
 from dreamcoder.domains.list.main import ListFeatureExtractor
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
-from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead, InvalidIntermediatesValueHead
 from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
 from dreamcoder.Astar import Astar
 from likelihoodModel import AllOrNothingLikelihoodModel
@@ -275,7 +274,8 @@ def hydra_main(cfg):
                 if cfg.test.max_tasks is not None and len(test_frontiers) > cfg.test.max_tasks:
                     mlb.red(f"Cutting down test frontiers from {len(test_frontiers)} to {cfg.test.max_tasks}")
                     test_frontiers = test_frontiers[:cfg.test.max_tasks]
-                solver = make_solver(cfg.data.test.solver,state.vhead,state.phead,cfg.data.test.max_depth)
+                vhead = InvalidIntermediatesValueHead(cfg) if cfg.test.validator_vhead else SampleDummyValueHead()
+                solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth)
                 mlb.purple("Running tests")
                 model_results = test.test_models([solver],
                                             test_frontiers,

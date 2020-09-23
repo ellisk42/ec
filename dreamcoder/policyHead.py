@@ -108,6 +108,7 @@ class NeuralPolicyHead(nn.Module):
         try:
             dist = self._computeDist([sk], [zipper], task, g) #TODO
         except InvalidSketchError:
+            mlb.red("2. Valuehead should have caught this")
             raise NoCandidates
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
@@ -126,6 +127,7 @@ class NeuralPolicyHead(nn.Module):
         try:
             dist = self._computeDist([sk], [holeZipper], task, g)
         except InvalidSketchError:
+            mlb.red("1. Valuehead should have caught this")
             return # pretend there are no expansions off of it
         dist = dist.squeeze(0)
         supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}

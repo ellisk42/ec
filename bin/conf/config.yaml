@@ -36,6 +36,7 @@ test: # for mode=test
   model_result_path: null
   timeout: 30
   max_tasks: null
+  validator_vhead: True
   josh:
     wave: 3 # 1 | 2 | 3 | 3.1 | final
   lucas:

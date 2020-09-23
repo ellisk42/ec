@@ -151,14 +151,12 @@ class SampleDummyValueHead(BaseValueHead):
 
 class SimpleRNNValueHead(BaseValueHead):
 
-    def __init__(self, g, extractor, cfg=None, cuda=True, H=512, encodeTargetHole=False):
+    def __init__(self, g, extractor, cfg):
         super().__init__()
-        if cfg is not None:
-            cuda = cfg.cuda
-            H = cfg.model.H
-            encodeTargetHole = cfg.model.encodeTargetHole
-        else:
-            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+        cuda = cfg.cuda
+        H = cfg.model.H
+        encodeTargetHole = cfg.model.encodeTargetHole
+        self.validator_vhead = InvalidIntermediatesValueHead(cfg)
             
         #specEncoder can be None, meaning you dont use the spec at all to encode objects
         self.use_cuda = cuda
@@ -687,6 +685,24 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         return distance #Or something ...
 
 
+class InvalidIntermediatesValueHead(BaseValueHead):
+    def __init__(self, cfg):
+        super().__init__()
+        self.ret = torch.tensor([0.]).to(cfg.device)
+        self.cfg = cfg
+    def valueLossFromFrontier(self, f, g):
+        return self.ret
+    def computeValue(self, sketch, task):
+        try:
+            concrete_rep(sketch,task,None,False,self.cfg.data.test.V)
+            #concrete_rep(sketch,task,None,False)
+        except InvalidSketchError:
+            print("caught an invalid sketch")
+            #return 100000000000
+            return 0
+        return 0
+
+
 
 
 class RBPrefixValueHead(BaseValueHead):
@@ -772,6 +788,7 @@ class ListREPLValueHead(BaseValueHead):
         self.featureExtractor = extractor
         self.allow_concrete_eval = allow_concrete_eval
         self.H = H
+        self.validator_vhead = InvalidIntermediatesValueHead(cfg)
         #self.outputDimensionality = H
         assert self.H == extractor.H
 
@@ -853,7 +870,11 @@ class ListREPLValueHead(BaseValueHead):
             if not (in_lambda and has_index(sk,None)):
                 # we dont run this if we're inside a lambda and we contain an index
                 # since those can't be concrete evaluated in a lambda
-                res = evaluate_ctxs(sk,ctxs,self.cfg.data.train.V)
+                try:
+                    res = evaluate_ctxs(sk,ctxs,self.cfg.data.train.V)
+                except InvalidSketchError:
+                    mlb.red('Valuehead validator should have already caught this.')
+                    raise
                 if sk.size() > 1:
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
                     if self._curr_task_concrete_count == task:
