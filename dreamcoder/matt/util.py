@@ -40,7 +40,11 @@ def outputs_regex(*rs):
         r = r.strip()
         if r == '':
             continue # use "*" instead for this case please. I want to filter out '' bc its easy to accidentally include it in a generated list of regexes
-        res.extend(list(outputs_path('').glob(f'**/*{r}*')))
+        try:
+            res.extend(list(outputs_path('').glob(f'**/*{r}*')))
+        except ValueError as e:
+            print(e)
+            return []
     return sorted(res)
 
 def hide_path_prefix(p):

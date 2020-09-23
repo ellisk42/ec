@@ -202,10 +202,10 @@ class State:
         # self.taskloader.lock = l
         # if self.taskloader.cfg.threaded:
         #     self.taskloader.lock.release()
-    def load(self, path):
+    def load(self, path, device=None):
         path = utils.to_absolute_path(path)
         print("torch.load")
-        state = torch.load(path)
+        state = torch.load(path, map_location=torch.device(device))
         print("self.update")
         self.update(state.__dict__)
         print("self.post_load")

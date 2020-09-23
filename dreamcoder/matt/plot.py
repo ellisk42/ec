@@ -80,7 +80,7 @@ class ModelResult:
         valid = [r for r in self.search_results if predicate(r)]
         return len(valid)/self.num_tests*100
 
-def plot_model_results(model_results, file, toplevel=False, title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
+def plot_model_results(model_results, file, toplevel=False, model_result_path=None, title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
     if not os.path.isdir('plots'):
         os.mkdir('plots')
     if not os.path.isdir('model_results'):
@@ -115,7 +115,20 @@ def plot_model_results(model_results, file, toplevel=False, title=None, salt=Non
 
     time_file = f"plots/{file}_time.png"
     evals_file = f"plots/{file}_evals{j_str}{salt}.png"
-    model_results_file = f"model_results/{file}{j_str}{salt}"
+
+    if model_result_path is not None:
+        model_results_file = f"model_results/{model_result_path}"
+        p = pathlib.Path(model_results_file)
+        if p.exists():
+            move_to = p
+            i=0
+            while move_to.exists():
+                move_to = pathlib.Path(f'{p}.{i}')
+                i += 1
+            p.rename(move_to)
+            mlb.red(f"moved old model result: {p} -> {move_to}")
+    else:
+        model_results_file = f"model_results/{file}{j_str}{salt}"
 
     print(f'Plotting {len(model_results)} model results')
 
@@ -164,6 +177,11 @@ def plot_model_results(model_results, file, toplevel=False, title=None, salt=Non
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")
     if toplevel:
         path = toplevel_path(evals_file)
+        plot.savefig(path)
+        mlb.yellow(f"toplevel: saved plot to {path}")
+        # cropped version
+        plot.xlim(left=0., right=min([m.earliest_failure for m in model_results]))
+        path = str(toplevel_path(evals_file)).replace('.png','.cropped.png')
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
 

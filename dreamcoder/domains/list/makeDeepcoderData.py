@@ -657,7 +657,8 @@ class DeepcoderTaskloader:
             assert self.g_lambdas.max_hole_depth is not None
             sampled = self.g_lambdas.sampleFromSketch(arrow(tlist(tint), tlist(tint)), program_plus_plus, maximumDepth = 20) # this max depth wont be hit bc of Grammar.max_hole_depth
             if sampled.size() > 30:
-                breakpoint()
+                #breakpoint()
+                print("you got some big trees there man")
             try:
                 verify_tree(sampled)
             except InvalidSketchError:

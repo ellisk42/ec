@@ -208,6 +208,8 @@ class Lexicon(nn.Embedding):
         for tok in tok_list:
             if isinstance(tok,(list,tuple)):
                 res.append(self.idxs_of_toks(tok))
+            elif isinstance(tok,bool):
+                res.append(self.idx_of_tok['<'+str(tok)+'>']) # True -> "<True>". Needed bc dictionaries can't tell the difference between 1 and True
             elif tok not in self.lexicon:
                 if unk == 0:
                     mlb.yellow(f"converting {tok} to <UNK>. suppressing future warnings")
@@ -287,7 +289,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         if self.digitwise:
             self.int_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_int)
             self.digit_embedder = Lexicon(self.lexicon, cfg=cfg)
-
+    @property # must be a property so that it gets updated when we get map_locationed somewhere else
+    def device(self):
+        return self.list_encoder.all_weights[0][0].device
 
 
     def tokenize(self, examples):
@@ -409,7 +413,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         return res
         
     def tokensToIndices(self,token_list):
-        assert not self.digitwise or isinstance(token_list[0],bool)
+        assert not self.digitwise
         # sanitize
         unk = 0
         for i,token in enumerate(token_list):
@@ -523,8 +527,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 pad_till = max(ints_per_ex)+2 # +2 for LIST_START and LIST_END
                 # make our examplewise tensor with padding already inserted as zeros
                 exs_tensor = torch.zeros(len(exs),pad_till,self.H) # [num_exs,longest_list_len,H]
-                if self.use_cuda:
-                    exs_tensor = exs_tensor.cuda()
+                exs_tensor = exs_tensor.to(self.device)
                 j = 0
                 # add LIST_START
                 list_start_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_START'])
@@ -578,8 +581,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
 
         # [non-list]
         if is_bool(val[0]):
-            indices = self.tokensToIndices(val) # [int]
-            res = self.embedding(indices, cuda=self.use_cuda) # [num_exs,H]
+            indices = torch.tensor(self.digit_embedder.idxs_of_toks(val)) # [int]
+            indices = indices.to(self.device)
+            res = self.digit_embedder(indices)
             return res
         
 

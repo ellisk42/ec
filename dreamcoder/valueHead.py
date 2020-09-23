@@ -191,8 +191,8 @@ class SimpleRNNValueHead(BaseValueHead):
         tokens_list = [ stringify(str(sketch)) for sketch in sketches]
         symbolSequence_list = [[self.wordToIndex[t] for t in tokens] for tokens in tokens_list]
         inputSequences = [torch.tensor(ss) for ss in symbolSequence_list] #this is impossible
-        if self.use_cuda: #TODO
-            inputSequences = [s.cuda() for s in inputSequences]
+        device = self.embedding.weight.device # may be cpu!
+        inputSequences = [s.to(device) for s in inputSequences]
         inputSequences = [self.embedding(ss) for ss in inputSequences]
         # import pdb; pdb.set_trace()
         idxs, inputSequence = zip(*sorted(enumerate(inputSequences), key=lambda x: -len(x[1])  ) )

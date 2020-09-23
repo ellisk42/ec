@@ -33,6 +33,7 @@ test: # for mode=test
   from_fn: null # deepcoder | josh | lucas
   from_file: null
   to_file: null
+  model_result_path: null
   timeout: 30
   max_tasks: null
   josh:

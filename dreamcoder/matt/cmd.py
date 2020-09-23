@@ -72,19 +72,32 @@ def cmd(cfg):
             results = outputs_regex(*args)
             for result in results:
                 print(result)
+            if len(results) == 0:
+                print('[No matching files]')
+                continue
         if cmd == 'delete':
             if len(args) == 0 and result is not None and len(result) > 0:
                 print("deleting result of previous `list` command")
             else:
-                results = outputs_regex(args)
+                results = outputs_regex(*args)
                 if len(results) == 0:
-                    print('glob returned no files to delete')
+                    print('[No matching files]')
                     continue
             for result in results:
-                target = ec_path('outputs_trash') / result.parent
-                target.mkdir(parents=True,exists_ok=True)
-                result.rename(dir / result.name)
-                print(f'moved {result} -> {target / result.name}')
+                print(f"{result} -- implies -> {get_datetime_path(result)}")
+            try:
+                yes = input('Type `y` to confirm deletion of the above results:').strip()
+            except (EOFError,KeyboardInterrupt):
+                continue
+            if yes != 'y':
+                print("aborting...")
+                continue
+            for result in results:
+                result = get_datetime_path(result)
+                target_parent = ec_path('outputs_trash') / result.parent.name  # result.parent.name is DATE/
+                target_parent.mkdir(parents=True,exist_ok=True) 
+                result.rename(target_parent / result.name)
+                print(f'moved {result} -> {target_parent / result.name}')
     return
 
 def process(tb):

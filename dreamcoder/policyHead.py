@@ -163,8 +163,7 @@ class NeuralPolicyHead(nn.Module):
         # maskedDist :: [5,49]
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
         targets = torch.tensor(targets) # :: [5]
-        if self.use_cuda:
-            targets = targets.cuda()
+        targets = targets.to(self.device)
         loss = self.lossFn(maskedDist, targets)
         return loss
 
@@ -206,8 +205,11 @@ class NeuralPolicyHead(nn.Module):
             masks.append(mask)
         mask = torch.tensor(masks)
         mask = torch.log(mask)
-        if self.use_cuda: mask = mask.cuda()
+        mask = mask.to(self.device)
         return mask
+    @property
+    def device(self):
+        raise NotImplementedError
 
 
 class RNNPolicyHead(NeuralPolicyHead):
@@ -252,6 +254,9 @@ class RNNPolicyHead(NeuralPolicyHead):
 
 
         print("num of params in rnn policy model", count_parameters(self))
+    @property
+    def device(self):
+        return self.output[0].weight.device
 
     def _computeDist(self, sketches, zippers, task, g):
         #need raw dist, and then which are valid and which is correct ... 
@@ -328,6 +333,9 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
 
+    @property
+    def device(self):
+        return self.output[0].weight.device
 
     def _computeDist(self, sketches, zippers, task, g):
         if self.encodeTargetHole:

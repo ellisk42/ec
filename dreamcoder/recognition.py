@@ -1809,6 +1809,7 @@ class OptionalVectorEmbedding(nn.Module):
         self.vals = set(range(length))
 
     def forward(self, x, volatile=False, cuda=False):
+        assert False, "my Lexicon should be used instead"
         #could be list of ints, or list of lists of ints
         #list of lists:
         if isinstance(x, list) and isinstance(x[0], list):

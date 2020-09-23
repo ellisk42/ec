@@ -92,6 +92,7 @@ def hydra_main(cfg):
 
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     cleanup()
+    print()
 
 
     if cfg.print and cfg.load is None:
@@ -153,7 +154,7 @@ def hydra_main(cfg):
             original_cfg = None
             tests_from = cfg.test.from_fn or cfg.test.from_file # use fancy python `or` semantics
             if cfg.test.from_fn is not None:
-                if cfg.test.from_fn not in tests.tests:
+                if cfg.test.from_fn not in test.tests.tests:
                     mlb.red(f"from_fn value not recognized. options are: {list(tests.tests.keys())}")
                     return
                 test_frontiers = test.tests.tests[cfg.test.from_fn](cfg)
@@ -201,13 +202,21 @@ def hydra_main(cfg):
             if 'saves' not in path.parts:
                 path = get_datetime_path(path) / 'saves' / 'autosave'
             
+            assert all(['=' in arg for arg in sys.argv[1:]])
+            overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
+
+            device = None
+            if 'device' in overrides:
+                device=cfg.device # override the device
+
             mlb.green(f"loading from {path}...")
-            state.load(path)
+            state.load(path, device=device)
+
+            #mlb.purple(f"It looks like the device of the model is {state.phead.output[0].weight.device}")
+
             if cfg.mode == 'device':
                 mlb.green(f"DEVICE: {state.cfg.device}")
             print("loaded")
-            assert all(['=' in arg for arg in sys.argv[1:]])
-            overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
             for override in overrides:
                 try:
                     # eg override = 'data.T'
@@ -257,6 +266,9 @@ def hydra_main(cfg):
 
             # TEST
             elif cfg.mode == 'test':
+                if cfg.test.model_result_path is None:
+                    mlb.red("please specify test.model_result_path")
+                    sys.exit(1)
                 ### NOTE: this continues from the earlier 'test' section
                 if cfg.test.from_fn == 'deepcoder' or (original_cfg is not None and original_cfg.test.from_fn == 'deepcoder'):
                     test.cfg_diff(state.cfg.data.train,original_cfg.data.test) # print the differences
@@ -271,7 +283,10 @@ def hydra_main(cfg):
                                             timeout=cfg.test.timeout,
                                             verbose=True)
                 mlb.purple("plotting results")
-                plot.plot_model_results(model_results, file=f'{tests_from}_{cfg.test.timeout}s')
+                plot.plot_model_results(model_results,
+                                        model_result_path=cfg.test.model_result_path,
+                                        file=f'{tests_from}_{cfg.test.timeout}s'
+                                        )
 
             # PROFILE
             elif cfg.mode == 'profile':
@@ -287,8 +302,7 @@ def hydra_main(cfg):
                 print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
                 print('tottime: doesnt include subfunctions')
                 print('percall: previous column divided by num calls')
-                
-                raise Exception("Take a look around!")
+                breakpoint()
 
             # INSPECT
             elif cfg.mode == 'inspect':
@@ -296,7 +310,8 @@ def hydra_main(cfg):
                 print("=== Inspecting State ===")
                 which(state.cfg)
                 #print(state)
-                raise Exception("Take a look around!") # intentional Exception so you can look at `state` and debug it.
+                breakpoint()
+                raise Exception("take a look around")
             else:
                 raise Exception("Mode not recognized:", cfg.mode)
         # not really sure if this is needed
