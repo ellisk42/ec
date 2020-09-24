@@ -164,9 +164,27 @@ class NeuralPolicyHead(nn.Module):
         
         # maskedDist :: [5,49]
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
-        targets = torch.tensor(targets) # :: [5]
-        targets = targets.to(self.device)
+        targets = torch.tensor(targets, device=self.device)# :: [5]
         loss = self.lossFn(maskedDist, targets)
+        if loss.item() == np.inf:
+            mlb.red("ISSUE FOUND, you seem to be masking out the right answer")
+            idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
+            target = targets[idx]
+            node = targetNodes[idx]
+            zipper = holesToExpand[idx]
+            trace = posTraces[idx]
+            print(f"""
+            {target=}
+            {node=}
+            {zipper=}
+            {trace=}
+            {idx=}
+            """)
+            mask = self._buildMask([trace],[zipper],frontier.task,g)
+            md1 = self._computeDist([trace], [zipper], frontier.task, g)
+            print("ayy")
+            maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
+            print("fuck")
         return loss
 
     def _computeDist(): raise NotImplementedError
@@ -198,10 +216,12 @@ class NeuralPolicyHead(nn.Module):
                 assert zipper.path[1] != 'body'
                 if g.g_lambdas is None: # backwards compatability. Careful it doesnt carry the max depth thru tho
                     g.g_lambdas = Grammar.uniform(get_lambdas())
-                g = g.g_lambdas
+                g_use = g.g_lambdas
+            else:
+                g_use = g
 
             mask = [0. for _ in range(len(self.productionToIndex))]
-            candidates = returnCandidates(zipper, sk, task.request, g)
+            candidates = returnCandidates(zipper, sk, task.request, g_use)
             for c in candidates:
                 mask[self._sketchNodeToIndex(c)] = 1. 
             masks.append(mask)

@@ -73,15 +73,17 @@ def train_model(
     plosses,
     frontiers=None,
     best_validation_loss=np.inf,
+    plosses_since_print=None,
+    vlosses_since_print=None,
     j=0,
     **kwargs,
         ):
     print(f"j:{j}")
-    tstart = None
     phead.featureExtractor.run_tests()
 
     if frontiers is None:
         frontiers = []
+    time_since_print = None
 
     while True:
         print(f"{len(frontiers)=}")
@@ -117,8 +119,11 @@ def train_model(
             loss.backward()
 
             # for printing later
-            plosses[j % loss_window] = ploss.item()
-            vlosses[j % loss_window] = vloss.item()
+            if cfg.loop.print_every is not None: # dont gather these if we'll never empty it by printing
+                #plosses[j % loss_window] = ploss.item()
+                plosses.append(ploss.item())
+                #vlosses[j % loss_window] = vloss.item()
+                vlosses.append(vloss.item())
             optimizer.step()
 
             mlb.freezer('pause')
@@ -136,19 +141,19 @@ def train_model(
 
             # printing and logging
             if j % cfg.loop.print_every == 0:
-                if tstart is not None:
-                    elapsed = time.time()-tstart
-                    time_str = f" ({cfg.loop.print_every/elapsed:.1f} steps/sec)"
-                else:
-                    time_str = ""
-                tstart = time.time()
-                vloss_avg = window_avg(vlosses)
-                ploss_avg = window_avg(plosses)
+                rate = len(plosses)/(time.time()-time_since_print) if time_since_print is not None else None
+                if rate is None: rate = 0
+                time_str = f" ({rate:.2f} steps/sec)"
+                vloss_avg = sum(vlosses) / max([len(vlosses),1])
+                ploss_avg = sum(plosses) / max([len(plosses),1])
                 for head,loss in zip([vhead,phead],[vloss_avg,ploss_avg]): # important that the right things zip together (both lists ordered same way)
                     print(f"[{j}]{time_str} {head.__class__.__name__} {loss}")
                     w.add_scalar('TrainLoss/'+head.__class__.__name__, loss, j)
                 print()
                 w.flush()
+                vlosses = []
+                plosses = []
+                time_since_print = time.time()
 
             # validation loss
             if cfg.loop.valid_every is not None and j % cfg.loop.valid_every == 0:
@@ -160,6 +165,8 @@ def train_model(
                     for f in validation_frontiers:
                         vloss += vhead.valueLossFromFrontier(f, g)
                         ploss += phead.policyLossFromFrontier(f, g)
+                        if ploss.item() == np.inf:
+                            breakpoint()
                     vloss /= len(validation_frontiers)
                     ploss /= len(validation_frontiers)
                 # print valid loss

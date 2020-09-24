@@ -153,8 +153,8 @@ class State:
         frontiers = None
 
         loss_window = 1
-        plosses = [None]*loss_window
-        vlosses = [None]*loss_window
+        plosses = []
+        vlosses = []
 
         #taskloader.check()
 
