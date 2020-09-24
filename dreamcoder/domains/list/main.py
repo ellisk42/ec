@@ -221,28 +221,33 @@ class Lexicon(nn.Embedding):
             mlb.yellow(f"Total <UNK>s: {unk}")
         # convert to indices for embeddings
         return res
-    def pad_idxs_lists(self,idxs_lists):
+    def pad_and_sort_idxs_lists(self,idxs_lists):
         assert isinstance(idxs_lists,list)
         assert isinstance(idxs_lists[0],list)
-        sizes = [len(idxs_list) for idxs_list in idxs_lists]
-        pad_till = max(sizes)
+
+        idxs_lists, sizes, unsorter = sort_unsort(idxs_lists)
 
         # padding
+        pad_till = max(sizes)
         for i, idxs_list in enumerate(idxs_lists):
             idxs_lists[i] += [self.pad] * (pad_till - len(idxs_list))
-        return idxs_lists, torch.tensor(sizes)
-    def sort_and_pack(self,embeddings,sizes):
-        mlb.log(f'using these sizes for gru: {sizes.tolist()}')
+        return idxs_lists, torch.tensor(sizes), unsorter
+    def pack(self,embeddings,sizes):
+        #mlb.log(f'using these sizes for gru: {sizes.tolist()}')
         assert sizes.max() == embeddings.shape[1]
         assert embeddings.dim() == 3
-        sizes,sorter = sizes.sort(descending=True)
-        _,unsorter = sorter.sort() # fun trick
-        mlb.log(f'sorting embeddings by sorter: {sorter.tolist()}')
-        embeddings = embeddings[sorter] # sort by decreasing size
+        #mlb.log(f'sorting embeddings by sorter: {sorter.tolist()}')
         embeddings = embeddings.permute(1,0,2) # swap first two dims. [padded_ex_length, num_exs, H]
-        mlb.log(f'permuted to {tuple(embeddings.shape)} :: (padded_length, batch_size, H)')
+        #mlb.log(f'permuted to {tuple(embeddings.shape)} :: (padded_length, batch_size, H)')
         packed = pack_padded_sequence(embeddings,sizes)
-        return packed,unsorter
+        return packed
+
+        # src = [x for i,x in enumerate(sorter) if x != i]
+        # dst = [i for i,x in enumerate(sorter) if x != i]
+        # if len(src) > 0:
+        #     embeddings[dst] = embeddings[src] # sort by decreasing size
+        # return embeddings
+
 
 
 class ListFeatureExtractor(RecurrentFeatureExtractor):
@@ -496,12 +501,12 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                         for _int in ex:
                             mlb.log(f'\t\t{list(map(int,_int))}')
 
-                ints_per_ex = [len(l) for l in exs]
+                exs_sorted, ints_per_ex, exs_unsorter = sort_unsort(exs)
                 # flatten over examples (so its one massive list of ints each represented as a list of digits)
-                ints = list(itertools.chain.from_iterable(exs)) # ::[[longtensor]] (num_exs*list_len, num_digits)
+                ints = list(itertools.chain.from_iterable(exs_sorted)) # ::[[longtensor]] (num_exs*list_len, num_digits)
                 if len(ints) > 0:
                     # pad it to a constant number of digits per int
-                    ints, digits_per_int = self.digit_embedder.pad_idxs_lists(ints)
+                    ints, digits_per_int, unsorter = self.digit_embedder.pad_and_sort_idxs_lists(ints)
                     ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs*list_len, longest_num_digits]
                     mlb.log('flattened, padded, stacked:')
                     mlb.log(ints)
@@ -513,7 +518,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                     mlb.log(f'ints_embedded :: {tuple(ints_embedded.shape)} :: (ints, longest_num_digits, H)')
                     mlb.log(f'Heres the ints_embedded[0] which is the digitwise encoding of the first int of the first example. You may see the zero padding. :')
                     mlb.log(ints_embedded[0])
-                    packed, unsorter = self.digit_embedder.sort_and_pack(ints_embedded, digits_per_int)
+                    packed = self.digit_embedder.pack(ints_embedded, digits_per_int)
                     mlb.log('running thru int_encoder() gru')
                     _, hidden = self.int_encoder(packed)
                     mlb.log(f'unsorting by unsorter: {unsorter.tolist()}')
@@ -526,8 +531,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 # undo the flattening
                 pad_till = max(ints_per_ex)+2 # +2 for LIST_START and LIST_END
                 # make our examplewise tensor with padding already inserted as zeros
-                exs_tensor = torch.zeros(len(exs),pad_till,self.H) # [num_exs,longest_list_len,H]
-                exs_tensor = exs_tensor.to(self.device)
+                exs_tensor = torch.zeros(len(exs),pad_till,self.H, device=self.device) # [num_exs,longest_list_len,H]
+                #exs_tensor = exs_tensor.to(self.device)
                 j = 0
                 # add LIST_START
                 list_start_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_START'])
@@ -545,11 +550,11 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 mlb.log(f'the first example is exs_tensor[0]:')
                 mlb.log(exs_tensor[0])
                 assert exs_tensor[0][0].equal(exs_tensor[1][0]) # both shd be LIST_START
-                packed,unsorter = self.digit_embedder.sort_and_pack(exs_tensor,sizes)
+                packed = self.digit_embedder.pack(exs_tensor,sizes)
                 mlb.log(f'running list_encoder gru')
                 _, hidden = self.list_encoder(packed)
                 mlb.log(f'unsorting with unsorter: {unsorter.tolist()}')
-                list_encodings = hidden.sum(0)[unsorter] # sum over bidirectionaliy. [num_exs,H]
+                list_encodings = hidden.sum(0)[exs_unsorter] # sum over bidirectionaliy. [num_exs,H]
                 mlb.log(f'encodeValue() is returning list_encodings :: {tuple(list_encodings.shape)} :: (num_exs,H)')
                 return list_encodings
 
@@ -562,13 +567,10 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 indices_lists.append(indices)
             
             # pad
-            indices_lists, sizes = self.pad_indices_lists(indices_lists) # [[int]]
-            # sort by sizes for pytorch efficiency
-            sizes,sorter = sizes.sort(descending=True)
-            _,unsorter = sorter.sort() # fun trick
+            indices_lists, sizes, unsorter = self.pad_and_sort_idxs_lists(indices_lists) # [[int]]
             # embed & pack
+            assert False, "wait we never use cuda=self.use_cuda right? Dont we always use my Lexicon?"
             embeddings = self.embedding(indices_lists, cuda=self.use_cuda) # [num_exs, padded_ex_length, H]
-            embeddings = embeddings[sorter] # sort by decreasing size
             embeddings = embeddings.permute(1,0,2) # swap first two dims. [padded_ex_length, num_exs, H]
             packed = pack_padded_sequence(embeddings,sizes)
 
@@ -598,10 +600,10 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 before_idxs_of_toks = ints # in case you want to inspect during debugging
                 ints = self.digit_embedder.idxs_of_toks(ints)
                 # pad it to a constant number of digits per int
-                ints, digits_per_int = self.digit_embedder.pad_idxs_lists(ints)
+                ints, digits_per_int, unsorter = self.digit_embedder.pad_and_sort_idxs_lists(ints)
                 ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs, longest_num_digits]
                 ints_embedded = self.digit_embedder(ints) # pointwise, converts indices -> embeddings
-                packed, unsorter = self.digit_embedder.sort_and_pack(ints_embedded, digits_per_int)
+                packed = self.digit_embedder.pack(ints_embedded, digits_per_int)
                 _, hidden = self.int_encoder(packed)
                 int_encodings = hidden.sum(0)[unsorter] # sum over bidirectionality [num_exs*list_len, H]
                 return int_encodings
@@ -626,6 +628,15 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
     #         return None,None
     #     return program, task
 
+def sort_unsort(list_of_lists):
+    sizes = np.array([len(l) for l in list_of_lists])
+    sorter = np.argsort(-1*sizes) # -1 so descending order
+    unsorter = np.argsort(sorter) # argsort is its own inverse
+    sorted_list_of_lists = np.array(list_of_lists,dtype=object)[sorter].tolist() # briefly convert to ragged array in order to sort
+
+    sorted_sizes = [len(l) for l in sorted_list_of_lists]
+    assert all(sorted_sizes == np.sort(sizes)[::-1]), "we didnt actually sort it"
+    return sorted_list_of_lists, sorted_sizes, unsorter
 
 
 def train_necessary(t):
