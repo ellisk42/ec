@@ -105,9 +105,11 @@ def train_model(
                 head.train()
                 head.zero_grad()
             try:
+                start = time.time()
                 vloss = vhead.valueLossFromFrontier(f, g)
                 ploss = phead.policyLossFromFrontier(f, g)
-                print(f'loss {ploss.item():.2f} on {f.p}')
+                elapsed = time.time() - start
+                print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {f.p}')
             except InvalidSketchError:
                 print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
                 continue

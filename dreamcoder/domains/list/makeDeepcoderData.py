@@ -209,7 +209,7 @@ def insert_index(e,i):
     """
     num_constants = count_constants(e)
     if num_constants == 0:
-        raise InvalidSketchError
+        raise InvalidSketchError("no constants to replace with indices")
     unseen_constants = num_constants # reamining_constants will be a shared nonlocal value
 
     def helper(e): # recursive helper
@@ -282,7 +282,7 @@ def verify_tree(e):
             if not has_index(e,1):
                 insert_index(e,1)
         if e.body.isIndex: # the identity lambda function
-            raise InvalidSketchError()
+            raise InvalidSketchError("identity lambda")
         verify_tree(e.body)
         return
     if e.isApplication:
@@ -300,7 +300,7 @@ def check_in_range(res,V):
     if isinstance(res,(int,np.integer)):
         if res > V or res < -V:
             #mlb.yellow(f'rejecting sketch bc concrete evaluation out of range: {res}')
-            raise InvalidSketchError
+            raise InvalidSketchError(f"integer outside a list had value {res}")
     if isinstance(res,(list,tuple)):
         if len(res) == 0:
             return
@@ -364,7 +364,7 @@ def concrete_rep(sk,task,ctxs,in_lambda,V):
             #     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
             #     if self._curr_task_concrete_count == task:
             #         self.concrete_count += sk.size()
-            return res
+            return
     
     if sk.isPrimitive:
         return

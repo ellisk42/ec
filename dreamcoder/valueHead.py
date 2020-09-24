@@ -812,7 +812,7 @@ class ListREPLValueHead(BaseValueHead):
 
         self.lambdaHoleModules = nn.ModuleDict()
         for tp in [tint,tbool]:
-            self.lambdaHoleModules[tp.show(True)] = NM(0, H)
+            self.lambdaHoleModules[tp.show(True)] = NM(0, H) # TODO <- 1
 
 
 
@@ -853,6 +853,7 @@ class ListREPLValueHead(BaseValueHead):
                 holeModule = self.lambdaHoleModules[sk.tp.show(True)]
                 res = holeModule().expand(len(task.examples),-1)
                 return res
+            # non-lambda
             holeModule = self.holeModules[sk.tp.show(True)]
             if holeModule.nArgs == 1:
                 # hole could have a program input as a subtree so lets pass in extractor(taskinputs)
@@ -874,6 +875,14 @@ class ListREPLValueHead(BaseValueHead):
                     res = evaluate_ctxs(sk,ctxs,self.cfg.data.train.V)
                 except InvalidSketchError as e:
                     mlb.red(f'Valuehead validator should have already caught this: {e}')
+                    mlb.red(f'\t {sk} {in_lambda}')
+                    try:
+                        concrete_rep(sk,task,ctxs,in_lambda,self.cfg.data.train.V)
+                    except InvalidSketchError as e:
+                        mlb.purple("WOULD HAVE WORKED")
+                        breakpoint()
+                        print(self.cfg.data.train.V)
+                        print(self.cfg.data.test.V)
                     raise
                 if sk.size() > 1:
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
