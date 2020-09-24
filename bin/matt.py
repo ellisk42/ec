@@ -296,7 +296,7 @@ def hydra_main(cfg):
                 cProfile.runctx('train.train_model(**state.as_kwargs)',globals(),locals(),'profiled')
                 p = pstats.Stats('profiled')
                 p.strip_dirs()
-                p.sort_stats(sort.CUMULATIVE)
+                p.sort_stats(sort.TIME)
                 p.reverse_order()
                 p.print_stats()
                 print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
