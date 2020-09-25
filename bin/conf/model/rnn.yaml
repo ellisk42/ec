@@ -6,6 +6,7 @@ policy: True
 value: False
 encodeTargetHole: False
 ordering: last
+ctxful_lambdas: True
 extractor:
   modular: True
   digitwise: True

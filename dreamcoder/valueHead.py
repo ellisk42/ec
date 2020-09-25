@@ -775,6 +775,39 @@ class NM(nn.Module):
 
         args = torch.cat(args,dim=1) # cat along example dimension. Harmless if only one thing in args anyways
         return self.params(args)
+
+class LambdaCtx:
+    def __init__(self,fn,args,vhead):
+        self.fn = fn
+        self.args = args
+        self.vhead = vhead
+        self._ctx = None
+        self._idxs = {}
+        self._holes = {}
+    def _encode_ctx(self):
+        assert len(self.args) > 0
+        num_exs = self.args[0].shape[0]
+        lex_embed = self.vhead.featureExtractor.lexicon_embedder
+        fn = lex_embed(lex_embed.idx_of_tok[self.fn.name]).expand(1,num_exs,-1)
+        start = lex_embed(lex_embed.ctx_start).expand(1,num_exs,-1)
+        end = lex_embed(lex_embed.ctx_end).expand(1,num_exs,-1)
+        ctx = torch.cat([fn,start] + [x.unsqueeze(0) for x in self.args] + [end])
+        _, res = self.vhead.featureExtractor.ctx_encoder(ctx)
+        res = res.sum(0) # sum bidir
+        self._ctx = res
+    def encode_idx(self, i):
+        if self._ctx is None:
+            self._encode_ctx()
+        if i not in self._idxs:
+            self._idxs[i] = self.vhead.lambdaIndexModules[i](self._ctx)
+        return self._idxs[i]
+    def encode_hole(self, tp):
+        if self._ctx is None:
+            self._encode_ctx()
+        tp = tp.show(True)
+        if tp not in self._holes:
+            self._holes[tp] = self.vhead.lambdaHoleModules[tp](self._ctx)
+        return self._holes[tp]
 class ListREPLValueHead(BaseValueHead):
 
     def __init__(self, g, extractor, cfg):
@@ -808,11 +841,12 @@ class ListREPLValueHead(BaseValueHead):
 
         self.compareModule = NM(2, H)
         self.indexModule = NM(0, H)
-        self.lambdaIndexModules = nn.ModuleList([NM(0,H) for _ in range(2)])
+        nargs = 1 if self.cfg.model.ctxful_lambdas else 0
+        self.lambdaIndexModules = nn.ModuleList([NM(nargs,H) for _ in range(2)])
 
         self.lambdaHoleModules = nn.ModuleDict()
         for tp in [tint,tbool]:
-            self.lambdaHoleModules[tp.show(True)] = NM(0, H) # TODO <- 1
+            self.lambdaHoleModules[tp.show(True)] = NM(nargs, H) # TODO <- 1
 
 
 
@@ -825,7 +859,7 @@ class ListREPLValueHead(BaseValueHead):
         self.concrete_count = 0 # CAREFUL dont make this a task->int dict or itll leak and make the save files gigabytes large
         self._curr_task_concrete_count = None
 
-    def rep(self,sk,task,ctxs, in_lambda):
+    def rep(self,sk,task,ctxs=None, in_lambda=False, lambda_ctx=None):
         """
         ctxs :: a list of tuples. The outer list iterates over examples, and the
             inner tuple is a context where the 0th thing is the value of $0 etc.
@@ -837,6 +871,8 @@ class ListREPLValueHead(BaseValueHead):
             is always iterating over examples.
         """
         mlb.log(f'rep() being called on sk={sk}')
+        if in_lambda:
+            assert lambda_ctx is not None
 
         # first, if this was called at the top level (ctx=0),
         # we clear out as many abstractions as there are top level inputs
@@ -850,9 +886,13 @@ class ListREPLValueHead(BaseValueHead):
         # if a node is a hole, encode it
         if sk.isHole:
             if in_lambda:
-                holeModule = self.lambdaHoleModules[sk.tp.show(True)]
-                res = holeModule().expand(len(task.examples),-1)
-                return res
+                if self.cfg.model.ctxful_lambdas:
+                    res = lambda_ctx.encode_hole(sk.tp)
+                    return res
+                else:
+                    holeModule = self.lambdaHoleModules[sk.tp.show(True)]
+                    res = holeModule().expand(len(task.examples),-1)
+                    return res
             # non-lambda
             holeModule = self.holeModules[sk.tp.show(True)]
             if holeModule.nArgs == 1:
@@ -884,7 +924,8 @@ class ListREPLValueHead(BaseValueHead):
                         breakpoint()
                         print(self.cfg.data.train.V)
                         print(self.cfg.data.test.V)
-                    raise
+                    #raise
+
                 if sk.size() > 1:
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")
                     if self._curr_task_concrete_count == task:
@@ -903,8 +944,12 @@ class ListREPLValueHead(BaseValueHead):
         if sk.isIndex:
             if in_lambda:
                 assert sk.i != 2
-                res = self.lambdaIndexModules[sk.i]().expand(len(task.examples),-1)
-                return res
+                if self.cfg.model.ctxful_lambdas:
+                    res = lambda_ctx.encode_idx(sk.i)
+                    return res
+                else:
+                    res = self.lambdaIndexModules[sk.i]().expand(len(task.examples),-1)
+                    return res
             # not in lambda
             assert not self.allow_concrete_eval
             assert sk.i == 0 # just bc im not being careful of other cases and I wanna know when they show up
@@ -923,21 +968,27 @@ class ListREPLValueHead(BaseValueHead):
             assert not in_lambda, "nested lambda should never happen"
             sk,i = strip_lambdas(sk)
             assert i <= 2
-            return self.rep(sk,task,ctxs,in_lambda=True)
+            return self.rep(sk,task,ctxs,in_lambda=True, lambda_ctx=lambda_ctx)
             
 
         # sk is an Application
         fn, args = sk.applicationParse()
         assert len(args) > 0
+        reps = []
         # recurse on children
-        reps = [self.rep(arg,task,ctxs,in_lambda) for arg in args]
-        for i,rep in enumerate(reps):
+        for arg in reversed(args): # eval in reverse order so we see any arg that is a lambda last
+            if not in_lambda: # if already in a lambda just propagate down the above context, dont overwrite it
+                lambda_ctx = LambdaCtx(fn, list(reversed(reps)), self)
+            rep = self.rep(arg,task,ctxs,in_lambda,lambda_ctx=lambda_ctx)
+            # rep :: [num_exs,H]
             if not torch.is_tensor(rep):
                 # encode concrete values
-                reps[i] = self.featureExtractor.encodeValue(rep)
+                rep = self.featureExtractor.encodeValue(rep)
                 if self.cfg.debug.zero_concrete_eval:
-                    reps[i] = torch.zeros_like(reps[i])
-        # rep :: [num_exs,H]
+                    rep = torch.zeros_like(rep)
+            reps.append(rep)
+        
+        reps = list(reversed(reps))
 
         if fn.isAbstraction:
             assert False
@@ -971,7 +1022,7 @@ class ListREPLValueHead(BaseValueHead):
 
         self.concrete_count = 0
         self._curr_task_concrete_count = task
-        sk_reps = torch.stack([self.rep(sk,task,None,False) for sk in sks]) # [num_sketches,num_exs,H]
+        sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
         total_size = sum([sk.size() for sk in sks])
         concrete_ratio = self.concrete_count/total_size
         self.concrete_count = 0

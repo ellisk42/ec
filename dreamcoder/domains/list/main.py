@@ -178,21 +178,26 @@ class Lexicon(nn.Embedding):
         idxs_list = idxs_of_toks(tok_list)
         idxs
     """
-    def __init__(self, lexicon, H=64, cuda=True, cfg=None, *args, **kwargs):
-        if cfg is not None:
-            cuda = cfg.cuda
-            H = cfg.model.H
-        else:
-            print(f'warning: {self.__class__.__name__} initialized with no `cfg` (was this intentional?)')
+    def __init__(self, lexicon, cfg, *args, **kwargs):
+        cuda = cfg.cuda
+        H = cfg.model.H
         self.lexicon = lexicon.union({'<UNK>','<PAD>'})
-        self.length = len(self.lexicon)
-        self.idx_of_tok = {tok:torch.tensor(idx,dtype=torch.long) for idx,tok in enumerate(self.lexicon)}
-        if cuda:
-            self.idx_of_tok = {k:v.cuda() for k,v in self.idx_of_tok.items()}
-        self.pad = self.idx_of_tok['<PAD>']
-        self.unk = self.idx_of_tok['<UNK>']
+        self.lexicon = list(self.lexicon) # to make the ordering fixed
+        self.idx_of_tok = {tok:torch.tensor(idx,dtype=torch.long).to(cfg.device) for idx,tok in enumerate(self.lexicon)}
         self.H = H
         self.use_cuda = cuda
+
+        # shortcuts
+        self.pad = self.idx_of_tok['<PAD>']
+        self.unk = self.idx_of_tok['<UNK>']
+        self.ctx_start = self.idx_of_tok['CTX_START']
+        self.ctx_end = self.idx_of_tok['CTX_END']
+        self.int_start = self.idx_of_tok['INT_START']
+        self.int_end = self.idx_of_tok['INT_END']
+        self.list_start = self.idx_of_tok['LIST_START']
+        self.list_end = self.idx_of_tok['LIST_END']
+
+        self.length = len(self.lexicon)
         super().__init__(num_embeddings=self.length, embedding_dim=H, padding_idx=int(self.pad), *args, **kwargs)
         """
         actual number of embeddings will be length+2 where an extra one is added
@@ -268,6 +273,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             self.lexicon = self.lexicon | set(range(-64,65))
         # add all non-arrow primitives ie things that should count as concrete values as opposed to arrows that are represented with NMs
         self.lexicon = self.lexicon | {p.value for p in deepcoderPrimitives() if not p.tp.isArrow()}
+        # add all functions that take lambdas, used for encoding lambda ctxs
+        self.lexicon = self.lexicon | {p.name for p in deepcoderPrimitives() if p.tp.isArrow()}
 
         self.maximumLength = maximumLength
 
@@ -293,11 +300,10 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             self.ctx_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_ctx)
         if self.digitwise:
             self.int_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_int)
-            self.digit_embedder = Lexicon(self.lexicon, cfg=cfg)
+            self.lexicon_embedder = Lexicon(self.lexicon, cfg=cfg)
     @property # must be a property so that it gets updated when we get map_locationed somewhere else
     def device(self):
         return self.list_encoder.all_weights[0][0].device
-
 
     def tokenize(self, examples):
         def sanitize(l): 
@@ -358,8 +364,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         inputs = torch.stack([self.encodeValue(arg) for arg in argwise]) # [num_args,num_exs,H]
         mlb.log(f'stacked arg encodings :: {tuple(inputs.shape)} :: (num_args,5,H) :: (seq_length, batch, H) which is correct for non-packed GRU')
         mlb.log('running ctx_encoder() gru on stacked results of encodeValue')
-        ctx_start_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['CTX_START']).expand(1,len(task.examples),-1)
-        ctx_end_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['CTX_END']).expand(1,len(task.examples),-1)
+        ctx_start_vec = self.lexicon_embedder(self.lexicon_embedder.ctx_start).expand(1,len(task.examples),-1)
+        ctx_end_vec = self.lexicon_embedder(self.lexicon_embedder.ctx_end).expand(1,len(task.examples),-1)
         inputs = torch.cat((ctx_start_vec,inputs,ctx_end_vec))
         mlb.log('catted on ctx_start and ctx_end vectors')
         mlb.log(f'input to ctx_encoder: {tuple(inputs.shape)}')
@@ -492,7 +498,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                     mlb.log(f'\tex {i}:')
                     for _int in ex:
                         mlb.log(f'\t\t{_int}')
-                exs = self.digit_embedder.idxs_of_toks(exs) # ::[[[longtensor]]] (num_exs,list_len,num_digits)
+                exs = self.lexicon_embedder.idxs_of_toks(exs) # ::[[[longtensor]]] (num_exs,list_len,num_digits)
 
                 if mlb.get_verbose():
                     mlb.log('to indices:')
@@ -506,19 +512,19 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 ints = list(itertools.chain.from_iterable(exs_sorted)) # ::[[longtensor]] (num_exs*list_len, num_digits)
                 if len(ints) > 0:
                     # pad it to a constant number of digits per int
-                    ints, digits_per_int, unsorter = self.digit_embedder.pad_and_sort_idxs_lists(ints)
+                    ints, digits_per_int, unsorter = self.lexicon_embedder.pad_and_sort_idxs_lists(ints)
                     ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs*list_len, longest_num_digits]
                     mlb.log('flattened, padded, stacked:')
                     mlb.log(ints)
                     mlb.log(f'shape:{tuple(ints.shape)} :: (ints, longest_num_digits)')
-                    mlb.log('running pointwise digit_embedder()')
-                    ints_embedded = self.digit_embedder(ints) # pointwise, converts indices -> embeddings. [num_exs*list_len, longest_num_digits, H]
+                    mlb.log('running pointwise lexicon_embedder()')
+                    ints_embedded = self.lexicon_embedder(ints) # pointwise, converts indices -> embeddings. [num_exs*list_len, longest_num_digits, H]
                     mlb.log(f'ints_embedded :: {tuple(ints_embedded.shape)} :: (ints, longest_num_digits, H)')
                     mlb.log(f'Heres the ints_embedded[0] which is the digitwise encoding of the first int of the first example:')
                     mlb.log(f'ints_embedded :: {tuple(ints_embedded.shape)} :: (ints, longest_num_digits, H)')
                     mlb.log(f'Heres the ints_embedded[0] which is the digitwise encoding of the first int of the first example. You may see the zero padding. :')
                     mlb.log(ints_embedded[0])
-                    packed = self.digit_embedder.pack(ints_embedded, digits_per_int)
+                    packed = self.lexicon_embedder.pack(ints_embedded, digits_per_int)
                     mlb.log('running thru int_encoder() gru')
                     _, hidden = self.int_encoder(packed)
                     mlb.log(f'unsorting by unsorter: {unsorter.tolist()}')
@@ -535,8 +541,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 #exs_tensor = exs_tensor.to(self.device)
                 j = 0
                 # add LIST_START
-                list_start_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_START'])
-                list_end_vec = self.digit_embedder(self.digit_embedder.idx_of_tok['LIST_END'])
+                list_start_vec = self.lexicon_embedder(self.lexicon_embedder.list_start)
+                list_end_vec = self.lexicon_embedder(self.lexicon_embedder.list_end)
                 exs_tensor[:,0] = list_start_vec.expand(len(exs),-1)
                 for i,num_ints in enumerate(ints_per_ex):
                     if int_encodings is not None: # only None if the input was an empty list of ints
@@ -550,7 +556,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 mlb.log(f'the first example is exs_tensor[0]:')
                 mlb.log(exs_tensor[0])
                 assert exs_tensor[0][0].equal(exs_tensor[1][0]) # both shd be LIST_START
-                packed = self.digit_embedder.pack(exs_tensor,sizes)
+                packed = self.lexicon_embedder.pack(exs_tensor,sizes)
                 mlb.log(f'running list_encoder gru')
                 _, hidden = self.list_encoder(packed)
                 mlb.log(f'unsorting with unsorter: {exs_unsorter.tolist()}')
@@ -583,9 +589,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
 
         # [non-list]
         if is_bool(val[0]):
-            indices = torch.tensor(self.digit_embedder.idxs_of_toks(val)) # [int]
+            indices = torch.tensor(self.lexicon_embedder.idxs_of_toks(val)) # [int]
             indices = indices.to(self.device)
-            res = self.digit_embedder(indices)
+            res = self.lexicon_embedder(indices)
             return res
         
 
@@ -598,18 +604,18 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 ints = val # :: [num_exs,]
                 ints = [['INT_START']+list(str(_int))+['INT_END'] for _int in ints] # convert 100 -> ['1','0','0']
                 before_idxs_of_toks = ints # in case you want to inspect during debugging
-                ints = self.digit_embedder.idxs_of_toks(ints)
+                ints = self.lexicon_embedder.idxs_of_toks(ints)
                 # pad it to a constant number of digits per int
-                ints, digits_per_int, unsorter = self.digit_embedder.pad_and_sort_idxs_lists(ints)
+                ints, digits_per_int, unsorter = self.lexicon_embedder.pad_and_sort_idxs_lists(ints)
                 ints = torch.stack([torch.stack(digits) for digits in ints]) # :: [num_exs, longest_num_digits]
-                ints_embedded = self.digit_embedder(ints) # pointwise, converts indices -> embeddings
-                packed = self.digit_embedder.pack(ints_embedded, digits_per_int)
+                ints_embedded = self.lexicon_embedder(ints) # pointwise, converts indices -> embeddings
+                packed = self.lexicon_embedder.pack(ints_embedded, digits_per_int)
                 _, hidden = self.int_encoder(packed)
                 int_encodings = hidden.sum(0)[unsorter] # sum over bidirectionality [num_exs*list_len, H]
                 return int_encodings
             # it's a list of functions or other non-int things
-            idxs = torch.stack(self.digit_embedder.idxs_of_toks(val))
-            res = self.digit_embedder(idxs)
+            idxs = torch.stack(self.lexicon_embedder.idxs_of_toks(val))
+            res = self.lexicon_embedder(idxs)
             return res
 
         # [non-digitwise]

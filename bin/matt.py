@@ -275,12 +275,16 @@ def hydra_main(cfg):
                 if cfg.test.max_tasks is not None and len(test_frontiers) > cfg.test.max_tasks:
                     mlb.red(f"Cutting down test frontiers from {len(test_frontiers)} to {cfg.test.max_tasks}")
                     test_frontiers = test_frontiers[:cfg.test.max_tasks]
+
+
+                state = fix.fix_state_testmode(state)
                 vhead = InvalidIntermediatesValueHead(cfg) if cfg.test.validator_vhead else SampleDummyValueHead()
                 solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth)
                 if state.cfg.data.train.V != cfg.data.test.V:
                     mlb.red(mlb.mk_bold(f"HUGE WARNING: You have trained on {state.cfg.data.train.V} data but are testing on {cfg.data.test.V}"))
                     exit(1)
                 mlb.purple("Running tests")
+
                 model_results = test.test_models([solver],
                                             test_frontiers,
                                             state.g,
@@ -301,8 +305,16 @@ def hydra_main(cfg):
                 p = pstats.Stats('profiled')
                 p.strip_dirs()
                 p.sort_stats(sort.TIME)
-                p.reverse_order()
-                p.print_stats()
+                #p.reverse_order()
+                mlb.green('TIME IN FN without children')
+                p.sort_stats(sort.TIME)
+                p.print_stats(50)
+                print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
+                print('tottime: doesnt include subfunctions')
+                print('percall: previous column divided by num calls')
+                mlb.green('CUMULATIVE')
+                p.sort_stats(sort.CUMULATIVE)
+                p.print_stats(50)
                 print('   ncalls  tottime  percall  cumtime  percall filename:lineno(function)')
                 print('tottime: doesnt include subfunctions')
                 print('percall: previous column divided by num calls')

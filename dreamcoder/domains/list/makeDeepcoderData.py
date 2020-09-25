@@ -190,11 +190,16 @@ def preprocess(test_frontiers,cfg):
             continue
         f.t.examples = new_exs
 
-        if f.t.name in seen:
+        name = f.t.name
+        if name[:3].isdigit() and len(name) == 5 and name[4].isdigit():
+            # name is like 004_2 and we wanna throw out everything beyond *_1
+            name = name[:3] # for `seen` purposes
+
+        if name in seen:
             print(f"[TASK] skipping bc already seen this task: {f.t.name}")
             continue
 
-        seen.add(f.t.name)
+        seen.add(name)
 
         filtered.append(f)
 

@@ -8,6 +8,7 @@ value: False # dummy will be used
 policy: True
 encodeTargetHole: False
 ordering: last
+ctxful_lambdas: True
 extractor:
   modular: True
   bidir_ctx: True
