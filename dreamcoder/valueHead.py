@@ -880,6 +880,7 @@ class ListREPLValueHead(BaseValueHead):
                         concrete_rep(sk,task,ctxs,in_lambda,self.cfg.data.train.V)
                     except InvalidSketchError as e:
                         mlb.purple("WOULD HAVE WORKED")
+                        mlb.purple("common error: your cfg.data.test for the test-time Astar is NOT actually the same as this")
                         breakpoint()
                         print(self.cfg.data.train.V)
                         print(self.cfg.data.test.V)

@@ -553,7 +553,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 packed = self.digit_embedder.pack(exs_tensor,sizes)
                 mlb.log(f'running list_encoder gru')
                 _, hidden = self.list_encoder(packed)
-                mlb.log(f'unsorting with unsorter: {unsorter.tolist()}')
+                mlb.log(f'unsorting with unsorter: {exs_unsorter.tolist()}')
                 list_encodings = hidden.sum(0)[exs_unsorter] # sum over bidirectionaliy. [num_exs,H]
                 mlb.log(f'encodeValue() is returning list_encodings :: {tuple(list_encodings.shape)} :: (num_exs,H)')
                 return list_encodings

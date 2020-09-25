@@ -141,30 +141,93 @@ class ToPlusPlusVisitor:
 
 
 
+from collections import defaultdict
 def preprocess(test_frontiers,cfg):
     """
     Filters out tasks that we don't want, e.g. ones with out of range values, etc
     """
     filtered = []
+    reqs = defaultdict(int)
+    numbers = defaultdict(int)
+    global_min = 10000
+    global_max = -100000
+    seen = set()
+
+    print(f"{len(test_frontiers)=}")
+
     for f in test_frontiers:
-        task = f.t
+        reqs[f.t.request] += 1
+
+        if f.t.request != arrow(tlist(tint),tlist(tint)):
+            continue
+
+        outputs = [o for [i],o in f.t.examples]
+        inputs = [i for [i],o in f.t.examples]
+        if all([len(o)==1 for o in outputs]):
+            print("[TASK] rejecting singleton")
+            continue
+
+        new_exs = []
+        for ex in f.t.examples:
+            [i],o = ex
+            if len(i) < 1 or len(i) > 10:
+                print("reject ex bc input too long")
+                continue
+            if max(i+o,default=global_max) > global_max:
+                global_max = max(i+o)
+            if min(i+o,default=global_min) < global_min:
+                global_min = min(i+o)
+            if min(i+o) < -cfg.data.test.V:
+                print("reject ex bc small")
+                continue
+            if max(i+o) > cfg.data.test.V:
+                print("reject ex bc big")
+                continue
+            new_exs.append(ex)
+        new_exs = new_exs[:5]
+        if len(new_exs) < 5:
+            print("[TASK] rejecting bc too few valid examples")
+            continue
+        f.t.examples = new_exs
+
+        if f.t.name in seen:
+            print(f"[TASK] skipping bc already seen this task: {f.t.name}")
+            continue
+
+        seen.add(f.t.name)
+
+        filtered.append(f)
+
+            # if max(i,default=0) > 16:
+            #     mlb.red(f"throwing out a big boy {max(i)}")
+            #     continue
+            # if min(i,default=0) < -16:
+            #     mlb.red(f"throwing out a negative big boy {min(i)}")
+            #     continue
+        
+
 
         # filter request type
-        if not cfg.data.test.allow_complex_requests:
-            # only [int] -> [int] allowed
-            if task.request != arrow(tlist(tint),tlist(tint)):
-                continue
-        else:
-            # only [int] -> [int] or [int] -> int allowed
-            if task.request not in [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)]:
-                continue
+        # if not cfg.data.test.allow_complex_requests:
+        #     # only [int] -> [int] allowed
+        #     if task.request != arrow(tlist(tint),tlist(tint)):
+        #         continue
+        # else:
+        #     # only [int] -> [int] or [int] -> int allowed
+        #     if task.request not in [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)]:
+        #         continue
         
         # adjust number of examples
-        for ([i],o) in task.examples:
-            print(len(i), end=' ')
+        # for ([i],o) in task.examples:
+        #     print(len(i), end=' ')
 
-        print()
-        filtered.append(f)
+        #print()
+    for k,v in reqs.items():
+        print(f"{k}: {v}")
+    print(f"{global_min=}")
+    print(f"{global_max=}")
+    print(f"{len(filtered)=}")
+    mlb.cyan(f"VERY IMPORTANT: you are pruning examples during preprocessing and search based on this limit: {cfg.data.test.V}")
     return filtered
 
 

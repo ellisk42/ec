@@ -157,15 +157,16 @@ def hydra_main(cfg):
                     mlb.red(f"from_fn value not recognized. options are: {list(tests.tests.keys())}")
                     return
                 test_frontiers = test.tests.tests[cfg.test.from_fn](cfg)
-                test_frontiers = preprocess(test_frontiers,cfg)
                 mlb.purple(f"got {len(test_frontiers)} test frontiers from {cfg.test.from_fn}()")
                 if cfg.test.to_file is not None:
                     print(f"Writing saved tests to {cfg.test.to_file}...")
                     torch.save((test_frontiers,cfg), test.tests.tests_dir / cfg.test.to_file)
+                    sys.exit(0)
             elif cfg.test.from_file is not None:
                 (test_frontiers,original_cfg) = torch.load(test.tests.tests_dir / cfg.test.from_file)
                 # note that original_cfg is just around in case you ever want a record of how the tests were created!
                 tests_from = cfg.test.from_file
+                test_frontiers = preprocess(test_frontiers,cfg)
                 mlb.purple(f"loaded {len(test_frontiers)} test frontiers from {cfg.test.from_file} (details in `original_cfg`)")
             else:
                 raise ValueError("Specify either test.from_file or test.from_fn")
@@ -276,6 +277,9 @@ def hydra_main(cfg):
                     test_frontiers = test_frontiers[:cfg.test.max_tasks]
                 vhead = InvalidIntermediatesValueHead(cfg) if cfg.test.validator_vhead else SampleDummyValueHead()
                 solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth)
+                if state.cfg.data.train.V != cfg.data.test.V:
+                    mlb.red(mlb.mk_bold(f"HUGE WARNING: You have trained on {state.cfg.data.train.V} data but are testing on {cfg.data.test.V}"))
+                    exit(1)
                 mlb.purple("Running tests")
                 model_results = test.test_models([solver],
                                             test_frontiers,
