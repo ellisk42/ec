@@ -709,6 +709,7 @@ class Grammar(object):
             try: context = context.unify(ft.returns(), request)                
             except UnificationFailure:
                 print("Exception: sketch is ill-typed")
+                raise
                 return #so that we can continue evaluating
                 # raise SketchEnumerationFailure() #"sketch is ill-typed"
             ft = ft.apply(context)
@@ -835,6 +836,7 @@ class Grammar(object):
             try: context = context.unify(ft.returns(), request)                
             except UnificationFailure:
                 print("Exception: sketch is ill-typed")
+                raise
                 # print(request)
                 # print(context)
                 # print(ft.returns())

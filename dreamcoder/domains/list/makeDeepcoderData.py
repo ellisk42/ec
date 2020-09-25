@@ -632,7 +632,7 @@ class DeepcoderTaskloader:
         assert not self.threaded, "We're not allowing threading for now"
         
         self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
-        self.allowed_requests = None if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
+        self.allowed_requests = [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)] if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
 
         #self.buf = queue.Queue(self.cfg.buf_size) # turns out Queues also cant be pickled:(
         self.buf = []
@@ -733,6 +733,8 @@ class DeepcoderTaskloader:
                     # deepcoder++ conversion
                     if self.cfg.expressive_lambdas:
                         frontiers = self.convert_to_deepcoder_plus_plus(ff,tasks)
+                        if frontiers is None:
+                            continue
                     else:
                         print(ff.p)
 
@@ -887,10 +889,18 @@ class DeepcoderTaskloader:
         res = []
 
         num_generated = 0
+        assert self.cfg.num_mutated_tasks == 1, "just bc the failure stuff i guess"
+        failures = -1
         while True:
+            failures += 1
+
+            if failures > 100:
+                print(f"Giving up on {program_plus_plus}")
+                return None
+
             task = tasks[num_generated]
             assert self.g_lambdas.max_hole_depth is not None
-            sampled = self.g_lambdas.sampleFromSketch(arrow(tlist(tint), tlist(tint)), program_plus_plus, maximumDepth = 20) # this max depth wont be hit bc of Grammar.max_hole_depth
+            sampled = self.g_lambdas.sampleFromSketch(task.request, program_plus_plus, maximumDepth = 20) # this max depth wont be hit bc of Grammar.max_hole_depth
             if sampled.size() > 30:
                 #breakpoint()
                 print("you got some big trees there man")
