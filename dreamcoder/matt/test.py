@@ -89,7 +89,10 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
                 assert len(solns) == 1 # i think this is true, I want it to be true lol
                 soln = solns[0]
                 search_results.append(soln)
-                if verbose: mlb.green(f"solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
+                if verbose:
+                    mlb.green(f"solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
+                    t,d,s = get_depth(solns[0].program)
+                    print(f"\t-> [T{t}d{d}s{s}] {solns[0].program}")
             else:
                 if verbose: mlb.red(f"failed to solve {task.name} (searched {num_progs} programs)")
                 search_failures.append(num_progs)

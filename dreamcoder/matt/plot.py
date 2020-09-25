@@ -79,6 +79,14 @@ class ModelResult:
     def fraction_hit(self, predicate):
         valid = [r for r in self.search_results if predicate(r)]
         return len(valid)/self.num_tests*100
+    def print_dist(self):
+        dist = defaultdict(int)
+        for result in self.search_results:
+            t,d,astar = get_depth(result.program)
+            dist[(t,d)] += 1
+        print(f"{self.prefix}.{self.name} distribution of {len(self.search_results)} solutions:")
+        for k,v in dist.items():
+            print(f"T{k[0]}d{k[1]}: {v}")
 
 def plot_model_results(model_results, file, toplevel=False, model_result_path=None, title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
     if not os.path.isdir('plots'):

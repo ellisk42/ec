@@ -148,6 +148,7 @@ class NeuralPolicyHead(nn.Module):
             fullProg = entry.program._fullProg
 
         mlb.log(f'program: {fullProg}')
+        #print(f'program: {fullProg}')
         mlb.log(f'request: {tp}')
         posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, 
                                                         onlyPos=True, returnNextNode=True,
@@ -155,10 +156,14 @@ class NeuralPolicyHead(nn.Module):
         for zipper in holesToExpand:
             assert self.cfg.data.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
         mlb.log('pos traces:')
+        #print("traces:")
         for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
             mlb.log(f'\t{trace}')
             mlb.log(f'\t\thole={hole}')
             mlb.log(f'\t\ttarget={target}')
+            #print(f'\t{trace}')
+            #print(f'\t\thole={hole}')
+            #print(f'\t\ttarget={target}')
 
         maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
         

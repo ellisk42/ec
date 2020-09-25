@@ -1,6 +1,7 @@
 #missing imports
 
 import os
+import mlb
 #import time
 import sys
 from dreamcoder.program import Hole
@@ -136,6 +137,7 @@ class SMC(Solver):
             h = baseHoleOfType(request)
             zippers = findHoles(h, request)
             population = [Particle(h, zippers, numberOfParticles)]
+            from dreamcoder.domains.list.makeDeepcoderData import get_depth
 
             for generation in range(self.maximumLength):
                 if time.time() - starting > timeout: break
@@ -149,10 +151,18 @@ class SMC(Solver):
                     for _ in range(p.frequency):
 
                         try:
+                            t,d,s = get_depth(p.trajectory)
+                            if t > 2 or d > 3:
+                                mlb.purple(f"[{totalNumberOfPrograms}] node: {p.trajectory}")
+                                mlb.purple(f"T{t}d{d}s{s}")
                             newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)
                             totalNumberOfPrograms += 1
+                            #print(f"{p.frequency=}")
+                            #print(f"{len(population)=}")
+                            #print(f"Parent: {p.trajectory}")
+                            #print(f"\t{newObject}")
 
                             # print(newObject)
                             # print(newZippers)

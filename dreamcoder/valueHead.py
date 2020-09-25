@@ -921,10 +921,10 @@ class ListREPLValueHead(BaseValueHead):
                     except InvalidSketchError as e:
                         mlb.purple("WOULD HAVE WORKED")
                         mlb.purple("common error: your cfg.data.test for the test-time Astar is NOT actually the same as this")
-                        breakpoint()
+                        #breakpoint()
                         print(self.cfg.data.train.V)
-                        print(self.cfg.data.test.V)
-                    #raise
+                        print(self.cfg.data.test.V) # but also check the ASTARs pecific test
+                    raise
 
                 if sk.size() > 1:
                     #print(f"ran concrete eval on sk of size {sk.size()}: {sk}")

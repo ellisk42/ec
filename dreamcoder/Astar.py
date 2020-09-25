@@ -1,6 +1,7 @@
 
 
 import os
+import mlb
 #import time
 import sys
 from dreamcoder.program import Hole
@@ -126,19 +127,27 @@ class Astar(Solver):
             #signal.setitimer(signal.ITIMER_REAL, timeout) ##TODO TEMP DISABLED
 
 
+            from dreamcoder.domains.list.makeDeepcoderData import get_depth
             while time.time() - starting < timeout:
 
                 node = q.popMaximum() #TODO
                 #print(">>>>>>node", node)
                 #print("queue size", len(q))
 
+                t,d,s = get_depth(node[2])
+                if t > 2 or d > 3:
+                    mlb.purple(f"[{totalNumberOfPrograms}] node: {node[2]}")
+                    mlb.purple(f"T{t}d{d}s{s}")
+
                 nNei = 0
+                #print(f"Parent: {node[2]}")
                 for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
                     # print(policyCost, neighbor)
                     # import pdb; pdb.set_trace()
                     nNei += 1
                     if (neighbor) in allObjects:
                         continue
+                    #print(f"\t{neighbor} {policyCost=}")
                     allObjects.add(neighbor)
                     if self.reportNodeExpansions: totalNumberOfPrograms += 1
 

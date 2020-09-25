@@ -508,6 +508,8 @@ def depth_nolambda(e):
             return 0
         elif e.isPrimitive:
             return 0
+        elif e.isHole:
+            return 0
         elif e.isApplication:
             f, xs = e.applicationParse() # important bc actually changes depth
             return 1 + max([helper(f)] + [helper(x) for x in xs])
@@ -530,6 +532,8 @@ def depth_lambda(e):
             return helper_inside_lambda(e)
         elif e.isPrimitive:
             return 0
+        elif e.isHole:
+            return 0
         elif e.isApplication:
             f, xs = e.applicationParse() # important bc actually changes depth
             return max([helper_outside_lambda(f)] + [helper_outside_lambda(x) for x in xs])
@@ -539,6 +543,8 @@ def depth_lambda(e):
             return 1
         elif e.isAbstraction:
             assert False
+        elif e.isHole:
+            return 1
         elif e.isPrimitive:
             return 1
         elif e.isApplication:
@@ -558,6 +564,8 @@ def depth_for_solver(e):
         elif e.isAbstraction:
             return helper(e.body) # ignores abstractions
         elif e.isPrimitive:
+            return 0
+        elif e.isHole:
             return 0
         elif e.isApplication:
             # doesnt do an applicationParse
@@ -726,6 +734,10 @@ class DeepcoderTaskloader:
                     if self.cfg.expressive_lambdas:
                         frontiers = self.convert_to_deepcoder_plus_plus(ff,tasks)
                     else:
+                        print(ff.p)
+
+                        for [i],o in ff.t.examples:
+                            print(f"\t{i} -> {o}")
                         frontiers = [ff]
 
                     # add to buffer and potentially exit by throwing exception (this is the only exit point)
@@ -917,7 +929,7 @@ class DeepcoderTaskloader:
                     #print(f"rejecting {sampled} bc it's the identity function")
                     continue # rejection sample
 
-            assert self.cfg.max_depth > get_depth(sampled)[2], "You want to increase your max_depth so this program will actually be searchable"
+            #assert self.cfg.max_depth > get_depth(sampled)[2], "You want to increase your max_depth so this program will actually be searchable"
             
 
             new_examples = [(ex[0],output) for ex,output in zip(task.examples,outputs)]

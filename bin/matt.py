@@ -4,11 +4,11 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 import os
-os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
-os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
-os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
-os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
-os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
+#os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
+#os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
+#os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
+#os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
+#os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
 from collections import defaultdict
 import pathlib
 import contextlib
@@ -134,13 +134,25 @@ def hydra_main(cfg):
                     paths[i] = get_datetime_path(path) / 'model_results' / cfg.plot.suffix
                     print(f"Path {i} converted to {paths[i]}")
 
+            print("Checking these paths:")
+            for p in paths:
+                print(f'\t{p}')
+                if not p.exists():
+                    print(f'\t\t-> DOES NOT EXIST')
+            paths = [p for p in paths if p.exists()]
             print("Plotting these paths:")
             for p in paths:
                 print(f'\t{p}')
+        
+            if len(paths) == 0:
+                print("No paths to plot")
+                sys.exit(1)
 
             model_results = []
             for path in paths:
                 model_results.extend(torch.load(path))
+            for m in model_results:
+                m.print_dist()
             plot.plot_model_results(model_results,
                                     file=cfg.plot.file,
                                     title=cfg.plot.title,
@@ -185,8 +197,14 @@ def hydra_main(cfg):
         state = State()
         if cfg.load is None:
             print("no file to load from, creating new state...")
-            with torch.cuda.device(cfg.device):
+            if cfg.device != 'cpu':
+                with torch.cuda.device(cfg.device):
+                    state.new(cfg=cfg)
+            else:
                 state.new(cfg=cfg)
+            # seems to initialize on gpu anyways sometimes
+            state.phead = state.phead.to(cfg.device)
+            state.vhead = state.vhead.to(cfg.device)
         else:
 
             paths = outputs_regex(cfg.load)
@@ -241,7 +259,7 @@ def hydra_main(cfg):
         for string in print_overrides: # just want this to print after the big wall of yaml
             mlb.purple(string)
             
-        with torch.cuda.device(state.cfg.device):
+        with (torch.cuda.device(state.cfg.device) if state.cfg.device != 'cpu' else contextlib.nullcontext()):
             if state.cfg is not None and state.cfg.seed is not None:
                 print("Setting evaluation to deterministic (roughly) and seeding RNG")
                 torch.manual_seed(state.cfg.seed)
