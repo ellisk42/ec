@@ -1,0 +1,9 @@
+8
+a <- int | b <- [int] | c <- ACCESS a b
+a <- [int] | b <- SCANL1 - a
+a <- [int] | b <- [int] | c <- ZIPWITH - b a
+a <- [int] | b <- COUNT isPOS a
+a <- [int] | b <- ZIPWITH - a a
+a <- [int] | b <- MINIMUM a
+a <- [int] | b <- MAP doNEG a
+a <- [int] | b <- MAP INC a

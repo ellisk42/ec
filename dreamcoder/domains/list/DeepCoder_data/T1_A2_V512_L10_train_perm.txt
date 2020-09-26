@@ -1,0 +1,33 @@
+32
+a <- [int] | b <- SORT a
+a <- [int] | b <- int | c <- TAKE b a
+a <- [int] | b <- SCANL1 + a
+a <- [int] | b <- [int] | c <- ZIPWITH MIN b a
+a <- [int] | b <- LAST a
+a <- [int] | b <- MAP SQR a
+a <- [int] | b <- ZIPWITH * a a
+a <- [int] | b <- ZIPWITH + a a
+a <- [int] | b <- [int] | c <- ZIPWITH - a b
+a <- [int] | b <- MAP SHR a
+a <- [int] | b <- SCANL1 MIN a
+a <- [int] | b <- MAP DEC a
+a <- [int] | b <- [int] | c <- ZIPWITH * a b
+a <- [int] | b <- COUNT isODD a
+a <- [int] | b <- FILTER isNEG a
+a <- [int] | b <- FILTER isEVEN a
+a <- [int] | b <- MAXIMUM a
+a <- int | b <- [int] | c <- DROP a b
+a <- [int] | b <- COUNT isNEG a
+a <- [int] | b <- int | c <- DROP b a
+a <- [int] | b <- MAP SHL a
+a <- [int] | b <- COUNT isEVEN a
+a <- [int] | b <- [int] | c <- ZIPWITH * b a
+a <- [int] | b <- SUM a
+a <- [int] | b <- [int] | c <- ZIPWITH + a b
+a <- [int] | b <- FILTER isPOS a
+a <- [int] | b <- MAP DIV3 a
+a <- [int] | b <- [int] | c <- ZIPWITH MIN a b
+a <- [int] | b <- [int] | c <- ZIPWITH MAX b a
+a <- [int] | b <- [int] | c <- ZIPWITH + b a
+a <- [int] | b <- MAP MUL3 a
+a <- [int] | b <- [int] | c <- ZIPWITH MAX a b

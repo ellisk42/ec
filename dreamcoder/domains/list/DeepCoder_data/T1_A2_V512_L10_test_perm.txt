@@ -1,0 +1,9 @@
+8
+a <- [int] | b <- int | c <- ACCESS b a
+a <- int | b <- [int] | c <- TAKE a b
+a <- [int] | b <- REVERSE a
+a <- [int] | b <- HEAD a
+a <- [int] | b <- MAP DIV4 a
+a <- [int] | b <- SCANL1 MAX a
+a <- [int] | b <- FILTER isODD a
+a <- [int] | b <- MAP MUL4 a
