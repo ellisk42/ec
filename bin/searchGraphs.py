@@ -257,34 +257,83 @@ if __name__ == '__main__':
         ]
 
 
-    # graph=""
-    # nameSalt = "AstarPseudoResultFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # ID = 'towers' + str(n)
-    # runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # maxEvals = 25000
-    # useMaxLens = True
-    # maxTasksOnly = True
-    # noMaxTasks=False
-    # #list of okay tasks:
-    # okayList = False #range(29)
-    # paths = [
-    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Abstract REPL (concrete + neural semantics)"),
-    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Abstract REPL (neural semantics only)"),
-    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
-    #     #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
-    #     #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
-    #     #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
-    #     #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
-    #     (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy only (weights not shared w value)'),
-    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
-    #     #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
-    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
-    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebugLong", "Abstract REPL policy + RL value (seperate weights)"),
-    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
-    #     (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
+    graph=""
+    nameSalt = "AstarPseudoResultFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    maxEvals = 17000
+    useMaxLens = True
+    maxTasksOnly = True
+    noMaxTasks=False
+    #list of okay tasks:
+    okayList = False #range(29)
+    paths = [
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Blended Execution - Policy only (ours)"),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Neural Execution - Policy only (modular baseline)"),
+        #(f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
+        #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
+        #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
+        #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
+        #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN - Policy only'),
+        #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
+        #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
+        #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebugLong", "Blended Execution - policy + value (ours)"),
+        #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
+        #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
 
-    #     #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
-    #    ]
+        #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
+       ]
+
+
+    graph=""
+    nameSalt = "SMCFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    maxEvals = 15000
+    useMaxLens = True
+    maxTasksOnly = True
+    noMaxTasks=False
+    #list of okay tasks:
+    okayList = False #range(29)
+    paths = [
+        ("experimentOutputs/towersRNNResultsSMC.pickle", 'RNN - Policy only'),
+        (f"experimentOutputs/towersNeuralExecResultsSMC.pickle", "Neural Execution - Policy only (modular baseline)"),
+        (f"experimentOutputs/towersBlendedExecResultsSMC.pickle", "Blended Execution - Policy only"),
+        (f"experimentOutputs/towersBlendedExecValueResultsSMC.pickle", "Blended Execution -Policy + Value (ours)"),
+        ("experimentOutputs/towersRNNResultsSMC2.pickle", '2RNN - Policy only'),
+        (f"experimentOutputs/towersNeuralExecResultsSMC2.pickle", "2Neural Execution - Policy only (modular baseline)"),
+        (f"experimentOutputs/towersBlendedExecResultsSMC2.pickle", "2Blended Execution - Policy only"),
+        (f"experimentOutputs/towersBlendedExecValueResultsSMC2.pickle", "2Blended Execution -Policy + Value (ours)"),
+       ]
+
+
+    graph="_graph=True"
+    nameSalt = "AstarChallengeConcatX" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'rb'
+    runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    maxEvals = 15000
+    useMaxLens = True
+    maxTasksOnly=False
+    noMaxTasks=False
+    okayList = False
+    challengeOnly=True#False#True
+    synthOnly =False#True
+    paths = [
+        # (f'experimentOutputs/AstarBlended.pickle', 'Blended execution'),
+        # (f'experimentOutputs/AstarNeuralOnly.pickle', 'neural modular only'),
+        # (f'experimentOutputs/AstarRNN.pickle', 'RNN policy'),
+        # ("experimentOutputs/AstarBlendedTemp01.pickle", "Blended 1/10 temp"),
+        # ("experimentOutputs/AstarBlendedTemp2.pickle", "Blended 1/2 temp"),
+        # ("experimentOutputs/AstarBlendedTemp1over2.pickle", "Blended 2 temp"),
+        # ("experimentOutputs/AstarBlendedTemp1over4.pickle", "Blended 4 temp"),
+        (f'experimentOutputs/AstarBlended_debug.pickle', 'Blended execution'),
+        (f'experimentOutputs/AstarNeuralOnly_debug.pickle', 'neural modular only'),
+        (f'experimentOutputs/AstarRNN_debug.pickle', 'RNN policy'),
+        #(f'robustfill_baseline_results.p20001', 'RobustFill (2.5M programs)'),
+        #(f'experimentOutputs/repl_results.p', 'REPL upper bound')
+        ]
 
 
 

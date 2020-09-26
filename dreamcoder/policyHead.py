@@ -426,7 +426,9 @@ class RBREPLPolicyHead(NeuralPolicyHead):
                 nn.Linear(H, H),
                 nn.ReLU(),
                 nn.Linear(H, len(self.productionToIndex) ),
+                #nn.MulConstant(10),
                 nn.LogSoftmax(dim=1))
+
 
         self.lossFn = nn.NLLLoss(reduction='sum')
         #print("num of params in repl policyhead (includes unused rnn weights)", count_parameters(self))
@@ -479,6 +481,13 @@ class RBREPLPolicyHead(NeuralPolicyHead):
     def _computeDist(self, sketches, zippers, task, g):
         features = self._computeREPR(sketches, task, zippers)
         dist = self.output(features)
+        
+        # for layer in self.output[:-1]:
+        #     features = layer(features)
+        # features = features/4
+        # #print("yeah...")
+        # dist = self.output[-1](features)
+
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
         return dist

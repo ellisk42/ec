@@ -73,109 +73,108 @@ class Astar(Solver):
                               testing=False, #unused
                               evaluationTimeout=None, 
                               maximumFrontiers=None): #IDK what this is...
-        
-        if hasattr(self.owner.policyHead, 'canonicalOrdering') and self.owner.policyHead.canonicalOrdering:
-            self.canonicalOrdering = True
-        else: self.canonicalOrdering = False
+        with torch.no_grad():
+            if hasattr(self.owner.policyHead, 'canonicalOrdering') and self.owner.policyHead.canonicalOrdering:
+                self.canonicalOrdering = True
+            else: self.canonicalOrdering = False
+                
+            sys.setrecursionlimit(5000)
+                    #START
+            assert timeout is not None, \
+                "enumerateForTasks: You must provide a timeout."
 
+            request = tasks[0].request
+            assert all(t.request == request for t in tasks), \
+                "enumerateForTasks: Expected tasks to all have the same type"
+            assert len(tasks) == 1, "only should be one task"
+            # if not all(task == tasks[0] for task in tasks):
+            #     print("WARNING, tasks are not all the same")
+            task = tasks[0]
+            self.maximumFrontiers = [maximumFrontiers[t] for t in tasks]
+            # store all of the hits in a priority queue
+            self.fullPrograms = set()
+            hits = [PQ() for _ in tasks]
+
+            self.reportedSolutions = {t: [] for t in tasks}
+
+            allObjects = set()
             
-        sys.setrecursionlimit(5000)
-                #START
-        assert timeout is not None, \
-            "enumerateForTasks: You must provide a timeout."
-
-        request = tasks[0].request
-        assert all(t.request == request for t in tasks), \
-            "enumerateForTasks: Expected tasks to all have the same type"
-        assert len(tasks) == 1, "only should be one task"
-        # if not all(task == tasks[0] for task in tasks):
-        #     print("WARNING, tasks are not all the same")
-        task = tasks[0]
-        self.maximumFrontiers = [maximumFrontiers[t] for t in tasks]
-        # store all of the hits in a priority queue
-        self.fullPrograms = set()
-        hits = [PQ() for _ in tasks]
-
-        self.reportedSolutions = {t: [] for t in tasks}
-
-        allObjects = set()
-        
-        starting = time.time()
-        totalNumberOfPrograms = 0
+            starting = time.time()
+            totalNumberOfPrograms = 0
 
 
-        q = PQMaxSize(maxSize=1000000)
-        #base node
-        h = baseHoleOfType(request)
-        zippers = findHoles(h, request)
-        q.push(0., (0., 0., h, zippers))
+            q = PQMaxSize(maxSize=1000000)
+            #base node
+            h = baseHoleOfType(request)
+            zippers = findHoles(h, request)
+            q.push(0., (0., 0., h, zippers))
 
 
-        try:
-            def timeoutCallBack(_1, _2): raise InferenceTimeout()
-            # signal.signal(signal.SIGVTALRM, timeoutCallBack)
-            # signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
-
-            signal.signal(signal.SIGALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_REAL, timeout)
-
-
-            while time.time() - starting < timeout:
-
-                node = q.popMaximum() #TODO
-                #print(">>>>>>node", node)
-                #print("queue size", len(q))
-
-                nNei = 0
-                for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
-                    # print(policyCost, neighbor)
-                    # import pdb; pdb.set_trace()
-                    nNei += 1
-                    if (neighbor) in allObjects:
-                        continue
-                    allObjects.add(neighbor)
-                    if self.reportNodeExpansions: totalNumberOfPrograms += 1
-
-                    if not zippers:
-                        success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
-                                                                    request, g, tasks, 
-                                                                    likelihoodModel,
-                                                                    hits, 
-                                                                    starting, 
-                                                                    elapsedTime, 
-                                                                    totalNumberOfPrograms) #TODO
-                        if success: return self._finish(tasks,
-                                                        hits, 
-                                                        totalNumberOfPrograms)
-                        else: continue
-
-                    valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
-                    totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
-                    #print("neighbor:", neighbor)
-                    #print("policyCost", policyCost)
-                    #print("valueCost", valueCost)
-                    #print("totalCost", totalCost)
-                    #import pdb; pdb.set_trace()
-                    newNode = (totalCost, policyCost, neighbor, zippers)
-                    q.push(totalCost, newNode)
-
-
-                    if time.time() - starting > timeout:
-                        break
-                #print('\t num neighbors', nNei)
-
-        except InferenceTimeout:
-            print("Timed out while evaluating, timeout", timeout)
-            print("time elapsed")
-            print(time.time() - starting)
-        finally:
-            # signal.signal(signal.SIGVTALRM, lambda *_: None)
-            # signal.setitimer(signal.ITIMER_VIRTUAL, 0)
             try:
-                signal.signal(signal.SIGALRM, lambda *_: None)
-                signal.setitimer(signal.ITIMER_REAL, 0)
+                def timeoutCallBack(_1, _2): raise InferenceTimeout()
+                # signal.signal(signal.SIGVTALRM, timeoutCallBack)
+                # signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
+
+                signal.signal(signal.SIGALRM, timeoutCallBack)
+                signal.setitimer(signal.ITIMER_REAL, timeout)
+
+
+                while time.time() - starting < timeout:
+
+                    node = q.popMaximum() #TODO
+                    #print(">>>>>>node", node)
+                    #print("queue size", len(q))
+
+                    nNei = 0
+                    for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
+                        # print(policyCost, neighbor)
+                        # import pdb; pdb.set_trace()
+                        nNei += 1
+                        if (neighbor) in allObjects:
+                            continue
+                        allObjects.add(neighbor)
+                        if self.reportNodeExpansions: totalNumberOfPrograms += 1
+
+                        if not zippers:
+                            success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
+                                                                        request, g, tasks, 
+                                                                        likelihoodModel,
+                                                                        hits, 
+                                                                        starting, 
+                                                                        elapsedTime, 
+                                                                        totalNumberOfPrograms) #TODO
+                            if success: return self._finish(tasks,
+                                                            hits, 
+                                                            totalNumberOfPrograms)
+                            else: continue
+
+                        valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
+                        totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
+                        #print("neighbor:", neighbor)
+                        #print("policyCost", policyCost)
+                        #print("valueCost", valueCost)
+                        #print("totalCost", totalCost)
+                        #import pdb; pdb.set_trace()
+                        newNode = (totalCost, policyCost, neighbor, zippers)
+                        q.push(totalCost, newNode)
+
+
+                        if time.time() - starting > timeout:
+                            break
+                    #print('\t num neighbors', nNei)
+
             except InferenceTimeout:
-                pass
+                print("Timed out while evaluating, timeout", timeout)
+                print("time elapsed")
+                print(time.time() - starting)
+            finally:
+                # signal.signal(signal.SIGVTALRM, lambda *_: None)
+                # signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+                try:
+                    signal.signal(signal.SIGALRM, lambda *_: None)
+                    signal.setitimer(signal.ITIMER_REAL, 0)
+                except InferenceTimeout:
+                    pass
 
         return self._finish(tasks, hits, totalNumberOfPrograms)
 

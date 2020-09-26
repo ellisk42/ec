@@ -197,7 +197,7 @@ if requests == []: requests = [arrow(texpression, texpression)]
 
 t = time.time()
 i = 0
-while r.valueHead.rl_iterations <= 16000*8*4:
+while r.valueHead.rl_iterations <= 120000:
     i += 1
     r.zero_grad()
     rl_loss = 0

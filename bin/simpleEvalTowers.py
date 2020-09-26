@@ -17,13 +17,17 @@ import time
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--gpu', type=int, default=None)
 parser.add_argument('--useValue', action='store_true')
 parser.add_argument('--useREPLnet', action='store_true')
 parser.add_argument('--useContrastiveValue', action='store_true')
 parser.add_argument('--usePath',type=str, default='')
 parser.add_argument('--name',type=str, default='')
+parser.add_argument('--solver',type=str, default='Astar')
+parser.add_argument('--timeout', type=int, default=120)
 args = parser.parse_args()
 
+if args.gpu is not None: torch.cuda.set_device(args.gpu)
 
 def test_policyTiming():
     from dreamcoder.Astar import Astar
@@ -31,6 +35,7 @@ def test_policyTiming():
     from dreamcoder.policyHead import RNNPolicyHead, BasePolicyHead, REPLPolicyHead
     from dreamcoder.domains.tower.makeTowerTasks import makeNewMaxTasks
     from dreamcoder.valueHead import SampleDummyValueHead
+    from dreamcoder.SMC import SMC
 
     sys.setrecursionlimit(50000)
     graph = ""
@@ -41,7 +46,7 @@ def test_policyTiming():
     useREPLnet = args.useREPLnet
     useRLValue = False
 
-    torch.cuda.set_device(0)
+    #torch.cuda.set_device(0)
 
 
     path = f'experimentOutputs/{ID}{runType}{model}_SRE=True{graph}.pickle'
@@ -100,18 +105,28 @@ def test_policyTiming():
         print(type(r.recognitionModel.valueHead))
         #print("no concrete?", r.recognitionModel.policyHead.noConcrete)
     
-    print("WARNGING: forcing blended exec")
-    r.recognitionModel.policyHead.REPLHead.noConcrete = False
-    if not hasattr(r.recognitionModel.valueHead, 'noConcrete'):
-        r.recognitionModel.valueHead.noConcrete =False
+    if not hasattr(r.recognitionModel.policyHead, 'noConcrete'):
+        print("WARNGING: forcing blended exec")
+        r.recognitionModel.policyHead.noConcrete = False
+        if hasattr(r.recognitionModel.policyHead, 'REPLHead'):
+            r.recognitionModel.policyHead.REPLHead.noConcrete = False
+        if not hasattr(r.recognitionModel.valueHead, 'noConcrete'):
+            r.recognitionModel.valueHead.noConcrete =False
 
     #import pdb; pdb.set_trace()
 
     g = r.grammars[-1]
     print(r.recognitionModel.gradientStepsTaken)
+    r.recognitionModel.cuda()
+
     solver = r.recognitionModel.solver
 
-    solver = Astar(r.recognitionModel)
+    if args.solver == 'Astar':
+        solver = Astar(r.recognitionModel)
+    elif args.solver == 'smc':
+        solver = SMC(r.recognitionModel, maxNumberofParticles=256)
+    else: assert 0
+
 
     times = []
     ttasks = r.getTestingTasks()
@@ -125,6 +140,7 @@ def test_policyTiming():
     #r.recognitionModel.policyHead.cpu()
     ttasts = list(set(ttasks))
     print("number of tasks:", len(ttasks))
+    #ttasks = ttasks[:2]
 
     nhit = 0
     stats = {}
@@ -132,21 +148,21 @@ def test_policyTiming():
     for i, t in enumerate(ttasks):
         #if i > 20: break
         tasks = [t]
-        print(tasks)
+        #print(tasks)
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
         #tasks = [frontier.task]
 
         if isinstance(r.recognitionModel.policyHead, BasePolicyHead):
             g = r.recognitionModel.grammarOfTask(tasks[0]).untorch()
         fs, searchTimes, totalNumberOfPrograms, reportedSolutions = solver.infer(g, tasks, likelihoodModel, 
-                                            timeout=300,
+                                            timeout=args.timeout,
                                             elapsedTime=0,
                                             evaluationTimeout=0.01,
                                             maximumFrontiers={tasks[0]: 2},
                                             CPUs=1,
                                             ) 
         print("done")
-        print("total prog", totalNumberOfPrograms)  
+        print("total prog", totalNumberOfPrograms, flush=True)  
         print("searchTimes", searchTimes)
         if list(searchTimes.values())[0]:
             nhit += 1
@@ -165,7 +181,9 @@ def test_policyTiming():
     pseudoResult.testingSearchStats = [stats]
     pseudoResult.testingNumOfProg = [nums]
 
-    savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}RLValue={args.useValue}contrastive={args.useContrastiveValue}seperate=True_SRE=True.pickleDebug{args.name}'
+    #savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}RLValue={args.useValue}contrastive={args.useContrastiveValue}seperate=True_SRE=True.pickleDebug{args.name}'
+
+    savePath = f'{args.name}'
     with open(savePath, 'wb') as h:
         dill.dump(pseudoResult, h)
     print("saved at", savePath)
