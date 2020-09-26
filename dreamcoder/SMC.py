@@ -72,7 +72,9 @@ class SMC(Solver):
                               # upperBound=100.,
                               # budgetIncrement=1.0, 
                               maximumFrontiers=None,
+                              starting_nodes=None,
                               returnAfterHit=True): #IDK what this is...
+
         #sys.setrecursionlimit(50000)
 
         #torch.set_num_threads(1)
@@ -134,9 +136,15 @@ class SMC(Solver):
         while time.time() - starting < timeout:
             if returnAfterHit and len(self.allHits) > 0: break
             # this line ensures particles start with a hole, wrapped in appropriate number of lambdas
-            h = baseHoleOfType(request)
-            zippers = findHoles(h, request)
-            population = [Particle(h, zippers, numberOfParticles)]
+
+            population = []
+            if starting_nodes is None:
+                h = baseHoleOfType(request)
+                starting_nodes = [h]
+            for node in starting_nodes:
+                zippers = findHoles(node, request)
+                population.append(Particle(node, zippers, numberOfParticles))
+
             from dreamcoder.domains.list.makeDeepcoderData import get_depth
 
             for generation in range(self.maximumLength):
@@ -151,10 +159,10 @@ class SMC(Solver):
                     for _ in range(p.frequency):
 
                         try:
-                            t,d,s = get_depth(p.trajectory)
-                            if t > 2 or d > 3:
-                                mlb.purple(f"[{totalNumberOfPrograms}] node: {p.trajectory}")
-                                mlb.purple(f"T{t}d{d}s{s}")
+                            #t,d,s = get_depth(p.trajectory)
+                            #if t > 2 or d > 3:
+                                #mlb.purple(f"[{totalNumberOfPrograms}] node: {p.trajectory}")
+                                #mlb.purple(f"T{t}d{d}s{s}")
                             newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)

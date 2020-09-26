@@ -592,10 +592,11 @@ def make_solver(type,vhead,phead,max_depth):
 
 class FakeFrontier:
     # pretends to be whatever valueLossFromFrontier wants for simplicity
-    def __init__(self,program,task):
+    def __init__(self,program,task, scaffold=None):
         self.task = task # satisfies frontier.task call
         self._fullProg = program
         self.program = self # trick for frontier.sample().program._fullProg
+        self.scaffold = scaffold
 
         # for my own use
         self.p = program
@@ -883,6 +884,7 @@ class DeepcoderTaskloader:
         if not visitor.has_lambda:
             # if the program has no lambdas to mutate we should ignore `n`
             # and just return the unmodified program in a singleton list
+            return None # actually lets just only allow programs wiht lambdas
             return [f]
 
         assert program_plus_plus.hasHoles
@@ -944,7 +946,7 @@ class DeepcoderTaskloader:
 
             new_examples = [(ex[0],output) for ex,output in zip(task.examples,outputs)]
             new_task = Task(str(sampled), task.request, new_examples)
-            res.append(FakeFrontier(sampled,new_task))
+            res.append(FakeFrontier(sampled,new_task,scaffold=get_scaffold(program_plus_plus)))
             #mlb.green(f"accepting {sampled}")
             if self.cfg.print_data:
                 print(f"accepting {sampled}")
@@ -955,7 +957,25 @@ class DeepcoderTaskloader:
                 break
         assert len(res) == self.cfg.num_mutated_tasks
         return res
-            
+
+
+def get_scaffold(e):
+    if e.isIndex:
+        return e
+    elif e.isAbstraction:
+        return Abstraction(get_scaffold(e.body))
+    elif e.isPrimitive:
+        return e
+    elif e.isHole:
+        #print(e.tp)
+        if not e.tp.isArrow():
+            return e
+        e.tp = e.tp.arguments[1] # for int->int->bool this shd be int->bool
+        return Abstraction(get_scaffold(e))
+    elif e.isApplication:
+        # doesnt do an applicationParse
+        return Application(get_scaffold(e.f),get_scaffold(e.x))
+    assert False
 
 if __name__ == '__main__':
     pass

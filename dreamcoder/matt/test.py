@@ -50,7 +50,7 @@ import dreamcoder.matt.plot as plot
 import dreamcoder.matt.state as state
 import dreamcoder.matt.train as train
 
-def test_models(astars, test_tasks, g, timeout, verbose=True):
+def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
     """
     `astars`: a list of one or more Astar objects
         These can be easily made with makeDeepcoderData.make_solver('astar',vhead,phead,maxDepth)
@@ -58,8 +58,12 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
     `g`: Grammar passed to Astar.infer()
     `timeout`: the search timeout
     """
+    test_scaffolds = None
     if len(test_tasks) > 0 and isinstance(test_tasks[0], FakeFrontier):
+        if scaffold:
+            test_scaffolds = [f.scaffold for f in test_tasks]
         test_tasks = [f.task for f in test_tasks]
+
     model_results = []
     for astar in astars:
         astar.owner.policyHead.eval()
@@ -71,7 +75,11 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
         search_results = []
         search_failures = []
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-        for task in test_tasks:
+        for i,task in enumerate(test_tasks):
+            if scaffold:
+                starting_nodes = [test_scaffolds[i]]
+            else:
+                starting_nodes = None
             with torch.no_grad():
                 fs, times, num_progs, solns = astar.infer(
                         g, 
@@ -82,6 +90,7 @@ def test_models(astars, test_tasks, g, timeout, verbose=True):
                         evaluationTimeout=0.01,
                         maximumFrontiers={task: 2},
                         CPUs=1,
+                        starting_nodes=starting_nodes,
                     ) 
             solns = solns[task]
             times = times[task]

@@ -80,6 +80,7 @@ class Astar(Solver):
                               CPUs=1,
                               testing=False, #unused
                               evaluationTimeout=None, 
+                              starting_nodes=None,
                               maximumFrontiers=None): #IDK what this is...
         
         assert hasattr(self.owner.policyHead,'ordering')
@@ -113,9 +114,12 @@ class Astar(Solver):
 
         q = PQMaxSize(maxSize=1000000)
         #base node
-        h = baseHoleOfType(request)
-        zippers = findHoles(h, request)
-        q.push(0., (0., 0., h, zippers))
+        if starting_nodes is None:
+            h = baseHoleOfType(request)
+            starting_nodes = [h]
+        for node in starting_nodes:
+            zippers = findHoles(node, request)
+            q.push(0., (0., 0., node, zippers))
 
 
         try:
@@ -134,15 +138,15 @@ class Astar(Solver):
                 #print(">>>>>>node", node)
                 #print("queue size", len(q))
 
-                t,d,s = get_depth(node[2])
-                if t > 2 or d > 3:
-                    mlb.purple(f"[{totalNumberOfPrograms}] node: {node[2]}")
-                    mlb.purple(f"T{t}d{d}s{s}")
+                #t,d,s = get_depth(node[2])
+                #if t > 2 or d > 3:
+                    #mlb.purple(f"[{totalNumberOfPrograms}] node: {node[2]}")
+                    #mlb.purple(f"T{t}d{d}s{s}")
 
                 nNei = 0
                 #print(f"Parent: {node[2]}")
                 for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
-                    # print(policyCost, neighbor)
+                    #print(policyCost, neighbor)
                     # import pdb; pdb.set_trace()
                     nNei += 1
                     if (neighbor) in allObjects:

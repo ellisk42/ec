@@ -210,6 +210,8 @@ def hydra_main(cfg):
             paths = outputs_regex(cfg.load)
             # path must at least be DATE/TIME, possibly DATE/TIME/...
             paths = [p for p in paths if len(p.parts) >= 2]
+            if len(paths) == 0:
+                mlb.red(f'load regex `{cfg.load}` yielded no files:')
             if len(paths) != 1:
                 mlb.red(f'load regex `{cfg.load}` yielded multiple possible files:')
                 for path in paths:
@@ -288,7 +290,7 @@ def hydra_main(cfg):
                     mlb.red("please specify test.model_result_path")
                     sys.exit(1)
                 ### NOTE: this continues from the earlier 'test' section
-                if cfg.test.from_fn == 'deepcoder' or (original_cfg is not None and original_cfg.test.from_fn == 'deepcoder'):
+                if original_cfg is not None and original_cfg.test.from_fn == 'deepcoder':
                     test.cfg_diff(state.cfg.data.train,original_cfg.data.test) # print the differences
                 if cfg.test.max_tasks is not None and len(test_frontiers) > cfg.test.max_tasks:
                     mlb.red(f"Cutting down test frontiers from {len(test_frontiers)} to {cfg.test.max_tasks}")
@@ -303,11 +305,19 @@ def hydra_main(cfg):
                     exit(1)
                 mlb.purple("Running tests")
 
+                if cfg.test.scaffold:
+                    mlb.red(mlb.mk_bold("WARNING: SCAFFOLDING IS TURNED ON"))
+                    assert hasattr(test_frontiers[0],'scaffold'), "turn off scaffolding or remake ur data"
+                    assert test_frontiers[0].scaffold is not None, "make sure expressive lambdas are turned on"
+
+
                 model_results = test.test_models([solver],
                                             test_frontiers,
                                             state.g,
                                             timeout=cfg.test.timeout,
-                                            verbose=True)
+                                            verbose=True,
+                                            scaffold=cfg.test.scaffold,
+                                            )
                 mlb.purple("plotting results")
                 plot.plot_model_results(model_results,
                                         model_result_path=cfg.test.model_result_path,

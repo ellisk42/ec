@@ -37,6 +37,7 @@ test: # for mode=test
   timeout: 30
   max_tasks: null
   validator_vhead: True
+  scaffold: False
   josh:
     wave: 3 # 1 | 2 | 3 | 3.1 | final
   lucas:
