@@ -1,9 +1,9 @@
 # @package _group_
 print_every: 100
-save_every: 2000
+save_every: 10000
 max_steps: 500000
 # validation
-valid_every: ${loop.print_every}
-search_valid_every: 20000
+valid_every: 10000
+search_valid_every: 30000
 search_valid_timeout: 3
 search_valid_num_tasks: 50
