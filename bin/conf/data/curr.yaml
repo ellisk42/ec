@@ -3,7 +3,7 @@
 train:
   num_templates: null
   repeat: True
-  buf_size: 200
+  buf_size: 1000
   threaded: False
   freeze: False
   T: ${data.T}
@@ -19,7 +19,7 @@ train:
   allow_complex_requests: ${data.allow_complex_requests}
   print_data: False
 test:
-  num_templates: 200
+  num_templates: 100
   repeat: False
   buf_size: ${data.test.num_templates}
   threaded: False # do NOT set to true

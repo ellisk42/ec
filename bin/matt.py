@@ -153,9 +153,10 @@ def hydra_main(cfg):
                 model_results.extend(torch.load(path))
             for m in model_results:
                 m.print_dist()
+            title = cfg.plot.title if cfg.plot.title is not None else ' '.join(sys.argv[2:])
             plot.plot_model_results(model_results,
                                     file=cfg.plot.file,
-                                    title=cfg.plot.title,
+                                    title=title,
                                     toplevel=True,
                                     save_model_results=False)
             return
@@ -191,6 +192,7 @@ def hydra_main(cfg):
         # CMD
         elif cfg.mode == 'cmd':
             cmd.cmd(cfg)
+            sys.exit(0)
 
         # LOAD OR NEW
         print_overrides = []
