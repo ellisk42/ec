@@ -7,6 +7,7 @@ import shutil
 import sys,os
 import glob
 import signal
+from torch.utils.tensorboard import SummaryWriter
 
 import hydra
 from hydra import utils
@@ -96,6 +97,15 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
     assert isinstance(model_results, list)
     assert isinstance(model_results[0], ModelResult)
 
+
+    if toplevel:
+        assert w is None
+        w = SummaryWriter(
+            log_dir=toplevel_path(''),
+            max_queue=10,
+        )
+
+
     for i,m in enumerate(model_results):
         if not hasattr(m, 'prefix'):
             model_results[i] = fix.fix_model_result(m)
@@ -180,9 +190,20 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
                 label=label,
                 linewidth=4)
     plot.legend()
-
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")
+
+    if w is not None:
+        if j is None:
+            j=0
+        if tb_name is None:
+            tb_name = title
+
+        fig = plot.gcf() # get current figure
+        w.add_figure(tb_name,fig,j)
+        print(f"Added figure to tensorboard: {tb_name}")
+
+
     if toplevel:
         path = toplevel_path(evals_file)
         plot.savefig(path)
@@ -193,14 +214,10 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
 
-    if w is not None:
-        print("Adding figure to Tensorboard")
-        assert j is not None
-        assert tb_name is not None
-
-        fig = plot.gcf() # get current figure
-        w.add_figure(tb_name,fig,j)
-        print("Added figure")
+    
+    if toplevel:
+        w.flush()
+        w.close()
 
     if save_model_results:
         print(f"saving model_results used in plotting to {printable_local_path(model_results_file)}")
