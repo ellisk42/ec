@@ -178,6 +178,7 @@ def hydra_main(cfg):
             elif cfg.test.from_file is not None:
                 (test_frontiers,original_cfg) = torch.load(test.tests.tests_dir / cfg.test.from_file)
                 # note that original_cfg is just around in case you ever want a record of how the tests were created!
+                mlb.green(yaml(original_cfg))
                 tests_from = cfg.test.from_file
                 test_frontiers = preprocess(test_frontiers,cfg)
                 mlb.purple(f"loaded {len(test_frontiers)} test frontiers from {cfg.test.from_file} (details in `original_cfg`)")

@@ -164,7 +164,7 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         plot.plot(xs,
                 [m.fraction_hit(lambda r: r.time < x) for x in xs],
                 label=label,
-                linewidth=4)
+                linewidth=2)
     plot.legend()
 
     plot.savefig(time_file)
@@ -188,7 +188,7 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         plot.plot(xs,
                 [m.fraction_hit(lambda r: r.evaluations <= x) for x in xs],
                 label=label,
-                linewidth=4)
+                linewidth=2)
     plot.legend()
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")

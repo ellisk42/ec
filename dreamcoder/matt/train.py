@@ -132,6 +132,8 @@ def train_model(
                 return
             if mlb.predicate('which'):
                 which(cfg)
+            if mlb.predicate('cfg'):
+                print(yaml(cfg))
             if mlb.predicate('rename'):
                 name = input('Enter new name:')
                 state.rename(name)
@@ -198,4 +200,4 @@ def train_model(
 
             j += 1 # increment before saving so we resume on the next iteration
             if cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
-                state.save(locals(),'autosave')
+                state.save(locals(),f'autosave.{j}')

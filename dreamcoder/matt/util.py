@@ -18,13 +18,11 @@ def printable_local_path(p):
     """
     return hide_path_prefix(pathlib.Path(os.getcwd())) / p
 def yaml(cfg):
-    print(OmegaConf.to_yaml(cfg))
+    return OmegaConf.to_yaml(cfg)
 def timestamp():
     return datetime.now()
-def which(cfg):
-    if cfg is None:
-        return
-    yaml(cfg)
+def which(cfg=None):
+    print(yaml(cfg))
     print(os.getcwd())
     regex = os.path.basename(os.path.dirname(os.getcwd())) + '%2F' + os.path.basename(os.getcwd())
     print(f'http://localhost:6696/#scalars&regexInput={regex}')
@@ -41,7 +39,8 @@ def outputs_regex(*rs):
         if r == '':
             continue # use "*" instead for this case please. I want to filter out '' bc its easy to accidentally include it in a generated list of regexes
         try:
-            res.extend(list(outputs_path('').glob(f'**/*{r}*')))
+            r = f'**/*{r}'
+            res.extend(list(outputs_path('').glob(r)))
         except ValueError as e:
             print(e)
             return []

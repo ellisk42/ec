@@ -99,11 +99,11 @@ def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
                 soln = solns[0]
                 search_results.append(soln)
                 if verbose:
-                    mlb.green(f"solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
+                    mlb.green(f"[{i+1}/{len(test_tasks)}] solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
                     t,d,s = get_depth(solns[0].program)
                     print(f"\t-> [T{t}d{d}s{s}] {solns[0].program}")
             else:
-                if verbose: mlb.red(f"failed to solve {task.name} (searched {num_progs} programs)")
+                if verbose: mlb.red(f"[{i+1}/{len(test_tasks)}] failed to solve {task.name} (searched {num_progs} programs)")
                 search_failures.append(num_progs)
         model_results.append(plot.ModelResult(prefix=prefix,name=name, cfg=astar.owner.policyHead.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout))
         if verbose: mlb.blue(f'solved {len(search_results)}/{len(test_tasks)} tasks ({len(search_results)/len(test_tasks)*100:.1f}%)\n')
@@ -122,10 +122,11 @@ def deepcoder(cfg):
     test_cfg = cfg.data.test
     taskloader = DeepcoderTaskloader(
         cfg=cfg,
-        mode='test'
+        mode='test',
         )
     tasks = taskloader.getTasks()
-    assert len(tasks) == cfg.data.test.num_templates
+    if cfg.data.test.num_templates is not None:
+        assert len(tasks) == cfg.data.test.num_templates
     return tasks
 
 def joshTasks(w):
