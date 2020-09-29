@@ -17,6 +17,7 @@ train:
   lambda_depth: ${data.lambda_depth}
   max_depth: ${data.max_depth}
   allow_complex_requests: ${data.allow_complex_requests}
+  premade_templates: null
   print_data: False
 test:
   num_templates: 100
@@ -36,6 +37,7 @@ test:
   lambda_depth: ${data.lambda_depth}
   max_depth: ${data.max_depth}
   allow_complex_requests: ${data.allow_complex_requests}
+  premade_templates: null
   print_data: True
 
 # things that generally want to changed together or not changed much

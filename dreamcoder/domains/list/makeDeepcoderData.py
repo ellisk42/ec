@@ -5,6 +5,7 @@ import os
 from hydra import utils
 from dreamcoder.Astar import Astar
 from dreamcoder.SMC import SMC
+import itertools
 from torch import nn
 #import mlb
 import contextlib
@@ -598,9 +599,13 @@ class FakeFrontier:
         self.program = self # trick for frontier.sample().program._fullProg
         self.scaffold = scaffold
 
-        # for my own use
-        self.p = program
-        self.t = task
+    # for my own use
+    @property
+    def p(self):
+        return self._fullProg
+    @property
+    def t(self):
+        return self.task
     def sample(self):
         return self
 
@@ -622,6 +627,13 @@ class DeepcoderTaskloader:
             assert cfg.L_min is  None and cfg.L_max is  None
             self.L = cfg.L
             self.L_big = self.L
+        
+        self.premade_templates = None
+        if self.cfg.premade_templates is not None:
+            self.premade_templates = torch.load(utils.to_absolute_path('list_tests/'+self.cfg.premade_templates))
+            #self.premade_templates = itertools.cycle(self.premade_templates)
+            self.premade_i = 0
+            mlb.purple(f'using templates for {self.mode}')
 
         # if cfg.repeat is False:
         #     if cfg.expressive_lambdas:
@@ -700,6 +712,7 @@ class DeepcoderTaskloader:
                     if len(self.buf) >= self.cfg.buf_size:
                         assert len(self.buf) == self.cfg.buf_size, "bug in code"
                         return
+                    
                     # note we can't use next(f) as this disables f.tell(), so we do f.readline()
                     line = f.readline().rstrip()
 
@@ -716,7 +729,10 @@ class DeepcoderTaskloader:
                     program,tasks = task_of_line(line,N=self.cfg.N,L=self.L,V=self.cfg.V, num_tasks=self.cfg.num_mutated_tasks)
                     if program is None:
                         continue
+                    if hasattr(self,'premade_templates') and self.premade_templates is not None:
+                        program = self.premade_templates[self.premade_i]
                     ff = FakeFrontier(program,tasks[0])
+
                     task = tasks[0]
 
                     # filter out bad programs/tasks
@@ -746,6 +762,10 @@ class DeepcoderTaskloader:
                     # add to buffer and potentially exit by throwing exception (this is the only exit point)
                     for frontier in frontiers:
                         self.buf.append(frontier)
+                        if hasattr(self,'premade_templates') and self.premade_templates is not None:
+                            self.premade_i += 1
+                            if self.premade_i >= len(self.premade_templates):
+                                self.premade_i = 0
                         if len(self.buf) == self.cfg.buf_size:
                             return
                         #print(f"buf {self.mode}:",self.buf.qsize())
@@ -880,12 +900,15 @@ class DeepcoderTaskloader:
         program = f.p
 
         visitor = ToPlusPlusVisitor()
-        program_plus_plus = program.visit(visitor)
-        if not visitor.has_lambda:
-            # if the program has no lambdas to mutate we should ignore `n`
-            # and just return the unmodified program in a singleton list
-            return None # actually lets just only allow programs wiht lambdas
-            return [f]
+        if not hasattr(self,'premade_templates') or self.premade_templates is None:
+            program_plus_plus = program.visit(visitor)
+            if not visitor.has_lambda:
+                # if the program has no lambdas to mutate we should ignore `n`
+                # and just return the unmodified program in a singleton list
+                return None # actually lets just only allow programs wiht lambdas
+                return [f]
+        else:
+            program_plus_plus = program
 
         assert program_plus_plus.hasHoles
         res = []
