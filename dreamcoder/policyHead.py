@@ -369,6 +369,15 @@ class ListREPLPolicyHead(NeuralPolicyHead):
             assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
         compared = self.vhead._compare(sketches,task,reduce='max') # [num_sks,H]
+        # if self.cfg.model.give_hole:
+        #     for sk,zipper in zip(sketches,zippers):
+        #         for attr in zipper.path:
+        #         hole = sk
+        #             hole = getattr(hole,attr)
+        #         print(f"this shd look like a hole: {hole}")
+
+
+
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask

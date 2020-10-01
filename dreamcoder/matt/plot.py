@@ -89,7 +89,7 @@ class ModelResult:
         for k,v in dist.items():
             print(f"T{k[0]}d{k[1]}: {v}")
 
-def plot_model_results(model_results, file, toplevel=False, model_result_path=None, title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
+def plot_model_results(model_results, file, toplevel=False, legend=None, cropped=False, model_result_path=None, title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
     if not os.path.isdir('plots'):
         os.mkdir('plots')
     if not os.path.isdir('model_results'):
@@ -97,6 +97,8 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
     assert isinstance(model_results, list)
     assert isinstance(model_results[0], ModelResult)
 
+    if legend is not None:
+        assert len(legend) == len(model_results)
 
     if toplevel:
         assert w is None
@@ -164,7 +166,7 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         plot.plot(xs,
                 [m.fraction_hit(lambda r: r.time < x) for x in xs],
                 label=label,
-                linewidth=2)
+                linewidth=4)
     plot.legend()
 
     plot.savefig(time_file)
@@ -175,20 +177,23 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         mlb.yellow(f"toplevel: saved plot to {path}")
 
     # plot vs evaluations
-    plot.figure()
+    plot.figure(dpi=200)
     plot.title(title)
-    plot.xlabel('Evaluations')
-    plot.ylabel('percent correct')
+    plot.xlabel('Number of partial programs considered', fontsize=14)
+    plot.ylabel('Percent correct', fontsize=14)
     x_max = max([m.earliest_failure for m in model_results])
     plot.ylim(bottom=0., top=100.)
     plot.xlim(left=0., right=x_max)
-    for m in model_results:
-        label = m.name if shared_prefix else m.prefix + '.' + m.name
+    for i,m in enumerate(model_results):
+        if legend is None:
+            label = m.name if shared_prefix else m.prefix + '.' + m.name
+        else:
+            label = legend[i]
         xs = list(range(m.earliest_failure))
         plot.plot(xs,
                 [m.fraction_hit(lambda r: r.evaluations <= x) for x in xs],
                 label=label,
-                linewidth=2)
+                linewidth=4)
     plot.legend()
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")
@@ -199,9 +204,11 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         if tb_name is None:
             tb_name = title
 
-        fig = plot.gcf() # get current figure
-        w.add_figure(tb_name,fig,j)
-        print(f"Added figure to tensorboard: {tb_name}")
+
+        if not cropped:
+            fig = plot.gcf() # get current figure
+            w.add_figure(tb_name,fig,j)
+            print(f"Added figure to tensorboard: {tb_name}")
 
 
     if toplevel:
@@ -213,6 +220,11 @@ def plot_model_results(model_results, file, toplevel=False, model_result_path=No
         path = str(toplevel_path(evals_file)).replace('.png','.cropped.png')
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
+        if cropped:
+            fig = plot.gcf() # get current figure
+            w.add_figure(tb_name,fig,j)
+            print(f"Added cropped figure to tensorboard: {tb_name}")
+
 
     
     if toplevel:

@@ -25,11 +25,13 @@
                 //"data.test.T=3",
                 //"data.allow_complex_requests=True"
                 "device=cpu",
+                "cuda=False",
                 "data.train.buf_size=200"
                 "data.train.premade_templates=holdout_train",
                 "data.test.premade_templates=holdout_valid",
                 "data.test.num_templates=50",
                 "data.test.valid_frac=1."
+                //"model.give_hole=True",
                 // "device=cpu",
                 // "load=2020-09-18/23-05-25/saves/best_validation",
                 // //"load=2020-09-19/12-51-23/saves/best_validation",

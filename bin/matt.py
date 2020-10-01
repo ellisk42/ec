@@ -154,10 +154,19 @@ def hydra_main(cfg):
             for m in model_results:
                 m.print_dist()
             title = cfg.plot.title if cfg.plot.title is not None else ' '.join(sys.argv[2:])
+            if cfg.plot.legend is not None:
+                legend = cfg.plot.legend.split('___')
+                legend = [x.replace('_',' ') for x in legend]
+            else:
+                legend = None
+
             plot.plot_model_results(model_results,
                                     file=cfg.plot.file,
                                     title=title,
                                     toplevel=True,
+                                    legend=legend,
+                                    tb_name=cfg.plot.tb_name,
+                                    cropped=cfg.plot.cropped,
                                     save_model_results=False)
             return
         
@@ -180,7 +189,7 @@ def hydra_main(cfg):
                 # note that original_cfg is just around in case you ever want a record of how the tests were created!
                 mlb.green(yaml(original_cfg))
                 tests_from = cfg.test.from_file
-                test_frontiers = preprocess(test_frontiers,cfg)
+                test_frontiers = preprocess(test_frontiers,original_cfg)
                 mlb.purple(f"loaded {len(test_frontiers)} test frontiers from {cfg.test.from_file} (details in `original_cfg`)")
             else:
                 raise ValueError("Specify either test.from_file or test.from_fn")
@@ -303,9 +312,10 @@ def hydra_main(cfg):
                 state = fix.fix_state_testmode(state)
                 vhead = InvalidIntermediatesValueHead(cfg) if cfg.test.validator_vhead else SampleDummyValueHead()
                 solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth)
-                if state.cfg.data.train.V != cfg.data.test.V:
-                    mlb.red(mlb.mk_bold(f"HUGE WARNING: You have trained on {state.cfg.data.train.V} data but are testing on {cfg.data.test.V}"))
-                    exit(1)
+                if original_cfg is not None:
+                    if state.cfg.data.train.V != original_cfg.data.test.V:
+                        mlb.red(mlb.mk_bold(f"HUGE WARNING: You have trained on {state.cfg.data.train.V} data but are testing on {original_cfg.data.test.V}"))
+                        exit(1)
                 mlb.purple("Running tests")
 
                 if cfg.test.scaffold:

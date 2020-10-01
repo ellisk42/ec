@@ -28,6 +28,9 @@ plot: # for mode=plot
   file: ${plot.suffix}
   title: ${plot.suffix}
   suffix: null
+  tb_name: null
+  cropped: False
+  legend: null
 
 test: # for mode=test
   from_fn: null # deepcoder | josh | lucas

@@ -9,8 +9,9 @@ policy: True
 encodeTargetHole: False
 ordering: last
 ctxful_lambdas: False
+#give_hole: False
 extractor:
   modular: True
   bidir_ctx: True
-  bidir_int: True
   digitwise: True
+  bidir_int: True
