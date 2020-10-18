@@ -89,7 +89,7 @@ class ModelResult:
         for k,v in dist.items():
             print(f"T{k[0]}d{k[1]}: {v}")
 
-def plot_model_results(model_results, file, toplevel=False, legend=None, cropped=False, model_result_path=None, title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
+def plot_model_results(model_results, file, toplevel=False, legend=None, cropped=False, model_result_path=None, filetype='png', title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
     if not os.path.isdir('plots'):
         os.mkdir('plots')
     if not os.path.isdir('model_results'):
@@ -133,8 +133,8 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
     else:
         j_str = ''
 
-    time_file = f"plots/{file}_time.png"
-    evals_file = f"plots/{file}_evals{j_str}{salt}.png"
+    time_file = f"plots/{file}_time.{filetype}"
+    evals_file = f"plots/{file}_evals{j_str}{salt}.{filetype}"
 
     if model_result_path is not None:
         model_results_file = f"model_results/{model_result_path}"
@@ -178,7 +178,7 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
 
     # plot vs evaluations
     plot.figure(dpi=200)
-    plot.title(title)
+    plot.title(title, fontsize=14)
     plot.xlabel('Number of partial programs considered', fontsize=14)
     plot.ylabel('Percent correct', fontsize=14)
     x_max = max([m.earliest_failure for m in model_results])
@@ -217,7 +217,7 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
         mlb.yellow(f"toplevel: saved plot to {path}")
         # cropped version
         plot.xlim(left=0., right=min([m.earliest_failure for m in model_results]))
-        path = str(toplevel_path(evals_file)).replace('.png','.cropped.png')
+        path = str(toplevel_path(evals_file)).replace(f'.{filetype}',f'_cropped.{filetype}')
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
         if cropped:

@@ -31,6 +31,7 @@ plot: # for mode=plot
   tb_name: null
   cropped: False
   legend: null
+  filetype: png
 
 test: # for mode=test
   from_fn: null # deepcoder | josh | lucas

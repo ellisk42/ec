@@ -167,6 +167,7 @@ def hydra_main(cfg):
                                     legend=legend,
                                     tb_name=cfg.plot.tb_name,
                                     cropped=cfg.plot.cropped,
+                                    filetype=cfg.plot.filetype,
                                     save_model_results=False)
             return
         
@@ -232,7 +233,9 @@ def hydra_main(cfg):
             [path] = paths
 
             if 'saves' not in path.parts:
-                path = get_datetime_path(path) / 'saves' / 'autosave'
+                savefile = 'autosave.'+str(max([int(x.name.split('.')[1])
+                                     for x in (get_datetime_path(path) / 'saves').glob('autosave.*')]))
+                path = get_datetime_path(path) / 'saves' / savefile
             
             assert all(['=' in arg for arg in sys.argv[1:]])
             overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
