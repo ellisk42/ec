@@ -326,18 +326,27 @@ def graphPrecisionRecall(symbolicDataLst, neuralDataLst, rnnDataLst, path, other
     repl_precision, repl_recall = zip(*  [precisionAndRecall(neuralDataLst, cutoff) for cutoff in cutoffs if precisionAndRecall(neuralDataLst, cutoff) is not None]) 
     rnn_precision, rnn_recall = zip(*  [precisionAndRecall(rnnDataLst, cutoff) for cutoff in cutoffs if precisionAndRecall(rnnDataLst, cutoff) is not None])
     
+    symb_recall = [symb_recall/(i+1) for i in reversed(range(nSamp))]
+    #print(symb_precision)
+    #print(symb_recall)
     
-    pyplot.plot(rnn_recall, rnn_precision, marker='.', color='#ff7f0e', linewidth=6, label='RNN')
-    pyplot.plot(repl_recall, repl_precision, marker='.',  color='#1f77b4', linewidth=6, label='Blended neural semantics (ours)')
-    pyplot.plot([symb_recall], [symb_precision], linestyle='--', marker='o', color='#2ca02c', label='Hand-coded abstract interpretation')
+    pyplot.plot(rnn_recall, rnn_precision, marker='.', color='C2', linewidth=4, label='RNN - value')
+    pyplot.plot(repl_recall, repl_precision, marker='.',  color='#1f77b4', linewidth=4, label='Blended semantics - value (ours)')
+    #import pdb; pdb.set_trace()
+    pyplot.plot(symb_recall, [symb_precision]*nSamp, linewidth=4, linestyle='--', color='C4', label='Hand-coded abstract interpretation')
     if otherSymbolicDataLst:
         symb_precision2, symb_recall2 = precisionAndRecall(otherSymbolicDataLst, 0.5)
-        pyplot.plot([symb_recall2], [symb_precision2], linestyle='--', marker='o', label='Hand-coded abstract interpretation on other data')
+        symb_recall2 = [symb_recall2/(i+1) for i in reversed(range(nSamp))]
+        pyplot.plot(symb_recall2, [symb_precision2]*nSamp, linestyle='--', marker='o', label='Hand-coded abstract interpretation on other data')
     # axis labels
-    pyplot.xlabel('Recall')
-    pyplot.ylabel('Precision')
+    pyplot.xlabel('Recall', fontsize=14)
+    pyplot.ylabel('Precision', fontsize=14)
+    pyplot.title('Tower Building - comparison to abstract interpretation', fontsize=14)
     # show the legend
     pyplot.legend()
+    handles, labels = pyplot.gca().get_legend_handles_labels()
+    order = [1,0,2]
+    pyplot.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
     # show the plot
     pyplot.savefig (path)
     #pyplot.show()

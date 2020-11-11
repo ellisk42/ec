@@ -23,7 +23,7 @@ from dreamcoder.domains.rb.main import makeOldTasks, makeTasks
 import argparse
 
 
-path = 'experimentOutputs/rbDenseREPLNoConcrete.pickle_RecModelOnlydict'
+path = 'experimentOutputs/rbDenseREPLNoConcrete.pickle_RecModelOnly2000000dict'
 
 d = torch.load(path)
 
@@ -41,14 +41,14 @@ policyHead.load_state_dict(pdict)
 
 
 
-torch.save(policyHead, 'experimentOutputs/rbDenseREPLNoConcrete.pickle_RecModelOnlyPolicyHead')
+torch.save(policyHead, 'experimentOutputs/rbDenseREPLNoConcrete.pickle_RecModelOnly2000000PolicyHead')
 
 
 
 """
 steps:
 make state_dict on om:
-run bin/make_dense_state_dict.py on ome
+run bin/make_dense_state_dict.py on om
 scp 'experimentOutputs/rbDenseREPLNoConcrete.pickle_RecModelOnlydict' to moe
 run bin/make_dense_model.py
 

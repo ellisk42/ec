@@ -80,7 +80,7 @@ FILTER_OUT = [
 
 
 def plotTestResults(testResults, timeout, defaultLoss=None,
-                    names=None, export=None, mode='fractionHit', maxLens=[],maxEvals=10000000):
+                    names=None, export=None, mode='fractionHit', maxLens=[],maxEvals=10000000, title="title", permOrder=False):
     import matplotlib.pyplot as plot
 
     def averageLoss(n, predicate):
@@ -115,29 +115,44 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
                   label=names[n], linewidth=8)
     plot.legend(bbox_to_anchor=(1.05, 1), loc='upper left',)
     if export:
-        plot.savefig(export)
+        plot.savefig(export+'.eps')
     else:
         plot.show()
 
     #plot.figure(figsize=(16,8))
     plot.figure()
     ax=plot.subplot()
-
-    plot.xlabel('Evaluations')
-    plot.ylabel('percent correct')
+    if title: plot.title(title, fontsize=14)
+    plot.xlabel('Number of partial programs considered', fontsize=14)
+    plot.ylabel('Percent correct', fontsize=14)
     if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
         xs = list(range(min(maxLens[n], maxEvals)))
+        if any(kwd in names[n] for kwd in ['REPL', 'bound', 'value', 'Robust']): ls = '--'
+        else: ls = '-'
+
         if mode =='fractionHit':
-            plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n], linewidth=6)
+            if 'Robust' in names[n]:
+                plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
+                      label=names[n], linewidth=4, linestyle=ls, color='C5')
+            elif 'REPL' in names[n]:
+                plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
+                      label=names[n], linewidth=4, linestyle=ls, color='C4')
+            else:
+                plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
+                      label=names[n], linewidth=4, linestyle=ls)
             #plot.xscale('log')
         else:
             plot.plot(xs, [averageLoss(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n], linewidth=6)  
+                  label=names[n], linewidth=4)  
 
-    plot.legend()
+    if permOrder:
+        handles, labels = plot.gca().get_legend_handles_labels()
+        order = permOrder
+        plot.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
+    else: plot.legend()
+
     #box = ax.get_position()
     #ax.set_position([box.x0, box.y0, box.width * 0.5, box.height])
     #plot.legend(bbox_to_anchor=(1.05, 1), loc='upper left',)
@@ -267,78 +282,84 @@ if __name__ == '__main__':
     noMaxTasks=False
     #list of okay tasks:
     okayList = False #range(29)
+    title=None #"Tower building"
+    permOrder=[3,0,1,2]
+    title = "Tower Building"
     paths = [
-        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Blended Execution - Policy only (ours)"),
-        (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Neural Execution - Policy only (modular baseline)"),
+        
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugreplLongTest", "Blended semantics - policy only (ours)"),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Falsecontrastive=Falseseperate=True_SRE=True.pickleDebugnoConcrete", "Neural semantics - policy only"),
         #(f'experimentOutputs/{ID}PolicyOnly{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy only (weights not shared w value)'),
         #(f'experimentOutputs/{ID}{runType}REPLRLValue=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value'),
         #(f'experimentOutputs/{ID}{runType}REPLRLValue=False_SRE=True{graph}.pickleDebug', 'Abstract REPL policy only (weights shared w value)'),
         #(f'experimentOutputs/{ID}{runType}RNNRLValue=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value'),
         #(f'experimentOutputs/{ID}{runType}RNNRLValue=False_SRE=True{graph}.pickleDebug', 'RNN Policy only (weights shared w value)'),
-        (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN - Policy only'),
+        (f'experimentOutputs/{ID}PolicyOnly{runType}RNN_SRE=True{graph}.pickle', 'RNN - policy only'),
+        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebugLong", "Blended semantics - policy & value (ours)"),
         #(f'experimentOutputs/{ID}PolicyOnly{runType}REPLRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'Abstract REPL policy + Value (contrastive value training)'),
         #(f'experimentOutputs/{ID}PolicyOnly{runType}RNNRLValue=Falsecontrastive=True_SRE=True{graph}.pickleDebug', 'RNN Policy + Value (contrastive value training)'),
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "Abstract REPL policy + RL value (seperate weights)"),
-        (f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebugLong", "Blended Execution - policy + value (ours)"),
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
-
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
        ]
 
 
-    graph=""
-    nameSalt = "SMCFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    ID = 'towers' + str(n)
-    runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    maxEvals = 15000
-    useMaxLens = True
-    maxTasksOnly = True
-    noMaxTasks=False
-    #list of okay tasks:
-    okayList = False #range(29)
-    paths = [
-        ("experimentOutputs/towersRNNResultsSMC.pickle", 'RNN - Policy only'),
-        (f"experimentOutputs/towersNeuralExecResultsSMC.pickle", "Neural Execution - Policy only (modular baseline)"),
-        (f"experimentOutputs/towersBlendedExecResultsSMC.pickle", "Blended Execution - Policy only"),
-        (f"experimentOutputs/towersBlendedExecValueResultsSMC.pickle", "Blended Execution -Policy + Value (ours)"),
-        ("experimentOutputs/towersRNNResultsSMC2.pickle", '2RNN - Policy only'),
-        (f"experimentOutputs/towersNeuralExecResultsSMC2.pickle", "2Neural Execution - Policy only (modular baseline)"),
-        (f"experimentOutputs/towersBlendedExecResultsSMC2.pickle", "2Blended Execution - Policy only"),
-        (f"experimentOutputs/towersBlendedExecValueResultsSMC2.pickle", "2Blended Execution -Policy + Value (ours)"),
-       ]
+    # graph=""
+    # nameSalt = "SMCFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    # ID = 'towers' + str(n)
+    # runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    # maxEvals = 15000
+    # useMaxLens = True
+    # maxTasksOnly = True
+    # noMaxTasks=False
+    # #list of okay tasks:
+    # okayList = False #range(29)
+    # paths = [
+    #     ("experimentOutputs/towersRNNResultsSMC.pickle", 'RNN - Policy only'),
+    #     (f"experimentOutputs/towersNeuralExecResultsSMC.pickle", "Neural Execution - Policy only (modular baseline)"),
+    #     (f"experimentOutputs/towersBlendedExecResultsSMC.pickle", "Blended Execution - Policy only"),
+    #     (f"experimentOutputs/towersBlendedExecValueResultsSMC.pickle", "Blended Execution -Policy + Value (ours)"),
+    #     ("experimentOutputs/towersRNNResultsSMC2.pickle", '2RNN - Policy only'),
+    #     (f"experimentOutputs/towersNeuralExecResultsSMC2.pickle", "2Neural Execution - Policy only (modular baseline)"),
+    #     (f"experimentOutputs/towersBlendedExecResultsSMC2.pickle", "2Blended Execution - Policy only"),
+    #     (f"experimentOutputs/towersBlendedExecValueResultsSMC2.pickle", "2Blended Execution -Policy + Value (ours)"),
+    #    ]
 
 
-    graph="_graph=True"
-    nameSalt = "AstarChallengeConcatX" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    ID = 'rb'
-    runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    maxEvals = 15000
-    useMaxLens = True
-    maxTasksOnly=False
-    noMaxTasks=False
-    okayList = False
-    challengeOnly=True#False#True
-    synthOnly =False#True
-    paths = [
-        # (f'experimentOutputs/AstarBlended.pickle', 'Blended execution'),
-        # (f'experimentOutputs/AstarNeuralOnly.pickle', 'neural modular only'),
-        # (f'experimentOutputs/AstarRNN.pickle', 'RNN policy'),
-        # ("experimentOutputs/AstarBlendedTemp01.pickle", "Blended 1/10 temp"),
-        # ("experimentOutputs/AstarBlendedTemp2.pickle", "Blended 1/2 temp"),
-        # ("experimentOutputs/AstarBlendedTemp1over2.pickle", "Blended 2 temp"),
-        # ("experimentOutputs/AstarBlendedTemp1over4.pickle", "Blended 4 temp"),
-        (f'experimentOutputs/AstarBlended_debug.pickle', 'Blended execution'),
-        (f'experimentOutputs/AstarNeuralOnly_debug.pickle', 'neural modular only'),
-        (f'experimentOutputs/AstarRNN_debug.pickle', 'RNN policy'),
-        #(f'robustfill_baseline_results.p20001', 'RobustFill (2.5M programs)'),
-        #(f'experimentOutputs/repl_results.p', 'REPL upper bound')
-        ]
+    # graph="_graph=True"
+    # nameSalt = "SMCChallengeWed" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    # ID = 'rb'
+    # runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    # maxEvals = 3700
+    # useMaxLens = True
+    # maxTasksOnly=False
+    # noMaxTasks=False
+    # okayList = False
+    # challengeOnly=True#False#True
+    # synthOnly =False#True
+    # title="String Editing"
+    # permOrder=[4, 0, 1, 3, 2]
+    # paths = [
+    #     # (f'experimentOutputs/AstarBlended.pickle', 'Blended execution'),
+    #     # (f'experimentOutputs/AstarNeuralOnly.pickle', 'neural modular only'),
+    #     # (f'experimentOutputs/AstarRNN.pickle', 'RNN policy'),
+    #     # ("experimentOutputs/AstarBlendedTemp01.pickle", "Blended 1/10 temp"),
+    #     # ("experimentOutputs/AstarBlendedTemp2.pickle", "Blended 1/2 temp"),
+    #     # ("experimentOutputs/AstarBlendedTemp1over2.pickle", "Blended 2 temp"),
+    #     # ("experimentOutputs/AstarBlendedTemp1over4.pickle", "Blended 4 temp"),
+    #     # (f'experimentOutputs/rbDensePseudoResultSMCREPLtasks=kevin_SRE=True.pickle', 'old blended (2M programs)'),
+    #     # (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNNtasks=challenge_SRE=True.pickle2000000', 'old RNN Policy (2M programs)'),
+    #     # (f'experimentOutputs/rbDensePseudoResultSMCREPLNoConcretetasks=challenge_SRE=True.pickle', 'old neural only policy (~1M programs)'),
+    #     (f'experimentOutputs/newsmcBlended.pickle', 'Blended semantics (ours)'),
+    #     (f'experimentOutputs/newsmcNeuralOnly.pickle', 'Neural semantics'),
+    #     (f'experimentOutputs/newsmcRNN.pickle', 'RNN'),
+    #     (f'robustfill_baseline_results.p20001', 'RobustFill'),
+    #     (f'experimentOutputs/repl_results.p', 'REPL (upper bound)')
+    #     ]
 
 
-
-
-
+ 
     with open('biasedtasks.p', 'rb') as h: biasedtasks = dill.load(h)
     timeout=120
     outputDirectory = 'plots'
@@ -444,7 +465,9 @@ if __name__ == '__main__':
         plotTestResults(testResults, timeout,
                         defaultLoss=1.,
                         names=names,
-                        export=f"{outputDirectory}/{nameSalt}{ID}{mode}_curve.eps",
+                        export=f"{outputDirectory}/{nameSalt}{ID}{mode}_curve",
                         mode='fractionHit',
                         maxLens=maxLens if useMaxLens else [maxEvals] * len(testResults),
-                        maxEvals=maxEvals)
+                        maxEvals=maxEvals,
+                        title=title,
+                        permOrder=permOrder)

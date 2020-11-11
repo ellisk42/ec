@@ -790,11 +790,37 @@ def dSLDemo():
     return images
             
 if __name__ == "__main__":
+
+    try:
+        import binutil  # required to import from dreamcoder modules
+    except ModuleNotFoundError:
+        import bin.binutil  # alt import if called as module
+
+    from dreamcoder.domains.tower.towerPrimitives import ttower, executeTower, _empty_tower, TowerState
+    from dreamcoder.domains.tower.tower_common import renderPlan
+    from dreamcoder.task import *
+    import dill
+
+
     from pylab import imshow,show
     from dreamcoder.domains.tower.tower_common import *
 
-    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+    #from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
     import scipy.misc
+
+
+    archesStack = SupervisedTower("arch stack %d"%n,
+                                """
+                                (for i 4 
+                                v (r 4) v (l 2) h (l 2))
+                                """)
+
+    path = 'iclrtowrs/'
+
+    task.exportImage(f'{path}/wall.png', pretty=False, Lego=False)
+    assert 0
+
+
     ts = makeMaxTasks()
     path = 'maxTowerTasks/'
     for i,t in enumerate(ts):

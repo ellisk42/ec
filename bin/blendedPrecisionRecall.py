@@ -10,13 +10,13 @@ import dill
 from dreamcoder.showTowerTasks import computeConfusionMatrixFromScores, graphPrecisionRecall
 
 useRNNPolicy = True
-with open(f"precisionRecallAllDataRNNPolicy={useRNNPolicy}.p", 'rb') as h:
+with open(f"precisionRecallAllDataRNNPolicy={useRNNPolicy}MAX.p", 'rb') as h:
     saved = dill.load(h)
 symbolicDataLst, _,rnnDataLst, _, _ = saved    
 
 
 useRNNPolicy = False
-with open(f"precisionRecallAllDataRNNPolicy={useRNNPolicy}.p", 'rb') as h:
+with open(f"precisionRecallAllDataRNNPolicy={useRNNPolicy}MAX.p", 'rb') as h:
     saved = dill.load(h)
 symbolicDataLst2, neuralDataLst,_, _, _ = saved    
 
