@@ -538,6 +538,14 @@ def sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=[], parentInfo=Non
     excludePrim will have prims and have integers for indices
     """
 
+    # if this is a zipper into a lambda then use the lambdas grammar
+    if len(zipper.env) > 1:
+        assert zipper.path[0] == 'body'
+        assert zipper.path[1] != 'body'
+        if g.g_lambdas is None: # backwards compatability. Careful it doesnt carry the max depth thru tho
+            g.g_lambdas = Grammar.uniform(get_lambdas())
+        g = g.g_lambdas
+
     if isinstance(g, ContextualGrammar):
         parent, parentIndex = parentInfo
         _, wrongSubtree = g._sampleOneStep(

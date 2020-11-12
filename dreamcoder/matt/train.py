@@ -79,7 +79,8 @@ def train_model(
     **kwargs,
         ):
     print(f"j:{j}")
-    phead.featureExtractor.run_tests()
+    if hasattr(phead,'featureExtractor'):
+        phead.featureExtractor.run_tests()
 
     if frontiers is None:
         frontiers = []
@@ -108,10 +109,10 @@ def train_model(
                 head.zero_grad()
             try:
                 start = time.time()
-                vloss = vhead.valueLossFromFrontier(f, g)
                 ploss = phead.policyLossFromFrontier(f, g)
+                vloss = vhead.valueLossFromFrontier(f, g)
                 elapsed = time.time() - start
-                print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {f.p}')
+                #print(f'loss v={vloss.item():.2f} p={ploss.item():.2f}  in {elapsed:.4f}s on {f.p}')
             except InvalidSketchError:
                 print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
                 continue

@@ -128,7 +128,8 @@ class State:
         else:
             vhead = SampleDummyValueHead()
 
-        vhead = phead.vhead.validator_vhead
+        if not cfg.model.value:
+            vhead = phead.vhead.validator_vhead
         heads = [vhead,phead]
 
 
@@ -147,7 +148,8 @@ class State:
         params = itertools.chain.from_iterable([head.parameters() for head in heads])
         optimizer = torch.optim.Adam(params, lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
-        vhead = InvalidIntermediatesValueHead(cfg)
+        if not cfg.model.value:
+            vhead = InvalidIntermediatesValueHead(cfg)
         astar = make_solver(cfg.data.test.solver,vhead,phead,cfg.data.train.max_depth)
         j=0
         frontiers = None

@@ -24,13 +24,20 @@
                 //"data.train.T=5",
                 //"data.test.T=3",
                 //"data.allow_complex_requests=True"
-                "device=cpu",
-                "cuda=False",
-                "data.train.buf_size=200"
-                "data.train.premade_templates=holdout_train",
-                "data.test.premade_templates=holdout_valid",
-                "data.test.num_templates=50",
-                "data.test.valid_frac=1."
+                "model.value=True",
+                "model.policy=False",
+                "model.tied=False",
+                "device=6",
+                "cuda=True",
+                "data.train.buf_size=100",
+
+                "data.train.num_templates=null",
+                "data.T=1",
+                "data.expressive_lambdas=False",
+                //"data.train.premade_templates=holdout_train",
+                //"data.test.premade_templates=holdout_valid",
+                "data.test.num_templates=30",
+                "data.test.valid_frac=1.",
                 //"model.give_hole=True",
                 // "device=cpu",
                 // "load=2020-09-18/23-05-25/saves/best_validation",

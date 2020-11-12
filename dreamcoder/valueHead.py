@@ -851,13 +851,16 @@ class ListREPLValueHead(BaseValueHead):
 
 
         self._distance = nn.Sequential(
-                nn.Linear(extractor.outputDimensionality + H, H),
+                nn.Linear(H, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
 
         self.concrete_count = 0 # CAREFUL dont make this a task->int dict or itll leak and make the save files gigabytes large
         self._curr_task_concrete_count = None
+    @property
+    def device(self):
+        return self._distance[0].weight.device
 
     def rep(self,sk,task,ctxs=None, in_lambda=False, lambda_ctx=None):
         """
@@ -1006,6 +1009,7 @@ class ListREPLValueHead(BaseValueHead):
     def computeValue(self, sketch, task):
         compared = self._compare([sketch], task, reduce='max')
         distance = self._distance(compared).squeeze(1)
+        distance = distance + self.validator_vhead(sketch,task)
         return distance
     
     def _compare(self,sks, task, reduce='max'):
@@ -1055,6 +1059,8 @@ class ListREPLValueHead(BaseValueHead):
             assert reduce is None
         return compared
 
+    seen = 0
+    invalid = 0 
     def valueLossFromFrontier(self, frontier, g):
         """
         given a frontier, should sample a postive trace and a negative trace
@@ -1065,10 +1071,27 @@ class ListREPLValueHead(BaseValueHead):
         entry = frontier.sample()
         tp = frontier.task.request
         fullProg = entry.program._fullProg
-        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+        posTrace, negTrace =  getTracesFromProg(fullProg,
+                                                frontier.task.request,
+                                                g,
+                                                ordering=self.ordering)
 
         #discard negative sketches which overlap with positive
         negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
+
+        def invalid(sk):
+            self.seen += 1
+            try:
+                concrete_rep(sk,frontier.task,None,False,self.cfg.data.train.V)
+            except InvalidSketchError as e:
+                self.invalid += 1
+                print(f"ignoring an invalid neg trace (percent invalid so far {self.invalid/self.seen*100:.4f}%)")
+                return True
+            return False
+
+        negTrace = [sk for sk in negTrace if not invalid(sk)]
+        if self.cfg.debug.no_neg_trace:
+            negTrace = []
 
         # TODO I added this bc otherwise we dont get tensor outputs from rep(). Idk if it makes sense tho
         posTrace = [sk for sk in posTrace if sk.hasHoles]
@@ -1082,9 +1105,7 @@ class ListREPLValueHead(BaseValueHead):
         compared = self._compare(posTrace+negTrace, frontier.task, reduce='max')
         distance = self._distance(compared).squeeze(1)
 
-        targets = torch.tensor([1.0]*nPos + [0.0]*nNeg)
-        if self.use_cuda:
-            targets = targets.cuda()
+        targets = torch.tensor([1.0]*nPos + [0.0]*nNeg, device=self.device)
 
         loss = binary_cross_entropy(-distance, targets, average=False) #average?
         return loss

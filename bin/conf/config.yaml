@@ -24,6 +24,8 @@ debug:
   zero_concrete_eval: False # Take the result of encodeValue(rep) and turn it to all zeros
   zero_sk: False # Take the result of rep(sk) and turn it to all zeros so _compare(all_zeros,outputFeatures) is run
 
+  no_neg_trace: False
+
 plot: # for mode=plot
   file: ${plot.suffix}
   title: ${plot.suffix}
