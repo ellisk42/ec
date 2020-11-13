@@ -49,7 +49,7 @@ import random
 from dreamcoder.domains.list.main import ListFeatureExtractor
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead, InvalidIntermediatesValueHead
-from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
+from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead, DeepcoderListPolicyHead
 from dreamcoder.Astar import Astar
 from likelihoodModel import AllOrNothingLikelihoodModel
 from torch.utils.tensorboard import SummaryWriter

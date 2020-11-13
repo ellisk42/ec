@@ -41,13 +41,13 @@ test:
   print_data: True
 
 # things that generally want to changed together or not changed much
-T: 3
+T: 2
 N : 5
 L: 10
 L_min: null
 L_max: null
-V: 32
-expressive_lambdas: False
+V: 64
+expressive_lambdas: True
 lambda_depth: 3
 allow_complex_requests: False
 max_depth: 12

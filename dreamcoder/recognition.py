@@ -658,7 +658,7 @@ class RecognitionModel(nn.Module):
         self._MLP = nn.Sequential(*[ layer
                                      for j in range(len(hidden))
                                      for layer in [
-                                             nn.Linear(([featureExtractor.outputDimensionality] + hidden)[j],
+                                             nn.Linear(([featureExtractor.outputDimensionality*2] + hidden)[j],
                                                        hidden[j]),
                                              activation()]])
 
@@ -706,9 +706,9 @@ class RecognitionModel(nn.Module):
                 for parameter in self.valueHead.parameters():
                     assert any(myParameter is parameter for myParameter in self.parameters())
 
-            if searchType == "SMC":
+            if searchType.lower() == "smc":
                 self.solver = SMC(self) #Can have many versions of this
-            elif searchType == "Astar":
+            elif searchType.lower() == "astar":
                 self.solver = Astar(self)
             else: assert False
 
@@ -727,6 +727,7 @@ class RecognitionModel(nn.Module):
         #import pdb; pdb.set_trace()
 
     def auxiliaryLoss(self, frontier, features):
+        return None
         # Compute a vector of uses
         ls = frontier.bestPosterior.program
         def uses(summary):
@@ -847,6 +848,9 @@ class RecognitionModel(nn.Module):
 
     def frontierKL(self, frontier, auxiliary=False, vectorized=True):
         features = self.featureExtractor.featuresOfTask(frontier.task)
+
+
+
         if features is None: return None, None
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
@@ -855,7 +859,8 @@ class RecognitionModel(nn.Module):
 
         if not vectorized:
             g = self(features)
-            return - entry.program.logLikelihood(g), al
+            #return - entry.program.logLikelihood(g), al
+            return - g.logLikelihood(frontier.task.request,entry.p), al
         else:
             features = self._MLP(features).expand(1, features.size(-1))
             ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
@@ -904,7 +909,7 @@ class RecognitionModel(nn.Module):
                 entries.append(e)
         return Frontier(entries, task=frontier.task)
 
-    def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
+    def DISABLEDtrain(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
               biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True,
@@ -2005,6 +2010,15 @@ class RecurrentFeatureExtractor(nn.Module):
         return e
 
     def featuresOfTask(self, t):
+
+        if self.digitwise:
+            in_feats = self.inputFeatures(t)
+            in_feats = in_feats.mean(0) # mean over examples
+            out_feats = self.outputFeatures(t)
+            out_feats = out_feats.mean(0) # mean over examples
+            features = torch.cat((in_feats,out_feats),dim=0) # shape [H*2]
+            return features
+
         if hasattr(self, 'useFeatures'):
             f = self(t.features)
         else:

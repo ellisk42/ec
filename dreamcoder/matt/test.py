@@ -39,7 +39,7 @@ import random
 from dreamcoder.domains.list.main import ListFeatureExtractor
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
-from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
+from dreamcoder.policyHead import DeepcoderListPolicyHead, RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
 from dreamcoder.Astar import Astar
 from likelihoodModel import AllOrNothingLikelihoodModel
 from torch.utils.tensorboard import SummaryWriter
@@ -66,6 +66,13 @@ def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
 
     model_results = []
     for astar in astars:
+        rec_model = None
+        if hasattr(astar,'actual_solver') and astar.actual_solver is not None:
+            assert isinstance(astar.owner.policyHead, DeepcoderListPolicyHead)
+            rec_model = astar.owner.policyHead.rec_model
+            astar = astar.actual_solver
+            mlb.purple('[deepcoder model testing]')
+
         astar.owner.policyHead.eval()
         astar.owner.valueHead.eval()
         #name = f"{astar.owner.policyHead.__class__.__name__}_&&_{astar.owner.valueHead.__class__.__name__}"
@@ -81,6 +88,11 @@ def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
             else:
                 starting_nodes = None
             with torch.no_grad():
+
+                if rec_model is not None:
+                    rec_model.eval()
+                    g = rec_model.grammarOfTask(task).untorch()
+                    rec_model.train()
                 fs, times, num_progs, solns = astar.infer(
                         g, 
                         [task],

@@ -69,9 +69,11 @@ from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
-    def __init__(self):
+    def __init__(self, cfg):
         super(BasePolicyHead, self).__init__() #should have featureExtractor?
         self.use_cuda = torch.cuda.is_available()
+        self.cfg = cfg
+        self.ordering = cfg.model.ordering
 
     def sampleSingleStep(self, task, g, sk,
                         request, holeZippers=None,
@@ -237,6 +239,45 @@ class NeuralPolicyHead(nn.Module):
     @property
     def device(self):
         raise NotImplementedError
+
+class DeepcoderListPolicyHead(NeuralPolicyHead):
+    def __init__(self, g, extractor, cfg):
+        super().__init__()
+        self.featureExtractor = extractor
+        self.cfg = cfg
+        from dreamcoder.recognition import RecognitionModel
+        from dreamcoder.valueHead import SampleDummyValueHead
+        self.rec_model = RecognitionModel(
+            featureExtractor=extractor,
+            grammar=g,
+            contextual=False, # unigram
+            cuda=True,
+            # these might not come into play:
+            useValue=True,
+            valueHead=SampleDummyValueHead(),
+            policyHead=BasePolicyHead(cfg),
+            searchType=cfg.data.test.solver,
+        )
+    def policyLossFromFrontier(self, frontier, g):
+        entry = frontier.sample()
+        tp = frontier.task.request
+        
+        if isinstance(entry.program, Program):
+            fullProg = entry.program
+        else:
+            fullProg = entry.program._fullProg
+
+        # frontierKL just calls extractor.featuresOfTask and rec_model._MLP
+        # then uses hte result as prod rule probabilities and does program.logLikelihood(grammar) with that
+        # and returns the negation of the result
+        neg_ll, _ = self.rec_model.frontierKL(frontier,auxiliary=False,vectorized=False)
+        return neg_ll
+    def sampleSingleStep(self, *args, **kwargs):
+        assert False, "please initialize Astar with BasePolicyHead and the grammar returned by DeepcoderListPolicyHead if you want to do deepcoder search"
+    def enumSingleStep(self, *args, **kwargs):
+        assert False, "please initialize Astar with BasePolicyHead and the grammar returned by DeepcoderListPolicyHead if you want to do deepcoder search"
+
+
 
 
 class RNNPolicyHead(NeuralPolicyHead):

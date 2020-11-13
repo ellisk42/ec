@@ -39,7 +39,7 @@ import random
 from dreamcoder.domains.list.main import ListFeatureExtractor, ExtractorGenerator
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
-from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
+from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead, DeepcoderListPolicyHead
 from dreamcoder.Astar import Astar
 from likelihoodModel import AllOrNothingLikelihoodModel
 from torch.utils.tensorboard import SummaryWriter
@@ -113,9 +113,10 @@ class State:
             phead = {
                 'rnn': RNNPolicyHead,
                 'repl': ListREPLPolicyHead,
+                'dc': DeepcoderListPolicyHead,
             }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
         else:
-            phead = BasePolicyHead()
+            phead = BasePolicyHead(cfg)
         if cfg.model.value:
             if cfg.model.tied:
                 assert cfg.model.policy
@@ -128,7 +129,8 @@ class State:
         else:
             vhead = SampleDummyValueHead()
 
-        vhead = phead.vhead.validator_vhead
+        if hasattr(phead,'vhead'):
+            vhead = phead.vhead.validator_vhead
         heads = [vhead,phead]
 
 

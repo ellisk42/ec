@@ -12,7 +12,7 @@ import contextlib
 import multiprocessing as mp
 import queue
 import contextlib
-# sys.path.append(os.path.abspath('./'))
+# sys.path.append(ospath.abspath('./'))
 # sys.path.append(os.path.abspath('./ec'))
 
 import pickle
@@ -583,13 +583,19 @@ def get_depth(p):
 
 
 def make_solver(type,vhead,phead,max_depth):
+    from dreamcoder.policyHead import BasePolicyHead, DeepcoderListPolicyHead
     if type == 'astar':
         s = Astar
     elif type == 'smc':
         s = SMC
     else:
         raise ValueError
-    return s(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
+    res = s(FakeRecognitionModel(vhead, phead), maxDepth=max_depth)
+    if isinstance(phead,DeepcoderListPolicyHead):
+        res.actual_solver = s(FakeRecognitionModel(vhead,BasePolicyHead(phead.cfg)),maxDepth=max_depth)
+    else:
+        res.actual_solver = None
+    return res
 
 class FakeFrontier:
     # pretends to be whatever valueLossFromFrontier wants for simplicity

@@ -1,0 +1,16 @@
+# @package _group_
+# note that most of these settings have no effect on the deepcoder model
+type: dc # deepcoder model
+H: 64
+tied: True
+policy: True
+value: False
+encodeTargetHole: False
+ordering: last
+ctxful_lambdas: False
+#give_hole: False
+extractor:
+  modular: True
+  digitwise: True
+  bidir_ctx: True
+  bidir_int: True 
