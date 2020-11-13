@@ -595,7 +595,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             return res
         
 
-        assert is_int(val[0])
+        #assert is_int(val[0])
         # val is one concrete non-list value per example
         # no LIST_START or anything needed here! Bc the list is examplewise
 
