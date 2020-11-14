@@ -89,7 +89,10 @@ class BasePolicyHead(nn.Module):
     def enumSingleStep(self, task, g, sk, request, 
                         holeZipper=None,
                         maximumDepth=4):
-        return enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
+        try:
+            yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
+        except NoCandidates:
+            return
 
 class NeuralPolicyHead(nn.Module):
     def __init__(self):

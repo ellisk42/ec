@@ -233,8 +233,14 @@ def hydra_main(cfg):
             [path] = paths
 
             if 'saves' not in path.parts:
-                savefile = 'autosave.'+str(max([int(x.name.split('.')[1])
-                                     for x in (get_datetime_path(path) / 'saves').glob('autosave.*')]))
+                savefiles = [x for x in (get_datetime_path(path) / 'saves').iterdir()]
+                if len([f for f in savefiles if f.name.startswith('autosave.')]) == 0:
+                    # old style before we added autosave.j format
+                    assert (get_datetime_path(path) / 'saves' / 'autosave').exists()
+                    savefile = 'autosave'
+                else:
+                    savefile = 'autosave.'+str(max([int(x.name.split('.')[1])
+                                        for x in (get_datetime_path(path) / 'saves').glob('autosave.*')]))
                 path = get_datetime_path(path) / 'saves' / savefile
             
             assert all(['=' in arg for arg in sys.argv[1:]])
