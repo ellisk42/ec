@@ -163,10 +163,13 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
     for m in model_results:
         label = m.name if shared_prefix else m.prefix + '.' + m.name
         xs = list(np.arange(0,m.timeout,0.1)) # start,stop,step
-        plot.plot(xs,
+        line, = plot.plot(xs,
                 [m.fraction_hit(lambda r: r.time < x) for x in xs],
                 label=label,
                 linewidth=4)
+        if label == 'DeepCoder':
+            print("fired")
+            line.set_color('C5')
     plot.legend()
 
     plot.savefig(time_file)
@@ -190,10 +193,13 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
         else:
             label = legend[i]
         xs = list(range(m.earliest_failure))
-        plot.plot(xs,
+        line, = plot.plot(xs,
                 [m.fraction_hit(lambda r: r.evaluations <= x) for x in xs],
                 label=label,
                 linewidth=4)
+        if label == 'DeepCoder':
+            print("fired")
+            line.set_color('C5')
     plot.legend()
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")
