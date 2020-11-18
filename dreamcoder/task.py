@@ -1,5 +1,6 @@
 from dreamcoder.program import *
 from dreamcoder.differentiation import *
+import numpy as np
 
 import signal
 
@@ -88,11 +89,20 @@ class Task(object):
                         p = None
                     if self.cache:
                         EVALUATIONTABLE[(x, e)] = p
-                if p != y:
+                if type(p) == np.int64:
+                    p = int(p)
+                try:
+                    if p != y:
+                        if timeout is not None:
+                            signal.signal(signal.SIGVTALRM, lambda *_: None)
+                            signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+                        return False
+                except ValueError:
                     if timeout is not None:
                         signal.signal(signal.SIGVTALRM, lambda *_: None)
                         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                     return False
+
 
             return True
         # except e:

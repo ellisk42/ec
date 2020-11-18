@@ -118,7 +118,7 @@ def hydra_main(cfg):
         if cfg.mode == 'plot':
             if '___' in cfg.load:
                 cfg.load = cfg.load.replace('___',' ')
-            paths = outputs_regex(*cfg.load.split(' '))
+            paths = outputs_regex(*cfg.load.split(' '), sort=cfg.plot.sort)
             # path must at least be DATE/TIME, possibly DATE/TIME/...
             paths = [p for p in paths if len(p.parts) >= 2]
 

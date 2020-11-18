@@ -267,6 +267,8 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         H = cfg.model.H
 
         self.lexicon = {"LIST_START", "LIST_END", "INT_START", "INT_END", 'CTX_START', 'CTX_END', "?", "<True>", "<False>"}
+        # some more needed for robustfill:
+        self.lexicon = self.lexicon | {',',' '}
         if digitwise:
             self.lexicon = self.lexicon | set(map(str,range(0,10))) | {'-'}
         else:

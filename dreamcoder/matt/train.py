@@ -1,3 +1,4 @@
+from dreamcoder.matt.syntax_robustfill import SyntaxCheckingRobustFill, train_step
 from dreamcoder.matt.util import *
 from collections import defaultdict
 import pathlib
@@ -79,7 +80,8 @@ def train_model(
     **kwargs,
         ):
     print(f"j:{j}")
-    phead.featureExtractor.run_tests()
+    if hasattr(phead,'featureExtractor'):
+        phead.featureExtractor.run_tests()
 
     if frontiers is None:
         frontiers = []
@@ -93,8 +95,25 @@ def train_model(
             assert len(frontiers) > 0
         while len(frontiers) > 0: # work thru batch of `batch_size` examples
             f = frontiers.pop(0)
+            force_save = False
+            force_search = False
+
+            if isinstance(phead, SyntaxCheckingRobustFill):
+                fs = [f]
+                for _ in range(32):
+                    if cfg.loop.save_every is not None and j % cfg.loop.save_every == 0:
+                        force_save = True
+                    if cfg.loop.search_valid_every is not None and j % cfg.loop.search_valid_every == 0:
+                        force_search = True
+                    if len(frontiers) == 0:
+                        break
+                    if cfg.loop.max_steps and j >= cfg.loop.max_steps:
+                        break
+                    fs.append(frontiers.pop(0))
+                    j += 1
 
             if cfg.data.train.freeze:
+                assert not isinstance(phead, SyntaxCheckingRobustFill)
                 frontiers.append(f) # put back at the end
 
             # abort if reached end
@@ -102,21 +121,31 @@ def train_model(
                 mlb.purple(f'Exiting because reached maximum step for the above run (step: {j}, max: {cfg.loop.max_steps})')
                 return
             
-            # train the model
             for head in heads:
                 head.train()
                 head.zero_grad()
-            try:
+            if not isinstance(phead, SyntaxCheckingRobustFill):
+                # train the model
+                try:
+                    start = time.time()
+                    vloss = vhead.valueLossFromFrontier(f, g)
+                    ploss = phead.policyLossFromFrontier(f, g)
+                    elapsed = time.time() - start
+                    print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {f.p}')
+                except InvalidSketchError:
+                    print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
+                    continue
+                loss = vloss + ploss
+                loss.backward()
+            else:
+                # robustfill
                 start = time.time()
-                vloss = vhead.valueLossFromFrontier(f, g)
-                ploss = phead.policyLossFromFrontier(f, g)
+                vloss = torch.tensor(0).float()
+                score, syntax_score = train_step(fs,phead)
+                ploss = torch.tensor(score+syntax_score).float()
                 elapsed = time.time() - start
-                print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {f.p}')
-            except InvalidSketchError:
-                print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
-                continue
-            loss = vloss + ploss
-            loss.backward()
+                print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {[f.p for f in fs]}')
+                # NO loss.backward() bc we assume vhead is not a trainable head and phead is handled by optimiser_step
 
             # for printing later
             if cfg.loop.print_every is not None: # dont gather these if we'll never empty it by printing
@@ -142,7 +171,7 @@ def train_model(
                 name = state.name
 
             # printing and logging
-            if j % cfg.loop.print_every == 0:
+            if j % cfg.loop.print_every == 0 or isinstance(phead,SyntaxCheckingRobustFill):
                 rate = len(plosses)/(time.time()-time_since_print) if time_since_print is not None else None
                 if rate is None: rate = 0
                 time_str = f" ({rate:.2f} steps/sec)"
@@ -158,7 +187,7 @@ def train_model(
                 time_since_print = time.time()
 
             # validation loss
-            if cfg.loop.valid_every is not None and j % cfg.loop.valid_every == 0:
+            if cfg.loop.valid_every is not None and j % cfg.loop.valid_every == 0 and not isinstance(phead,SyntaxCheckingRobustFill):
                 # get valid loss
                 for head in heads:
                     head.eval()
@@ -184,7 +213,7 @@ def train_model(
                     w.add_scalar('ValidationLossBest/'+head.__class__.__name__, loss, j)
 
             # search on validation set
-            if cfg.loop.search_valid_every is not None and j % cfg.loop.search_valid_every == 0:
+            if force_search or (cfg.loop.search_valid_every is not None and j % cfg.loop.search_valid_every == 0):
                 model_results = test.test_models([astar],
                                             validation_frontiers[: cfg.loop.search_valid_num_tasks],
                                             g,
@@ -199,5 +228,5 @@ def train_model(
             #     plot_model_results(model_results, file='test', salt=j)
 
             j += 1 # increment before saving so we resume on the next iteration
-            if cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0: # the j-1 is important for not accidentally repeating a step
+            if force_save or (cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0): # the j-1 is important for not accidentally repeating a step
                 state.save(locals(),f'autosave.{j}')

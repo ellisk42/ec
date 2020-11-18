@@ -1,3 +1,4 @@
+from dreamcoder.matt.syntax_robustfill import SyntaxCheckingRobustFill, robustfill_search
 from dreamcoder.matt.util import *
 from collections import defaultdict
 import pathlib
@@ -72,6 +73,10 @@ def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
             rec_model = astar.owner.policyHead.rec_model
             astar = astar.actual_solver
             mlb.purple('[deepcoder model testing]')
+        
+        if isinstance(astar.owner.policyHead,SyntaxCheckingRobustFill):
+            model_results.append(robustfill_search(astar.owner.policyHead, test_tasks, timeout))
+            continue
 
         astar.owner.policyHead.eval()
         astar.owner.valueHead.eval()

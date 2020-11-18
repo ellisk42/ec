@@ -46,12 +46,14 @@ from torch.utils.tensorboard import SummaryWriter
 import mlb
 import time
 
+from dreamcoder.matt.syntax_robustfill import get_robustfill
 
 
-import dreamcoder.matt.cmd as cmd
-import dreamcoder.matt.plot as plot
-import dreamcoder.matt.test as test
-import dreamcoder.matt.train as train
+
+# import dreamcoder.matt.cmd as cmd
+# import dreamcoder.matt.plot as plot
+# import dreamcoder.matt.test as test
+# import dreamcoder.matt.train as train
 
 class Poisoned: pass
 
@@ -114,6 +116,7 @@ class State:
                 'rnn': RNNPolicyHead,
                 'repl': ListREPLPolicyHead,
                 'dc': DeepcoderListPolicyHead,
+                'rb': get_robustfill,
             }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
         else:
             phead = BasePolicyHead(cfg)

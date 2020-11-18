@@ -19,6 +19,7 @@ train:
   allow_complex_requests: ${data.allow_complex_requests}
   premade_templates: null
   print_data: False
+  t4: False
 test:
   num_templates: 100
   repeat: False
@@ -39,6 +40,7 @@ test:
   allow_complex_requests: ${data.allow_complex_requests}
   premade_templates: null
   print_data: True
+  t4: False
 
 # things that generally want to changed together or not changed much
 T: 2

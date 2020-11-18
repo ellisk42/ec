@@ -253,6 +253,8 @@ class DeepcoderListPolicyHead(NeuralPolicyHead):
         self.rec_model = RecognitionModel(
             featureExtractor=extractor,
             grammar=g,
+            activation='relu',
+            hidden=[256,256,256],
             contextual=False, # unigram
             cuda=True,
             # these might not come into play:

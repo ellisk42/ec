@@ -28,7 +28,7 @@ def which(cfg=None):
     print(f'http://localhost:6696/#scalars&regexInput={regex}')
     print("curr time:",timestamp())
 
-def outputs_regex(*rs):
+def outputs_regex(*rs, sort=True):
     """
     The union of one or more regexes over the outputs/ directory.
     Returns a list of results (pathlib.Path objects)
@@ -44,7 +44,9 @@ def outputs_regex(*rs):
         except ValueError as e:
             print(e)
             return []
-    return sorted(res)
+    if sort:
+        return sorted(res)
+    return res
 
 def hide_path_prefix(p):
     """

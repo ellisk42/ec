@@ -650,7 +650,10 @@ class DeepcoderTaskloader:
         self.threaded = cfg.threaded
         assert not self.threaded, "We're not allowing threading for now"
         
-        self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
+        if cfg.t4:
+            self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt')
+        else:
+            self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
         self.allowed_requests = [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)] if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
 
         #self.buf = queue.Queue(self.cfg.buf_size) # turns out Queues also cant be pickled:(
