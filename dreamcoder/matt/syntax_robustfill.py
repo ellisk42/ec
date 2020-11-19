@@ -58,6 +58,7 @@ def robustfill_search(m, tasks, timeout, search_batch_size=32):
     search_results = []
     search_failures = []
     m.eval()
+    m.max_length = 50
 
     with torch.no_grad():
         for i,t in enumerate(tasks):
@@ -69,6 +70,7 @@ def robustfill_search(m, tasks, timeout, search_batch_size=32):
             while time.time() - start < timeout and not hit:
                 candidates, scores, _ = m.sampleAndScore([ios]*search_batch_size)
                 for candidate, score in zip(candidates, scores):
+                    print(f'sampled: {"".join(candidate)}')
                     totalNumberOfPrograms += get_num_nodes(candidate)
                     hit, p = check_candidate(t, candidate)
                     if hit:
@@ -92,8 +94,10 @@ def check_candidate(task, raw_candidate):
     #print(raw_candidate)
     try:
         p = Program.parse(" ".join(raw_candidate))
+        print('parse succeeded')
         #print(p)
         ll = task.logLikelihood(p, timeout=1)
+        print(f'got ll: {ll}')
         
         if ll == 0.0:
             return True, p

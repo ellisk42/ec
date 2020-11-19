@@ -3,6 +3,8 @@ from omegaconf import DictConfig,OmegaConf,open_dict
 
 
 def fix_state_testmode(state):
+    if not hasattr(state.phead,'featureExtractor'):
+        return state
     ext = state.phead.featureExtractor
     if not hasattr(ext,'lexicon_embedder'):
         ext.lexicon_embedder = ext.digit_embedder
