@@ -132,7 +132,7 @@ def choose(matrix, idxs):
     return matrix.view(matrix.nelement())[unrolled_idxs]
 
 class SyntaxCheckingRobustFill(nn.Module):
-    def __init__(self, input_vocabularies, target_vocabulary, hidden_size=512, embedding_size=128, cell_type="LSTM", max_length=25):
+    def __init__(self, input_vocabularies, target_vocabulary, hidden_size=112, embedding_size=64, cell_type="LSTM", max_length=25):
         """
         Terminology is a little confusing. The SyntaxCheckingRobustFill is the full model, which contains a SyntaxLSTM inside it
         :param: input_vocabularies: List containing a vocabulary list for each input. E.g. if learning a function f:A->B from (a,b) pairs, input_vocabularies has length 2
@@ -194,6 +194,8 @@ class SyntaxCheckingRobustFill(nn.Module):
         #self.SyntaxLSTM = RobustFill([], target_vocabulary, hidden_size, embedding_size, cell_type, max_length)
 
         #rewrite SyntaxLSTM run function so that I have access to the whole thing
+        mlb.purple(sum([p.numel() for p in self.parameters()]))
+        print("hi")
 
 
 

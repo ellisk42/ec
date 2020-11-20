@@ -142,6 +142,8 @@ def train_model(
                 start = time.time()
                 vloss = torch.tensor(0).float()
                 score, syntax_score = train_step(fs,phead)
+                print(f"score: {score}")
+                #print(f"syntax score: {syntax_score}")
                 ploss = torch.tensor(score+syntax_score).float()
                 elapsed = time.time() - start
                 print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {[f.p for f in fs]}')
