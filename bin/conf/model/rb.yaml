@@ -2,6 +2,9 @@
 # note that most of these settings have no effect on the robustfill model
 type: rb # robustfill model
 H: 64
+hidden_size: 64
+embedding_size: 64
+cell_type: LSTM
 tied: True
 policy: True
 value: False

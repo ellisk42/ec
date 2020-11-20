@@ -118,7 +118,10 @@ def get_robustfill(cfg, extractor, g):
     target_vocab = [str(p) for p in g.primitives] + extras
     m = SyntaxCheckingRobustFill(
         input_vocabularies=input_vocabs,
-        target_vocabulary=target_vocab
+        target_vocabulary=target_vocab,
+        hidden_size=cfg.model.hidden_size,
+        embedding_size=cfg.model.embedding_size,
+        cell_type=cfg.model.cell_type,
     )
     m = m.to(cfg.device)
     m.iter = 0
@@ -132,7 +135,7 @@ def choose(matrix, idxs):
     return matrix.view(matrix.nelement())[unrolled_idxs]
 
 class SyntaxCheckingRobustFill(nn.Module):
-    def __init__(self, input_vocabularies, target_vocabulary, hidden_size=112, embedding_size=64, cell_type="LSTM", max_length=25):
+    def __init__(self, input_vocabularies, target_vocabulary, hidden_size=64, embedding_size=64, cell_type="GRU", max_length=25):
         """
         Terminology is a little confusing. The SyntaxCheckingRobustFill is the full model, which contains a SyntaxLSTM inside it
         :param: input_vocabularies: List containing a vocabulary list for each input. E.g. if learning a function f:A->B from (a,b) pairs, input_vocabularies has length 2
@@ -164,6 +167,10 @@ class SyntaxCheckingRobustFill(nn.Module):
             self.decoder_cell = nn.GRUCell(input_size=self.v_target+1, hidden_size=self.hidden_size, bias=True)
 
             self.syntax_decoder_cell = nn.GRUCell(input_size=self.v_target+1, hidden_size=self.hidden_size, bias=True)
+
+            # i just added these
+            self.syntax_decoder_init_c = Parameter(torch.rand(1, self.hidden_size))
+            self.syntax_decoder_init_h = Parameter(torch.rand(1, self.hidden_size))
 
         if cell_type=='LSTM':
             self.encoder_init_h = Parameter(torch.rand(1, self.hidden_size)) #Also used for decoder if self.no_inputs=True
