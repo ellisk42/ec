@@ -320,7 +320,7 @@ def hydra_main(cfg):
 
                 state = fix.fix_state_testmode(state)
                 vhead = InvalidIntermediatesValueHead(cfg) if cfg.test.validator_vhead else SampleDummyValueHead()
-                solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth)
+                solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth, max_length=cfg.data.test.max_length)
                 if original_cfg is not None:
                     if state.cfg.data.train.V != original_cfg.data.test.V:
                         mlb.red(mlb.mk_bold(f"HUGE WARNING: You have trained on {state.cfg.data.train.V} data but are testing on {original_cfg.data.test.V}"))

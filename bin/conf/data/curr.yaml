@@ -18,6 +18,7 @@ train:
   max_depth: ${data.max_depth}
   allow_complex_requests: ${data.allow_complex_requests}
   premade_templates: null
+  max_length: ${data.max_length}
   print_data: False
   t4: False
 test:
@@ -37,6 +38,7 @@ test:
   expressive_lambdas: ${data.expressive_lambdas}
   lambda_depth: ${data.lambda_depth}
   max_depth: ${data.max_depth}
+  max_length: ${data.max_length}
   allow_complex_requests: ${data.allow_complex_requests}
   premade_templates: null
   print_data: True
@@ -53,5 +55,6 @@ expressive_lambdas: True
 lambda_depth: 3
 allow_complex_requests: False
 max_depth: 12
+max_length: 12
 #num_mutated_tasks: 3
 #print_data: False
