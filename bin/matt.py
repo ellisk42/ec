@@ -168,6 +168,7 @@ def hydra_main(cfg):
                                     tb_name=cfg.plot.tb_name,
                                     cropped=cfg.plot.cropped,
                                     filetype=cfg.plot.filetype,
+                                    xlim=cfg.plot.xlim,
                                     save_model_results=False)
             return
         

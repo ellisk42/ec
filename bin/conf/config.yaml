@@ -33,6 +33,7 @@ plot: # for mode=plot
   legend: null
   filetype: png
   sort: True
+  xlim: null
 
 test: # for mode=test
   from_fn: null # deepcoder | josh | lucas

@@ -89,7 +89,7 @@ class ModelResult:
         for k,v in dist.items():
             print(f"T{k[0]}d{k[1]}: {v}")
 
-def plot_model_results(model_results, file, toplevel=False, legend=None, cropped=False, model_result_path=None, filetype='png', title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None):
+def plot_model_results(model_results, file, toplevel=False, legend=None, cropped=False, model_result_path=None, filetype='png', title=None, salt=None, save_model_results=True, w=None, j=None, tb_name=None, xlim=None):
     if not os.path.isdir('plots'):
         os.mkdir('plots')
     if not os.path.isdir('model_results'):
@@ -185,6 +185,9 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
     plot.xlabel('Number of partial programs considered', fontsize=14)
     plot.ylabel('Percent correct', fontsize=14)
     x_max = max([m.earliest_failure for m in model_results])
+    if xlim is not None:
+        x_max = min((x_max,xlim))
+        print(f'applied xlim to get new xmax of {x_max}')
     plot.ylim(bottom=0., top=100.)
     plot.xlim(left=0., right=x_max)
     for i,m in enumerate(model_results):
@@ -200,6 +203,10 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
         if label == 'DeepCoder':
             print("fired")
             line.set_color('C5')
+        if label == 'RobustFill':
+            print("fired")
+            line.set_color('C4')
+            line.set_zorder(0)
     plot.legend()
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")
@@ -222,7 +229,11 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
         # cropped version
-        plot.xlim(left=0., right=min([m.earliest_failure for m in model_results]))
+        right = min([m.earliest_failure for m in model_results]) 
+        if xlim is not None:
+            right = min((x_max,xlim))
+            print(f'applied xlim to get new xmax of {right}')
+        plot.xlim(left=0., right=right)
         path = str(toplevel_path(evals_file)).replace(f'.{filetype}',f'_cropped.{filetype}')
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
