@@ -52,6 +52,7 @@ def train_step(fs,m):
     return score,syntax_score
 
 def get_num_nodes(raw_candidate):
+    #return len(raw_candidate)
     return len( [x for x in raw_candidate if x not in ['(', ')', 'lambda']] )
 
 def robustfill_search(m, tasks, timeout, search_batch_size=32):
@@ -66,14 +67,24 @@ def robustfill_search(m, tasks, timeout, search_batch_size=32):
             start = time.time()
             totalNumberOfPrograms = 0
             hit = False
+            growth_factor = 2
+            num_particles = 8
             start = time.time()
             while time.time() - start < timeout and not hit:
-                candidates, scores, _ = m.sampleAndScore([ios]*search_batch_size)
-                for candidate, score in zip(candidates, scores):
-                    print(f'sampled: {"".join(candidate)}')
-                    totalNumberOfPrograms += get_num_nodes(candidate)
+                candidates = []
+                while len(candidates) < num_particles:
+                    num_to_get = min([search_batch_size,num_particles-len(candidates)])
+                    candidates += m.sampleAndScore([ios]*num_to_get)[0]
+                assert len(candidates) == num_particles
+
+                for ii,candidate in enumerate(candidates):
+                    #print(f'sampled: {"".join(candidate)}')
                     hit, p = check_candidate(t, candidate)
                     if hit:
+                        nodes = get_num_nodes(candidate)
+                        totalNumberOfPrograms += sum([min((nodes-1,get_num_nodes(cand))) for cand in candidates]) + ii
+                        #totalNumberOfPrograms += (get_num_nodes(candidate)-1)*num_particles + i
+
                         dt =  time.time() - start
                         search_results.append(SearchResult(
                             program=p,
@@ -83,21 +94,60 @@ def robustfill_search(m, tasks, timeout, search_batch_size=32):
                         ))
                         mlb.green(f"[{i+1}/{len(tasks)}] solved {t.name} in {dt:.2f}s (searched {totalNumberOfPrograms} programs)")
                         break # and notice the while loop will end too since hit=True
+                totalNumberOfPrograms += sum([get_num_nodes(cand) for cand in candidates])
+                num_particles *= growth_factor
+                print(f"growing to {num_particles} particles at {totalNumberOfPrograms} nodes expanded")
+
             if not hit:
                 mlb.red(f"[{i+1}/{len(tasks)}] failed to solve {t.name} (searched {totalNumberOfPrograms} programs)")
                 search_failures.append(totalNumberOfPrograms)
         mlb.blue(f'solved {len(search_results)}/{len(tasks)} tasks ({len(search_results)/len(tasks)*100:.1f}%)\n')
         return ModelResult(prefix=m.cfg.prefix, name=m.cfg.name, cfg=m.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout)
 
+# def robustfill_search(m, tasks, timeout, search_batch_size=32):
+#     search_results = []
+#     search_failures = []
+#     m.eval()
+#     m.max_length = 50
+
+#     with torch.no_grad():
+#         for i,t in enumerate(tasks):
+#             ios = to_robustfill_ios(t)
+#             start = time.time()
+#             totalNumberOfPrograms = 0
+#             hit = False
+#             start = time.time()
+#             while time.time() - start < timeout and not hit:
+#                 candidates, scores, _ = m.sampleAndScore([ios]*search_batch_size)
+#                 for candidate, score in zip(candidates, scores):
+#                     #print(f'sampled: {"".join(candidate)}')
+#                     totalNumberOfPrograms += get_num_nodes(candidate)
+#                     hit, p = check_candidate(t, candidate)
+#                     if hit:
+#                         dt =  time.time() - start
+#                         search_results.append(SearchResult(
+#                             program=p,
+#                             loss=None,
+#                             time=dt,
+#                             evaluations=totalNumberOfPrograms
+#                         ))
+#                         mlb.green(f"[{i+1}/{len(tasks)}] solved {t.name} in {dt:.2f}s (searched {totalNumberOfPrograms} programs)")
+#                         break # and notice the while loop will end too since hit=True
+#             if not hit:
+#                 mlb.red(f"[{i+1}/{len(tasks)}] failed to solve {t.name} (searched {totalNumberOfPrograms} programs)")
+#                 search_failures.append(totalNumberOfPrograms)
+#         mlb.blue(f'solved {len(search_results)}/{len(tasks)} tasks ({len(search_results)/len(tasks)*100:.1f}%)\n')
+#         return ModelResult(prefix=m.cfg.prefix, name=m.cfg.name, cfg=m.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout)
+
 def check_candidate(task, raw_candidate):
     p = None
     #print(raw_candidate)
     try:
         p = Program.parse(" ".join(raw_candidate))
-        print('parse succeeded')
+        #print('parse succeeded')
         #print(p)
         ll = task.logLikelihood(p, timeout=1)
-        print(f'got ll: {ll}')
+        #print(f'got ll: {ll}')
         
         if ll == 0.0:
             return True, p

@@ -279,7 +279,7 @@ class SMC(Solver):
                 if len(population) == 0: break
                 
             numberOfParticles *= self.exponentialGrowthFactor
-            #print("Increased number of particles to", numberOfParticles)
+            print("Increased number of particles to", numberOfParticles, "at", totalNumberOfPrograms, "programs")
 
 
         ## FINISH

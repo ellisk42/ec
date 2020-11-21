@@ -86,6 +86,7 @@ def train_model(
     if frontiers is None:
         frontiers = []
     time_since_print = None
+    running = []
 
     while True:
         print(f"{len(frontiers)=}")
@@ -144,6 +145,8 @@ def train_model(
                 score, syntax_score = train_step(fs,phead)
                 print(f"score: {score}")
                 #print(f"syntax score: {syntax_score}")
+                running.append((score*len(fs),len(fs)))
+                print(f"avg: {sum(list(zip(*running))[0])/sum(list(zip(*running))[1])}")
                 ploss = torch.tensor(score+syntax_score).float()
                 elapsed = time.time() - start
                 print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {[f.p for f in fs]}')
