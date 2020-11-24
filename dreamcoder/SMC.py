@@ -52,6 +52,8 @@ class SMC(Solver):
                  initialParticles=8, exponentialGrowthFactor=2,
                  criticCoefficient=1.,
                  maxDepth=12,
+                no_resample=False,
+                max_particles=64,
                  holeProb=0.2):
         self.maximumLength = maximumLength
         self.initialParticles = initialParticles
@@ -60,6 +62,8 @@ class SMC(Solver):
         self.owner = owner
         self.maxDepth = maxDepth
         self.holeProb = holeProb
+        self.no_resample = no_resample
+        self.max_particles = max_particles
 
     def infer(self, g, tasks, likelihoodModel, _=None,
                               #verbose=False,
@@ -77,6 +81,7 @@ class SMC(Solver):
 
         #sys.setrecursionlimit(50000)
 
+        from dreamcoder.valueHead import InvalidIntermediatesValueHead
         #torch.set_num_threads(1)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
@@ -133,6 +138,8 @@ class SMC(Solver):
 
         totalNumberOfPrograms = 0
 
+        assert isinstance(self.owner.valueHead,InvalidIntermediatesValueHead) # because of the valuehe function resampling stuff later that assumes it
+
         while time.time() - starting < timeout:
             if returnAfterHit and len(self.allHits) > 0: break
             # this line ensures particles start with a hole, wrapped in appropriate number of lambdas
@@ -147,6 +154,7 @@ class SMC(Solver):
 
             from dreamcoder.domains.list.makeDeepcoderData import get_depth
 
+            broke=True
             for generation in range(self.maximumLength):
                 if time.time() - starting > timeout: break
                 
@@ -232,7 +240,15 @@ class SMC(Solver):
                 samples = [Particle(t, skToZippers[t], frequency, finished=finished)
                            for (t, finished), frequency in sampleFrequency.items() ]
                 
+                
                 if len(samples) == 0: break
+
+                if self.no_resample:
+                    population = [p for p in samples if not p.finished and self.owner.valueHead.computeValue(p.trajectory,task) == 0]
+                    if len(population) == 0:
+                        break
+                    continue
+
                 # Computed value
                 for p in samples:
                     # SHOULD I Resample with or without the finished ones? if not, then i lose particles along the way
@@ -276,9 +292,18 @@ class SMC(Solver):
                         particle.frequency = frequency
                         population.append(particle)
                         
-                if len(population) == 0: break
+                if len(population) == 0:
+                    break
+            else:
+                broke = False
+                print("did not end before maxlen")
+            
+            if broke:
+                print(f"ended before maxlen {generation}")
+                pass
                 
             numberOfParticles *= self.exponentialGrowthFactor
+            numberOfParticles = min((numberOfParticles,self.max_particles))
             print("Increased number of particles to", numberOfParticles, "at", totalNumberOfPrograms, "programs")
 
 

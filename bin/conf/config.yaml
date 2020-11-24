@@ -29,7 +29,7 @@ plot: # for mode=plot
   title: ${plot.suffix}
   suffix: null
   tb_name: null
-  cropped: False
+  cropped: True
   legend: null
   filetype: png
   sort: True
@@ -38,6 +38,8 @@ plot: # for mode=plot
 test: # for mode=test
   from_fn: null # deepcoder | josh | lucas
   from_file: null
+  no_resample: True
+  max_particles: 64
   to_file: null
   model_result_path: null
   timeout: 30

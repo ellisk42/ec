@@ -59,7 +59,7 @@ def robustfill_search(m, tasks, timeout, search_batch_size=32):
     search_results = []
     search_failures = []
     m.eval()
-    m.max_length = 50
+    m.max_length = 80
 
     with torch.no_grad():
         for i,t in enumerate(tasks):
@@ -96,6 +96,7 @@ def robustfill_search(m, tasks, timeout, search_batch_size=32):
                         break # and notice the while loop will end too since hit=True
                 totalNumberOfPrograms += sum([get_num_nodes(cand) for cand in candidates])
                 num_particles *= growth_factor
+                num_particles = min((num_particles,m.max_particles))
                 print(f"growing to {num_particles} particles at {totalNumberOfPrograms} nodes expanded")
 
             if not hit:
@@ -176,6 +177,7 @@ def get_robustfill(cfg, extractor, g):
     m = m.to(cfg.device)
     m.iter = 0
     m.cfg = cfg
+    m.max_particles = cfg.test.max_particles
     return m
 
 def choose(matrix, idxs):

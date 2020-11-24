@@ -3,6 +3,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
+from dreamcoder.matt.syntax_robustfill import SyntaxCheckingRobustFill
 import os
 #os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
 #os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
@@ -320,8 +321,10 @@ def hydra_main(cfg):
 
 
                 state = fix.fix_state_testmode(state)
+                if isinstance(state.phead,SyntaxCheckingRobustFill):
+                    state.phead.max_particles = cfg.test.max_particles
                 vhead = InvalidIntermediatesValueHead(cfg) if cfg.test.validator_vhead else SampleDummyValueHead()
-                solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth, max_length=cfg.data.test.max_length)
+                solver = make_solver(cfg.data.test.solver,vhead,state.phead,cfg.data.test.max_depth, max_length=cfg.data.test.max_length, max_particles=cfg.test.max_particles, no_resample=cfg.test.no_resample)
                 if original_cfg is not None:
                     if state.cfg.data.train.V != original_cfg.data.test.V:
                         mlb.red(mlb.mk_bold(f"HUGE WARNING: You have trained on {state.cfg.data.train.V} data but are testing on {original_cfg.data.test.V}"))

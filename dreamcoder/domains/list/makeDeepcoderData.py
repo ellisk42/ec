@@ -582,7 +582,7 @@ def get_depth(p):
     return T,d,astar
 
 
-def make_solver(type,vhead,phead,max_depth, max_length=12):
+def make_solver(type,vhead,phead,max_depth, max_length=12, max_particles=64, no_resample=True):
     from dreamcoder.policyHead import BasePolicyHead, DeepcoderListPolicyHead
     if type == 'astar':
         s = Astar
@@ -590,9 +590,9 @@ def make_solver(type,vhead,phead,max_depth, max_length=12):
         s = SMC
     else:
         raise ValueError
-    res = s(FakeRecognitionModel(vhead, phead), maxDepth=max_depth, maximumLength=max_length)
+    res = s(FakeRecognitionModel(vhead, phead), maxDepth=max_depth, maximumLength=max_length, max_particles=max_particles,no_resample=no_resample)
     if isinstance(phead,DeepcoderListPolicyHead):
-        res.actual_solver = s(FakeRecognitionModel(vhead,BasePolicyHead(phead.cfg)),maxDepth=max_depth, maximumLength=max_length)
+        res.actual_solver = s(FakeRecognitionModel(vhead,BasePolicyHead(phead.cfg)),maxDepth=max_depth, maximumLength=max_length, max_particles=max_particles,no_resample=no_resample)
     else:
         res.actual_solver = None
     return res
