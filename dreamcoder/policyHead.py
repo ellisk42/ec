@@ -69,9 +69,12 @@ from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
-    def __init__(self):
+    def __init__(self, cfg):
         super(BasePolicyHead, self).__init__() #should have featureExtractor?
+        self.cfg=cfg
         self.use_cuda = torch.cuda.is_available()
+        self.encodeTargetHole = cfg.model.encodeTargetHole
+        self.ordering = cfg.model.ordering
 
     def sampleSingleStep(self, task, g, sk,
                         request, holeZippers=None,

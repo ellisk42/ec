@@ -1007,9 +1007,12 @@ class ListREPLValueHead(BaseValueHead):
         return self.fnModules[fn.name](*reps)
 
     def computeValue(self, sketch, task):
+        validator_value = self.validator_vhead.computeValue(sketch,task)
+        if validator_value > 0:
+            return validator_value # sketch is invalid
         compared = self._compare([sketch], task, reduce='max')
         distance = self._distance(compared).squeeze(1)
-        distance = distance + self.validator_vhead(sketch,task)
+        distance = distance
         return distance
     
     def _compare(self,sks, task, reduce='max'):
