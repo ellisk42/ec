@@ -115,7 +115,7 @@ class State:
                 'repl': ListREPLPolicyHead,
             }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
         else:
-            phead = BasePolicyHead(cfg)
+            phead = BasePolicyHead(cfg=cfg, g=g)
         if cfg.model.value:
             if cfg.model.tied:
                 assert cfg.model.policy

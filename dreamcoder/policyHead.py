@@ -67,30 +67,6 @@ from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 
-class BasePolicyHead(nn.Module):
-    #this is the single step type
-    def __init__(self, cfg):
-        super(BasePolicyHead, self).__init__() #should have featureExtractor?
-        self.cfg=cfg
-        self.use_cuda = torch.cuda.is_available()
-        self.encodeTargetHole = cfg.model.encodeTargetHole
-        self.ordering = cfg.model.ordering
-
-    def sampleSingleStep(self, task, g, sk,
-                        request, holeZippers=None,
-                        maximumDepth=4):
-        return sampleSingleStep(g, sk, request, holeZippers=holeZippers, maximumDepth=maximumDepth)
-
-    def policyLossFromFrontier(self, frontier, g):
-        if self.use_cuda:
-            return torch.tensor([0.]).cuda()
-        else: 
-            return torch.tensor([0.])
-
-    def enumSingleStep(self, task, g, sk, request, 
-                        holeZipper=None,
-                        maximumDepth=4):
-        return enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
 
 class NeuralPolicyHead(nn.Module):
     def __init__(self):
@@ -174,25 +150,24 @@ class NeuralPolicyHead(nn.Module):
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
         targets = torch.tensor(targets, device=self.device)# :: [5]
         loss = self.lossFn(maskedDist, targets)
-        if loss.item() == np.inf:
-            mlb.red("ISSUE FOUND, you seem to be masking out the right answer")
-            idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
-            target = targets[idx]
-            node = targetNodes[idx]
-            zipper = holesToExpand[idx]
-            trace = posTraces[idx]
-            print(f"""
-            {target=}
-            {node=}
-            {zipper=}
-            {trace=}
-            {idx=}
-            """)
-            mask = self._buildMask([trace],[zipper],frontier.task,g)
-            md1 = self._computeDist([trace], [zipper], frontier.task, g)
-            print("ayy")
-            maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
-            print("fuck")
+        # if loss.item() == np.inf:
+        #     mlb.red("ISSUE FOUND, you seem to be masking out the right answer")
+        #     idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
+        #     target = targets[idx]
+        #     node = targetNodes[idx]
+        #     zipper = holesToExpand[idx]
+        #     trace = posTraces[idx]
+        #     print(f"""
+        #     {target=}
+        #     {node=}
+        #     {zipper=}
+        #     {trace=}
+        #     {idx=}
+        #     """)
+        #     mask = self._buildMask([trace],[zipper],frontier.task,g)
+        #     md1 = self._computeDist([trace], [zipper], frontier.task, g)
+        #     print("ayy")
+        #     maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
         return loss
 
     def _computeDist(): raise NotImplementedError
@@ -240,6 +215,43 @@ class NeuralPolicyHead(nn.Module):
     @property
     def device(self):
         raise NotImplementedError
+
+class BasePolicyHead(NeuralPolicyHead):
+    #this is the single step type
+    def __init__(self, g, cfg, extractor=None, maxVar=15):
+        super(BasePolicyHead, self).__init__() #should have featureExtractor?
+        self.cfg=cfg
+        self.use_cuda = torch.cuda.is_available()
+        self.encodeTargetHole = cfg.model.encodeTargetHole
+        self.ordering = cfg.model.ordering
+
+        self.indexToProduction = {}
+        self.productionToIndex = {}
+        i = 0
+        for _, _, expr in g.productions:
+            self.indexToProduction[i] = expr
+            self.productionToIndex[expr] = i
+            i += 1
+
+        for v in range(maxVar):
+            self.indexToProduction[i] = Index(v)
+            self.productionToIndex[Index(v)] = i
+            i += 1
+
+    def policyLossFromFrontier(self, frontier, g):
+        # overriding this from parent since we dont train it at all
+        if self.use_cuda:
+            return torch.tensor([0.]).cuda()
+        else: 
+            return torch.tensor([0.])
+
+    @property
+    def device(self):
+        return torch.device(self.cfg.device) # idk if we'll need this or what it shd be
+    def _computeDist(self, sketches, zippers, task, g):
+        mask = self._buildMask(sketches, zippers, task, g)
+        #print(mask[0]) looks like the mask is a bunch of 0s and -infs
+        return mask # [num_sks,49]
 
 
 class RNNPolicyHead(NeuralPolicyHead):

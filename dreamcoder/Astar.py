@@ -167,9 +167,11 @@ class Astar(Solver):
                                                         hits, 
                                                         totalNumberOfPrograms)
                         else: continue
-
-                    valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
-                    totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
+                    if policyCost != -np.inf: # to avoid computeValue in cases where policyhead already decided the neighbor wasnt viable
+                        valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
+                        totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
+                    else:
+                        totalCost = policyCost
                     #print("neighbor:", neighbor)
                     #print("policyCost", policyCost)
                     #print("valueCost", valueCost)
