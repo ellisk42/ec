@@ -469,7 +469,8 @@ let primitive_mapi = primitive "mapi" ((tint @> t0 @> t1) @> (tlist t0) @> (tlis
     List.mapi l ~f:f);;
 let primitive_a2 = primitive "++" ((tlist t0) @> (tlist t0) @> (tlist t0)) (@);;
 let primitive_reducei = primitive "reducei" ((tint @> t1 @> t0 @> t1) @> t1 @> (tlist t0) @> t1) (fun f x0 l -> List.foldi ~f:f ~init:x0 l);;
-let primitive_filter = primitive "filter" ((tint @> tboolean) @> (tlist tint) @> (tlist tint)) (fun f l -> List.filter ~f:f l);;
+let primitive_filter = primitive "filter" ((t0 @> tboolean) @> (tlist t0) @> (tlist t0)) (fun f l -> List.filter ~f:f l);;
+let primitive_filter_int = primitive "filter_int" ((tint @> tboolean) @> (tlist tint) @> (tlist tint)) (fun f l -> List.filter ~f:f l);;
 let primitive_equal = primitive "eq?" (tint @> tint @> tboolean) (fun (a : int) (b : int) -> a = b);;
 let primitive_equal0 = primitive "eq0" (tint @> tboolean) (fun (a : int) -> a = 0);;
 let primitive_not = primitive "not" (tboolean @> tboolean) (not);;

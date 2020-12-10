@@ -121,7 +121,7 @@ def OldDeepcoderPrimitives():
         Primitive("sum", arrow(tlist(tint), tint), _sum)
         ] + [
         Primitive("map", arrow(int_to_int, tlist(tint), tlist(tint)), _map), #is this okay???
-        Primitive("filter", arrow(int_to_bool, tlist(tint), tlist(tint)), _filter), #is this okay???
+        Primitive("filter_int", arrow(int_to_bool, tlist(tint), tlist(tint)), _filter), #is this okay???
         Primitive("count", arrow(int_to_bool, tlist(tint), tint), _count), #is this okay???
         Primitive("zipwith", arrow(int_to_int_to_int, tlist(tint), tlist(tint), tlist(tint)), _zipwith), #is this okay???
         Primitive("scanl1", arrow(int_to_int_to_int, tlist(tint), tlist(tint)), _scanl1), #is this okay???
