@@ -1,0 +1,10 @@
+digraph {
+	graph [rankdir=LR]
+	f0 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f0=(λ (x y z) (_rflatten <br /> (_rappend y (_rappend z <br /> (_rrevcdr x)))))>]
+	f2 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f2=(λ (x) (if (_rmatch <br /> (_rtail (f1 x)) _e) x))>]
+	f1 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f1=(λ (x) (_rsplit _rempty <br /> x))>]
+	f3 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f3=(λ (x y z) (_rflatten <br /> (cons x (cons z (cdr <br /> (_rsplit _rdot y))))))>]
+	f4 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f4=(λ (x y z) (_rflatten <br /> (map (λ (u) (_rconcat y <br /> x)) (f1 z))))>]
+	f1 -> f2
+	f1 -> f4
+}

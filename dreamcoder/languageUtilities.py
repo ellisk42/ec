@@ -3,79 +3,86 @@ import os
 from collections import defaultdict
 
 example_logos = {
-    "a small triangle",
-    "a small 5 gon",
-    "a small 9 gon",
-    "a medium 6 gon",
-    "a medium 7 gon",
-    
-    "a small circle",
-    "a small semicircle",
-    "a medium circle",
-    "a medium semicircle",
-    "a big circle",
-    "a big semicircle",
-    
-    "4 small square s in a row",
-    "6 small 5 gon s in a row",
-    "5 medium semicircle s in a row",
+    # "a small triangle",
+    # "a small 5 gon",
+    # "a small 9 gon",
+    # "a medium 6 gon",
+    # "a medium 7 gon",
     # 
-    "3 concentric square s",
-    "2 concentric circle s",
-    "8 concentric circle s",
+    # "a small circle",
+    # "a small semicircle",
+    # "a medium circle",
+    # "a medium semicircle",
+    # "a big circle",
+    # "a big semicircle",
     # 
-    "a 4 stepped staircase_copy_0",
-    "a 7 stepped staircase",
-    "a 4 stepped zigzag",
-    "a 5 stepped zigzag",
+    # "4 small square s in a row",
+    # "6 small 5 gon s in a row",
+    # "5 medium semicircle s in a row",
+    # # 
+    # "3 concentric square s",
+    # "2 concentric circle s",
+    # "8 concentric circle s",
+    # # 
+    # "a 4 stepped staircase_copy_0",
+    # "a 7 stepped staircase",
+    # "a 9 pointed star",
+    # "a 4 stepped zigzag",
+    # "a 5 stepped zigzag",
+    # 
+    # "a greek spiral with 6 turns",
     
-    "a greek spiral with 6 turns",
-    "a greek spiral with 8 turns",
-    # 
-    "a small triangle connected by a big line to a medium triangle",
-    "a medium square next to a medium triangle",
-    "a small circle next to a small 6 gon",
-    "a small 9 gon next to a medium square",
+    # "a greek spiral with 8 turns",
+    # # 
+    # "a small triangle connected by a big line to a medium triangle",
+    # "a medium square next to a medium triangle",
+    # "a small circle next to a small 6 gon",
+    # "a small 9 gon next to a medium square",
+    # # 
     # 
     
-    "7 sided snowflake with a short line and a small square as arms",
-    "7 sided snowflake with a short space and a small square as arms",
-    "8 sided snowflake with a short space and a short line and a short space and a small 5 gon as arms",
-    "8 sided snowflake with a medium line and a small 9 gon as arms",
-    "7 sided snowflake with a medium circle and a small 5 gon as arms",
-    "6 sided snowflake with a small 5 gon and a short line as arms",
+    "7 sided snowflake with a short space and a short line and a short space and a small triangle as arms"
+    # "7 sided snowflake with a short line and a small square as arms",
+    # "7 sided snowflake with a short space and a small square as arms",
+    # "8 sided snowflake with a short space and a short line and a short space and a small 5 gon as arms",
+    # "8 sided snowflake with a medium line and a small 9 gon as arms",
+    # "7 sided snowflake with a medium circle and a small 5 gon as arms",
+    # "6 sided snowflake with a small 5 gon and a short line as arms",
     # "8 sided snowflake with a small triangle as arms",
     # "7 sided snowflake with a short line and a small 5 gon as arms",
     # "5 sided snowflake with a short line and a medium circle as arms",
     # "7 sided snowflake with a short space and a short line and a short space and a small 5 gon as arms",
     # "6 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms",
 }
-def get_example_tasks(frontiers, max_translations, max_tasks=10):
-    top_tokens = defaultdict(list) 
-    frontier_programs = {}   
-    for f in frontiers:
-        for e in frontiers[f].entries:
-            ml_tokens = e.tokens
-            for ml_token in ml_tokens:
-                if ml_token in max_translations:
-                    for (word, _) in max_translations[ml_token]:
-                        if word in f.name:
-                            if len(top_tokens[ml_token]) < max_tasks:
-                                if f.name not in top_tokens[ml_token]:
-                                    top_tokens[ml_token].append(f.name)
-                                    frontier_programs[(f.name, ml_token)] = e.program
-    # examples = example_logos
-    # frontier_programs = {}
-    # top_tokens = defaultdict(list)  
-    # 
+def get_example_tasks(frontiers, max_translations, max_tasks=10, word_in_name=False):
+    # top_tokens = defaultdict(list) 
+    # frontier_programs = {}   
     # for f in frontiers:
-    #     if f.name in examples:
-    #         print("_".join(f.name.split())) # So we can find it
-    #         for e in frontiers[f].entries:
-    #             tokens = e.tokens
-    #             for t in tokens:
-    #                 top_tokens[t].append(f.name)
-    #                 frontier_programs[(f.name, t)] = e.program
+    #     for e in frontiers[f].entries:
+    #         ml_tokens = e.tokens
+    #         for ml_token in ml_tokens:
+    #             if ml_token in max_translations:
+    #                 for (word, _) in max_translations[ml_token]:
+    #                     if word in f.name or not word_in_name:
+    #                         if len(top_tokens[ml_token]) < max_tasks:
+    #                             if f.name not in top_tokens[ml_token]:
+    #                                 top_tokens[ml_token].append(f.name)
+    #                                 frontier_programs[(f.name, ml_token)] = e.program
+    examples = example_logos
+    frontier_programs = {}
+    top_tokens = defaultdict(list)  
+    
+    for f in list(frontiers)[:50]:
+        if f.name in examples or True:
+            print("_".join(f.name.split())) # So we can find it
+            # Ground truth programs
+            for e in frontiers[f].entries:
+                tokens = e.tokens
+                for t in tokens:
+                    top_tokens[t].append(f.name)
+                    # Ground truth program
+                    # frontier_programs[(f.name, t)] = f.groundTruthProgram
+                    frontier_programs[(f.name, t)] = e.program
     return {
         'tokens_to_tasks': top_tokens,
         'frontiers_to_programs':frontier_programs

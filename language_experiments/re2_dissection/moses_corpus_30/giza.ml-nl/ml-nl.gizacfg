@@ -1,0 +1,107 @@
+adbackoff 0
+c /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/ml-nl-int-train.snt
+compactadtable 1
+compactalignmentformat 0
+coocurrencefile /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/giza.ml-nl/ml-nl.cooc
+corpusfile /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/ml-nl-int-train.snt
+countcutoff 1e-06
+countcutoffal 1e-05
+countincreasecutoff 1e-06
+countincreasecutoffal 1e-05
+countoutputprefix 
+d 
+deficientdistortionforemptyword 0
+depm4 76
+depm5 68
+dictionary 
+dopeggingyn 0
+dumpcount 0
+dumpcountusingwordstring 0
+emalignmentdependencies 2
+emalsmooth 0.2
+emprobforempty 0.4
+emsmoothhmm 2
+hmmdumpfrequency 0
+hmmiterations 5
+l 120-05-18.233500.catwong.log
+log 0
+logfile 120-05-18.233500.catwong.log
+m1 5
+m2 0
+m3 3
+m4 3
+m5 0
+m5p0 -1
+m6 0
+manlexfactor1 0
+manlexfactor2 0
+manlexmaxmultiplicity 20
+maxfertility 10
+maxsentencelength 101
+mh 5
+mincountincrease 1e-07
+ml 101
+model1dumpfrequency 1
+model1iterations 5
+model23smoothfactor 0
+model2dumpfrequency 0
+model2iterations 0
+model345dumpfrequency 0
+model3dumpfrequency 0
+model3iterations 3
+model4iterations 3
+model4smoothfactor 0.4
+model5iterations 0
+model5smoothfactor 0.1
+model6iterations 0
+nbestalignments 0
+ncpus 4
+nodumps 1
+nofiledumpsyn 1
+noiterationsmodel1 5
+noiterationsmodel2 0
+noiterationsmodel3 3
+noiterationsmodel4 3
+noiterationsmodel5 0
+noiterationsmodel6 0
+nsmooth 4
+nsmoothgeneral 0
+numberofiterationsforhmmalignmentmodel 5
+o /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/giza.ml-nl/ml-nl
+onlyaldumps 1
+outputfileprefix /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/giza.ml-nl/ml-nl
+outputpath 
+p 0
+p0 0.999
+peggedcutoff 0.03
+pegging 0
+previousa 
+previousd 
+previousd4 
+previousd42 
+previoushmm 
+previousn 
+previousp0 
+previoust 
+probcutoff 1e-07
+probsmooth 1e-07
+readtableprefix 
+restart 0
+s /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/nl.vcb
+sourcevocabularyclasses /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/nl.vcb.classes
+sourcevocabularyfile /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/nl.vcb
+t /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/ml.vcb
+t1 1
+t2 0
+t2to3 0
+t3 0
+t345 0
+targetvocabularyclasses /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/ml.vcb.classes
+targetvocabularyfile /home/catwong/ec/experimentOutputs/re2/2020-05-18T19-50-59-156776/moses_corpus_30/ml.vcb
+tc 
+testcorpusfile 
+th 0
+transferdumpfrequency 0
+v 0
+verbose 0
+verbosesentence -10

@@ -1,0 +1,16 @@
+digraph {
+	graph [rankdir=RL]
+	subgraph cluster_1 {
+		graph [rank=same]
+		f0 [label=<f0=(λ (x y z) (_rflatten <br /> (_rappend y (_rappend z <br /> (_rrevcdr x)))))>]
+		f3 [label=<f3=(λ (x y z) (_rflatten <br /> (cons x (cons z (cdr <br /> (_rsplit _rdot y))))))>]
+		f1 [label=<f1=(λ (x) (_rsplit _rempty <br /> x))>]
+	}
+	subgraph cluster_2 {
+		graph [rank=same]
+		f4 [label=<f4=(λ (x y z) (_rflatten <br /> (map (λ (u) (_rconcat y <br /> x)) (f1 z))))>]
+		f2 [label=<f2=(λ (x) (if (_rmatch <br /> (_rtail (f1 x)) _e) x))>]
+	}
+	f1 -> f4
+	f1 -> f2
+}

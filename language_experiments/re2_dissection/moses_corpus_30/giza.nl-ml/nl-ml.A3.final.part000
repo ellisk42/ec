@@ -1,0 +1,1254 @@
+# Sentence pair (1) source length 3 target length 11 alignment score : 3.20991e-14
+if the word ends with any letter add w after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 7 8 10 }) _w ({ 9 11 }) 
+# Sentence pair (5) source length 4 target length 11 alignment score : 1.90471e-15
+if the word ends with any letter add w after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) _rappend ({ 3 4 6 7 8 10 }) _w ({ 9 11 }) 
+# Sentence pair (8) source length 7 target length 8 alignment score : 3.80182e-11
+if there is d replace that with y 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 3 }) _rconcat ({ 6 }) _rempty ({ 5 }) if ({ }) _rmatch ({ 7 }) _d ({ 4 }) _y ({ 8 }) 
+# Sentence pair (14) source length 9 target length 13 alignment score : 2.27424e-14
+if the word starts with any letter any letter add f after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ }) car ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _f ({ 11 13 }) car ({ 10 12 }) _rrevcdr ({ }) cdr ({ }) 
+# Sentence pair (18) source length 12 target length 13 alignment score : 2.82352e-17
+if the word starts with any letter any letter add f after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 }) _o ({ }) cons ({ }) car ({ }) _rrevcdr ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ 6 7 8 9 }) _f ({ 11 13 }) car ({ 10 12 }) _rrevcdr ({ }) cdr ({ }) 
+# Sentence pair (24) source length 4 target length 9 alignment score : 7.6679e-10
+if there is t replace that with a x 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 5 }) _a ({ 7 8 }) _x ({ 6 9 }) 
+# Sentence pair (28) source length 11 target length 9 alignment score : 1.02041e-12
+if there is t replace that with a x 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) car ({ }) map ({ }) _t ({ 4 }) _rappend ({ }) _i ({ 5 7 }) _rrevcdr ({ }) _rsplit ({ }) _rdot ({ }) _a ({ 8 }) _x ({ 6 9 }) 
+# Sentence pair (32) source length 6 target length 14 alignment score : 5.8725e-16
+if the word starts with any letter any letter replace that with l n 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _n ({ 10 14 }) _l ({ 11 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 12 }) 
+# Sentence pair (35) source length 4 target length 8 alignment score : 5.00984e-11
+if there is e add e before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 }) _e ({ 5 7 }) _e ({ 6 8 }) 
+# Sentence pair (37) source length 5 target length 8 alignment score : 5.38131e-11
+if there is e add e before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _e ({ 4 }) _e ({ 5 7 }) _e ({ 6 8 }) 
+# Sentence pair (42) source length 5 target length 12 alignment score : 1.13852e-14
+if the word starts with any letter replace that with n a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _a ({ 9 10 12 }) _n ({ 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) 
+# Sentence pair (46) source length 5 target length 9 alignment score : 1.29143e-08
+if there is any letter replace that with k 
+NULL ({ }) _rflatten ({ 1 }) map ({ 2 3 4 5 }) _k ({ 7 9 }) _rsplit ({ }) _rempty ({ 6 8 }) 
+# Sentence pair (50) source length 10 target length 13 alignment score : 2.3454e-14
+if the word starts with any letter any letter add b after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) car ({ }) _rrevcdr ({ 5 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ }) _b ({ 11 13 }) car ({ 10 12 }) _rrevcdr ({ }) cdr ({ 6 7 8 9 }) 
+# Sentence pair (57) source length 6 target length 14 alignment score : 5.6842e-17
+if the word ends with any letter any letter replace that with o u 
+NULL ({ 12 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 3 4 5 6 7 8 9 }) _u ({ 10 14 }) _o ({ 11 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rrevcdr ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) 
+# Sentence pair (61) source length 4 target length 9 alignment score : 4.36678e-10
+if there is p replace that with f w 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 5 }) _f ({ 8 }) _w ({ 6 9 }) 
+# Sentence pair (63) source length 5 target length 9 alignment score : 4.93271e-10
+if there is p replace that with f w 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _p ({ 4 6 }) _f ({ 8 }) _w ({ 7 9 }) 
+# Sentence pair (67) source length 4 target length 11 alignment score : 5.04657e-15
+if the word ends with any letter add d after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) _rappend ({ 3 4 6 7 8 10 }) _d ({ 9 11 }) 
+# Sentence pair (71) source length 3 target length 10 alignment score : 1.07434e-11
+if there is any letter replace that with q j 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _j ({ 6 10 }) _q ({ 7 9 }) 
+# Sentence pair (73) source length 4 target length 10 alignment score : 5.92016e-12
+if there is any letter replace that with q j 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _j ({ 7 10 }) _q ({ 9 }) 
+# Sentence pair (77) source length 5 target length 8 alignment score : 2.09564e-09
+if there is g add q before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _g ({ 4 5 }) _q ({ 6 8 }) _g ({ 7 }) 
+# Sentence pair (80) source length 5 target length 8 alignment score : 7.29304e-10
+if there is g add q before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 5 }) _q ({ 6 8 }) _g ({ 7 }) 
+# Sentence pair (85) source length 5 target length 8 alignment score : 1.52503e-09
+if there is c add d before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _c ({ 4 5 }) _d ({ 6 8 }) _c ({ 7 }) 
+# Sentence pair (92) source length 5 target length 9 alignment score : 3.44447e-10
+if there is u replace that with l q 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _u ({ 4 7 }) _l ({ 5 8 }) _q ({ 6 9 }) 
+# Sentence pair (96) source length 8 target length 11 alignment score : 5.38005e-16
+if the word starts with consonant e add l before that 
+NULL ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 3 4 6 }) _e ({ 7 }) cdr ({ }) _rsplit ({ }) _rempty ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 8 10 }) _l ({ 9 11 }) 
+# Sentence pair (102) source length 3 target length 12 alignment score : 6.72007e-16
+if the word ends with any letter replace that with t m 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 10 }) _m ({ 9 12 }) _t ({ 8 11 }) 
+# Sentence pair (105) source length 8 target length 12 alignment score : 3.32455e-15
+if the word ends with any letter replace that with t m 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ }) _m ({ 12 }) _rappend ({ 2 3 4 }) _t ({ 9 11 }) _rrevcdr ({ 5 6 7 10 }) _rsplit ({ }) _rempty ({ 8 }) 
+# Sentence pair (111) source length 5 target length 12 alignment score : 3.47184e-16
+if the word starts with any letter replace that with e e 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _e ({ 8 11 }) _e ({ 9 12 }) 
+# Sentence pair (116) source length 5 target length 13 alignment score : 6.08787e-18
+if the word starts with any letter any letter add j before that 
+NULL ({ }) _rflatten ({ 1 }) cons ({ 2 3 4 6 7 8 9 10 12 }) _j ({ 11 13 }) _rsplit ({ }) _b ({ 5 }) 
+# Sentence pair (124) source length 4 target length 10 alignment score : 8.79308e-12
+if there is any letter replace that with h s 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _s ({ 7 10 }) _h ({ 9 }) 
+# Sentence pair (128) source length 5 target length 12 alignment score : 1.48473e-14
+if the word starts with any letter replace that with w i 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _i ({ 8 10 12 }) _w ({ 9 11 }) 
+# Sentence pair (132) source length 3 target length 8 alignment score : 9.43814e-09
+if there is r replace that with j 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _j ({ 6 8 }) 
+# Sentence pair (133) source length 6 target length 8 alignment score : 1.99582e-11
+if there is r replace that with j 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 3 }) if ({ }) _rmatch ({ 7 }) _rnot ({ }) _r ({ 4 5 }) _j ({ 6 8 }) 
+# Sentence pair (136) source length 4 target length 9 alignment score : 2.51289e-10
+if there is t replace that with t x 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) _t ({ 5 8 }) _x ({ 6 9 }) 
+# Sentence pair (139) source length 6 target length 9 alignment score : 2.36877e-10
+if there is t replace that with t x 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _rconcat ({ 6 }) _t ({ 8 }) _x ({ 9 }) 
+# Sentence pair (143) source length 5 target length 12 alignment score : 2.55657e-13
+if the word starts with any letter replace that with y w 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _w ({ 9 12 }) _y ({ 8 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) 
+# Sentence pair (146) source length 4 target length 12 alignment score : 1.59039e-14
+if the word starts with any letter replace that with c v 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _v ({ 8 12 }) _c ({ 9 11 }) 
+# Sentence pair (150) source length 5 target length 12 alignment score : 1.91868e-14
+if the word starts with any letter replace that with c v 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _v ({ 8 12 }) _c ({ 9 11 }) 
+# Sentence pair (154) source length 5 target length 9 alignment score : 8.13531e-09
+if there is b replace that with y a 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _b ({ 4 }) _rconcat ({ 6 }) _y ({ 5 8 }) _a ({ 7 9 }) 
+# Sentence pair (158) source length 6 target length 9 alignment score : 6.96504e-09
+if there is t replace that with d q 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _d ({ 8 }) _q ({ 7 9 }) 
+# Sentence pair (162) source length 6 target length 12 alignment score : 3.61387e-14
+if the word starts with any letter replace that with q a 
+NULL ({ 5 }) _rflatten ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _rsplit ({ }) _rempty ({ 8 }) _a ({ 10 12 }) _q ({ 9 11 }) 
+# Sentence pair (166) source length 4 target length 9 alignment score : 1.55216e-10
+if there is d replace that with c t 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 6 }) _c ({ 8 }) _t ({ 5 9 }) 
+# Sentence pair (167) source length 6 target length 9 alignment score : 1.09136e-10
+if there is d replace that with c t 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _c ({ 8 }) _t ({ 9 }) 
+# Sentence pair (168) source length 5 target length 9 alignment score : 9.79284e-11
+if there is d replace that with c t 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _d ({ 4 6 }) _c ({ 8 }) _t ({ 5 9 }) 
+# Sentence pair (169) source length 6 target length 9 alignment score : 3.96999e-11
+if there is d replace that with c t 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _rconcat ({ 6 }) _c ({ 8 }) _t ({ 9 }) 
+# Sentence pair (170) source length 9 target length 9 alignment score : 8.86585e-13
+if there is d replace that with c t 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ }) _d ({ 6 }) _c ({ 8 }) _t ({ 5 }) _rconcat ({ 7 }) _e ({ }) _t ({ 9 }) 
+# Sentence pair (175) source length 5 target length 12 alignment score : 3.94268e-14
+if the word starts with any letter replace that with g a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _a ({ 9 10 12 }) _g ({ 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) 
+# Sentence pair (179) source length 6 target length 9 alignment score : 8.36121e-10
+if there is any letter replace that with p 
+NULL ({ }) _rflatten ({ 1 }) map ({ 2 3 4 5 }) _p ({ 9 }) _rsplit ({ }) _rnot ({ 6 8 }) _b ({ 7 }) 
+# Sentence pair (183) source length 10 target length 12 alignment score : 1.09529e-15
+if the word starts with consonant any letter replace that with f 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ }) _e ({ }) _e ({ }) _o ({ 5 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ 7 8 }) _rempty ({ 9 11 }) _f ({ 10 12 }) 
+# Sentence pair (188) source length 7 target length 9 alignment score : 3.21448e-14
+if there is l replace that with n k 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _l ({ 4 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ }) _l ({ }) _n ({ 7 8 }) _k ({ 6 9 }) _y ({ 5 }) 
+# Sentence pair (192) source length 5 target length 8 alignment score : 6.94024e-10
+if there is t add y after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _t ({ 4 5 }) _t ({ 7 }) _y ({ 6 8 }) 
+# Sentence pair (194) source length 5 target length 8 alignment score : 1.92656e-08
+if there is t add y after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) _rconcat ({ 5 }) _t ({ 7 }) _y ({ 6 8 }) 
+# Sentence pair (196) source length 4 target length 12 alignment score : 5.47715e-15
+if the word starts with any letter replace that with i r 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _r ({ 9 12 }) _i ({ 8 11 }) 
+# Sentence pair (199) source length 5 target length 12 alignment score : 1.10843e-15
+if the word starts with any letter replace that with i r 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _r ({ 9 12 }) _i ({ 8 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) 
+# Sentence pair (205) source length 10 target length 10 alignment score : 2.8162e-15
+if there is any letter replace that with r v 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ }) _r ({ 9 }) _v ({ 8 }) cons ({ }) _rconcat ({ 7 }) _r ({ 6 }) _v ({ 10 }) cdr ({ }) 
+# Sentence pair (210) source length 6 target length 13 alignment score : 4.40316e-17
+if the word ends with any letter consonant replace that with d t 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 8 }) _t ({ 13 }) _d ({ 10 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 9 }) _rrevcdr ({ 11 }) 
+# Sentence pair (214) source length 6 target length 8 alignment score : 1.04633e-09
+if there is p add p after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _rconcat ({ 5 }) _p ({ 7 }) _p ({ 6 8 }) 
+# Sentence pair (218) source length 4 target length 11 alignment score : 1.47594e-13
+if the word starts with any letter add f before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 6 7 8 10 }) _f ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) 
+# Sentence pair (225) source length 5 target length 10 alignment score : 8.28693e-14
+if there is any letter replace that with f n 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 4 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 3 }) _n ({ 6 8 10 }) _rconcat ({ 7 }) _f ({ 9 }) 
+# Sentence pair (231) source length 3 target length 11 alignment score : 1.56601e-14
+if the word ends with any letter add p after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 7 8 10 }) _p ({ 9 11 }) 
+# Sentence pair (234) source length 4 target length 11 alignment score : 1.40177e-15
+if the word ends with any letter add p after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) _rappend ({ 3 4 6 7 8 10 }) _p ({ 9 11 }) 
+# Sentence pair (237) source length 6 target length 8 alignment score : 3.86798e-09
+if the word ends with s remove that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 4 5 }) _s ({ 6 8 }) _rtail ({ 3 7 }) _rrevcdr ({ }) 
+# Sentence pair (241) source length 4 target length 8 alignment score : 1.39416e-10
+if there is r add b before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _b ({ 6 8 }) _r ({ 7 }) 
+# Sentence pair (242) source length 5 target length 8 alignment score : 1.11662e-10
+if there is r add b before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _r ({ 4 5 }) _b ({ 6 8 }) _r ({ 7 }) 
+# Sentence pair (246) source length 4 target length 9 alignment score : 6.0669e-10
+if there is t replace that with f v 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) _f ({ 6 8 }) _v ({ 5 9 }) 
+# Sentence pair (249) source length 5 target length 9 alignment score : 4.41716e-10
+if there is t replace that with f v 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 5 }) _rconcat ({ 6 }) _f ({ 8 }) _v ({ 7 9 }) 
+# Sentence pair (253) source length 6 target length 9 alignment score : 2.77071e-10
+if there is o replace that with c g 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _c ({ 8 }) _g ({ 9 }) 
+# Sentence pair (257) source length 4 target length 6 alignment score : 7.35633e-09
+if there is m remove that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 2 3 }) _m ({ 4 }) _rempty ({ 5 6 }) 
+# Sentence pair (259) source length 4 target length 6 alignment score : 2.04507e-08
+if there is m remove that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _m ({ 4 }) _rempty ({ 6 }) _rempty ({ 5 }) 
+# Sentence pair (261) source length 4 target length 9 alignment score : 2.09248e-08
+if there is l replace that with v q 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _l ({ 4 6 }) _v ({ 5 8 }) _q ({ 7 9 }) 
+# Sentence pair (265) source length 5 target length 9 alignment score : 4.23464e-09
+if there is l replace that with v q 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _l ({ 4 6 }) _v ({ 5 8 }) _q ({ 7 9 }) 
+# Sentence pair (269) source length 5 target length 11 alignment score : 7.32143e-12
+if the word starts with any letter replace that with b 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _b ({ 9 11 }) cdr ({ 5 6 7 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) 
+# Sentence pair (273) source length 5 target length 9 alignment score : 1.75269e-10
+if there is c replace that with k b 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _c ({ 4 }) _k ({ 6 8 }) _b ({ 7 9 }) 
+# Sentence pair (277) source length 4 target length 8 alignment score : 8.22716e-10
+if there is n replace that with q 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 2 3 }) _n ({ 4 5 }) _q ({ 6 8 }) 
+# Sentence pair (279) source length 4 target length 8 alignment score : 2.65865e-08
+if there is n replace that with q 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _n ({ 4 6 }) _q ({ 8 }) _rempty ({ 5 7 }) 
+# Sentence pair (283) source length 6 target length 9 alignment score : 2.96908e-10
+if there is e replace that with t u 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _t ({ 8 }) _u ({ 9 }) 
+# Sentence pair (287) source length 5 target length 12 alignment score : 3.54178e-14
+if the word starts with any letter replace that with r m 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _m ({ 9 12 }) _r ({ 8 11 }) 
+# Sentence pair (291) source length 4 target length 12 alignment score : 2.25825e-14
+if the word starts with any letter replace that with b w 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _w ({ 9 12 }) _b ({ 8 11 }) 
+# Sentence pair (294) source length 7 target length 12 alignment score : 1.12231e-18
+if the word starts with any letter replace that with b w 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 5 6 7 }) _b ({ 9 11 }) cons ({ }) _w ({ 10 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) cdr ({ }) 
+# Sentence pair (298) source length 7 target length 11 alignment score : 5.81647e-15
+if the word ends with consonant replace that with a o 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _o ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 7 }) _rappend ({ }) _a ({ 6 8 10 }) _rrevcdr ({ }) 
+# Sentence pair (304) source length 4 target length 13 alignment score : 5.85872e-19
+if the word ends with any letter any letter add f after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 10 12 }) _f ({ 11 13 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 6 7 8 9 }) 
+# Sentence pair (309) source length 5 target length 11 alignment score : 5.46389e-11
+if the word starts with any letter add d after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _d ({ 9 11 }) car ({ 8 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) 
+# Sentence pair (313) source length 5 target length 8 alignment score : 3.3968e-13
+if there is n add e after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _n ({ 8 }) _n ({ 4 }) _e ({ 5 6 7 }) 
+# Sentence pair (317) source length 4 target length 8 alignment score : 2.79659e-11
+if there is d add i after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 5 }) _d ({ 8 }) _i ({ 6 7 }) 
+# Sentence pair (321) source length 8 target length 8 alignment score : 1.22241e-11
+if there is d add i after that 
+NULL ({ }) if ({ }) _rmatch ({ }) _s ({ 5 }) _s ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 }) _d ({ 8 }) _i ({ 6 }) 
+# Sentence pair (328) source length 5 target length 13 alignment score : 8.07842e-14
+if the word starts with any letter any letter replace that with w 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _rempty ({ 10 12 }) _w ({ 11 13 }) 
+# Sentence pair (332) source length 8 target length 10 alignment score : 6.20797e-12
+if the word ends with consonant replace that with w 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 6 }) _rtail ({ 3 4 }) _e ({ 8 9 }) _rappend ({ }) _w ({ 7 10 }) _rrevcdr ({ }) 
+# Sentence pair (338) source length 5 target length 12 alignment score : 2.0424e-13
+if the word starts with any letter replace that with y c 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _c ({ 9 12 }) _y ({ 8 11 }) 
+# Sentence pair (341) source length 5 target length 12 alignment score : 4.99769e-14
+if the word starts with any letter replace that with y c 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _c ({ 9 12 }) _y ({ 8 11 }) 
+# Sentence pair (344) source length 5 target length 10 alignment score : 6.10238e-11
+if there is any letter replace that with y t 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _rdot ({ 4 5 7 }) _y ({ 6 9 }) _t ({ 10 }) 
+# Sentence pair (348) source length 4 target length 10 alignment score : 4.72845e-12
+if there is any letter replace that with n i 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 2 3 4 5 }) _i ({ 7 8 10 }) _n ({ 6 9 }) 
+# Sentence pair (352) source length 3 target length 10 alignment score : 2.99537e-12
+if there is any letter replace that with w t 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _t ({ 7 10 }) _w ({ 6 9 }) 
+# Sentence pair (353) source length 4 target length 10 alignment score : 4.85134e-12
+if there is any letter replace that with w t 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 2 3 4 5 }) _t ({ 7 10 }) _w ({ 6 9 }) 
+# Sentence pair (357) source length 3 target length 8 alignment score : 2.64091e-09
+if there is m replace that with l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _m ({ 4 5 }) _l ({ 6 8 }) 
+# Sentence pair (359) source length 4 target length 8 alignment score : 4.52771e-09
+if there is m replace that with l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _m ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _l ({ 6 8 }) 
+# Sentence pair (363) source length 4 target length 12 alignment score : 3.06248e-13
+if the word ends with any letter replace that with i y 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _y ({ 9 12 }) _i ({ 8 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) 
+# Sentence pair (367) source length 6 target length 11 alignment score : 2.38569e-14
+if the word starts with consonant replace that with g u 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _u ({ 9 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) _u ({ 8 11 }) _g ({ 7 10 }) 
+# Sentence pair (371) source length 10 target length 11 alignment score : 4.17793e-15
+if the word starts with consonant replace that with g u 
+NULL ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ }) _u ({ 7 }) _rsplit ({ }) _rempty ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _u ({ 8 9 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) _u ({ 11 }) _g ({ 10 }) 
+# Sentence pair (380) source length 4 target length 10 alignment score : 2.32664e-10
+if there is any letter replace that with u e 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 8 }) _u ({ 6 9 }) _e ({ 7 10 }) 
+# Sentence pair (384) source length 4 target length 8 alignment score : 4.63053e-09
+if there is t replace that with n 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _n ({ 6 8 }) 
+# Sentence pair (388) source length 5 target length 8 alignment score : 1.16758e-09
+if there is s add x after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _s ({ 4 5 }) _s ({ 7 }) _x ({ 6 8 }) 
+# Sentence pair (392) source length 4 target length 9 alignment score : 9.57938e-11
+if there is e replace that with i m 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 6 }) _i ({ 5 8 }) _m ({ 9 }) 
+# Sentence pair (395) source length 6 target length 9 alignment score : 1.83009e-10
+if there is e replace that with i m 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _rconcat ({ 6 }) _i ({ 5 8 }) _m ({ 9 }) 
+# Sentence pair (399) source length 14 target length 12 alignment score : 1.32383e-17
+if the word ends with e any letter replace that with t 
+NULL ({ }) if ({ 2 }) _rmatch ({ 5 }) _rtail ({ 3 4 }) _rrevcdr ({ }) cdr ({ }) cdr ({ 7 8 }) _rsplit ({ }) _rempty ({ 9 11 }) _e ({ 6 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ }) _t ({ 12 }) _rrevcdr ({ }) _rrevcdr ({ }) 
+# Sentence pair (408) source length 4 target length 13 alignment score : 3.66767e-18
+if the word starts with any letter any letter add y before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 10 12 }) _y ({ 11 13 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 6 7 8 9 }) 
+# Sentence pair (411) source length 5 target length 12 alignment score : 6.20027e-15
+if the word starts with any letter replace that with k e 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _e ({ 9 12 }) _k ({ 8 11 }) 
+# Sentence pair (415) source length 4 target length 11 alignment score : 3.56403e-13
+if the word starts with any letter replace that with h 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _h ({ 9 11 }) cdr ({ 5 6 7 8 }) 
+# Sentence pair (421) source length 5 target length 12 alignment score : 3.36098e-14
+if the word starts with any letter replace that with x e 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _e ({ 9 12 }) _x ({ 8 11 }) 
+# Sentence pair (425) source length 4 target length 9 alignment score : 7.79728e-10
+if there is r replace that with m l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _m ({ 8 }) _l ({ 6 9 }) 
+# Sentence pair (428) source length 8 target length 9 alignment score : 4.73144e-10
+if there is r replace that with m l 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _rflatten ({ }) _rsplit ({ }) _u ({ 7 }) _rconcat ({ 6 }) _m ({ 8 }) _l ({ 9 }) 
+# Sentence pair (432) source length 6 target length 9 alignment score : 8.42775e-10
+if there is r replace that with e d 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _e ({ 7 8 }) _d ({ 9 }) 
+# Sentence pair (436) source length 5 target length 8 alignment score : 3.84737e-10
+if there is c add e after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _c ({ 4 5 }) _c ({ 8 }) _e ({ 6 7 }) 
+# Sentence pair (439) source length 5 target length 8 alignment score : 1.01351e-10
+if there is c add e after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _c ({ 4 5 }) _c ({ 8 }) _e ({ 6 7 }) 
+# Sentence pair (443) source length 4 target length 10 alignment score : 3.556e-11
+if the word ends with consonant replace that with r 
+NULL ({ 5 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _r ({ 7 10 }) _rempty ({ 9 }) 
+# Sentence pair (445) source length 4 target length 12 alignment score : 2.86349e-15
+if the word starts with any letter replace that with m i 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _i ({ 9 10 12 }) _m ({ 8 11 }) 
+# Sentence pair (448) source length 5 target length 12 alignment score : 2.291e-15
+if the word starts with any letter replace that with m i 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _i ({ 9 10 12 }) _m ({ 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 8 }) 
+# Sentence pair (452) source length 5 target length 11 alignment score : 3.35797e-13
+if the word ends with consonant replace that with o c 
+NULL ({ 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 2 3 4 5 6 }) _rconcat ({ 8 }) _o ({ 7 10 }) _c ({ 11 }) 
+# Sentence pair (456) source length 4 target length 9 alignment score : 5.08713e-11
+if there is any letter add q before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 2 3 4 5 }) _rconcat ({ 6 8 }) _q ({ 7 9 }) 
+# Sentence pair (459) source length 4 target length 9 alignment score : 1.0042e-11
+if there is any letter add q before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 4 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 3 }) _rconcat ({ 6 8 }) _q ({ 7 9 }) 
+# Sentence pair (463) source length 10 target length 12 alignment score : 6.62025e-16
+if the word starts with any letter replace that with j o 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _rsplit ({ }) _rdot ({ 5 6 7 }) _rflatten ({ }) cons ({ }) _j ({ 10 }) cdr ({ }) _o ({ 9 12 }) _j ({ 8 11 }) 
+# Sentence pair (467) source length 7 target length 10 alignment score : 2.12382e-15
+if the word ends with consonant add j after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 7 9 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 6 }) _o ({ 10 }) _rrevcdr ({ }) _rempty ({ 5 }) _j ({ 8 }) 
+# Sentence pair (471) source length 5 target length 9 alignment score : 8.66663e-11
+if there is s replace that with t q 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _s ({ 4 }) _t ({ 5 8 }) _q ({ 6 9 }) 
+# Sentence pair (474) source length 5 target length 9 alignment score : 1.14863e-10
+if there is s replace that with t q 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _s ({ 4 }) _t ({ 8 }) _q ({ 6 9 }) 
+# Sentence pair (478) source length 8 target length 10 alignment score : 3.04546e-12
+if the word ends with consonant add p after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) map ({ }) if ({ 2 }) _rmatch ({ 5 6 }) _rtail ({ 3 4 }) _e ({ 7 9 }) _rappend ({ }) _p ({ 8 10 }) 
+# Sentence pair (482) source length 4 target length 10 alignment score : 2.0788e-11
+if there is any letter replace that with g i 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _i ({ 7 8 10 }) _g ({ 9 }) 
+# Sentence pair (486) source length 4 target length 12 alignment score : 1.43687e-14
+if the word ends with any letter replace that with o m 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _m ({ 9 12 }) _o ({ 8 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) 
+# Sentence pair (490) source length 4 target length 11 alignment score : 1.11975e-12
+if the word ends with consonant replace that with n a 
+NULL ({ 5 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _n ({ 7 10 }) _a ({ 9 11 }) 
+# Sentence pair (494) source length 5 target length 11 alignment score : 3.91375e-13
+if the word ends with consonant replace that with n a 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 2 3 4 5 6 }) _rconcat ({ 8 }) _n ({ 7 10 }) _a ({ 9 11 }) 
+# Sentence pair (500) source length 3 target length 10 alignment score : 3.20988e-11
+if there is any letter replace that with h x 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _x ({ 7 10 }) _h ({ 6 9 }) 
+# Sentence pair (502) source length 10 target length 10 alignment score : 9.90407e-12
+if there is any letter replace that with h x 
+NULL ({ }) _rflatten ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ 7 }) _h ({ 6 9 }) _x ({ 10 }) _rappend ({ }) _d ({ }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 8 }) 
+# Sentence pair (506) source length 5 target length 12 alignment score : 5.26121e-14
+if the word starts with any letter replace that with r r 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _r ({ 9 12 }) _r ({ 8 11 }) 
+# Sentence pair (510) source length 3 target length 8 alignment score : 1.58666e-08
+if there is g replace that with c 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 5 }) _c ({ 6 8 }) 
+# Sentence pair (512) source length 4 target length 8 alignment score : 1.49219e-08
+if there is g replace that with c 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _c ({ 6 8 }) 
+# Sentence pair (515) source length 4 target length 12 alignment score : 1.86883e-14
+if the word starts with any letter replace that with g b 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _b ({ 9 12 }) _g ({ 8 11 }) 
+# Sentence pair (519) source length 5 target length 12 alignment score : 2.2546e-14
+if the word starts with any letter replace that with g b 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _b ({ 9 12 }) _g ({ 8 11 }) 
+# Sentence pair (524) source length 4 target length 8 alignment score : 1.65009e-09
+if there is t replace that with i 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _i ({ 6 7 8 }) 
+# Sentence pair (528) source length 5 target length 10 alignment score : 3.66176e-15
+if the word starts with consonant replace that with i 
+NULL ({ 5 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _i ({ 6 8 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 7 }) cdr ({ }) 
+# Sentence pair (531) source length 6 target length 9 alignment score : 2.2129e-09
+if there is t replace that with l p 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 7 }) _l ({ 6 8 }) _p ({ 9 }) 
+# Sentence pair (535) source length 3 target length 11 alignment score : 3.0505e-15
+if the word ends with consonant replace that with o g 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 9 }) _g ({ 8 11 }) _o ({ 7 10 }) 
+# Sentence pair (539) source length 4 target length 11 alignment score : 1.50803e-15
+if the word ends with consonant replace that with o g 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 9 }) _g ({ 8 11 }) _o ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 7 }) 
+# Sentence pair (543) source length 5 target length 9 alignment score : 2.98528e-09
+if there is a replace that with u c 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _a ({ 4 7 }) _rconcat ({ 6 }) _u ({ 5 8 }) _c ({ 9 }) 
+# Sentence pair (547) source length 6 target length 13 alignment score : 2.89939e-19
+if the word starts with consonant any letter replace that with e a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _a ({ 6 11 13 }) _e ({ 10 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 9 }) cdr ({ 7 8 }) 
+# Sentence pair (553) source length 4 target length 11 alignment score : 8.10538e-15
+if the word ends with any letter add q after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 8 10 }) _q ({ 9 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 7 }) 
+# Sentence pair (557) source length 5 target length 11 alignment score : 2.56896e-14
+if the word starts with consonant replace that with i s 
+NULL ({ 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 }) _s ({ 8 11 }) _i ({ 6 7 10 }) 
+# Sentence pair (560) source length 4 target length 12 alignment score : 3.39857e-15
+if the word starts with any letter replace that with g l 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _l ({ 9 12 }) _g ({ 8 11 }) 
+# Sentence pair (564) source length 10 target length 12 alignment score : 1.14299e-16
+if the word starts with any letter replace that with g l 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _rsplit ({ }) _rdot ({ 6 7 10 }) _rflatten ({ }) cons ({ }) _l ({ 8 }) cdr ({ }) _l ({ 9 12 }) _g ({ 11 }) 
+# Sentence pair (571) source length 4 target length 8 alignment score : 2.26189e-10
+if there is i replace that with m 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 2 3 }) _i ({ 4 6 7 }) _m ({ 5 8 }) 
+# Sentence pair (574) source length 4 target length 8 alignment score : 1.6067e-08
+if there is i replace that with m 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 6 }) _rempty ({ 7 }) _m ({ 5 8 }) 
+# Sentence pair (578) source length 10 target length 10 alignment score : 2.04795e-12
+if there is any letter replace that with j u 
+NULL ({ }) _rflatten ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ 7 }) _j ({ 9 }) _u ({ 6 10 }) _rappend ({ }) _c ({ }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 8 }) 
+# Sentence pair (585) source length 10 target length 11 alignment score : 4.48917e-14
+if the word ends with consonant replace that with i u 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 6 }) _rtail ({ 3 4 }) _e ({ }) _rappend ({ }) _u ({ 7 11 }) _rappend ({ }) _i ({ 8 9 10 }) _rrevcdr ({ }) 
+# Sentence pair (591) source length 5 target length 9 alignment score : 6.64588e-10
+if there is p replace that with a w 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _p ({ 4 6 }) _a ({ 7 8 }) _w ({ 9 }) 
+# Sentence pair (596) source length 5 target length 9 alignment score : 1.79444e-10
+if there is g replace that with u f 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) _g ({ 4 }) _u ({ 5 8 }) _f ({ 6 9 }) 
+# Sentence pair (600) source length 5 target length 12 alignment score : 1.31982e-14
+if the word starts with any letter replace that with a w 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _w ({ 9 12 }) _a ({ 10 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 8 }) 
+# Sentence pair (604) source length 4 target length 12 alignment score : 4.25019e-13
+if the word ends with any letter replace that with r j 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _j ({ 9 12 }) _r ({ 8 11 }) 
+# Sentence pair (609) source length 5 target length 10 alignment score : 6.64376e-11
+if there is any letter replace that with i p 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _rdot ({ 4 5 8 }) _i ({ 6 9 }) _p ({ 7 10 }) 
+# Sentence pair (616) source length 9 target length 10 alignment score : 5.06307e-13
+if there is any letter replace that with n g 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ }) _n ({ 9 }) _g ({ 6 }) map ({ }) _rconcat ({ 7 }) _n ({ 8 }) _g ({ 10 }) 
+# Sentence pair (621) source length 6 target length 11 alignment score : 1.7587e-11
+if the word starts with any letter add o after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _o ({ 9 11 }) car ({ 8 10 }) _rrevcdr ({ 5 }) _rrevcdr ({ }) 
+# Sentence pair (626) source length 5 target length 12 alignment score : 6.53619e-15
+if the word starts with any letter replace that with x i 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _i ({ 9 10 12 }) _x ({ 8 11 }) 
+# Sentence pair (631) source length 5 target length 11 alignment score : 4.28468e-16
+if the word starts with consonant replace that with q i 
+NULL ({ 9 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 }) _i ({ 6 7 11 }) _q ({ 8 10 }) 
+# Sentence pair (635) source length 6 target length 13 alignment score : 9.13769e-17
+if the word ends with any letter any letter replace that with j 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _j ({ 11 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) _rrevcdr ({ }) _rrevcdr ({ 6 7 8 9 12 }) 
+# Sentence pair (641) source length 7 target length 10 alignment score : 2.53981e-12
+if the word ends with consonant replace that with i 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _i ({ 7 10 }) _rrevcdr ({ }) _rsplit ({ 6 }) _rnot ({ 5 9 }) _m ({ 8 }) 
+# Sentence pair (650) source length 12 target length 12 alignment score : 1.3106e-16
+if the word starts with any letter replace that with e s 
+NULL ({ }) _rflatten ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _rsplit ({ }) _rempty ({ 5 }) _rflatten ({ }) cons ({ }) _e ({ }) cdr ({ 6 7 }) _rsplit ({ }) _rempty ({ 8 10 }) _s ({ 12 }) _e ({ 9 11 }) 
+# Sentence pair (657) source length 4 target length 8 alignment score : 1.38121e-09
+if there is r add q after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _r ({ 7 }) _q ({ 6 8 }) 
+# Sentence pair (659) source length 5 target length 8 alignment score : 2.67848e-09
+if there is r add q after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _r ({ 4 5 }) _r ({ 7 }) _q ({ 6 8 }) 
+# Sentence pair (661) source length 5 target length 8 alignment score : 2.79521e-10
+if there is r add q after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _r ({ 7 }) _q ({ 6 8 }) 
+# Sentence pair (665) source length 4 target length 8 alignment score : 1.804e-09
+if there is u replace that with b 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _u ({ 4 5 }) _b ({ 6 8 }) 
+# Sentence pair (669) source length 6 target length 14 alignment score : 2.19873e-16
+if the word starts with any letter any letter replace that with e s 
+NULL ({ 5 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _s ({ 14 }) _e ({ 11 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) 
+# Sentence pair (672) source length 4 target length 9 alignment score : 5.06153e-09
+if there is r replace that with v a 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) _v ({ 6 8 }) _a ({ 7 9 }) 
+# Sentence pair (674) source length 6 target length 9 alignment score : 2.99572e-10
+if there is r replace that with v a 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _v ({ 7 8 }) _a ({ 9 }) 
+# Sentence pair (678) source length 4 target length 8 alignment score : 7.81568e-09
+if there is i replace that with v 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _v ({ 6 8 }) 
+# Sentence pair (681) source length 4 target length 8 alignment score : 2.85132e-09
+if there is i replace that with v 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _v ({ 6 8 }) 
+# Sentence pair (682) source length 3 target length 9 alignment score : 2.62299e-11
+if there is any letter add l before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 3 4 5 }) _rconcat ({ 6 8 }) _l ({ 7 9 }) 
+# Sentence pair (686) source length 4 target length 9 alignment score : 9.38066e-12
+if there is any letter add l before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 4 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 3 }) _rconcat ({ 6 8 }) _l ({ 7 9 }) 
+# Sentence pair (690) source length 6 target length 11 alignment score : 2.89166e-14
+if the word ends with consonant replace that with o y 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 2 3 4 5 6 }) _rconcat ({ 8 }) _o ({ 9 10 }) _y ({ 7 11 }) 
+# Sentence pair (694) source length 13 target length 14 alignment score : 2.69015e-19
+if the word starts with any letter any letter replace that with f s 
+NULL ({ 5 }) _rflatten ({ 1 }) cons ({ 2 3 4 }) _f ({ 11 13 }) cdr ({ 6 7 8 9 }) _rsplit ({ }) _rempty ({ 10 }) _rflatten ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ }) _rsplit ({ }) _rempty ({ 12 }) _s ({ 14 }) _s ({ }) 
+# Sentence pair (699) source length 5 target length 13 alignment score : 1.4922e-13
+if the word starts with any letter any letter replace that with q 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _rempty ({ 10 12 }) _q ({ 11 13 }) 
+# Sentence pair (701) source length 6 target length 13 alignment score : 1.88987e-15
+if the word starts with any letter any letter replace that with q 
+NULL ({ 5 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _q ({ 11 13 }) cdr ({ 6 7 8 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) cdr ({ }) 
+# Sentence pair (705) source length 6 target length 14 alignment score : 3.37711e-18
+if the word ends with any letter any letter replace that with r q 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 3 4 5 6 7 8 9 12 }) _q ({ 11 14 }) _r ({ 10 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rrevcdr ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) 
+# Sentence pair (708) source length 9 target length 14 alignment score : 2.24724e-16
+if the word ends with any letter any letter replace that with b j 
+NULL ({ 5 }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _j ({ 14 }) _rappend ({ }) _b ({ 11 13 }) _rrevcdr ({ 6 7 8 9 }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 10 12 }) 
+# Sentence pair (712) source length 4 target length 9 alignment score : 3.5522e-10
+if there is c replace that with n m 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _c ({ 4 6 }) _n ({ 5 8 }) _m ({ 9 }) 
+# Sentence pair (713) source length 5 target length 9 alignment score : 2.73174e-10
+if there is c replace that with n m 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _c ({ 4 6 }) _n ({ 5 8 }) _m ({ 9 }) 
+# Sentence pair (715) source length 8 target length 9 alignment score : 7.41991e-11
+if there is c replace that with n m 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _c ({ 4 }) _rflatten ({ }) _rsplit ({ }) _i ({ 7 }) _rconcat ({ 6 }) _n ({ 5 8 }) _m ({ 9 }) 
+# Sentence pair (718) source length 4 target length 9 alignment score : 4.37352e-11
+if there is any letter add b after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 2 3 4 5 }) _rconcat ({ 6 8 }) _b ({ 7 9 }) 
+# Sentence pair (722) source length 3 target length 10 alignment score : 1.3514e-11
+if there is any letter replace that with h r 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _r ({ 7 10 }) _h ({ 6 9 }) 
+# Sentence pair (725) source length 4 target length 10 alignment score : 6.10086e-10
+if there is any letter replace that with h r 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 8 }) _h ({ 6 9 }) _r ({ 7 10 }) 
+# Sentence pair (729) source length 4 target length 11 alignment score : 9.20269e-15
+if the word ends with any letter add k after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) _rappend ({ 3 4 6 7 8 10 }) _k ({ 9 11 }) 
+# Sentence pair (734) source length 4 target length 12 alignment score : 2.02907e-13
+if the word ends with any letter replace that with x s 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _s ({ 9 12 }) _x ({ 8 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) 
+# Sentence pair (738) source length 5 target length 12 alignment score : 1.40281e-17
+if the word ends with any letter consonant replace that with j 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _j ({ 9 10 12 }) _rrevcdr ({ 5 6 7 8 11 }) _rrevcdr ({ }) 
+# Sentence pair (742) source length 5 target length 12 alignment score : 1.13255e-17
+if the word ends with any letter consonant replace that with j 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 6 7 8 }) _j ({ 9 12 }) _rempty ({ 10 11 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ }) _rempty ({ 5 }) 
+# Sentence pair (746) source length 4 target length 13 alignment score : 1.30912e-18
+if the word ends with any letter any letter add a after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) _rappend ({ 3 4 6 7 8 9 10 12 }) _a ({ 11 13 }) 
+# Sentence pair (748) source length 4 target length 13 alignment score : 1.10581e-19
+if the word ends with any letter any letter add a after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 10 12 }) _a ({ 11 13 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 7 8 9 }) 
+# Sentence pair (750) source length 4 target length 11 alignment score : 1.08011e-13
+if the word starts with any letter replace that with a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _a ({ 9 11 }) cdr ({ 6 7 8 10 }) 
+# Sentence pair (752) source length 7 target length 11 alignment score : 3.18286e-12
+if the word starts with any letter replace that with a 
+NULL ({ }) _rflatten ({ 1 }) cons ({ 2 3 4 }) _a ({ 9 11 }) cdr ({ 6 7 }) _rsplit ({ }) _rnot ({ 8 10 }) _a ({ 5 }) 
+# Sentence pair (756) source length 5 target length 11 alignment score : 3.22794e-16
+if the word ends with any letter add u after that 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 6 7 8 10 }) _u ({ 9 }) _rsplit ({ }) _b ({ 5 11 }) 
+# Sentence pair (760) source length 3 target length 12 alignment score : 3.49817e-15
+if the word ends with any letter replace that with x p 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 10 }) _p ({ 9 12 }) _x ({ 8 11 }) 
+# Sentence pair (764) source length 4 target length 12 alignment score : 1.35078e-13
+if the word ends with any letter replace that with x p 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _p ({ 9 12 }) _x ({ 8 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) 
+# Sentence pair (768) source length 5 target length 8 alignment score : 4.02333e-09
+if there is p add o after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 }) _rconcat ({ 5 }) _p ({ 7 }) _o ({ 6 8 }) 
+# Sentence pair (771) source length 6 target length 8 alignment score : 5.63333e-12
+if there is o add r before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ }) _rconcat ({ 5 7 }) _r ({ 6 }) _o ({ 8 }) 
+# Sentence pair (775) source length 3 target length 11 alignment score : 6.08001e-14
+if the word starts with any letter add v before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 6 7 8 10 }) _v ({ 9 11 }) 
+# Sentence pair (778) source length 4 target length 11 alignment score : 1.39621e-14
+if the word starts with any letter add v before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 6 8 10 }) _v ({ 9 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 7 }) 
+# Sentence pair (783) source length 4 target length 8 alignment score : 4.27772e-09
+if there is o replace that with l 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 5 }) _l ({ 6 8 }) 
+# Sentence pair (788) source length 4 target length 8 alignment score : 1.75746e-08
+if there is t replace that with o 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 5 }) _o ({ 6 8 }) _rempty ({ 7 }) 
+# Sentence pair (794) source length 5 target length 9 alignment score : 5.20788e-11
+if there is s replace that with i r 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _s ({ 4 }) _i ({ 5 8 }) _r ({ 6 9 }) 
+# Sentence pair (798) source length 13 target length 11 alignment score : 2.69749e-14
+if the word ends with consonant replace that with b a 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) if ({ }) _rmatch ({ 6 }) _rtail ({ }) _rsplit ({ }) _rempty ({ 5 9 }) _e ({ }) _e ({ }) _rconcat ({ 8 }) _b ({ 7 10 }) _a ({ 11 }) _rrevcdr ({ }) 
+# Sentence pair (803) source length 5 target length 8 alignment score : 2.20595e-10
+if there is l add m before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _l ({ 4 5 }) _m ({ 6 }) _l ({ 7 8 }) 
+# Sentence pair (807) source length 4 target length 11 alignment score : 3.1752e-14
+if the word starts with any letter add b before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 10 }) _b ({ 9 11 }) 
+# Sentence pair (811) source length 3 target length 10 alignment score : 2.42511e-13
+if the word starts with consonant add a before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 6 7 9 }) _a ({ 8 10 }) 
+# Sentence pair (815) source length 4 target length 10 alignment score : 5.33601e-15
+if the word starts with consonant add a before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 9 }) _a ({ 8 10 }) 
+# Sentence pair (817) source length 3 target length 9 alignment score : 4.35926e-12
+if there is any letter replace that with l 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 2 3 4 5 6 }) _l ({ 7 9 }) 
+# Sentence pair (821) source length 3 target length 12 alignment score : 1.26535e-15
+if the word ends with any letter replace that with o j 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 10 }) _j ({ 9 12 }) _o ({ 8 11 }) 
+# Sentence pair (825) source length 4 target length 12 alignment score : 5.16558e-14
+if the word ends with any letter replace that with o j 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _j ({ 9 12 }) _o ({ 8 11 }) 
+# Sentence pair (828) source length 5 target length 9 alignment score : 6.40404e-10
+if there is s replace that with r a 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _s ({ 4 6 }) _r ({ 5 8 }) _a ({ 7 9 }) 
+# Sentence pair (833) source length 7 target length 12 alignment score : 3.97768e-14
+if the word starts with any letter replace that with s b 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _s ({ 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) cons ({ }) _b ({ 9 12 }) cdr ({ 5 6 7 10 }) 
+# Sentence pair (839) source length 4 target length 12 alignment score : 7.80356e-14
+if the word ends with any letter replace that with c v 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _v ({ 8 12 }) _c ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) 
+# Sentence pair (845) source length 4 target length 8 alignment score : 1.87376e-09
+if there is e replace that with p 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _p ({ 6 8 }) 
+# Sentence pair (848) source length 10 target length 13 alignment score : 6.63423e-18
+if the word starts with any letter a replace that with q d 
+NULL ({ 5 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 1 2 3 4 }) _a ({ 8 }) cdr ({ 6 7 }) _rsplit ({ }) _rempty ({ 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 9 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ }) _d ({ 13 }) _q ({ 10 12 }) 
+# Sentence pair (852) source length 3 target length 12 alignment score : 1.24303e-15
+if the word ends with any letter replace that with b a 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _a ({ 9 10 12 }) _b ({ 8 11 }) 
+# Sentence pair (854) source length 9 target length 12 alignment score : 2.15411e-15
+if the word ends with any letter replace that with b a 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _a ({ 12 }) _rappend ({ }) _b ({ 9 11 }) _rrevcdr ({ 5 6 7 10 }) _rappend ({ }) _a ({ 8 }) _rrevcdr ({ }) 
+# Sentence pair (858) source length 5 target length 9 alignment score : 2.28813e-10
+if there is r replace that with g e 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _r ({ 4 5 }) _g ({ 8 }) _e ({ 6 9 }) 
+# Sentence pair (860) source length 6 target length 9 alignment score : 1.43232e-09
+if there is r replace that with g e 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _rconcat ({ 6 }) _g ({ 8 }) _e ({ 7 9 }) 
+# Sentence pair (863) source length 4 target length 8 alignment score : 3.21461e-10
+if there is d replace that with p 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _d ({ 4 6 }) _p ({ 5 8 }) 
+# Sentence pair (868) source length 4 target length 10 alignment score : 6.53114e-12
+if there is any letter replace that with f h 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 2 3 4 5 }) _h ({ 6 10 }) _f ({ 7 9 }) 
+# Sentence pair (872) source length 10 target length 11 alignment score : 6.14906e-14
+if the word ends with consonant replace that with x i 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 6 }) _rtail ({ 3 4 }) _e ({ }) _rappend ({ }) _i ({ 8 9 11 }) _rappend ({ }) _x ({ 7 10 }) _rrevcdr ({ }) 
+# Sentence pair (877) source length 7 target length 14 alignment score : 4.03244e-18
+if the word ends with any letter any letter replace that with t w 
+NULL ({ 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ }) _w ({ 11 14 }) _rappend ({ 2 3 4 }) _t ({ 10 13 }) _rrevcdr ({ 6 7 8 9 }) _rrevcdr ({ 5 }) 
+# Sentence pair (879) source length 12 target length 14 alignment score : 4.90449e-17
+if the word ends with any letter any letter replace that with t w 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _w ({ 11 14 }) _rappend ({ }) _t ({ 10 }) _rrevcdr ({ 6 7 8 9 }) _rappend ({ }) _t ({ 13 }) _rrevcdr ({ }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 5 12 }) 
+# Sentence pair (887) source length 4 target length 9 alignment score : 7.34687e-10
+if there is i replace that with u u 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 6 }) _u ({ 7 8 }) _u ({ 5 9 }) 
+# Sentence pair (891) source length 5 target length 9 alignment score : 4.06991e-10
+if there is i replace that with u u 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _i ({ 4 6 }) _u ({ 7 8 }) _u ({ 9 }) 
+# Sentence pair (896) source length 5 target length 8 alignment score : 1.02319e-11
+if there is h add p after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _h ({ 7 8 }) _h ({ 4 }) _p ({ 5 6 }) 
+# Sentence pair (900) source length 7 target length 12 alignment score : 1.22116e-13
+if the word ends with any letter replace that with x m 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _m ({ 12 }) _rappend ({ }) _x ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) _rrevcdr ({ 5 6 7 10 }) 
+# Sentence pair (907) source length 4 target length 12 alignment score : 9.9848e-15
+if the word starts with any letter replace that with m k 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _k ({ 9 12 }) _m ({ 8 11 }) 
+# Sentence pair (911) source length 5 target length 12 alignment score : 1.20459e-14
+if the word starts with any letter replace that with m k 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _k ({ 9 12 }) _m ({ 8 11 }) 
+# Sentence pair (915) source length 5 target length 12 alignment score : 1.70634e-15
+if the word starts with any letter replace that with p e 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _e ({ 9 12 }) _p ({ 8 11 }) 
+# Sentence pair (919) source length 4 target length 10 alignment score : 7.77099e-11
+if there is any letter replace that with g x 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _x ({ 7 10 }) _g ({ 9 }) 
+# Sentence pair (922) source length 9 target length 10 alignment score : 1.60476e-13
+if the word ends with s add e before that 
+NULL ({ }) if ({ 1 2 }) _rmatch ({ }) _rtail ({ 3 4 }) _rsplit ({ }) _rempty ({ 5 }) _s ({ 6 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ }) _s ({ 7 9 }) _e ({ 8 10 }) 
+# Sentence pair (926) source length 12 target length 10 alignment score : 5.90506e-11
+if the word ends with s add e before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ }) _rtail ({ 3 4 }) _rsplit ({ }) _rempty ({ 5 }) _s ({ 6 }) _rappend ({ }) _rtail ({ 7 9 }) _rappend ({ }) _e ({ 8 10 }) _rrevcdr ({ }) 
+# Sentence pair (932) source length 4 target length 9 alignment score : 1.18584e-09
+if there is p replace that with r t 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 6 }) _r ({ 5 8 }) _t ({ 9 }) 
+# Sentence pair (936) source length 9 target length 9 alignment score : 2.50141e-12
+if there is p replace that with r t 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ }) _p ({ }) _r ({ 8 }) _t ({ 5 }) _rconcat ({ 6 }) _a ({ 7 }) _t ({ 9 }) 
+# Sentence pair (945) source length 4 target length 12 alignment score : 2.20032e-13
+if the word ends with any letter replace that with y b 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _b ({ 9 12 }) _y ({ 8 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) 
+# Sentence pair (951) source length 5 target length 9 alignment score : 3.71891e-10
+if there is h replace that with k s 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _h ({ 4 6 }) _k ({ 8 }) _s ({ 9 }) 
+# Sentence pair (954) source length 7 target length 11 alignment score : 1.72497e-10
+if the word starts with any letter add l after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _l ({ 9 11 }) car ({ 8 10 }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 5 }) 
+# Sentence pair (958) source length 4 target length 11 alignment score : 3.86628e-14
+if the word starts with any letter add d before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 10 }) _d ({ 9 11 }) 
+# Sentence pair (962) source length 4 target length 9 alignment score : 1.13532e-10
+if there is t replace that with k s 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) _k ({ 5 8 }) _s ({ 6 9 }) 
+# Sentence pair (965) source length 9 target length 9 alignment score : 1.33653e-12
+if there is t replace that with k s 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ }) _t ({ 5 }) _k ({ 8 }) _s ({ }) _rconcat ({ 6 }) _a ({ 7 }) _s ({ 9 }) 
+# Sentence pair (970) source length 5 target length 11 alignment score : 1.66999e-15
+if the word starts with consonant replace that with f j 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _j ({ 6 9 11 }) _f ({ 8 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 7 }) 
+# Sentence pair (976) source length 5 target length 12 alignment score : 1.8161e-14
+if the word starts with any letter replace that with j p 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _p ({ 9 12 }) _j ({ 8 11 }) 
+# Sentence pair (981) source length 5 target length 11 alignment score : 2.27478e-14
+if the word starts with any letter add x before that 
+NULL ({ }) _rflatten ({ 1 }) cons ({ 2 3 4 6 7 8 10 }) _x ({ 9 11 }) _rsplit ({ }) _b ({ 5 }) 
+# Sentence pair (984) source length 4 target length 9 alignment score : 3.9778e-12
+if there is any letter add r after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rconcat ({ 6 8 }) _r ({ 7 9 }) 
+# Sentence pair (989) source length 13 target length 13 alignment score : 1.74013e-19
+if the word ends with any letter consonant replace that with k t 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 }) _rtail ({ 3 4 }) _rsplit ({ }) _rempty ({ }) _e ({ }) _rappend ({ }) _t ({ 13 }) _rappend ({ }) _k ({ 10 12 }) _rrevcdr ({ 6 7 8 9 11 }) _rrevcdr ({ }) 
+# Sentence pair (992) source length 5 target length 14 alignment score : 2.11443e-16
+if the word starts with any letter any letter replace that with e o 
+NULL ({ 5 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _o ({ 11 14 }) _e ({ 10 13 }) 
+# Sentence pair (994) source length 11 target length 14 alignment score : 8.25225e-19
+if the word starts with any letter any letter replace that with e o 
+NULL ({ 5 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _e ({ }) cdr ({ 6 7 8 9 }) _rsplit ({ }) _rdot ({ }) _rflatten ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ }) _o ({ 11 14 }) _e ({ 10 13 }) 
+# Sentence pair (998) source length 4 target length 13 alignment score : 1.22892e-17
+if the word starts with any letter any letter add p before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 9 10 12 }) _p ({ 11 13 }) 
+# Sentence pair (1000) source length 4 target length 13 alignment score : 3.00717e-18
+if the word starts with any letter any letter add p before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 9 10 12 }) _p ({ 11 13 }) 
+# Sentence pair (1002) source length 3 target length 8 alignment score : 1.94369e-09
+if there is n replace that with m 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _n ({ 4 6 7 }) _m ({ 5 8 }) 
+# Sentence pair (1003) source length 4 target length 8 alignment score : 1.48443e-10
+if there is n replace that with m 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 2 3 }) _n ({ 4 6 7 }) _m ({ 5 8 }) 
+# Sentence pair (1005) source length 4 target length 8 alignment score : 4.56016e-08
+if there is n replace that with m 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _n ({ 4 6 }) _m ({ 8 }) _rempty ({ 5 7 }) 
+# Sentence pair (1008) source length 5 target length 12 alignment score : 7.13745e-14
+if the word starts with any letter replace that with u p 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _p ({ 9 12 }) _u ({ 8 11 }) 
+# Sentence pair (1012) source length 4 target length 12 alignment score : 4.73475e-15
+if the word starts with any letter replace that with l c 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _c ({ 9 12 }) _l ({ 8 11 }) 
+# Sentence pair (1016) source length 5 target length 12 alignment score : 5.71212e-15
+if the word starts with any letter replace that with l c 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _c ({ 9 12 }) _l ({ 8 11 }) 
+# Sentence pair (1020) source length 5 target length 12 alignment score : 5.30048e-16
+if the word starts with any letter replace that with i e 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _e ({ 9 12 }) _i ({ 8 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) 
+# Sentence pair (1024) source length 6 target length 14 alignment score : 1.03281e-17
+if the word starts with any letter any letter replace that with r n 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _n ({ 11 12 14 }) _r ({ 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) cdr ({ 6 7 8 9 }) 
+# Sentence pair (1030) source length 8 target length 10 alignment score : 4.68767e-14
+if there is any letter i add e after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _i ({ }) _rflatten ({ }) _rsplit ({ }) _rdot ({ 4 5 }) _rconcat ({ 7 9 }) _i ({ 6 }) _e ({ 8 10 }) 
+# Sentence pair (1040) source length 8 target length 12 alignment score : 1.29764e-13
+if the word ends with any letter replace that with d k 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _rconcat ({ 9 }) _d ({ 11 }) _k ({ 12 }) _rrevcdr ({ 5 6 7 10 }) _rsplit ({ }) _rempty ({ 8 }) 
+# Sentence pair (1043) source length 6 target length 12 alignment score : 6.33607e-14
+if the word starts with any letter replace that with v q 
+NULL ({ }) _rflatten ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _rsplit ({ }) _rempty ({ 5 10 }) _q ({ 9 12 }) _v ({ 8 11 }) 
+# Sentence pair (1047) source length 8 target length 10 alignment score : 5.51084e-12
+if the word ends with s replace that with p 
+NULL ({ 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 }) _rtail ({ 3 4 }) _s ({ 6 7 }) _rappend ({ }) _p ({ 8 10 }) _rrevcdr ({ }) 
+# Sentence pair (1049) source length 11 target length 10 alignment score : 5.21228e-13
+if the word ends with s replace that with p 
+NULL ({ 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 }) _rtail ({ 3 4 }) _s ({ 6 7 }) _rappend ({ }) _p ({ 8 10 }) _rrevcdr ({ }) _rappend ({ }) _rtail ({ }) _rrevcdr ({ }) 
+# Sentence pair (1053) source length 5 target length 11 alignment score : 4.16571e-13
+if the word ends with consonant replace that with q w 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 2 3 4 5 6 }) _rconcat ({ 8 }) _q ({ 9 10 }) _w ({ 7 11 }) 
+# Sentence pair (1058) source length 4 target length 8 alignment score : 2.65184e-10
+if there is o replace that with j 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 2 3 }) _o ({ 4 6 }) _j ({ 5 8 }) 
+# Sentence pair (1061) source length 4 target length 8 alignment score : 7.51634e-08
+if there is o replace that with j 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 6 }) _rempty ({ 7 }) _j ({ 5 8 }) 
+# Sentence pair (1063) source length 7 target length 12 alignment score : 1.71292e-16
+if the word starts with consonant any letter add c before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _e ({ }) cons ({ 8 9 11 }) _c ({ 10 12 }) _rsplit ({ 7 }) _m ({ 5 }) 
+# Sentence pair (1068) source length 4 target length 11 alignment score : 5.54332e-15
+if the word starts with any letter add t before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 10 }) _t ({ 9 11 }) 
+# Sentence pair (1073) source length 4 target length 11 alignment score : 2.70846e-12
+if the word ends with consonant replace that with u a 
+NULL ({ 5 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _u ({ 7 10 }) _a ({ 9 11 }) 
+# Sentence pair (1075) source length 13 target length 11 alignment score : 6.2938e-14
+if the word ends with consonant replace that with u a 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 5 6 }) _rtail ({ 3 4 }) _e ({ }) _rappend ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ }) _e ({ }) _e ({ }) _rconcat ({ 8 }) _u ({ 7 10 }) _a ({ 9 11 }) _rrevcdr ({ }) 
+# Sentence pair (1082) source length 3 target length 12 alignment score : 3.98451e-15
+if the word ends with any letter replace that with l n 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _n ({ 8 10 12 }) _l ({ 9 11 }) 
+# Sentence pair (1086) source length 4 target length 12 alignment score : 3.13667e-15
+if the word ends with any letter replace that with l n 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _n ({ 10 12 }) _l ({ 9 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 8 }) 
+# Sentence pair (1091) source length 7 target length 8 alignment score : 8.31674e-12
+if there is p replace that with e 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 3 }) _rconcat ({ 6 }) _rempty ({ 5 }) if ({ }) _rmatch ({ 7 }) _p ({ 4 }) _e ({ 8 }) 
+# Sentence pair (1098) source length 3 target length 8 alignment score : 4.50857e-09
+if there is s replace that with v 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _s ({ 4 6 }) _v ({ 5 8 }) 
+# Sentence pair (1101) source length 4 target length 8 alignment score : 9.12418e-10
+if there is s replace that with v 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _s ({ 4 6 }) _v ({ 5 8 }) 
+# Sentence pair (1105) source length 4 target length 10 alignment score : 4.02659e-11
+if the word ends with consonant replace that with n 
+NULL ({ 5 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _rempty ({ 9 }) _n ({ 7 10 }) 
+# Sentence pair (1108) source length 4 target length 9 alignment score : 4.05306e-10
+if there is g replace that with i l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 }) _i ({ 5 8 }) _l ({ 6 9 }) 
+# Sentence pair (1110) source length 5 target length 9 alignment score : 1.82217e-10
+if there is g replace that with i l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _g ({ 4 }) _i ({ 5 8 }) _l ({ 6 9 }) 
+# Sentence pair (1112) source length 5 target length 9 alignment score : 1.13435e-10
+if there is g replace that with i l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) _g ({ 4 }) _i ({ 5 8 }) _l ({ 6 9 }) 
+# Sentence pair (1115) source length 4 target length 10 alignment score : 2.54001e-11
+if there is any letter replace that with j h 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _h ({ 7 10 }) _j ({ 9 }) 
+# Sentence pair (1119) source length 6 target length 12 alignment score : 2.79129e-12
+if the word ends with any letter replace that with m y 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _rconcat ({ 9 }) _m ({ 11 }) _y ({ 8 12 }) _rrevcdr ({ 5 6 7 10 }) 
+# Sentence pair (1123) source length 3 target length 10 alignment score : 2.3155e-11
+if there is any letter replace that with x o 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _o ({ 7 10 }) _x ({ 6 9 }) 
+# Sentence pair (1124) source length 4 target length 10 alignment score : 3.75021e-11
+if there is any letter replace that with x o 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 2 3 4 5 }) _o ({ 7 10 }) _x ({ 6 9 }) 
+# Sentence pair (1126) source length 4 target length 10 alignment score : 1.36729e-09
+if there is any letter replace that with x o 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 8 }) _x ({ 6 9 }) _o ({ 7 10 }) 
+# Sentence pair (1130) source length 4 target length 9 alignment score : 1.28394e-11
+if there is any letter add k before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rconcat ({ 6 8 }) _k ({ 7 9 }) 
+# Sentence pair (1134) source length 4 target length 10 alignment score : 3.86596e-11
+if there is any letter replace that with n w 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 2 3 4 5 }) _w ({ 7 10 }) _n ({ 6 9 }) 
+# Sentence pair (1139) source length 4 target length 11 alignment score : 9.19187e-13
+if the word starts with any letter replace that with q 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _q ({ 9 11 }) _rempty ({ 5 8 }) 
+# Sentence pair (1143) source length 3 target length 10 alignment score : 2.39922e-11
+if there is any letter replace that with x j 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _j ({ 7 10 }) _x ({ 6 9 }) 
+# Sentence pair (1145) source length 4 target length 10 alignment score : 8.34933e-12
+if there is any letter replace that with x j 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _j ({ 7 10 }) _x ({ 9 }) 
+# Sentence pair (1147) source length 5 target length 10 alignment score : 6.11811e-10
+if there is any letter replace that with x j 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ 7 }) _x ({ 6 9 }) _j ({ 10 }) 
+# Sentence pair (1151) source length 4 target length 8 alignment score : 1.24753e-08
+if there is g replace that with n 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 }) _n ({ 5 8 }) _rempty ({ 6 7 }) 
+# Sentence pair (1159) source length 10 target length 10 alignment score : 2.01436e-14
+if the word ends with s add m before that 
+NULL ({ }) if ({ 1 2 }) _rmatch ({ }) _rtail ({ 3 4 }) cdr ({ }) _rsplit ({ }) _rempty ({ 5 }) _s ({ 6 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ }) _s ({ 7 9 }) _m ({ 8 10 }) 
+# Sentence pair (1163) source length 8 target length 10 alignment score : 6.15709e-12
+if the word starts with consonant add d after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 6 }) _e ({ }) _rempty ({ 5 }) _d ({ 8 10 }) car ({ 7 9 }) _rrevcdr ({ }) 
+# Sentence pair (1165) source length 5 target length 8 alignment score : 3.4226e-09
+if there is s add x before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _s ({ 4 5 }) _x ({ 6 8 }) _s ({ 7 }) 
+# Sentence pair (1167) source length 5 target length 8 alignment score : 2.11209e-08
+if there is s add x before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _s ({ 4 }) _rconcat ({ 5 }) _x ({ 6 8 }) _s ({ 7 }) 
+# Sentence pair (1170) source length 3 target length 11 alignment score : 5.13228e-14
+if the word ends with any letter replace that with b 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _b ({ 8 11 }) _rempty ({ 9 10 }) 
+# Sentence pair (1174) source length 4 target length 11 alignment score : 4.12366e-13
+if the word ends with any letter replace that with b 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 }) _rempty ({ 8 10 }) _b ({ 9 11 }) 
+# Sentence pair (1179) source length 5 target length 12 alignment score : 6.95417e-15
+if the word starts with any letter replace that with g t 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _t ({ 9 12 }) _g ({ 8 11 }) 
+# Sentence pair (1185) source length 4 target length 12 alignment score : 6.306e-15
+if the word starts with any letter replace that with p n 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _n ({ 8 10 12 }) _p ({ 9 11 }) 
+# Sentence pair (1189) source length 5 target length 12 alignment score : 3.7986e-15
+if the word starts with any letter replace that with p n 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _n ({ 8 10 12 }) _p ({ 9 11 }) 
+# Sentence pair (1194) source length 5 target length 9 alignment score : 9.27687e-11
+if there is t replace that with c y 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _t ({ 4 }) _c ({ 6 8 }) _y ({ 9 }) 
+# Sentence pair (1199) source length 8 target length 8 alignment score : 1.16603e-13
+if there is m add l before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _m ({ 4 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ }) _m ({ }) _m ({ }) _rconcat ({ 5 }) _l ({ 6 8 }) _m ({ 7 }) 
+# Sentence pair (1204) source length 5 target length 12 alignment score : 1.80754e-14
+if the word starts with any letter replace that with b k 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _k ({ 9 12 }) _b ({ 8 11 }) 
+# Sentence pair (1211) source length 5 target length 12 alignment score : 1.73761e-13
+if the word starts with any letter replace that with j w 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _w ({ 9 12 }) _j ({ 8 11 }) 
+# Sentence pair (1215) source length 3 target length 10 alignment score : 1.01057e-11
+if there is any letter replace that with j f 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _f ({ 7 10 }) _j ({ 6 9 }) 
+# Sentence pair (1218) source length 4 target length 10 alignment score : 4.65057e-10
+if there is any letter replace that with j f 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 8 }) _j ({ 6 9 }) _f ({ 7 10 }) 
+# Sentence pair (1223) source length 4 target length 10 alignment score : 2.14529e-10
+if there is any letter replace that with i v 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 8 }) _i ({ 6 9 }) _v ({ 7 10 }) 
+# Sentence pair (1226) source length 5 target length 13 alignment score : 1.13698e-13
+if the word starts with any letter any letter replace that with k 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _k ({ 11 13 }) _rempty ({ 10 12 }) 
+# Sentence pair (1230) source length 4 target length 11 alignment score : 1.63849e-13
+if the word ends with consonant replace that with m a 
+NULL ({ 5 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _m ({ 10 }) _a ({ 7 9 11 }) 
+# Sentence pair (1234) source length 5 target length 11 alignment score : 5.72684e-14
+if the word ends with consonant replace that with m a 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 2 3 4 5 6 }) _rconcat ({ 8 }) _m ({ 10 }) _a ({ 7 9 11 }) 
+# Sentence pair (1238) source length 6 target length 8 alignment score : 1.8745e-09
+if there is t add d before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _t ({ 4 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _rconcat ({ 5 }) _d ({ 6 8 }) _t ({ 7 }) 
+# Sentence pair (1243) source length 4 target length 9 alignment score : 7.89843e-09
+if there is any letter add y after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ 6 8 }) _y ({ 7 9 }) 
+# Sentence pair (1246) source length 6 target length 12 alignment score : 1.30835e-13
+if the word starts with any letter replace that with s n 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 }) _rconcat ({ 9 }) _s ({ 11 }) _n ({ 8 12 }) cdr ({ 5 6 7 10 }) 
+# Sentence pair (1250) source length 5 target length 13 alignment score : 4.27261e-16
+if the word ends with any letter any letter replace that with k 
+NULL ({ 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _k ({ 11 13 }) _rrevcdr ({ 6 7 8 9 10 }) _rrevcdr ({ 5 }) 
+# Sentence pair (1254) source length 6 target length 13 alignment score : 2.53945e-15
+if the word ends with any letter any letter replace that with k 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _k ({ 11 13 }) _rrevcdr ({ 6 7 8 9 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) _rrevcdr ({ }) 
+# Sentence pair (1259) source length 4 target length 8 alignment score : 2.2784e-08
+if there is p replace that with a 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 6 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 5 }) _a ({ 7 8 }) 
+# Sentence pair (1262) source length 6 target length 14 alignment score : 5.55376e-18
+if the word starts with any letter any letter replace that with h t 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) _t ({ 11 14 }) _h ({ 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) cdr ({ 6 7 8 9 12 }) 
+# Sentence pair (1267) source length 5 target length 12 alignment score : 1.69813e-15
+if the word starts with any letter replace that with n g 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _g ({ 9 12 }) _n ({ 8 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) 
+# Sentence pair (1271) source length 11 target length 11 alignment score : 2.24397e-14
+if the word starts with consonant replace that with m y 
+NULL ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ }) _n ({ 7 }) cdr ({ }) _rsplit ({ }) _rempty ({ 5 9 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _e ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) _y ({ 8 11 }) _m ({ 10 }) 
+# Sentence pair (1275) source length 3 target length 8 alignment score : 1.47632e-08
+if there is l replace that with n 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _l ({ 4 6 }) _n ({ 5 8 }) 
+# Sentence pair (1276) source length 4 target length 8 alignment score : 5.95052e-10
+if there is l replace that with n 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 2 3 }) _l ({ 4 6 }) _n ({ 5 8 }) 
+# Sentence pair (1277) source length 4 target length 8 alignment score : 2.71954e-08
+if there is l replace that with n 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _l ({ 4 6 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _n ({ 7 8 }) 
+# Sentence pair (1281) source length 4 target length 9 alignment score : 8.9124e-12
+if there is any letter add h after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 4 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 3 }) _rconcat ({ 6 8 }) _h ({ 7 9 }) 
+# Sentence pair (1285) source length 5 target length 11 alignment score : 2.07234e-14
+if the word ends with any letter add f before that 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _rtail ({ 8 10 }) _rsplit ({ }) _rempty ({ }) _f ({ 9 11 }) 
+# Sentence pair (1288) source length 6 target length 11 alignment score : 3.06845e-15
+if the word ends with any letter add f before that 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 }) _rtail ({ 8 10 }) cdr ({ 6 7 }) _rsplit ({ }) _rempty ({ 5 }) _f ({ 9 11 }) 
+# Sentence pair (1291) source length 6 target length 12 alignment score : 2.71659e-14
+if the word starts with any letter replace that with b n 
+NULL ({ 5 }) _rflatten ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _rsplit ({ }) _rempty ({ 10 }) _n ({ 8 12 }) _b ({ 9 11 }) 
+# Sentence pair (1295) source length 4 target length 11 alignment score : 6.75657e-13
+if the word ends with consonant replace that with q x 
+NULL ({ 5 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _q ({ 9 10 }) _x ({ 7 11 }) 
+# Sentence pair (1296) source length 5 target length 11 alignment score : 2.48953e-13
+if the word ends with consonant replace that with q x 
+NULL ({ }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _rconcat ({ 8 }) _q ({ 9 10 }) _x ({ 7 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) 
+# Sentence pair (1298) source length 6 target length 11 alignment score : 3.48353e-14
+if the word ends with consonant replace that with q x 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 2 3 4 5 6 }) _rconcat ({ 8 }) _q ({ 9 10 }) _x ({ 7 11 }) 
+# Sentence pair (1302) source length 7 target length 10 alignment score : 2.1938e-12
+if the word starts with consonant replace that with r 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _a ({ 8 9 }) _rrevcdr ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) _rempty ({ 5 }) _r ({ 7 10 }) 
+# Sentence pair (1305) source length 4 target length 9 alignment score : 1.35151e-10
+if there is e replace that with e h 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 6 }) _e ({ 7 8 }) _h ({ 5 9 }) 
+# Sentence pair (1307) source length 5 target length 9 alignment score : 1.45791e-10
+if there is e replace that with e h 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _e ({ 4 6 }) _e ({ 7 8 }) _h ({ 5 9 }) 
+# Sentence pair (1313) source length 10 target length 10 alignment score : 9.97424e-12
+if there is any letter replace that with f m 
+NULL ({ }) _rflatten ({ 1 }) map ({ 2 3 4 5 }) _rconcat ({ 7 }) _f ({ 9 }) _m ({ 10 }) _rappend ({ }) _o ({ 6 }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 8 }) 
+# Sentence pair (1319) source length 11 target length 14 alignment score : 3.20669e-18
+if the word starts with any letter any letter replace that with r c 
+NULL ({ 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ }) _rsplit ({ }) _rdot ({ }) _rflatten ({ 5 }) cons ({ }) _r ({ 13 }) cdr ({ 6 7 8 9 }) _c ({ 11 14 }) _r ({ 10 }) 
+# Sentence pair (1328) source length 10 target length 11 alignment score : 3.9751e-16
+if the word starts with consonant replace that with f n 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ }) _e ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ }) _e ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _i ({ 5 9 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) _n ({ 7 11 }) _f ({ 8 10 }) 
+# Sentence pair (1337) source length 12 target length 11 alignment score : 1.91878e-15
+if the word starts with consonant e replace that with s 
+NULL ({ }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 6 }) _e ({ 7 9 }) cdr ({ }) _rsplit ({ }) _rempty ({ 5 }) _rflatten ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ }) _rsplit ({ }) _rempty ({ 8 }) _rempty ({ 10 }) _s ({ 11 }) 
+# Sentence pair (1343) source length 4 target length 10 alignment score : 1.97228e-10
+if there is any letter replace that with h g 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 7 }) _h ({ 6 9 }) _g ({ 10 }) 
+# Sentence pair (1346) source length 7 target length 14 alignment score : 1.13608e-16
+if the word ends with any letter any letter replace that with j a 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _rconcat ({ 11 }) _j ({ 10 13 }) _a ({ 5 14 }) _rrevcdr ({ 6 7 8 9 12 }) _rrevcdr ({ }) 
+# Sentence pair (1349) source length 11 target length 14 alignment score : 3.04448e-19
+if the word ends with any letter any letter replace that with j a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _a ({ 14 }) _rappend ({ }) _j ({ 11 12 }) _rrevcdr ({ 6 7 8 9 }) _rrevcdr ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) _rappend ({ }) _j ({ 13 }) _rrevcdr ({ }) 
+# Sentence pair (1358) source length 4 target length 10 alignment score : 2.03807e-11
+if there is any letter replace that with u y 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _y ({ 7 10 }) _u ({ 8 9 }) 
+# Sentence pair (1362) source length 3 target length 8 alignment score : 1.48836e-08
+if there is o replace that with b 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 5 }) _b ({ 6 8 }) 
+# Sentence pair (1365) source length 11 target length 11 alignment score : 2.93164e-16
+if the word ends with consonant replace that with m p 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _p ({ 8 11 }) _rrevcdr ({ }) _rappend ({ }) _p ({ }) _rappend ({ }) _m ({ 7 10 }) _rrevcdr ({ }) _rsplit ({ 6 }) _rempty ({ 5 9 }) 
+# Sentence pair (1372) source length 4 target length 8 alignment score : 3.7887e-10
+if there is s replace that with w 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _s ({ 4 6 }) _w ({ 5 8 }) 
+# Sentence pair (1375) source length 4 target length 8 alignment score : 1.20479e-09
+if there is p add m after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 5 }) _p ({ 7 8 }) _m ({ 6 }) 
+# Sentence pair (1378) source length 4 target length 12 alignment score : 5.57853e-13
+if the word ends with any letter replace that with v j 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _j ({ 9 12 }) _v ({ 8 11 }) 
+# Sentence pair (1382) source length 7 target length 11 alignment score : 1.61462e-14
+if the word starts with consonant replace that with l a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _n ({ 7 }) cdr ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) _a ({ 9 11 }) _l ({ 8 10 }) 
+# Sentence pair (1386) source length 4 target length 8 alignment score : 2.51147e-09
+if there is m add a before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _m ({ 4 5 }) _a ({ 6 8 }) _m ({ 7 }) 
+# Sentence pair (1387) source length 5 target length 8 alignment score : 1.00553e-09
+if there is m add a before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _m ({ 4 5 }) _a ({ 6 8 }) _m ({ 7 }) 
+# Sentence pair (1389) source length 5 target length 8 alignment score : 5.08257e-10
+if there is m add a before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _m ({ 4 5 }) _a ({ 6 8 }) _m ({ 7 }) 
+# Sentence pair (1390) source length 6 target length 8 alignment score : 4.22141e-09
+if there is m add a before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _m ({ 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _rconcat ({ 5 }) _a ({ 6 8 }) _m ({ 4 }) 
+# Sentence pair (1393) source length 10 target length 11 alignment score : 4.12509e-13
+if the word ends with consonant replace that with m x 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _rempty ({ 7 9 }) _rappend ({ }) _x ({ 8 11 }) _rappend ({ }) _m ({ 10 }) _rrevcdr ({ }) _rsplit ({ 6 }) _rempty ({ 5 }) 
+# Sentence pair (1400) source length 4 target length 10 alignment score : 2.26617e-10
+if there is any letter replace that with u t 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _rdot ({ 4 5 8 }) _u ({ 6 9 }) _t ({ 7 10 }) 
+# Sentence pair (1405) source length 4 target length 12 alignment score : 5.41985e-13
+if the word ends with any letter replace that with y w 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _w ({ 9 12 }) _y ({ 8 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) 
+# Sentence pair (1410) source length 5 target length 9 alignment score : 4.2931e-10
+if there is i replace that with e q 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 5 }) _rconcat ({ 7 }) _e ({ 6 8 }) _q ({ 9 }) 
+# Sentence pair (1414) source length 4 target length 10 alignment score : 3.24848e-11
+if there is any letter replace that with x a 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 6 }) _a ({ 8 10 }) _x ({ 7 9 }) 
+# Sentence pair (1419) source length 5 target length 11 alignment score : 1.22788e-11
+if the word starts with any letter add i after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _i ({ 9 11 }) car ({ 8 10 }) 
+# Sentence pair (1425) source length 6 target length 8 alignment score : 1.32148e-10
+if there is e add t after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _e ({ 4 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _rconcat ({ 5 }) _e ({ 7 8 }) _t ({ 6 }) 
+# Sentence pair (1431) source length 4 target length 8 alignment score : 8.99755e-09
+if there is r replace that with l 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) _l ({ 6 8 }) 
+# Sentence pair (1434) source length 4 target length 11 alignment score : 2.68258e-14
+if the word starts with any letter add c before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 10 }) _c ({ 9 11 }) 
+# Sentence pair (1438) source length 3 target length 8 alignment score : 3.73251e-08
+if there is p replace that with y 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _p ({ 4 6 }) _y ({ 5 8 }) 
+# Sentence pair (1442) source length 8 target length 11 alignment score : 6.70101e-14
+if the word starts with consonant replace that with c w 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) if ({ 2 }) _rmatch ({ 6 }) car ({ }) _a ({ 9 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 }) _w ({ 7 11 }) _c ({ 8 10 }) 
+# Sentence pair (1447) source length 3 target length 9 alignment score : 1.42475e-11
+if there is any letter add e before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 2 3 4 5 }) _rconcat ({ 6 8 }) _e ({ 7 9 }) 
+# Sentence pair (1449) source length 4 target length 9 alignment score : 5.14784e-12
+if there is any letter add e before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 2 3 4 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rconcat ({ 6 8 }) _e ({ 7 9 }) 
+# Sentence pair (1452) source length 3 target length 12 alignment score : 3.36469e-15
+if the word ends with any letter replace that with w w 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 10 }) _w ({ 9 12 }) _w ({ 8 11 }) 
+# Sentence pair (1456) source length 4 target length 12 alignment score : 1.37358e-13
+if the word ends with any letter replace that with w w 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _w ({ 9 12 }) _w ({ 8 11 }) 
+# Sentence pair (1459) source length 5 target length 12 alignment score : 4.30144e-15
+if the word starts with any letter replace that with n u 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _u ({ 8 12 }) _n ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) 
+# Sentence pair (1462) source length 4 target length 8 alignment score : 1.64157e-10
+if there is i add k after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 5 }) _i ({ 7 }) _k ({ 6 8 }) 
+# Sentence pair (1464) source length 6 target length 8 alignment score : 4.02848e-11
+if there is i add k after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _i ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ }) _rconcat ({ 5 }) _i ({ 7 }) _k ({ 6 8 }) 
+# Sentence pair (1468) source length 9 target length 14 alignment score : 1.14247e-14
+if the word starts with any letter any letter replace that with m h 
+NULL ({ }) _rflatten ({ 1 }) cons ({ 2 3 4 }) _rconcat ({ 11 }) _m ({ 13 }) _h ({ 10 14 }) cdr ({ 6 7 8 9 }) cdr ({ }) _rsplit ({ }) _rempty ({ 5 12 }) 
+# Sentence pair (1473) source length 6 target length 14 alignment score : 8.81953e-17
+if the word starts with any letter any letter replace that with e u 
+NULL ({ 5 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _u ({ 10 14 }) _e ({ 11 13 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) 
+# Sentence pair (1477) source length 4 target length 12 alignment score : 5.12283e-14
+if the word ends with any letter replace that with i o 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _o ({ 9 12 }) _i ({ 8 11 }) 
+# Sentence pair (1481) source length 4 target length 8 alignment score : 2.49054e-09
+if there is r replace that with x 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _r ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _x ({ 6 8 }) 
+# Sentence pair (1484) source length 4 target length 9 alignment score : 2.21212e-09
+if there is n replace that with b q 
+NULL ({ }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 1 2 3 }) _n ({ 4 5 }) _b ({ 6 8 }) _q ({ 7 9 }) 
+# Sentence pair (1488) source length 9 target length 9 alignment score : 2.10077e-13
+if there is n replace that with b q 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _n ({ 4 5 }) if ({ }) _rmatch ({ }) _p ({ }) _e ({ }) _rconcat ({ 7 }) _b ({ 6 8 }) _q ({ 9 }) 
+# Sentence pair (1495) source length 6 target length 9 alignment score : 6.93734e-11
+if there is o replace that with i o 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rconcat ({ 6 }) _i ({ 7 8 }) _o ({ 9 }) 
+# Sentence pair (1499) source length 3 target length 12 alignment score : 1.94528e-14
+if the word ends with any letter replace that with c y 
+NULL ({ 10 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _y ({ 8 12 }) _c ({ 9 11 }) 
+# Sentence pair (1502) source length 4 target length 12 alignment score : 3.93674e-15
+if the word ends with any letter replace that with c y 
+NULL ({ 10 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _y ({ 8 12 }) _c ({ 9 11 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) 
+# Sentence pair (1505) source length 6 target length 11 alignment score : 9.97714e-12
+if the word starts with any letter add e after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _rsplit ({ }) _rempty ({ 5 }) _e ({ 9 11 }) car ({ 8 10 }) 
+# Sentence pair (1510) source length 5 target length 9 alignment score : 1.53703e-09
+if there is i replace that with v h 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _i ({ 4 7 }) _v ({ 5 8 }) _h ({ 6 9 }) 
+# Sentence pair (1514) source length 3 target length 10 alignment score : 4.33706e-13
+if the word starts with consonant add p before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) cons ({ 2 3 4 6 7 9 }) _p ({ 8 10 }) 
+# Sentence pair (1516) source length 5 target length 10 alignment score : 9.42091e-13
+if the word starts with consonant add p before that 
+NULL ({ }) _rflatten ({ 1 }) cons ({ 2 3 4 6 7 9 }) _p ({ 8 10 }) _rsplit ({ }) _a ({ 5 }) 
+# Sentence pair (1520) source length 6 target length 8 alignment score : 3.94692e-10
+if there is g add a after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ }) _rconcat ({ 5 }) _g ({ 7 }) _a ({ 6 8 }) 
+# Sentence pair (1524) source length 3 target length 12 alignment score : 1.67295e-17
+if the word ends with any letter replace that with c d 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 10 }) _d ({ 9 12 }) _c ({ 8 11 }) 
+# Sentence pair (1528) source length 14 target length 12 alignment score : 2.62295e-16
+if the word ends with any letter replace that with c d 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 }) _d ({ 12 }) _rappend ({ }) _c ({ 9 }) _rrevcdr ({ 6 7 10 }) _rsplit ({ }) _rempty ({ 5 }) _rflatten ({ }) _rappend ({ }) _c ({ 11 }) _rrevcdr ({ }) _rsplit ({ }) _rempty ({ 8 }) 
+# Sentence pair (1538) source length 6 target length 14 alignment score : 2.88107e-15
+if the word starts with any letter any letter replace that with m w 
+NULL ({ 5 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _w ({ 11 14 }) _m ({ 13 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 10 }) 
+# Sentence pair (1543) source length 4 target length 11 alignment score : 1.09478e-14
+if the word starts with any letter add w before that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) cons ({ 3 4 6 7 8 10 }) _w ({ 9 11 }) 
+# Sentence pair (1547) source length 4 target length 11 alignment score : 2.35836e-13
+if the word ends with consonant replace that with y k 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 9 }) _k ({ 8 11 }) _y ({ 7 10 }) 
+# Sentence pair (1549) source length 4 target length 11 alignment score : 5.77077e-14
+if the word ends with consonant replace that with y k 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 9 }) _k ({ 8 11 }) _y ({ 7 10 }) 
+# Sentence pair (1553) source length 5 target length 8 alignment score : 5.57799e-09
+if there is s add m after that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _s ({ 4 }) _rconcat ({ 5 }) _s ({ 7 }) _m ({ 6 8 }) 
+# Sentence pair (1557) source length 3 target length 11 alignment score : 1.70226e-14
+if the word ends with any letter add e after that 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 7 8 10 }) _e ({ 9 11 }) 
+# Sentence pair (1559) source length 4 target length 11 alignment score : 3.60739e-15
+if the word ends with any letter add e after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 7 8 10 }) _e ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) 
+# Sentence pair (1561) source length 5 target length 11 alignment score : 9.01318e-15
+if the word ends with any letter add e after that 
+NULL ({ }) _rflatten ({ 1 }) _rappend ({ 2 3 4 6 7 8 10 }) _e ({ 9 11 }) _rsplit ({ }) _a ({ 5 }) 
+# Sentence pair (1563) source length 5 target length 12 alignment score : 1.35736e-14
+if the word starts with any letter replace that with f t 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _t ({ 8 12 }) _f ({ 9 11 }) 
+# Sentence pair (1567) source length 3 target length 12 alignment score : 6.77319e-15
+if the word ends with any letter replace that with f i 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 }) _i ({ 8 10 12 }) _f ({ 9 11 }) 
+# Sentence pair (1569) source length 6 target length 12 alignment score : 3.90265e-14
+if the word ends with any letter replace that with f i 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _rconcat ({ 9 }) _f ({ 11 }) _i ({ 8 12 }) _rrevcdr ({ 5 6 7 10 }) 
+# Sentence pair (1573) source length 5 target length 12 alignment score : 1.83276e-13
+if the word starts with any letter replace that with v k 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _k ({ 9 12 }) _v ({ 8 11 }) 
+# Sentence pair (1576) source length 5 target length 12 alignment score : 4.48472e-14
+if the word starts with any letter replace that with v k 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 2 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 3 4 5 6 7 }) _k ({ 9 12 }) _v ({ 8 11 }) 
+# Sentence pair (1582) source length 3 target length 10 alignment score : 4.09734e-11
+if there is any letter replace that with y o 
+NULL ({ 8 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 1 2 3 4 5 }) _o ({ 7 10 }) _y ({ 6 9 }) 
+# Sentence pair (1585) source length 4 target length 10 alignment score : 1.49416e-11
+if there is any letter replace that with y o 
+NULL ({ 8 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$2^(lambda^(_rconcat^$1^$2)))))) ({ 2 3 4 5 }) _o ({ 7 10 }) _y ({ 6 9 }) 
+# Sentence pair (1589) source length 4 target length 8 alignment score : 1.39035e-08
+if there is g replace that with b 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _g ({ 4 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _b ({ 6 8 }) 
+# Sentence pair (1593) source length 4 target length 8 alignment score : 9.04918e-10
+if there is c replace that with b 
+NULL ({ 7 }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _c ({ 4 6 }) _b ({ 5 8 }) 
+# Sentence pair (1597) source length 3 target length 8 alignment score : 2.32358e-08
+if there is o replace that with k 
+NULL ({ 7 }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 5 }) _k ({ 6 8 }) 
+# Sentence pair (1599) source length 4 target length 8 alignment score : 1.83122e-08
+if there is o replace that with k 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _o ({ 4 7 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _k ({ 6 8 }) 
+# Sentence pair (1603) source length 9 target length 12 alignment score : 1.18997e-16
+if the word starts with consonant any letter replace that with r 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(if^(_rmatch^(car^(_rrevcdr^$0))^$1)))) ({ 2 3 4 6 }) _i ({ }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ }) cdr ({ 7 8 }) _rsplit ({ }) _rempty ({ 9 11 }) _rempty ({ 10 }) _r ({ 12 }) 
+# Sentence pair (1607) source length 4 target length 11 alignment score : 1.87806e-13
+if the word ends with any letter replace that with t 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _t ({ 9 11 }) _rrevcdr ({ 5 6 7 8 10 }) 
+# Sentence pair (1609) source length 5 target length 11 alignment score : 1.29346e-13
+if the word ends with any letter replace that with t 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 }) _t ({ 9 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 8 }) _rrevcdr ({ 5 6 7 10 }) 
+# Sentence pair (1612) source length 3 target length 12 alignment score : 3.83921e-15
+if the word ends with any letter replace that with x q 
+NULL ({ }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 1 2 3 4 5 6 7 10 }) _q ({ 9 12 }) _x ({ 8 11 }) 
+# Sentence pair (1616) source length 4 target length 12 alignment score : 1.5673e-13
+if the word ends with any letter replace that with x q 
+NULL ({ }) #(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1))))) ({ 1 }) #(lambda^(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^$2^(_rappend^$1^(_rrevcdr^$0))))))) ({ 2 3 4 5 6 7 10 }) _q ({ 9 12 }) _x ({ 8 11 }) 
+# Sentence pair (1622) source length 4 target length 12 alignment score : 6.15603e-15
+if the word starts with any letter replace that with b f 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 5 6 7 }) _f ({ 9 12 }) _b ({ 8 11 }) 
+# Sentence pair (1626) source length 5 target length 12 alignment score : 1.82455e-14
+if the word starts with any letter replace that with b f 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _f ({ 9 12 }) _b ({ 8 11 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) 
+# Sentence pair (1628) source length 5 target length 8 alignment score : 3.1643e-09
+if there is c add n before that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(lambda^(#(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0))))))^$2^$3^(_rconcat^$1^$0)))))) ({ 2 3 }) _c ({ 4 5 }) _n ({ 6 8 }) _c ({ 7 }) 
+# Sentence pair (1630) source length 5 target length 8 alignment score : 5.52021e-09
+if there is c add n before that 
+NULL ({ }) #(lambda^(lambda^(lambda^(#(lambda^(lambda^(_rflatten^(map^$0^(_rsplit^_rdot^$1)))))^$1^(lambda^(if^(_rmatch^$3^$0)^$1^$0)))))) ({ 1 2 3 }) _c ({ 4 }) _rconcat ({ 5 }) _n ({ 6 8 }) _c ({ 7 }) 
+# Sentence pair (1634) source length 3 target length 10 alignment score : 8.86288e-13
+if the word ends with consonant replace that with a 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 7 }) #(lambda^(#(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0)))))^(lambda^(_rappend^(if^(_rmatch^(_rtail^$0)^_e)^_e^$1)^(_rrevcdr^$0))))) ({ 1 2 3 4 6 }) _a ({ 8 9 10 }) 
+# Sentence pair (1638) source length 5 target length 11 alignment score : 1.40998e-11
+if the word starts with any letter add n after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _n ({ 9 11 }) car ({ 8 10 }) _rrevcdr ({ 5 }) 
+# Sentence pair (1641) source length 6 target length 11 alignment score : 8.12617e-12
+if the word starts with any letter add n after that 
+NULL ({ }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 6 7 }) _n ({ 9 11 }) car ({ 8 10 }) _rrevcdr ({ 5 }) _rrevcdr ({ }) 
+# Sentence pair (1645) source length 6 target length 14 alignment score : 1.16394e-15
+if the word starts with any letter any letter replace that with t n 
+NULL ({ 5 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) #(lambda^(lambda^(lambda^(cons^$0^(cons^$1^(cdr^$2)))))) ({ 2 3 4 }) cdr ({ 6 7 8 9 }) _n ({ 11 12 14 }) _t ({ 13 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 10 }) 
+# Sentence pair (1649) source length 7 target length 12 alignment score : 3.49592e-18
+if the word ends with any letter replace that with i c 
+NULL ({ 10 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 1 }) _rappend ({ 2 3 4 6 7 }) _rconcat ({ 9 }) _i ({ 8 11 }) _c ({ 12 }) #(lambda^(lambda^(_rflatten^($1^(_rsplit^_rdot^$0))))) ({ 5 }) _rrevcdr ({ }) 

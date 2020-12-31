@@ -1,0 +1,26 @@
+digraph {
+	graph [rankdir=RL]
+	subgraph cluster_1 {
+		graph [rank=same]
+		f3 [label=<<font face="boldfontname"><u>[('if', 0.1225977), ('the', 0.0415053), ('replace', 0.048825)]</u></font><br />f3=(λ (x y) (_rflatten (x <br /> (_rsplit _rdot y))))>]
+		f7 [label=<<font face="boldfontname"><u>[('starts', 0.0279198), ('consonant', 0.0320197)]</u></font><br />f7=(λ (x y) (if (_rmatch <br /> (car (_rrevcdr y)) x)))>]
+		f5 [label=<<font face="boldfontname"><u>[('starts', 0.1565081), ('word', 0.0926483), ('letter', 0.0672005), ('any', 0.0670487), ('the', 0.0724958)]</u></font><br />f5=(λ (x y z) (cons z (cons y <br /> (cdr x))))>]
+		f0 [label=<<font face="boldfontname"><u>[('remove', 0.1428571), ('if', 0.0322068), ('is', 0.0328283), ('there', 0.0266904), ('letter', 0.0308836), ('replace', 0.0289756)]</u></font><br />f0=(λ (x y) (_rflatten (map <br /> y (_rsplit _rdot x))))>]
+	}
+	subgraph cluster_2 {
+		graph [rank=same]
+		f6 [label=<<font face="boldfontname"><u>[('ends', 0.0441595), ('consonant', 0.0254516)]</u></font><br />f6=(λ (x) (f3 (λ (y) <br /> (_rappend (if (_rmatch <br /> (_rtail y) _e) _e x) <br /> (_rrevcdr y)))))>]
+		f1 [label=<<font face="boldfontname"><u>[('if', 0.041882), ('is', 0.0800505), ('there', 0.0803254)]</u></font><br />f1=(λ (x y z) (f0 y (λ (u) (if <br /> (_rmatch x u) z u))))>]
+		f8 [label=<<font face="boldfontname"><u>[('b', 0.0141176), ('p', 0.0144404), ('t', 0.0153649), ('is', 0.0270202), ('there', 0.0271988)]</u></font><br />f8=(λ (x y z) (f0 x (λ (u) <br /> (_rconcat z y))))>]
+		f4 [label=<<font face="boldfontname"><u>[('ends', 0.1068376), ('word', 0.044821), ('with', 0.0385979), ('letter', 0.0457535), ('any', 0.0458453), ('the', 0.0442723)]</u></font><br />f4=(λ (x y) (f3 (λ (z) <br /> (_rappend x (_rappend y <br /> (_rrevcdr z))))))>]
+	}
+	f3 -> f6
+	f0 -> f1
+	f0 -> f8
+	f3 -> f4
+	subgraph cluster_3 {
+		graph [rank=same]
+		f2 [label=<<font face="boldfontname"><u>[('if', 0.0319417), ('is', 0.0835859), ('there', 0.0793086)]</u></font><br />f2=(λ (x y z u) (f1 y x <br /> (_rconcat z u)))>]
+	}
+	f1 -> f2
+}

@@ -1,6 +1,6 @@
-USING_AZURE = True
+USING_AZURE = False
 USING_GCLOUD = False
-USING_SINGULARITY = False
+USING_SINGULARITY = True
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 HIGH_MEM = False
@@ -25,7 +25,7 @@ def gcloud_commands(job_name):
     gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type={machine_type} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@andreas-jacob-8fc0.iam.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \n "
     
-singularity_base_command = "srun --job-name=clevr_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=10000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+singularity_base_command = "srun --job-name=clevr_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=10000 --gres=gpu --cpus-per-task 20 --time=1000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
         return singularity_base_command.format(job, job_name)
@@ -66,12 +66,13 @@ jobs = []
 job = 0
 
 ### Generates curriculum experiments for the Helmholtz generative model
-RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL = False
+RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL = True
 num_iterations = 3
 task_batch_size = 20
 recognition_steps = 10000
 enumerationTimeout = 1800
-EXPS = [("bootstrap", 3600), ("bootstrap", 7200), ("bootstrap", 14400), ("bootstrap", 21600)]
+# EXPS = [("bootstrap", 3600), ("bootstrap", 7200), ("bootstrap", 14400), ("bootstrap", 21600)]
+EXPS = [("bootstrap", 3600)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("original", ("clevr_original", "clevr_map_transform")),
@@ -157,7 +158,7 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
 num_iterations = 10
 task_batch_size = 20
 recognition_steps = 10000
@@ -190,7 +191,7 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
+RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = False
 num_iterations = 10
 task_batch_size = 20
 recognition_steps = 10000
@@ -256,7 +257,7 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION  = True
+RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION  = False
 num_iterations = 10
 task_batch_size = 20
 recognition_steps = 10000
@@ -289,6 +290,60 @@ for prim_name, primitive_set in primitives:
                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
+
+### Generates curriculum experiments for the Helmholtz generative model
+RUN_CURR_BASELINE_MODEL = False
+num_iterations = 3
+task_batch_size = 20
+recognition_steps = 10000
+# EXPS = [("bootstrap", 3600), ("bootstrap", 7200), ("bootstrap", 14400), ("bootstrap", 21600)]
+EXPS = [("bootstrap", 3600)]
+task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform")
+primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
+              ("original", ("clevr_original", "clevr_map_transform")),
+              ("filter", ("clevr_original", "clevr_map_transform", "clevr_filter")),]
+for prim_name, primitive_set in primitives:
+    for enumerationTimeout in [1800, 3600, 7200, 14400, 21600]:
+        exp = (prim_name, enumerationTimeout)
+        job_name = f"clevr_ec_no_lang_compression_et_{enumerationTimeout}_curr_prim_{prim_name}"
+        jobs.append(job_name)
+        base_command = "python bin/clevr.py "
+        
+        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout 0  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 examples --Helmholtz 0.5 --skip_first_test "
+        
+        prims = " ".join(primitive_set)
+        exp_parameters = f" --curriculumDatasets curriculum --taskDatasets  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1 --taskReranker sentence_length"
+        exp_command = base_command + base_parameters + exp_parameters
+        command = build_command(exp_command, job, job_name, replication=None)
+        if RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL:
+            if (EXPS is None) or (exp in EXPS):
+                if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                experiment_commands += build_replications(exp_command, job, job_name)
+        job +=1
+
+## Run test experiments for the 'curriculum' dataset on human and generated language.
+RUN_OBJECT_LOCALIZATION_LANGUAGE_TEST_EXPERIMENTS = True
+language_checkpoints = [("best-ghelm-clevr-language-38", "experimentOutputs/clevr/2020-05-23T20-09-31-694337/clevr_aic=1.0_arity=3_ET=3600_it=5_MF=5_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=20_K=2_topLL=F_LANG=F.pickle", 5, "language"),
+("best-clevr-no-lang", "experimentOutputs/clevr/2020-08-11T10-59-25-411054/clevr_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=3600_HR=0.5_it=4_MF=5_no_dsl=F_pc=30.0_RS=10000_RT=7200_RR=F_RW=F_STM=T_L=1.5_batch=20_K=2_topLL=F_LANG=F.pickle", 4, "no-language"),
+] 
+task_dataset = "2_localizationlong"
+enumerationTimeout = 1800
+recognition_timeout = 1800
+for (name, language_checkpoint, last_iter, type) in language_checkpoints:
+    job_name = f"clevr_ec_synthetic_test_object_localization_{name}"
+    jobs.append(job_name)
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    exp_parameters = f" --taskDatasets {task_dataset} --resume {language_checkpoint} --no-dsl --no-consolidation --test_dsl_only --trainInputScenes CLEVR_train_scenes_5000_new --testInputScenes CLEVR_val_scenes_5000_new "
+    if type == 'language': exp_parameters += "--test_only_after_recognition" # Runs both tests.
+    if type == 'no-language': exp_parameters += "--test_only_after_recognition" # Runs both tests.
+    
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_OBJECT_LOCALIZATION_LANGUAGE_TEST_EXPERIMENTS:
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
+
 
 #### Outputs
 PRINT_LOG_SCRIPT = False
