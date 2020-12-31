@@ -147,6 +147,7 @@ def main(args):
     run_tests(args)
 
     # Load the curriculum and datasets.
+    # TODO: pop off all the unnecessary arguments.
     curriculum_datasets = args.pop("curriculumDatasets")
     task_dataset_dir=args.pop("taskDatasetDir")
     train_scenes, test_scenes = args.pop("trainInputScenes"), args.pop("testInputScenes")
@@ -243,6 +244,7 @@ def main(args):
     evaluationTimeout = 1.0
     print("Using starting grammar")
     print(baseGrammar)
+    
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix="%s/clevr"%outputDirectory,

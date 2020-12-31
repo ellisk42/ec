@@ -1,4 +1,5 @@
 import os, json, random, copy
+from collections import defaultdict
 from dreamcoder.task import Task
 from dreamcoder.type import *
 from dreamcoder.domains.clevr.clevrPrimitives import *
@@ -12,6 +13,8 @@ LANGUAGE_DIRECTORY = 'language'
 QUESTION_FILE_PREFIX = 'CLEVR'
 TRAIN_SPLIT = 'train'
 VAL_SPLIT = 'val'
+
+GENERATE_ALL_FLAG = "all"
 
 def loadAllTaskAndLanguageDatasets(args):
     """
@@ -28,7 +31,16 @@ def loadAllTaskAndLanguageDatasets(args):
     return train_tasks, test_tasks, language_datasets
 
 def loadAllLanguageDatasets(args):
-    pass
+    """
+    Returns an array of the subdirectory names within the primary language datasets folder that we should load language from.
+    
+    We now simply return all of the possible subdirectories, so that we can load the most comprehensive vocabulary.
+    
+    Returns [array of string directory names].
+    """
+    question_classes_registry = buildCLEVRQuestionClassesRegistry(args)
+    dataset_names = list(question_classes_registry.keys())
+    return dataset_names
     
 def loadAllTaskDatasets(args):
     """
@@ -47,17 +59,17 @@ def loadAllTaskDatasets(args):
     
     all_train_tasks, all_test_tasks = [], []
     # Load the curriculum datasets, which we don't expect to have a validation set for. 
-    curriculum_datasets = args.pop("curriculumDatasets")
-    curriculum_tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=curriculum_datasets, question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, random_seed=args["seed"], is_curriculum=True)
+    curriculum_datasets = args.curriculumDatasets
+    curriculum_tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=curriculum_datasets, question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, is_curriculum=True)
     all_train_tasks += curriculum_tasks[TRAIN_SPLIT]
     
     # Load the training and validation datasets.
-    task_datasets = args.pop("taskDatasets")
-    main_tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=task_datasets, question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, random_seed=args["seed"], is_curriculum=False)
+    task_datasets = args.taskDatasets
+    main_tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=task_datasets, question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, is_curriculum=False)
     all_train_tasks += main_tasks[TRAIN_SPLIT]
     all_test_tasks +=  main_tasks[VAL_SPLIT]
 
-    printf(f"Loaded a total of {len(all_train_tasks)} training tasks and {len(all_test_tasks)} testing tasks for curriculum datasets: {curriculum_datasets} and main datasest: {task_datasets}")
+    print(f"Loaded a total of {len(all_train_tasks)} training tasks and {len(all_test_tasks)} testing tasks for curriculum datasets: {curriculum_datasets} and main datasest: {task_datasets}")
     
     return all_train_tasks, all_test_tasks
 
@@ -117,25 +129,23 @@ def load_all_scenes(args):
             all_scene_data[split] = scenes
     return all_scene_data
 
-def buildCLEVRTasksForAllQuestionFiles(task_datasets,  question_classes_registry, all_scene_data, random_seed, is_curriculum):
+def buildCLEVRTasksForAllQuestionFiles(task_datasets,  question_classes_registry, all_scene_data, is_curriculum):
     """
     Builds the CLEVR tasks for a set of question files. 
     If not is_curriculum == True, expects both a train and a validation file.
-    
     Returns: 
-        {
-            "train": [array of training task objects]
-            "val" : [array of test task objects]
+        {"train": [array of training task objects]
+          "val" : [array of test task objects]
         }
-    """    
-    # Expects train and validation question splits unless it's a curriculum dataset.
+    """   
     if is_curriculum: 
+        # Expects train and validation question splits unless it's a curriculum dataset.
         splits = [TRAIN_SPLIT]
     else:
         splits = [TRAIN_SPLIT, VAL_SPLIT]
     
-    generate_all = (args.question_classes_to_generate == [GENERATE_ALL_FLAG])
-    tasks = defaultdict()
+    generate_all = (task_datasets == [GENERATE_ALL_FLAG])
+    tasks = defaultdict(list)
     for candidate_dataset in question_classes_registry:
         if candidate_dataset in task_datasets or generate_all:
             for split in splits:
@@ -144,41 +154,33 @@ def buildCLEVRTasksForAllQuestionFiles(task_datasets,  question_classes_registry
                 with open(dataset_full_filepath) as f:
                     all_questions_for_dataset = json.load(f)["questions"]
                 for question in all_questions_for_dataset:
-                    t = buildClevrTask(q, scenes[split])
+                    t = buildClevrTask(question, all_scene_data[split], candidate_dataset)
                     tasks[split].append(t)
                 print(f"Loading dataset {candidate_dataset}: {split}: found {len(all_questions_for_dataset)} tasks.")
     return tasks
-              
-def loadCLEVRDataset(task_datasets, task_dataset_dir, train_scenes, test_scenes, seed, is_curriculum=False):
 
-    """Loads tasks. If not is_curriculum, assumes there is a train and val version of each -- DEPRECATED"""
-    # TODO: append the question class to the task name.
-    with open(os.path.join(task_dataset_dir, "scenes", train_scenes + ".json"), 'r') as f:
-        train_scenes = json.load(f)['scenes']
-    with open(os.path.join(task_dataset_dir, "scenes", test_scenes + ".json"), 'r') as f:
-        test_scenes = json.load(f)['scenes']
+def buildClevrTask(question, input_scenes, dataset_name):
+    """
+    Builds a typed CLEVR Task object from a raw CLEVR question. Infers the return type from the CLEVR question itself.
     
-    tasks = {"train" : [], "val" : []} if not is_curriculum else {"train" : []}
-    scenes = {"train" : train_scenes, "val" : test_scenes}
+    Return a Task object:
+        Named {INDEX}-{DATASET_NAME}-{QUESTION_TEXT}    
+    """
+
+    name = question['question'] if type(question['question']) is str else question['question'][0]
+    name = f"{question['question_index']}-{dataset_name}-{name}"
+    return_type, is_special = infer_return_type(question['answers'])
+    request_type = arrow(tlist(tclevrobject), return_type)
+    examples = build_examples(question, input_scenes)
+    t = Task(name=name, request=request_type, examples=examples, features=None, cache=False)
     
-    dataset_prefix = "CLEVR_%s_"
-    for task_dataset in task_datasets:
-        for split in tasks.keys():
-            split_fn = (dataset_prefix % split) + task_dataset + ".json"
-            dataset_fn = os.path.join(task_dataset_dir, "questions", split_fn)
-            with open(dataset_fn) as f:
-                qs = json.load(f)["questions"]
-            for q in qs:
-                t = buildClevrTask(q, scenes[split])
-                tasks[split].append(t)
-    if is_curriculum:
-        tasks["val"] = []
-    
-    # Handle random shuffling
-    for split in tasks:
-        random.Random(seed).shuffle(tasks[split])
-    return tasks["train"], tasks["val"]
-    
+    t.specialSolver = 'clevrSolver'
+    t.serializeSpecialInput = serialize_clevr_object
+    if is_special:
+        t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
+        t.serializeSpecialOutput = serialize_clevr_object 
+    return t
+
 def convert_scene(input_scene):
     # Add IDs if this is a standard input scene.
     obj_ids = [idx if not "id" in obj else obj["id"] for (idx, obj) in enumerate(input_scene['objects'])]
@@ -257,22 +259,6 @@ def buildClevrMockTask(train_task, test_attr_type=None, test_count=False, test_b
     print(f"Inferred task type: {req}; is_special: {is_special}")
     t = Task(name="mock", request=req,
                 examples=examples, features=None, cache=False)
-    t.specialSolver = 'clevrSolver'
-    t.serializeSpecialInput = serialize_clevr_object
-    if is_special:
-        t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
-        t.serializeSpecialOutput = serialize_clevr_object 
-    return t
-
-def buildClevrTask(q, input_scenes):
-    # TODO: append the question class to the task name.
-    name = q['question'] if type(q['question']) is str else q['question'][0]
-    name = f"{q['question_index']}_{name}"
-    return_type, is_special = infer_return_type(q['answers'])
-    request_type = arrow(tlist(tclevrobject), return_type)
-    examples = build_examples(q, input_scenes)
-    t = Task(name=name, request=request_type, examples=examples, features=None, cache=False)
-    
     t.specialSolver = 'clevrSolver'
     t.serializeSpecialInput = serialize_clevr_object
     if is_special:
