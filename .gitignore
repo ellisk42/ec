@@ -30,6 +30,7 @@ message
 sklearn-container.img
 .idea/
 venv/
+ec-language-venv
 tests/out/
 moses_compiled/
 .word_vectors_cache

@@ -3,7 +3,6 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-# TODO: implement feature extractor.
 from dreamcoder.domains.clevr.main import main, clevr_options, ClevrFeatureExtractor
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
