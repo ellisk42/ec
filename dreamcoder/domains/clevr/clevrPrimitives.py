@@ -2,6 +2,22 @@ from dreamcoder.program import Primitive, Program
 from dreamcoder.type import *
 from dreamcoder.domains.list.listPrimitives import _eq, _map, _fold, _if, _car, _cdr, _cons, _gt, _not, _isEmpty
 
+"""
+clevrPrimitives.py | Author: Catherine Wong
+Contains primitives designed to operate on symbolic CLEVR scene graph reasoning questions.
+
+This contains a reimplementation of the DSL used in the original CLEVR paper, and a set of LISP-based list manipulation primitives from which we can bootstrap these primitives.
+
+CLEVR scenes are sorted lists of Objects of the following form:
+    list(Object) = [{
+        "id": unique ID,
+        "color", "size", "shape", "material": string attributes,
+        "left", "right", "front", "behind": [list of integers for object IDs to the <RELATION> of the current object.]
+    }]
+CLEVR tasks have examples of the form:
+    Array of [ ([x], y)]    # Where x is a scene, and y is an answer object.
+"""
+# Base types.
 tclevrcolor = baseType("tclevrcolor")
 tclevrsize = baseType("tclevrsize")
 tclevrmaterial = baseType("tclevrmaterial")

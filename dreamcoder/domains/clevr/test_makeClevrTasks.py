@@ -1,4 +1,10 @@
 import dreamcoder.domains.clevr.makeClevrTasks as to_test
+"""
+Tests for makeClevrTasks.py | Author: Catherine Wong
+Tests for making and loading CLEVR tasks.
+
+All tests are manually added to a 'test_all' function.
+"""
 
 from types import SimpleNamespace as MockArgs
 
