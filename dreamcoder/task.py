@@ -71,7 +71,6 @@ class Task(object):
             return self.use_supervised
 
     def check(self, e, timeout=None):
-        print(f"Evaluating {e}")
         if timeout is not None:
             def timeoutCallBack(_1, _2): raise EvaluationTimeout()
         try:
@@ -93,7 +92,6 @@ class Task(object):
                 else:
                     try:
                         p = self.predict(f, x)
-                        print(f"Evaluated on {x} to {p}")
                     except BaseException as err:
                         print("Err during evaluation" + str(err))
                         p = None

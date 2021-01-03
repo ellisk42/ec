@@ -1,6 +1,6 @@
 from dreamcoder.program import Primitive, Program
 from dreamcoder.type import *
-from dreamcoder.domains.list.listPrimitives import _eq, _map, _fold, _if, _car, _cdr, _cons, _gt, _not, _isEmpty
+from dreamcoder.domains.list.listPrimitives import _eq, _map, _fold, _if, _car, _cdr, _cons, _gt, _not, _isEmpty, _lt
 
 """
 clevrPrimitives.py | Author: Catherine Wong
@@ -17,6 +17,18 @@ CLEVR scenes are sorted lists of Objects of the following form:
 CLEVR tasks have examples of the form:
     Array of [ ([x], y)]    # Where x is a scene, and y is an answer object.
 """
+# A 'null object' to allow safe operations that remove an object from an already empty list.
+NULL_OBJECT = {   "id" : -1,
+        "color" : "NULL", 
+        "size" : "NULL",
+        "shape" : "NULL",
+        "material" : "NULL",
+        "left" : [],
+        "right" : [],
+        "front" : [],
+        "behind" : [],
+    }
+
 # Base types.
 tclevrcolor = baseType("tclevrcolor")
 tclevrsize = baseType("tclevrsize")
@@ -71,6 +83,49 @@ def _relate(obj): return lambda rel: lambda objset: __relate(obj, rel, objset)
 clevr_relate = Primitive("clevr_relate", 
                         arrow(tclevrobject, tclevrrelation, tlist(tclevrobject), tlist(tclevrobject)), _relate)
 
+### Pre-defined filter and pre-defined same
+def base_filter(condition_fn): # (ObjSet -> ObjSet)
+    try:
+        return lambda objset: sort_and_dedup_obj_list([obj for obj in objset if condition_fn(obj)])
+    except:
+        return []
+
+def safe_filter(attribute_type, objset, attr):
+    try:
+        return sort_and_dedup_obj_list([obj for obj in objset if obj[attribute_type] == attr])
+    except:
+        return []
+def make_filter_handler(attribute_type):
+    def filter_handler(objset): # (ObjSet x Attribute -> ObjSet)
+        return lambda attr: safe_filter(attribute_type, objset, attr)
+    return filter_handler
+    
+def base_filter_except(query_obj):
+    try:
+        import pdb; pdb.set_trace()
+        return lambda condition_fn: lambda objset: sort_objs([obj for obj in objset if condition_fn(obj) and obj['id'] != query_obj["id"]])
+    except:
+        return []
+
+def safe_same_handler(attribute_type, obj1, objset):
+    # Gets objects that are of the same type as a query object, except for the object itself.
+    try: 
+        return sort_and_dedup_obj_list([obj2 for obj2 in objset if (obj1[attribute_type] == obj2[attribute_type]) and (obj1["id"] != obj2["id"])])
+    except: 
+        return []
+    
+def make_same_handler(attribute_type):
+    def same_handler(obj1):  # (Obj -> ObjSet -> Ob jSet)
+        return lambda objset: safe_same_handler(attribute_type, obj1, objset)
+    return same_handler
+    
+clevr_filter_color = Primitive("clevr_filter_color", arrow(tlist(tclevrobject), tclevrcolor, tlist(tclevrobject)), make_filter_handler("color"))
+clevr_filter_size = Primitive("clevr_filter_size", arrow(tlist(tclevrobject), tclevrsize, tlist(tclevrobject)), make_filter_handler("size"))
+clevr_filter_material = Primitive("clevr_filter_material", arrow(tlist(tclevrobject), tclevrmaterial, tlist(tclevrobject)), make_filter_handler("material"))
+clevr_filter_shape = Primitive("clevr_filter_shape", arrow(tlist(tclevrobject), tclevrshape, tlist(tclevrobject)), make_filter_handler("shape"))
+
+clevr_filter = Primitive("clevr_filter", arrow(arrow(t0, tbool), tlist(tclevrobject), tlist(tclevrobject)), base_filter)
+
 ### Get attributes and check equality.
 def make_query_handler(attribute_type):
     def query_handler(object): 
@@ -106,40 +161,6 @@ def sort_and_dedup_obj_list(obj_list):
             deduped.append(o)
     return sort_objs(deduped)
 
-### Pre-defined filter and pre-defined same
-def base_filter(condition_fn): # (ObjSet -> ObjSet)
-    return lambda objset: sort_objs([obj for obj in objset if condition_fn(obj)])
-def base_filter_except(query_obj):
-    return lambda condition_fn: lambda objset: sort_objs([obj for obj in objset if condition_fn(obj) and obj['id'] != query_obj["id"]]) 
-
-def safe_filter(attribute_type, objset, attr):
-    try:
-        return sort_objs([obj for obj in objset if obj[attribute_type] == attr])
-    except:
-        return []
-def make_filter_handler(attribute_type):
-    def filter_handler(objset): # (ObjSet x Attribute -> ObjSet)
-        return lambda attr: safe_filter(attribute_type, objset, attr)
-    return filter_handler
-
-def safe_same_handler(attribute_type, obj1, obj_set):
-    try: 
-        return sort_objs([obj2 for obj2 in objset if (obj1[attribute_type] == obj2[attribute_type]) and (obj1["id"] != obj2["id"])])
-    except: 
-        return []
-    
-def make_same_handler(attribute_type):
-    def same_handler(obj1):  # (Obj -> ObjSet -> Ob jSet)
-        return lambda objset: safe_same_handler(attribute_type, obj1, obj_set)
-    return same_handler
-    
-clevr_filter_color = Primitive("clevr_filter_color", arrow(tlist(tclevrobject), tclevrcolor, tlist(tclevrobject)), make_filter_handler("color"))
-clevr_filter_size = Primitive("clevr_filter_size", arrow(tlist(tclevrobject), tclevrsize, tlist(tclevrobject)), make_filter_handler("size"))
-clevr_filter_material = Primitive("clevr_filter_material", arrow(tlist(tclevrobject), tclevrmaterial, tlist(tclevrobject)), make_filter_handler("material"))
-clevr_filter_shape = Primitive("clevr_filter_shape", arrow(tlist(tclevrobject), tclevrshape, tlist(tclevrobject)), make_filter_handler("shape"))
-
-clevr_filter = Primitive("clevr_filter", arrow(arrow(t0, tbool), tlist(tclevrobject), tlist(tclevrobject)), base_filter)
-
 clevr_same_color = Primitive("clevr_same_color", arrow(tclevrobject, tlist(tclevrobject), tlist(tclevrobject)), make_same_handler("color"))
 clevr_same_size = Primitive("clevr_same_size", arrow(tclevrobject, tlist(tclevrobject), tlist(tclevrobject)), make_same_handler("size"))
 clevr_same_material = Primitive("clevr_same_material", arrow(tclevrobject, tlist(tclevrobject), tlist(tclevrobject)), make_same_handler("material"))
@@ -168,7 +189,7 @@ def objset_op(s1, s2, op_fn):
             if o["id"] in result_set and o["id"] not in final_ids:
                 final_set.append(o)
                 final_ids.add(o["id"])
-        return sort_objs(final_set)
+        return sort_and_dedup_obj_list(final_set)
     except:
         return []
 
@@ -184,12 +205,19 @@ clevr_difference = Primitive("clevr_difference", arrow(tlist(tclevrobject), tlis
 clevr_count = Primitive("clevr_count", arrow(tlist(tclevrobject), tint), len)
 clevr_eq_int = Primitive("clevr_eq_int", arrow(tint, tint, tbool), _eq)
 clevr_is_gt = Primitive("clevr_gt?", arrow(tint, tint, tbool), _gt)
+clevr_is_lt = Primitive("clevr_lt?", arrow(tint, tint, tbool), _lt)
 
 # Boolean operations
 clevr_not = Primitive("clevr_not", arrow(tbool, tbool), _not)
 
 # Singleton operators
-clevr_unique = Primitive("clevr_unique", arrow(tlist(tclevrobject), tclevrobject), _car)
+def _safe_car(objset):
+    if len(objset) >= 1:
+        return objset[0]
+    else:
+        return NULL_OBJECT
+
+clevr_unique = Primitive("clevr_unique", arrow(tlist(tclevrobject), tclevrobject), _safe_car)
 def _exist(objset) : return len(objset) > 0
 clevr_exist = Primitive("clevr_exist", arrow(tlist(tclevrobject), tbool), _exist)
 
@@ -207,12 +235,12 @@ clevr_transform_material = Primitive("clevr_transform_material", arrow(tclevrmat
 clevr_test = Primitive("clevr_test", arrow(tclevrcolor, tclevrobject, tclevrobject), make_transform_handler("color"))
 
 ### List operators, restricted to be of type object; we can undo this later
-def _clevr_map(f): return lambda l: sort_objs([f(o) for o in l])
+def _clevr_map(f): return lambda l: sort_and_dedup_obj_list([f(o) for o in l])
 
 # Removes any duplicate object from the list before adding a new one.
 def __clevr_add(obj1, obj_list):
     filtered_list = [o for o in obj_list if o["id"] != obj1["id"]]
-    return sort_objs([obj1] + filtered_list)
+    return sort_and_dedup_obj_list([obj1] + filtered_list)
 def _clevr_add(o): return lambda l: __clevr_add(o, l)
 
 def safe_tail(obj_list):
@@ -244,7 +272,7 @@ def clevr_test_primitives():
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
      clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] \
     + [clevr_union, clevr_intersect] \
-    + [clevr_count, clevr_eq_int, clevr_is_gt] \
+    + [clevr_count, clevr_eq_int, clevr_is_gt, clevr_is_lt] \
     + [clevr_not] + [clevr_car, clevr_cdr, clevr_is_empty] \
     + [clevr_if, clevr_empty, clevr_fold, clevr_add] \
     + [clevr_eq_objects] + clevr_constants()  
@@ -258,7 +286,7 @@ def clevr_original_v1_primitives():
     return [clevr_relate] \
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,         clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape]  \
     + [clevr_union, clevr_intersect] \
-    + [clevr_count, clevr_eq_int, clevr_is_gt] \
+    + [clevr_count, clevr_eq_int, clevr_is_gt, clevr_is_lt] \
     + [clevr_not] + [clevr_unique, clevr_exist] \
     + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape] \
     + [clevr_same_material, clevr_same_size, clevr_same_color, clevr_same_shape] \
@@ -269,7 +297,7 @@ def clevr_bootstrap_v1_primitives():
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
      clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] \
     + [clevr_union, clevr_intersect] \
-    + [clevr_count, clevr_eq_int, clevr_is_gt] \
+    + [clevr_count, clevr_eq_int, clevr_is_gt, clevr_is_lt] \
     + [clevr_not] + [clevr_car, clevr_cdr, clevr_is_empty] \
     + [clevr_if, clevr_empty, clevr_fold, clevr_add] \
     + [clevr_eq_objects] + clevr_constants()  

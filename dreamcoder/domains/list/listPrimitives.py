@@ -96,6 +96,8 @@ def _not(x): return not x
 
 def _gt(x): return lambda y: x > y
 
+def _lt(x): return lambda y: x < y
+
 
 def _index(j): return lambda l: l[j]
 
