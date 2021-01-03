@@ -199,6 +199,7 @@ clevr_intersect = Primitive("clevr_intersect", arrow(tlist(tclevrobject), tlist(
 clevr_difference = Primitive("clevr_difference", arrow(tlist(tclevrobject), tlist(tclevrobject), tlist(tclevrobject)), _set_difference)
 
 #### Mathematical operations.
+    
 clevr_count = Primitive("clevr_count", arrow(tlist(tclevrobject), tint), len)
 clevr_eq_int = Primitive("clevr_eq_int", arrow(tint, tint, tbool), _eq)
 clevr_is_gt = Primitive("clevr_gt?", arrow(tint, tint, tbool), _gt)

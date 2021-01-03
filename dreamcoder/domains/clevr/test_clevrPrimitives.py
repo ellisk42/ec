@@ -353,24 +353,32 @@ def test_default_one_hop_query_original_primitives():
 def test_default_same_relate_count_original_primitives():
     """How many other things are there of the same size as the cyan thing?"""
     same_relate_task = get_default_same_relate_count()
-    # filter_cyan = "(clevr_filter_color $0 clevr_cyan)"
-    # get_single_object = f"(clevr_unique {filter_cyan})"
-    # get_same_size = f"(clevr_same_size {get_single_object} $0)"
-    # raw_program = f"(lambda (clevr_count {get_same_size}))"
-    # check_task_evaluation(same_relate_task, raw_program)
-    # print("\n")
+    filter_cyan = "(clevr_filter_color $0 clevr_cyan)"
+    get_single_object = f"(clevr_unique {filter_cyan})"
+    get_same_size = f"(clevr_same_size {get_single_object} $0)"
+    raw_program = f"(lambda (clevr_count {get_same_size}))"
+    check_task_evaluation(same_relate_task, raw_program)
+    print("\n")
     # Bootstrapped primitives.
     is_cyan = "(clevr_eq_color clevr_cyan (clevr_query_color $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_cyan} (clevr_add $1 $0) $0)))"
-    filter_cyan = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    filter_cyan = f"(clevr_fold $2 clevr_empty {fold_fn})"
     get_single_object = f"(clevr_car {filter_cyan})"
-    is_same_size = f"(clevr_eq_size (clevr_query_size {get_single_object}) (clevr_query_size $1))"
-    fold_fn = f"(lambda (lambda (clevr_if {is_same_size} (clevr_add $1 $0) $0)))"
-    filter_same_size = f"(clevr_fold $0 clevr_empty {fold_fn})"
-    raw_program = f"(lambda (clevr_count {filter_same_size}))"
+    get_size = f"(clevr_query_size {get_single_object})"
+    
+    is_size = f"(clevr_eq_size {get_size} (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_size} (clevr_add $1 $0) $0)))"
+    filter_size = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_cyan = "(clevr_eq_color clevr_cyan (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cyan} (clevr_add $1 $0) $0)))"
+    filter_cyan = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    difference = f"(clevr_difference {filter_size} {filter_cyan})"
+    raw_program = f"(lambda (clevr_count {difference}))"
     check_task_evaluation(same_relate_task, raw_program)
     print("\n")
-    
+
 
 def test_default_same_relate_query_original_primitives():
     """There is a red thing that is the same size as the metal cylinder; what shape is it?"""
@@ -384,7 +392,29 @@ def test_default_same_relate_query_original_primitives():
     raw_program = f"(lambda (clevr_query_shape {get_single_object}))"
     check_task_evaluation(same_relate_task, raw_program)
     print("\n")
-
+    is_metal = "(clevr_eq_material clevr_metal (clevr_query_material $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_metal} (clevr_add $1 $0) $0)))"
+    filter_metal = f"(clevr_fold $2 clevr_empty {fold_fn})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_metal_cylinder = f"(clevr_fold {filter_metal} clevr_empty {fold_fn})"
+    get_single_object = f"(clevr_unique {filter_metal_cylinder})"
+    get_size = f"(clevr_query_size {get_single_object})"
+    
+    is_size = f"(clevr_eq_size {get_size} (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_size} (clevr_add $1 $0) $0)))"
+    filter_size = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_red = "(clevr_eq_color clevr_red (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_red} (clevr_add $1 $0) $0)))"
+    filter_red = f"(clevr_fold {filter_size} clevr_empty {fold_fn})"
+    get_single_object = f"(clevr_unique {filter_red})"
+    raw_program = f"(lambda (clevr_query_shape {get_single_object}))"
+    check_task_evaluation(same_relate_task, raw_program)
+    print("\n")
+    
+    
 def test_default_compare_integer_less_than_original_primitives():
     """Is the number of cyan rubber things less than the number of large cylinders?"""
     compare_integer_task = get_default_compare_integer_less_than()
@@ -601,8 +631,7 @@ def test_all():
     # test_default_one_hop_query_original_primitives()
     
     # test_default_same_relate_count_original_primitives() # TODO 
-    # test_default_same_relate_count_filter_except() # TODO 
-    # test_default_same_relate_query_original_primitives() # TODO 
+    test_default_same_relate_query_original_primitives() # TODO 
     
     # test_default_compare_integer_less_than_original_primitives()
     # test_default_compare_integer_greater_than()
@@ -610,7 +639,7 @@ def test_all():
     # test_default_remove()
     # test_default_remove_query()
     # test_default_transform()
-    test_default_transform_query()
+    # test_default_transform_query()
     
     ## TODO try same relate filter except
     ## TODO why did we need intersect again?
