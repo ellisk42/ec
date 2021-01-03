@@ -270,7 +270,7 @@ def clevr_test_primitives():
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
      clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] \
     + [clevr_union, clevr_intersect] \
-    + [clevr_count, clevr_eq_int, clevr_is_gt, clevr_is_lt] \
+    + [clevr_count, clevr_is_gt, clevr_is_lt] \
     + [clevr_not] + [clevr_car, clevr_cdr, clevr_is_empty] \
     + [clevr_if, clevr_empty, clevr_fold, clevr_add] \
     + [clevr_eq_objects] + clevr_constants()  
@@ -282,23 +282,23 @@ def clevr_test_primitives():
     
 def clevr_original_v1_primitives():
     return [clevr_relate] \
-    + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,         clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape]  \
-    + [clevr_union, clevr_intersect] \
-    + [clevr_count, clevr_eq_int, clevr_is_gt, clevr_is_lt] \
-    + [clevr_not] + [clevr_unique, clevr_exist] \
+    + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape, clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape]  \
+    + [clevr_union, clevr_intersect, clevr_difference] \
+    + [clevr_count, clevr_is_gt, clevr_is_lt] \
+    + [clevr_unique] \
     + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape] \
     + [clevr_same_material, clevr_same_size, clevr_same_color, clevr_same_shape] \
-    + [clevr_difference] + clevr_constants() 
+    + clevr_constants() 
 
 def clevr_bootstrap_v1_primitives():
     return [clevr_relate] \
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
      clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] \
     + [clevr_union, clevr_intersect, clevr_difference] \
-    + [clevr_count, clevr_eq_int, clevr_is_gt, clevr_is_lt] \
-    + [clevr_not] + [clevr_unique, clevr_cdr, clevr_is_empty] \
+    + [clevr_count, clevr_is_gt, clevr_is_lt] \
+    + [clevr_car] \
     + [clevr_if, clevr_empty, clevr_fold, clevr_add] \
-    + [clevr_eq_objects] + clevr_constants()  
+    + clevr_constants()  
 
 def load_clevr_primitives(primitive_names):
     prims = []
