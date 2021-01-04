@@ -114,6 +114,93 @@ def test_loadAllTaskAndLanguageDatasets():
         for task in tasks:
             dataset_name = task.name.split("-")[1]
             assert dataset_name in question_classes_registry
+
+def assert_same_serialized_clevr_object(object, serialized_object):
+    assert type(object) == type(dict())
+    assert type(serialized_object) == type(dict())
+    for key in object:
+        if key not in ['left', 'right', 'front', 'behind']:
+            assert object[key] == serialized_object[key]
+        else:
+            assert ",".join([str(v) for v in object[key]]) == serialized_object[key]
+
+def assert_all_same_serialized_tasks(all_train_tasks, all_test_tasks):
+    for task_set in [all_train_tasks, all_test_tasks]:
+        for task in task_set:
+            assert hasattr(task, "serializeSpecialInput")
+            
+            serialized_examples = []
+            assert len(task.examples) > 0
+            for xs, y in task.examples:
+                if hasattr(task, "serializeSpecialInput"):
+                    serialized_xs = task.serializeSpecialInput(xs)
+                    for x_idx, original_x in enumerate(xs):
+                        # Each x is of type list(object)
+                        serialized_x = serialized_xs[x_idx]
+                        assert type(original_x) == type([])
+                        assert type(serialized_x) == type([])
+                        assert len(original_x) != 0
+
+                        for object_idx, object in enumerate(original_x):
+                            serialized_object = serialized_x[object_idx]
+                            assert_same_serialized_clevr_object(object, serialized_object)    
+                
+                if type(y) == type([]):
+                    assert hasattr(task, "serializeSpecialOutput")
+                if hasattr(task, "serializeSpecialOutput"):
+                    serialized_y = task.serializeSpecialOutput(y, is_output=True)
+                    # y is itself simply of type list(object)
+                    for object_idx, object in enumerate(y):
+                        serialized_object = serialized_y[object_idx]
+                        assert_same_serialized_clevr_object(object, serialized_object)
+        
+def test_serialize_clevr_object_localization():
+    print("....running test_serialize_clevr_object_localization")
+    mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
+    curriculumDatasets=[],taskDatasets=["2_localization"])
+    
+    question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
+    
+    all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)
+    assert_all_same_serialized_tasks(all_train_tasks, all_test_tasks)
+    print("\n")
+    
+def test_serialize_clevr_object_zero_hop():
+    print("....running test_serialize_clevr_object_zero_hop")
+    mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
+    curriculumDatasets=[],taskDatasets=["2_zero_hop"])
+    
+    question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
+    
+    all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)
+    assert_all_same_serialized_tasks(all_train_tasks, all_test_tasks)
+    print("\n")
+    pass
+
+def test_serialize_clevr_object_transform():
+    print("....running test_serialize_clevr_object_transform")
+    mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
+    curriculumDatasets=[],taskDatasets=["2_transform"])
+    
+    question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
+    
+    all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)
+    assert_all_same_serialized_tasks(all_train_tasks, all_test_tasks)
+    print("\n")
+    pass
+
+def test_serialize_clevr_object_all():
+    print("....running test_serialize_clevr_object_transform")
+    mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
+    curriculumDatasets=[],taskDatasets=["all"])
+    
+    question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
+    
+    all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)
+    assert_all_same_serialized_tasks(all_train_tasks, all_test_tasks)
+    print("\n")
+    pass
+    
     
 def test_all():
     print("Running tests for makeClevrTasks....")
@@ -124,3 +211,8 @@ def test_all():
     test_loadAllTaskDatasets()
     test_loadAllLanguageDatasets()
     test_loadAllTaskAndLanguageDatasets()
+    test_serialize_clevr_object_localization()
+    test_serialize_clevr_object_zero_hop()
+    test_serialize_clevr_object_transform()
+    test_serialize_clevr_object_all()
+    print("....all tests passed!\n")

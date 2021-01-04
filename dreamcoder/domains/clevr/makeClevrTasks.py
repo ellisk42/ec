@@ -4,6 +4,15 @@ from dreamcoder.task import Task
 from dreamcoder.type import *
 from dreamcoder.domains.clevr.clevrPrimitives import *
 
+"""
+makeClevrTasks.py | Author : Catherine Wong
+Utility functions for constructing CLEVR Task objects out of the raw question data.
+
+loadAllTaskAndLanguageDatasets is the main entrypoint function.
+
+Contains functionality for serializing the CLEVR scene objects, which is used when sending the data to OCaml.
+"""
+
 DEFAULT_CLEVR_DATASET_DIR = "data/clevr"
 
 QUESTIONS_DIRECTORY = 'questions'
