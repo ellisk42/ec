@@ -29,6 +29,20 @@ NULL_OBJECT = {   "id" : -1,
         "behind" : [],
     }
 
+# Utilities for sorting and deduplicating objects.
+def sort_objs(obj_list):
+    return sorted(obj_list, key=lambda o: o["id"])
+    
+# Sort and deduplicate. The final scene equality requires absolute list equality, so we use a sort and deduplicate after all list operations to preserve this.
+def sort_and_dedup_obj_list(obj_list):
+    seen = set()
+    deduped = []
+    for o in obj_list:
+        if o["id"] not in seen:
+            seen.add(o["id"])
+            deduped.append(o)
+    return sort_objs(deduped)
+
 """String constant values"""
 attribute_constants = {
     'color' : ["gray", "red", "blue", "green", "brown", "purple", "cyan", "yellow"],
@@ -80,20 +94,6 @@ def __relate(obj, rel, objset):
 def _relate(obj): return lambda rel: lambda objset: __relate(obj, rel, objset)
 clevr_relate = Primitive("clevr_relate", 
                         arrow(tclevrobject, tclevrrelation, tlist(tclevrobject), tlist(tclevrobject)), _relate)
-
-# Sorts and deduplicate
-def sort_objs(obj_list):
-    return sorted(obj_list, key=lambda o: o["id"])
-    
-# Sort and deduplicate. The final scene equality requires absolute list equality, so we use a sort and deduplicate after all list operations to preserve this.
-def sort_and_dedup_obj_list(obj_list):
-    seen = set()
-    deduped = []
-    for o in obj_list:
-        if o["id"] not in seen:
-            seen.add(o["id"])
-            deduped.append(o)
-    return sort_objs(deduped)
     
 ### Pre-defined filter functions.
 def base_filter(condition_fn): # (ObjSet -> ObjSet)
@@ -320,7 +320,14 @@ def load_clevr_primitives(primitive_names):
         else:
             print(f"Unknown primitive set: {pname}")
             assert False
-    return prims
+    # Deduplicate the primitive set.
+    final_prims = []
+    primitive_names = set()
+    for primitive in prims:
+        if primitive.name not in primitive_names:
+            final_prims += [primitive]
+            primitive_names.add(primitive.name)
+    return final_prims
 
 def generate_ocaml_definitions(primitive_names):
     print("(** CLEVR Types -- types.ml **)")

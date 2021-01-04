@@ -249,7 +249,7 @@ def wrapInThread(f):
             return
     return _f
 
-
+OCAML_TEST_FLAG = "is_ocaml_test" # Indicates a JSON response intended for testing.
 def solveForTask_ocaml(_=None,
                        elapsedTime=0.,
                        CPUs=1,
@@ -259,7 +259,8 @@ def solveForTask_ocaml(_=None,
                        testing=None, # FIXME: unused
                        likelihoodModel=None,
                        evaluationTimeout=None, maximumFrontiers=None,
-                       unigramGrammar=None):
+                       unigramGrammar=None,
+                       verbose=False):
 
     import json
 
@@ -281,6 +282,8 @@ def solveForTask_ocaml(_=None,
             special, extra = t.specialTask
             m["specialTask"] = special
             m["extras"] = extra
+        if hasattr(t, "raw_programs_to_test"):
+            m["raw_programs_to_test"] = t.raw_programs_to_test
         return m
 
 
@@ -294,7 +297,7 @@ def solveForTask_ocaml(_=None,
                "lowerBound": lowerBound,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
-               "verbose": False,
+               "verbose": verbose,
                "shatter": 5 if len(tasks) == 1 and "turtle" in str(tasks[0].request) else 10}
 
     if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
@@ -332,6 +335,9 @@ def solveForTask_ocaml(_=None,
             return unigramGrammar.escape_tokens_string(tokens)
         return g.escape_tokens_string(tokens)
 
+    if OCAML_TEST_FLAG in response:
+        return response
+        
     pc = response.get("number_enumerated",0)  # TODO
     frontiers = {}
     searchTimes = {}

@@ -76,6 +76,7 @@ let load_problems channel =
 
       let task =
         (try
+          (** We use a special handler for evaluating return types with a CLEVR object list **)
            let special = j |> member "specialTask" |> to_string in
            match special |> Hashtbl.find task_handler with
            | Some(handler) -> handler (j |> member "extras")

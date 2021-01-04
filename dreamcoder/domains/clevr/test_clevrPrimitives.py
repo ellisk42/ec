@@ -165,15 +165,16 @@ def test_localization_task_original_primitives():
     localization_task = get_default_localization_task()
     
     # Original primitives.
-    raw_program = "(lambda (clevr_filter_size $0 clevr_large))"
-    check_task_evaluation(localization_task, raw_program)
+    raw_program_original = "(lambda (clevr_filter_size $0 clevr_large))"
+    check_task_evaluation(localization_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     condition = "(clevr_eq_size clevr_large (clevr_query_size $1))"
     fold_fn = f"(lambda (lambda (clevr_if {condition} (clevr_add $1 $0) $0)))"
-    raw_program = f"(lambda (clevr_fold $0 clevr_empty {fold_fn}))"
-    check_task_evaluation(localization_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_fold $0 clevr_empty {fold_fn}))"
+    check_task_evaluation(localization_task, raw_program_bootstrap)
     print("\n")
+    return localization_task, raw_program_original, raw_program_bootstrap 
 
 def test_localization_task_original_primitives_base_filter():
     print(f"Running test_localization_task_original_primitives")
@@ -606,44 +607,30 @@ def test_default_transform_query():
     raw_program = f"(lambda (clevr_count {filter_brown}))"
     check_task_evaluation(transform_task, raw_program)
     print("\n")
-    
-## TODO: TRY FILTER EXCEPT VERSIO
-    
-# Tests that we can solve each of the individual question classes with the LISP-based primitive set.
-
-    
-
-# Test enumeration.
-
 
 def test_all():
     print("Running tests for clevrPrimitives....")
     
-    # test_localization_task_original_primitives()
-    # test_localization_task_original_primitives_base_filter()
-    # test_localization_task_multiple_filter_original_primitives()
-    # test_zero_hop_task_count_original_primitives()
-    # test_zero_hop_task_query_shape_original_primitives()
-    # test_zero_hop_task_query_material_original_primitives()
-    # test_zero_hop_task_query_color_original_primitives()
-    # test_zero_hop_task_query_size_original_primitives()
-    # test_one_hop_count_original_primitives()
-    # test_default_one_hop_query_original_primitives()
+    test_localization_task_original_primitives()
+    test_localization_task_original_primitives_base_filter()
+    test_localization_task_multiple_filter_original_primitives()
+    test_zero_hop_task_count_original_primitives()
+    test_zero_hop_task_query_shape_original_primitives()
+    test_zero_hop_task_query_material_original_primitives()
+    test_zero_hop_task_query_color_original_primitives()
+    test_zero_hop_task_query_size_original_primitives()
+    test_one_hop_count_original_primitives()
+    test_default_one_hop_query_original_primitives()
     
-    # test_default_same_relate_count_original_primitives() # TODO 
-    test_default_same_relate_query_original_primitives() # TODO 
+    test_default_same_relate_count_original_primitives()
+    test_default_same_relate_query_original_primitives() 
     
-    # test_default_compare_integer_less_than_original_primitives()
-    # test_default_compare_integer_greater_than()
-    # test_default_single_or()
-    # test_default_remove()
-    # test_default_remove_query()
-    # test_default_transform()
-    # test_default_transform_query()
-    
-    ## TODO try same relate filter except
-    ## TODO why did we need intersect again?
-    ## TODO: right now the transform ones are somewhat challenging to write
-    ## TODO: should we make a safer fold version? (Require it to return list objects)
-    ## TODO: we don't need very many primitives for the list functions.
+    test_default_compare_integer_less_than_original_primitives()
+    test_default_compare_integer_greater_than()
+    test_default_single_or()
+    test_default_remove()
+    test_default_remove_query()
+    test_default_transform()
+    test_default_transform_query()
+
     pass

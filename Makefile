@@ -70,7 +70,7 @@ solver:
 	jbuilder build solver.exe && \
 	cp _build/default/solver.exe ../solver
 
-clevrrClean: 
+clevrClean: 
 	cd solvers && jbuilder clean
 	rm -f clevrSolver
 
@@ -78,6 +78,12 @@ clevrSolver:
 	cd solvers && \
 	jbuilder build clevrSolver.exe && \
 	cp _build/default/clevrSolver.exe ../clevrSolver
+
+clevrPrimitivesTest:
+	cd solvers && jbuilder clean 
+	rm -f test_clevr_primitives 
+	cd solvers && jbuilder build test_clevr_primitives.exe && \
+	cp _build/default/test_clevr_primitives.exe ../test_clevr_primitives
 
 re2TestClean: 
 	cd solvers && jbuilder clean
