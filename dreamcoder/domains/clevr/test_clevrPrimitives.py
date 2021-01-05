@@ -12,13 +12,13 @@ All tests are manually added to a 'test_all' function.
 DEFAULT_CLEVR_DATASET_DIR = 'data/clevr'
 DATASET_CACHE = dict()
 
-def check_task_evaluation(test_task, raw_program):
+def check_task_evaluation(test_task, raw_program, should_succeed=True):
     to_test.clevr_original_v1_primitives()
     print(f"Testing program: {raw_program}")
     p = Program.parse(raw_program)
     test_pass = test_task.check(p, timeout=1000)
     print(f"{test_task.name} | pass: {test_pass}")
-    assert test_pass
+    assert test_pass == should_succeed
 
 def get_train_task_datasets(task_dataset):
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
@@ -156,6 +156,255 @@ def get_default_transform_query():
     print(f"Testing task: {default_task.name}")
     return default_task
 
+# Tests error handling on common error scenarios.
+def test_relate_not_in_list():
+    # Tests if we can fail safely if the query object is not in the object list.
+    """How many things are right the large cylinder?"""
+    one_task = get_default_one_hop_count()
+    # Bootstrapped primitives.
+    is_large = "(clevr_eq_size clevr_large (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_large} (clevr_add $1 $0) $0)))"
+    filter_large = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_large_cylinder = f"(clevr_fold {filter_large} clevr_empty {fold_fn})"
+    get_single_object = f"(clevr_car {filter_large_cylinder})"
+    empty_list = f"clevr_empty"
+    get_right_of = f"(clevr_relate {get_single_object} clevr_right {empty_list})"
+    raw_program_bootstrap = f"(lambda (clevr_count {get_right_of}))"
+    check_task_evaluation(one_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return one_task, raw_program_bootstrap
+    
+def test_relate_no_relations():
+    # Tests that we can fail safely if there is no object with any relations in the list.
+    one_task = get_default_one_hop_count()
+    # Bootstrapped primitives.
+    is_large = "(clevr_eq_size clevr_large (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_large} (clevr_add $1 $0) $0)))"
+    filter_large = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_large_cylinder = f"(clevr_fold {filter_large} clevr_empty {fold_fn})"
+    get_single_object = f"(clevr_car {filter_large_cylinder})"
+
+    get_right_of = f"(clevr_relate {get_single_object} clevr_right {filter_large_cylinder})"
+    raw_program_bootstrap = f"(lambda (clevr_count {get_right_of}))"
+    check_task_evaluation(one_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return one_task, raw_program_bootstrap
+
+def test_union_same_lists():
+    # Tests that we can handle unioning the same list twice..
+    """How many cylinders are brown things or small rubber things?"""
+    single_or_task = get_default_single_or()
+
+    # Bootstrap primitives
+    is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_small} (clevr_add $1 $0) $0)))"
+    filter_small = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_rubber = "(clevr_eq_material clevr_rubber (clevr_query_material $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_rubber} (clevr_add $1 $0) $0)))"
+    filter_small_rubber = f"(clevr_fold {filter_small} clevr_empty {fold_fn})"
+    
+    is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    union = f"(clevr_union {filter_brown} {filter_brown})"
+    union_again = f"(clevr_union {union} {filter_small_rubber})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_cylinder = f"(clevr_fold {union_again} clevr_empty {fold_fn})"
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinder}))"
+    check_task_evaluation(single_or_task, raw_program_bootstrap)
+    print("\n")
+    return single_or_task, raw_program_bootstrap
+
+def test_intersect_no_intersection():
+    # Tests that we can handle intersections with no intersection.
+    single_or_task = get_default_single_or()
+
+    # Bootstrap primitives
+    is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_small} (clevr_add $1 $0) $0)))"
+    filter_small = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_rubber = "(clevr_eq_material clevr_rubber (clevr_query_material $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_rubber} (clevr_add $1 $0) $0)))"
+    filter_small_rubber = f"(clevr_fold {filter_small} clevr_empty {fold_fn})"
+    
+    is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    needless_intersection = f"(clevr_intersect clevr_empty clevr_empty)"
+    union = f"(clevr_union {filter_brown} {needless_intersection})"
+    union_again = f"(clevr_union {union} {filter_small_rubber})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_cylinder = f"(clevr_fold {union_again} clevr_empty {fold_fn})"
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinder}))"
+    check_task_evaluation(single_or_task, raw_program_bootstrap)
+    print("\n")
+    return single_or_task, raw_program_bootstrap
+
+def test_difference_empty_lists():
+    # Tests that we can handle differences between empty lists.
+    single_or_task = get_default_single_or()
+
+    # Bootstrap primitives
+    is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_small} (clevr_add $1 $0) $0)))"
+    filter_small = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_rubber = "(clevr_eq_material clevr_rubber (clevr_query_material $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_rubber} (clevr_add $1 $0) $0)))"
+    filter_small_rubber = f"(clevr_fold {filter_small} clevr_empty {fold_fn})"
+    
+    is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    needless_difference = f"(clevr_difference clevr_empty clevr_empty)"
+    union = f"(clevr_union {filter_brown} {needless_difference})"
+    union_again = f"(clevr_union {union} {filter_small_rubber})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_cylinder = f"(clevr_fold {union_again} clevr_empty {fold_fn})"
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinder}))"
+    check_task_evaluation(single_or_task, raw_program_bootstrap)
+    print("\n")
+    return single_or_task, raw_program_bootstrap
+
+def test_difference_one_empty_list():
+    # Tests that we can handle differences between one empty list.
+    single_or_task = get_default_single_or()
+
+    # Bootstrap primitives
+    is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_small} (clevr_add $1 $0) $0)))"
+    filter_small = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_rubber = "(clevr_eq_material clevr_rubber (clevr_query_material $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_rubber} (clevr_add $1 $0) $0)))"
+    filter_small_rubber = f"(clevr_fold {filter_small} clevr_empty {fold_fn})"
+    
+    is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    needless_difference = f"(clevr_difference clevr_empty {filter_brown})"
+    union = f"(clevr_union {filter_brown} {needless_difference})"
+    union_again = f"(clevr_union {union} {filter_small_rubber})"
+    
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
+    filter_cylinder = f"(clevr_fold {union_again} clevr_empty {fold_fn})"
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinder}))"
+    check_task_evaluation(single_or_task, raw_program_bootstrap)
+    print("\n")
+    return single_or_task, raw_program_bootstrap
+
+def test_car_empty_list():
+    # Tests that we can fail gracefully on taking the car of an empty list.
+    zero_task = get_default_zero_hop_task_query_shape()
+    # Bootstrapped primitives.
+    get_single_object = f"(clevr_car clevr_empty)"
+    raw_program_bootstrap = f"(lambda (clevr_query_shape {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return zero_task, raw_program_bootstrap
+
+def test_add_duplicate():
+    # Tests that we can incorrectly try adding another object to a list that already has it.
+    """There is a thing front the brown thing; how big is it?"""
+    one_task = get_default_one_hop_query()
+    # Bootstrapped primitives.
+    is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    get_single_object = f"(clevr_car {filter_brown})"
+    get_front_of = f"(clevr_relate {get_single_object} clevr_front $0)"
+    get_single_object = f"(clevr_car {get_front_of})"
+    add_to_empty = f"(clevr_add {get_single_object} clevr_empty)"
+    add_again = f"(clevr_add {get_single_object} {add_to_empty})"
+    get_single_object = f"(clevr_car {add_again})"
+    raw_program_bootstrap = f"(lambda (clevr_query_size {get_single_object}))"
+    check_task_evaluation(one_task, raw_program_bootstrap)
+    print("\n")
+    return one_task, raw_program_bootstrap
+
+def test_if_malformed():
+    # Tests that we can fail gracefully if the IF statement doesn't work.
+    # """There is a thing front the brown thing; how big is it?"""
+    one_task = get_default_one_hop_query()
+    # Bootstrapped primitives.
+    empty_object = f"(clevr_car clevr_empty)"
+    is_brown = f"(clevr_eq_color clevr_brown (clevr_query_color {empty_object}))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    get_single_object = f"(clevr_car {filter_brown})"
+    get_front_of = f"(clevr_relate {get_single_object} clevr_front $0)"
+    get_single_object = f"(clevr_car {get_front_of})"
+    add_to_empty = f"(clevr_add {get_single_object} clevr_empty)"
+    add_again = f"(clevr_add {get_single_object} {add_to_empty})"
+    get_single_object = f"(clevr_car {add_again})"
+    raw_program_bootstrap = f"(lambda (clevr_query_size {get_single_object}))"
+    check_task_evaluation(one_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return one_task, raw_program_bootstrap
+
+def test_map_malformed():
+    # Tests that we can fail gracefully if the MAP statement doesn't work.
+    transform_task = get_default_transform_query()
+    empty_object = f"(clevr_car clevr_empty)"
+    map_transform = f"(clevr_map (clevr_transform_color clevr_brown) {empty_object})"
+    union = f"(clevr_union {map_transform} $0)"
+    
+    is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
+    filter_brown = f"(clevr_fold {union} clevr_empty {fold_fn})"
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_brown}))"
+    check_task_evaluation(transform_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return transform_task, raw_program_bootstrap
+
+def test_map_malformed_transform_only():
+    # Tests that we can fail gracefully if the MAP statement doesn't work.
+    # Bootstrap primitives
+    transform_task = get_default_transform_query()
+    empty_object = f"(clevr_car clevr_empty)"
+    is_brown = f"(clevr_eq_color clevr_brown (clevr_query_color {empty_object}))"
+    return_empty = f"(clevr_if {is_brown} {empty_object} {empty_object})"
+    
+    map_transform_green = f"(clevr_map {return_empty} $0)"
+    map_transform_green_metal = f"(clevr_map (clevr_transform_material clevr_metal) {map_transform_green})"
+    map_transform_small_green_metal = f"(clevr_map (clevr_transform_size clevr_small) {map_transform_green_metal})"
+    raw_program_bootstrap = f"(lambda (clevr_union {map_transform_small_green_metal} $0))"
+    check_task_evaluation(transform_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return transform_task, raw_program_bootstrap
+
+def test_fold_malformed():
+    # Tests that we can fail gracefully if the FOLD statement doesn't work.
+    localization_task = get_default_localization_task_multiple_filter()
+    # Original primitives.
+    empty_object = f"(clevr_car clevr_empty)"
+    add_empty = f"(clevr_add {empty_object} clevr_empty)"
+    # Bootstrapped primitives.
+    is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_small} (clevr_add $1 $0) $0)))"
+    filter_small = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    
+    is_cube = "(clevr_eq_shape clevr_cube (clevr_query_shape $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {is_cube} (clevr_add $1 $0) {add_empty})))"
+    raw_program_bootstrap = f"(lambda (clevr_fold {filter_small} clevr_empty {fold_fn}))"
+    check_task_evaluation(localization_task, raw_program_bootstrap, should_succeed=False)
+    print("\n")
+    return localization_task, raw_program_bootstrap
 
     
 # Tests that we can solve each of the individual question classes with the reimplementation.
@@ -518,13 +767,13 @@ def test_default_single_or():
     
     is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
-    filter_small = f"(clevr_fold $0 clevr_empty {fold_fn})"
+    filter_brown = f"(clevr_fold $0 clevr_empty {fold_fn})"
     union = f"(clevr_union {filter_brown} {filter_small_rubber})"
     
-    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shaoe $1))"
+    is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shape $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
     filter_cylinder = f"(clevr_fold {union} clevr_empty {fold_fn})"
-    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinders}))"
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinder}))"
     check_task_evaluation(single_or_task, raw_program_bootstrap)
     print("\n")
     return single_or_task, raw_program_original, raw_program_bootstrap
@@ -631,26 +880,40 @@ def test_default_transform_query():
 def test_all():
     print("Running tests for clevrPrimitives....")
     
-    test_localization_task_original_primitives()
-    test_localization_task_original_primitives_base_filter()
-    test_localization_task_multiple_filter_original_primitives()
-    test_zero_hop_task_count_original_primitives()
-    test_zero_hop_task_query_shape_original_primitives()
-    test_zero_hop_task_query_material_original_primitives()
-    test_zero_hop_task_query_color_original_primitives()
-    test_zero_hop_task_query_size_original_primitives()
-    test_one_hop_count_original_primitives()
-    test_default_one_hop_query_original_primitives()
-    
-    test_default_same_relate_count_original_primitives()
-    test_default_same_relate_query_original_primitives() 
-    
-    test_default_compare_integer_less_than_original_primitives()
-    test_default_compare_integer_greater_than()
-    test_default_single_or()
-    test_default_remove()
-    test_default_remove_query()
-    test_default_transform()
-    test_default_transform_query()
-
-    pass
+    # Tests for common error scenarios.
+    # test_relate_not_in_list()
+    # test_relate_no_relations()
+    # test_union_same_lists()
+    # test_intersect_no_intersection()
+    # test_difference_one_empty_list()
+    # test_difference_empty_lists()
+    # test_add_duplicate()
+    # test_car_empty_list()
+    # test_if_malformed()
+    # test_map_malformed()
+    # test_map_malformed_transform_only()
+    test_fold_malformed()
+    # Tests that should succeed
+    # test_localization_task_original_primitives()
+    # test_localization_task_original_primitives_base_filter()
+    # test_localization_task_multiple_filter_original_primitives()
+    # test_zero_hop_task_count_original_primitives()
+    # test_zero_hop_task_query_shape_original_primitives()
+    # test_zero_hop_task_query_material_original_primitives()
+    # test_zero_hop_task_query_color_original_primitives()
+    # test_zero_hop_task_query_size_original_primitives()
+    # test_one_hop_count_original_primitives()
+    # test_default_one_hop_query_original_primitives()
+    # 
+    # test_default_same_relate_count_original_primitives()
+    # test_default_same_relate_query_original_primitives() 
+    # 
+    # test_default_compare_integer_less_than_original_primitives()
+    # test_default_compare_integer_greater_than()
+    # test_default_single_or()
+    # test_default_remove()
+    # test_default_remove_query()
+    # test_default_transform()
+    # test_default_transform_query()
+    # 
+    # pass

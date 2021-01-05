@@ -616,7 +616,7 @@ let clevr_relate obj1 rel obj_list =
       let rel_set = Int.Set.of_list unpacked in 
       obj_list |> List.filter ~f: (fun obj2 ->
         let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in 
-        Set.mem rel_set (magical id2)) |> sort_objs
+        Set.mem rel_set (magical id2)) |> sort_dedup
   with _ -> [];;
     
 let primitive_clevr_relate = primitive "clevr_relate" (tclevrobject @> tclevrrelation @> tlist tclevrobject @> tlist tclevrobject) (clevr_relate);;
@@ -627,7 +627,7 @@ let filter_attribute attr_type = (fun obj_list attr ->
     obj_list |> List.filter ~f: 
     (fun obj -> 
       let (_, obj_attr) = List.Assoc.find_exn obj attr_type ~equal:(=) in
-      obj_attr = attr) |> sort_objs
+      obj_attr = attr) |> sort_dedup
   with _ -> []
   );;
 
@@ -635,7 +635,7 @@ let primitive_clevr_filter_color = primitive "clevr_filter_color" (tlist tclevro
 let primitive_clevr_filter_size = primitive "clevr_filter_size" (tlist tclevrobject @> tclevrsize @> tlist tclevrobject) (filter_attribute "size");; 
 let primitive_clevr_filter_material = primitive "clevr_filter_material" (tlist tclevrobject @> tclevrmaterial @> tlist tclevrobject) (filter_attribute "material");;
 let primitive_clevr_filter_shape = primitive "clevr_filter_shape" (tlist tclevrobject @> tclevrshape @> tlist tclevrobject) (filter_attribute "shape");;
-let primitive_clevr_filter = primitive "clevr_filter" ((t0 @> tboolean) @> tlist tclevrobject @> tlist tclevrobject) (fun f l -> l |> List.filter ~f:f |> sort_objs);;
+let primitive_clevr_filter = primitive "clevr_filter" ((t0 @> tboolean) @> tlist tclevrobject @> tlist tclevrobject) (fun f l -> l |> List.filter ~f:f |> sort_dedup);;
   
 (**  Query object attributes and check equality. **)
 let primitive_clevr_query_color = primitive "clevr_query_color" (tclevrobject @> tclevrcolor) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "color" ~equal:(=) in attr);;
@@ -663,7 +663,7 @@ let same_attribute attr_type = (fun obj1 obj_list ->
       let (_, obj2_attr) = List.Assoc.find_exn obj2 attr_type ~equal:(=) in
       let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
       (obj1_attr = obj2_attr) && (not (id1 = id2))
-      ) |> sort_objs
+      ) |> sort_dedup
   with _ -> []
   );;
 
@@ -674,7 +674,7 @@ let filter_except obj1 condition_fn obj_list  =
     (fun obj2 -> 
       let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
       (condition_fn obj2) && (not (id1 = id2))
-      ) |> sort_objs
+      ) |> sort_dedup
   with _ -> [];;
 
 let primitive_clevr_same_color = primitive "clevr_same_color" (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (same_attribute "color");;
@@ -700,7 +700,7 @@ let objset_op op_fn l1 l2 =
     let filter_l2 = l2 |> List.filter ~f: (fun obj -> 
       let (_, id) =  List.Assoc.find_exn obj "id" ~equal:(=) 
       in (Set.mem result_set id) && (not (Set.mem filter_l1_ids id))) in 
-    (filter_l1 @ filter_l2) |> sort_objs
+    (filter_l1 @ filter_l2) |> sort_dedup
   with _ -> [];;
 
 let primitive_clevr_union = primitive "clevr_union" ((tlist tclevrobject) @> (tlist tclevrobject) @> (tlist tclevrobject)) (objset_op Set.union);;
@@ -737,7 +737,7 @@ let primitive_transform_shape = primitive "clevr_transform_shape" (tclevrshape @
 let primitive_transform_material = primitive "clevr_transform_material" (tclevrmaterial @> tclevrobject @>  tclevrobject) (transform "material");;
 
 (** Basic list operators **)
-let primitive_clevr_map = primitive "clevr_map" ((tclevrobject @> tclevrobject) @> tlist tclevrobject @> tlist tclevrobject) (fun f l -> l |> List.map ~f:f |> sort_objs);;
+let primitive_clevr_map = primitive "clevr_map" ((tclevrobject @> tclevrobject) @> tlist tclevrobject @> tlist tclevrobject) (fun f l -> l |> List.map ~f:f |> sort_dedup);;
 let primitive_clevr_if = primitive "clevr_if" (tboolean @> t0 @> t0 @> t0)
     ~manualLaziness:true
     (fun p x y -> if Lazy.force p then Lazy.force x else Lazy.force y);;
@@ -753,7 +753,7 @@ let clevr_add obj1 obj_list =
       let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
       (not (id1 = id2))
       ) in 
-  sort_objs (obj1 :: filtered_obj_list);;
+  sort_dedup (obj1 :: filtered_obj_list);;
 
 let primitive_clevr_fold = primitive "clevr_fold" (tlist tclevrobject @> t1 @> (tclevrobject @> t1 @> t1) @> t1) (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
 let primitive_clevr_add = primitive "clevr_add" (tclevrobject @> tlist tclevrobject  @> tlist tclevrobject) (fun x xs -> (clevr_add x xs));;

@@ -17,7 +17,8 @@ CLEVR_PRIMITIVE_OCAML_TEST_FILE = "test_clevr_primitives"
 
 CLEVR_PRIMITIVE_SETS = ['clevr_original', 'clevr_bootstrap', 'clevr_map_transform']
 
-def check_ocaml_evaluation_for_task(task, programs_to_test):
+def check_ocaml_evaluation_for_task(task, programs_to_test, should_succeed=True):
+    """Helper method to evaluate a specific program"""
     TIMEOUT = 10
     # Construct a grammar object.
     clevr_primitives = clevrPrimitives.load_clevr_primitives(CLEVR_PRIMITIVE_SETS)
@@ -37,10 +38,61 @@ def check_ocaml_evaluation_for_task(task, programs_to_test):
                        budgetIncrement=0.5,
                        verbose=True
                        )
+    print(response)
     assert task.name in response
     did_succeed =  response[task.name]
-    assert did_succeed
+    assert did_succeed == should_succeed
 
+# Tests error handling on common error scenarios.
+def test_relate_not_in_list_ocaml():
+    task, error_program = test_clevrPrimitives.test_relate_not_in_list()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+def test_relate_no_relations_ocaml():
+    task, error_program = test_clevrPrimitives.test_relate_no_relations()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+def test_union_same_lists_ocaml():
+    task, double_union = test_clevrPrimitives.test_union_same_lists()
+    check_ocaml_evaluation_for_task(task, [double_union])
+    print("\n")
+def test_intersect_no_intersection_ocaml():
+    task, intersection = test_clevrPrimitives.test_intersect_no_intersection()
+    check_ocaml_evaluation_for_task(task, [intersection])
+    print("\n")
+def test_difference_empty_lists_ocaml():
+    task, difference = test_clevrPrimitives.test_difference_empty_lists()
+    check_ocaml_evaluation_for_task(task, [difference])
+    print("\n")
+def test_difference_one_empty_list_ocaml():
+    task, difference = test_clevrPrimitives.test_difference_one_empty_list()
+    check_ocaml_evaluation_for_task(task, [difference])
+    print("\n")
+def test_car_empty_list_ocaml():
+    task, error_program = test_clevrPrimitives.test_car_empty_list()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+def test_add_duplicate_ocaml():
+    task, duplicate = test_clevrPrimitives.test_add_duplicate()
+    check_ocaml_evaluation_for_task(task, [duplicate])
+    print("\n")
+def test_if_malformed_ocaml():
+    task, error_program = test_clevrPrimitives.test_if_malformed()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+def test_map_malformed_ocaml():
+    task, error_program = test_clevrPrimitives.test_map_malformed()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+def test_map_malformed_transform_only_ocaml():
+    task, error_program = test_clevrPrimitives.test_map_malformed_transform_only()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+def test_fold_malformed_ocaml():
+    task, error_program = test_clevrPrimitives.test_fold_malformed()
+    check_ocaml_evaluation_for_task(task, [error_program], should_succeed=False)
+    print("\n")
+    
 # Tests that we can solve each of the individual question classes with the reimplementation.
 def test_localization_task_ocaml():
     print(f"Running test_localization_task_ocaml")
@@ -157,28 +209,65 @@ def test_default_transform_query_ocaml():
     check_ocaml_evaluation_for_task(task, [raw_program_original, raw_program_bootstrap])
     print("\n")
 
+
+# Integration stress testing.
+def test_enumeration_localization_task_original_primitives():
+    pass
+
+def test_enumeration_localization_bootstrap_primitives():
+    pass
+
+def test_enumeration_one_hop_original_primitives():
+    pass
+
+def test_enumeration_one_hop_bootstrap_primitives():
+    pass
+
+# Tests parallel enumeration for a set of tasks.
+def test_parallel_enumeration_mini_batch_original_primitives():
+    pass
+
+def test_parallel_enumeration_mini_batch_bootstrap_primitives():
+    pass
+
+# Tests how we run Helmholtz samples.
+
     
 def test_all():
     print("Running tests for clevrPrimitivesOcaml....")
-    test_localization_task_ocaml()
-    test_localizatization_task_base_filter_ocaml()
-    test_localization_task_multiple_filter_original_primitives_ocaml()
-    test_zero_hop_task_count_ocaml()
-    test_zero_hop_task_query_shape_ocaml()
-    test_zero_hop_task_query_material_ocaml()
-    test_zero_hop_task_query_color_ocaml()
-    test_zero_hop_task_query_size_ocaml()
-    test_one_hop_count_ocaml()
-    test_default_one_hop_query_ocaml()
-    test_default_same_relate_count_ocaml()
-    test_default_same_relate_query_ocaml()
-    test_default_compare_integer_less_than_ocaml()
-    test_default_compare_integer_greater_than_ocaml()
-    test_default_single_or_ocaml()
-    test_default_remove_ocaml()
-    test_default_remove_query_ocaml()
-    test_default_transform_ocaml()
-    test_default_transform_query_ocaml()
+    # Error handling programs.
+    # test_relate_not_in_list_ocaml()
+    # test_relate_no_relations_ocaml()
+    # test_union_same_lists_ocaml()
+    # test_intersect_no_intersection_ocaml()
+    # test_difference_empty_lists_ocaml()
+    # test_difference_one_empty_list_ocaml()
+    # test_add_duplicate_ocaml()
+    # test_car_empty_list_ocaml()
+    # test_if_malformed_ocaml()
+    # test_map_malformed_ocaml()
+    # test_map_malformed_transform_only_ocaml()
+    test_fold_malformed_ocaml()
+    
+    # test_localization_task_ocaml()
+    # test_localizatization_task_base_filter_ocaml()
+    # test_localization_task_multiple_filter_original_primitives_ocaml()
+    # test_zero_hop_task_count_ocaml()
+    # test_zero_hop_task_query_shape_ocaml()
+    # test_zero_hop_task_query_material_ocaml()
+    # test_zero_hop_task_query_color_ocaml()
+    # test_zero_hop_task_query_size_ocaml()
+    # test_one_hop_count_ocaml()
+    # test_default_one_hop_query_ocaml()
+    # test_default_same_relate_count_ocaml()
+    # test_default_same_relate_query_ocaml()
+    # test_default_compare_integer_less_than_ocaml()
+    # test_default_compare_integer_greater_than_ocaml()
+    # test_default_single_or_ocaml()
+    # test_default_remove_ocaml()
+    # test_default_remove_query_ocaml()
+    # test_default_transform_ocaml()
+    # test_default_transform_query_ocaml()
     
     print(".....finished running all tests!")
 

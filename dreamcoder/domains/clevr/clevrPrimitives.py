@@ -86,11 +86,13 @@ def clevr_constants():
 
 ## Relational handling
 def __relate(obj, rel, objset):
+    # Takes a list of objects and then returns the subset that is related to that object.
     obj_in_set = [obj1 for obj1 in objset if obj1["id"] == obj["id"]]
     if len(obj_in_set) < 1: return []
     obj_in_set = obj_in_set[0]
     rels = obj_in_set[rel]
     return [obj1 for obj1 in objset if obj1["id"] in rels]
+    
 def _relate(obj): return lambda rel: lambda objset: __relate(obj, rel, objset)
 clevr_relate = Primitive("clevr_relate", 
                         arrow(tclevrobject, tclevrrelation, tlist(tclevrobject), tlist(tclevrobject)), _relate)
@@ -233,7 +235,12 @@ clevr_transform_material = Primitive("clevr_transform_material", arrow(tclevrmat
 clevr_test = Primitive("clevr_test", arrow(tclevrcolor, tclevrobject, tclevrobject), make_transform_handler("color"))
 
 ### List operators, restricted to be of type object; we can undo this later
-def _clevr_map(f): return lambda l: sort_and_dedup_obj_list([f(o) for o in l])
+def _clevr_safe_map(l):
+    try:
+        return sort_and_dedup_obj_list([f(o) for o in l])
+    except:
+        return []
+def _clevr_map(f): return lambda l: _clevr_safe_map(l)
 
 # Removes any duplicate object from the list before adding a new one.
 def __clevr_add(obj1, obj_list):
