@@ -184,6 +184,7 @@ def test_localization_task_original_primitives_base_filter():
     raw_program = f"(lambda (clevr_filter {is_large} $0))"
     check_task_evaluation(localization_task, raw_program)
     print("\n")
+    return localization_task, raw_program
 
 def test_localization_task_multiple_filter_original_primitives():
     """Find the small cube."""
@@ -191,8 +192,8 @@ def test_localization_task_multiple_filter_original_primitives():
     localization_task = get_default_localization_task_multiple_filter()
     # Original primitives.
     filter_small = "(clevr_filter_size $0 clevr_small)"
-    raw_program = f"(lambda (clevr_filter_shape {filter_small} clevr_cube))"
-    check_task_evaluation(localization_task, raw_program)
+    raw_program_original = f"(lambda (clevr_filter_shape {filter_small} clevr_cube))"
+    check_task_evaluation(localization_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
@@ -201,9 +202,10 @@ def test_localization_task_multiple_filter_original_primitives():
     
     is_cube= "(clevr_eq_shape clevr_cube (clevr_query_shape $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_cube} (clevr_add $1 $0) $0)))"
-    raw_program = f"(lambda (clevr_fold {filter_small} clevr_empty {fold_fn}))"
-    check_task_evaluation(localization_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_fold {filter_small} clevr_empty {fold_fn}))"
+    check_task_evaluation(localization_task, raw_program_bootstrap)
     print("\n")
+    return localization_task, raw_program_original, raw_program_bootstrap
     
     
 def test_zero_hop_task_count_original_primitives():
@@ -211,16 +213,17 @@ def test_zero_hop_task_count_original_primitives():
     zero_task = get_default_zero_hop_task_count()
     # Original primitives.
     filter_metal = "(clevr_filter_material $0 clevr_metal)"
-    raw_program = f"(lambda (clevr_count {filter_metal}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_original = f"(lambda (clevr_count {filter_metal}))"
+    check_task_evaluation(zero_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_metal = "(clevr_eq_material clevr_metal (clevr_query_material $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_metal} (clevr_add $1 $0) $0)))"
     filter_metal = f"(clevr_fold $0 clevr_empty {fold_fn})"
-    raw_program = f"(lambda (clevr_count {filter_metal}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_metal}))"
+    check_task_evaluation(zero_task, raw_program_bootstrap)
     print("\n")
+    return zero_task, raw_program_original, raw_program_bootstrap
 
 def test_zero_hop_task_query_shape_original_primitives():
     """What is the shape of the small yellow thing?"""
@@ -230,8 +233,8 @@ def test_zero_hop_task_query_shape_original_primitives():
     filter_yellow = "(clevr_filter_color $0 clevr_yellow)"
     filter_small_yellow = f"(clevr_filter_size {filter_yellow} clevr_small)"
     get_single_object = f"(clevr_unique {filter_small_yellow})"
-    raw_program = f"(lambda (clevr_query_shape {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_original = f"(lambda (clevr_query_shape {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
@@ -242,16 +245,18 @@ def test_zero_hop_task_query_shape_original_primitives():
     fold_fn = f"(lambda (lambda (clevr_if {is_yellow} (clevr_add $1 $0) $0)))"
     filter_small_yellow = f"(clevr_fold {filter_small} clevr_empty {fold_fn})"
     get_single_object = f"(clevr_car {filter_small_yellow})"
-    raw_program = f"(lambda (clevr_query_shape {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_query_shape {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_bootstrap)
     print("\n")
+    return zero_task, raw_program_original, raw_program_bootstrap
+    
     
 def test_zero_hop_task_query_material_original_primitives():
     zero_task = get_default_zero_hop_task_query_material()
     filter_purple = "(clevr_filter_color $0 clevr_purple)"
     get_single_object = f"(clevr_unique {filter_purple})"
-    raw_program = f"(lambda (clevr_query_material {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_original = f"(lambda (clevr_query_material {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_purple = "(clevr_eq_color clevr_purple (clevr_query_color $1))"
@@ -259,17 +264,18 @@ def test_zero_hop_task_query_material_original_primitives():
     filter_purple = f"(clevr_fold $0 clevr_empty {fold_fn})"
     
     get_single_object = f"(clevr_car {filter_purple})"
-    raw_program = f"(lambda (clevr_query_material {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_query_material {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_bootstrap)
     print("\n")
+    return zero_task, raw_program_original, raw_program_bootstrap
     
 def test_zero_hop_task_query_color_original_primitives():
     zero_task = get_default_zero_hop_task_query_color()
     filter_metal = "(clevr_filter_material $0 clevr_metal)"
     filter_metal_sphere = f"(clevr_filter_shape {filter_metal} clevr_sphere)"
     get_single_object = f"(clevr_unique {filter_metal_sphere})"
-    raw_program = f"(lambda (clevr_query_color {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_original = f"(lambda (clevr_query_color {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_metal = "(clevr_eq_material clevr_metal (clevr_query_material $1))"
@@ -280,9 +286,10 @@ def test_zero_hop_task_query_color_original_primitives():
     fold_fn = f"(lambda (lambda (clevr_if {is_sphere} (clevr_add $1 $0) $0)))"
     filter_metal_sphere = f"(clevr_fold {filter_metal} clevr_empty {fold_fn})"
     get_single_object = f"(clevr_car {filter_metal_sphere })"
-    raw_program = f"(lambda (clevr_query_color {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_query_color {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_bootstrap)
     print("\n")
+    return zero_task, raw_program_original, raw_program_bootstrap
     
 
 def test_zero_hop_task_query_size_original_primitives():
@@ -290,8 +297,8 @@ def test_zero_hop_task_query_size_original_primitives():
     filter_metal = "(clevr_filter_material $0 clevr_metal)"
     filter_brown_metal = f"(clevr_filter_color {filter_metal} clevr_brown)"
     get_single_object = f"(clevr_unique {filter_brown_metal})"
-    raw_program = f"(lambda (clevr_query_size {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_original = f"(lambda (clevr_query_size {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_metal = "(clevr_eq_material clevr_metal (clevr_query_material $1))"
@@ -302,9 +309,10 @@ def test_zero_hop_task_query_size_original_primitives():
     fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
     filter_brown_metal = f"(clevr_fold {filter_metal} clevr_empty {fold_fn})"
     get_single_object = f"(clevr_car {filter_brown_metal})"
-    raw_program = f"(lambda (clevr_query_size {get_single_object}))"
-    check_task_evaluation(zero_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_query_size {get_single_object}))"
+    check_task_evaluation(zero_task, raw_program_bootstrap)
     print("\n")
+    return zero_task, raw_program_original, raw_program_bootstrap
 
 def test_one_hop_count_original_primitives():
     """How many things are right the large cylinder?"""
@@ -313,8 +321,8 @@ def test_one_hop_count_original_primitives():
     filter_large_cylinder = f"(clevr_filter_shape {filter_large} clevr_cylinder)"
     get_single_object = f"(clevr_unique {filter_large_cylinder})"
     get_right_of = f"(clevr_relate {get_single_object} clevr_right $0)"
-    raw_program = f"(lambda (clevr_count {get_right_of}))"
-    check_task_evaluation(one_task, raw_program)
+    raw_program_original = f"(lambda (clevr_count {get_right_of}))"
+    check_task_evaluation(one_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_large = "(clevr_eq_size clevr_large (clevr_query_size $1))"
@@ -326,9 +334,10 @@ def test_one_hop_count_original_primitives():
     filter_large_cylinder = f"(clevr_fold {filter_large} clevr_empty {fold_fn})"
     get_single_object = f"(clevr_car {filter_large_cylinder})"
     get_right_of = f"(clevr_relate {get_single_object} clevr_right $0)"
-    raw_program = f"(lambda (clevr_count {get_right_of}))"
-    check_task_evaluation(one_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_count {get_right_of}))"
+    check_task_evaluation(one_task, raw_program_bootstrap)
     print("\n")
+    return one_task, raw_program_original, raw_program_bootstrap
 
 def test_default_one_hop_query_original_primitives():
     """There is a thing front the brown thing; how big is it?"""
@@ -337,8 +346,8 @@ def test_default_one_hop_query_original_primitives():
     get_single_object = f"(clevr_unique {filter_brown})"
     get_front_of = f"(clevr_relate {get_single_object} clevr_front $0)"
     get_single_object = f"(clevr_unique {get_front_of})"
-    raw_program = f"(lambda (clevr_query_size {get_single_object}))"
-    check_task_evaluation(one_task, raw_program)
+    raw_program_original = f"(lambda (clevr_query_size {get_single_object}))"
+    check_task_evaluation(one_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
@@ -347,9 +356,11 @@ def test_default_one_hop_query_original_primitives():
     get_single_object = f"(clevr_car {filter_brown})"
     get_front_of = f"(clevr_relate {get_single_object} clevr_front $0)"
     get_single_object = f"(clevr_car {get_front_of})"
-    raw_program = f"(lambda (clevr_query_size {get_single_object}))"
-    check_task_evaluation(one_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_query_size {get_single_object}))"
+    check_task_evaluation(one_task, raw_program_bootstrap)
     print("\n")
+    return one_task, raw_program_original, raw_program_bootstrap
+    
 
 def test_default_same_relate_count_original_primitives():
     """How many other things are there of the same size as the cyan thing?"""
@@ -357,8 +368,8 @@ def test_default_same_relate_count_original_primitives():
     filter_cyan = "(clevr_filter_color $0 clevr_cyan)"
     get_single_object = f"(clevr_unique {filter_cyan})"
     get_same_size = f"(clevr_same_size {get_single_object} $0)"
-    raw_program = f"(lambda (clevr_count {get_same_size}))"
-    check_task_evaluation(same_relate_task, raw_program)
+    raw_program_original = f"(lambda (clevr_count {get_same_size}))"
+    check_task_evaluation(same_relate_task, raw_program_original)
     print("\n")
     # Bootstrapped primitives.
     is_cyan = "(clevr_eq_color clevr_cyan (clevr_query_color $1))"
@@ -376,9 +387,10 @@ def test_default_same_relate_count_original_primitives():
     filter_cyan = f"(clevr_fold $0 clevr_empty {fold_fn})"
     
     difference = f"(clevr_difference {filter_size} {filter_cyan})"
-    raw_program = f"(lambda (clevr_count {difference}))"
-    check_task_evaluation(same_relate_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_count {difference}))"
+    check_task_evaluation(same_relate_task, raw_program_bootstrap)
     print("\n")
+    return same_relate_task, raw_program_original, raw_program_bootstrap
 
 
 def test_default_same_relate_query_original_primitives():
@@ -390,8 +402,8 @@ def test_default_same_relate_query_original_primitives():
     get_same_size = f"(clevr_same_size {get_single_object} $0)"
     filter_red = f"(clevr_filter_color {get_same_size} clevr_red)"
     get_single_object = f"(clevr_unique {filter_red})"
-    raw_program = f"(lambda (clevr_query_shape {get_single_object}))"
-    check_task_evaluation(same_relate_task, raw_program)
+    raw_program_original = f"(lambda (clevr_query_shape {get_single_object}))"
+    check_task_evaluation(same_relate_task, raw_program_original)
     print("\n")
     is_metal = "(clevr_eq_material clevr_metal (clevr_query_material $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_metal} (clevr_add $1 $0) $0)))"
@@ -411,9 +423,10 @@ def test_default_same_relate_query_original_primitives():
     fold_fn = f"(lambda (lambda (clevr_if {is_red} (clevr_add $1 $0) $0)))"
     filter_red = f"(clevr_fold {filter_size} clevr_empty {fold_fn})"
     get_single_object = f"(clevr_unique {filter_red})"
-    raw_program = f"(lambda (clevr_query_shape {get_single_object}))"
-    check_task_evaluation(same_relate_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_query_shape {get_single_object}))"
+    check_task_evaluation(same_relate_task, raw_program_bootstrap)
     print("\n")
+    return same_relate_task, raw_program_original, raw_program_bootstrap
     
     
 def test_default_compare_integer_less_than_original_primitives():
@@ -423,8 +436,8 @@ def test_default_compare_integer_less_than_original_primitives():
     filter_large_cylinder = f"(clevr_filter_shape {filter_large} clevr_cylinder)"
     filter_rubber = "(clevr_filter_material $0 clevr_rubber)"
     filter_cyan_rubber = f"(clevr_filter_color {filter_rubber} clevr_cyan)"
-    raw_program = f"(lambda (clevr_lt? (clevr_count {filter_cyan_rubber}) (clevr_count {filter_large_cylinder})))"
-    check_task_evaluation(compare_integer_task, raw_program)
+    raw_program_original = f"(lambda (clevr_lt? (clevr_count {filter_cyan_rubber}) (clevr_count {filter_large_cylinder})))"
+    check_task_evaluation(compare_integer_task, raw_program_original)
     print("\n")
     # Bootstrap primitives
     is_cyan = "(clevr_eq_color clevr_cyan (clevr_query_color $1))"
@@ -441,9 +454,10 @@ def test_default_compare_integer_less_than_original_primitives():
     fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
     filter_large_cylinder = f"(clevr_fold {filter_large} clevr_empty {fold_fn})"
     
-    raw_program = f"(lambda (clevr_lt? (clevr_count {filter_cyan_rubber}) (clevr_count {filter_large_cylinder})))"
-    check_task_evaluation(compare_integer_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_lt? (clevr_count {filter_cyan_rubber}) (clevr_count {filter_large_cylinder})))"
+    check_task_evaluation(compare_integer_task, raw_program_bootstrap)
     print("\n")
+    return compare_integer_task, raw_program_original, raw_program_bootstrap
 
 def test_default_compare_integer_greater_than():
     """Is the number of large cylinders greater than the number of small rubber spheres?"""
@@ -454,8 +468,8 @@ def test_default_compare_integer_greater_than():
     filter_small_sphere = f"(clevr_filter_shape {filter_small} clevr_sphere)"
     filter_small_rubber_sphere = f"(clevr_filter_material {filter_small_sphere} clevr_rubber)"
     
-    raw_program = f"(lambda (clevr_gt? (clevr_count {filter_large_cylinder}) (clevr_count {filter_small_rubber_sphere})))"
-    check_task_evaluation(compare_integer_task, raw_program)
+    raw_program_original = f"(lambda (clevr_gt? (clevr_count {filter_large_cylinder}) (clevr_count {filter_small_rubber_sphere})))"
+    check_task_evaluation(compare_integer_task, raw_program_original)
     print("\n")
     
     # Bootstrap primitives
@@ -477,9 +491,10 @@ def test_default_compare_integer_greater_than():
     fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
     filter_large_cylinder = f"(clevr_fold {filter_large} clevr_empty {fold_fn})"
     
-    raw_program = f"(lambda (clevr_gt? (clevr_count {filter_large_cylinder}) (clevr_count {filter_small_rubber_sphere})))"
-    check_task_evaluation(compare_integer_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_gt? (clevr_count {filter_large_cylinder}) (clevr_count {filter_small_rubber_sphere})))"
+    check_task_evaluation(compare_integer_task, raw_program_bootstrap)
     print("\n")
+    return compare_integer_task, raw_program_original, raw_program_bootstrap
 
 def test_default_single_or():
     """How many cylinders are brown things or small rubber things?"""
@@ -489,8 +504,8 @@ def test_default_single_or():
     filter_small_rubber = f"(clevr_filter_size {filter_rubber} clevr_small)"
     union = f"(clevr_union {filter_brown} {filter_small_rubber})"
     filter_cylinders = f"(clevr_filter_shape {union} clevr_cylinder)"
-    raw_program = f"(lambda (clevr_count {filter_cylinders}))"
-    check_task_evaluation(single_or_task, raw_program)
+    raw_program_original = f"(lambda (clevr_count {filter_cylinders}))"
+    check_task_evaluation(single_or_task, raw_program_original)
     print("\n")
     # Bootstrap primitives
     is_small = "(clevr_eq_size clevr_small (clevr_query_size $1))"
@@ -509,17 +524,18 @@ def test_default_single_or():
     is_cylinder = "(clevr_eq_shape clevr_cylinder (clevr_query_shaoe $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_cylinder} (clevr_add $1 $0) $0)))"
     filter_cylinder = f"(clevr_fold {union} clevr_empty {fold_fn})"
-    raw_program = f"(lambda (clevr_count {filter_cylinders}))"
-    check_task_evaluation(single_or_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_cylinders}))"
+    check_task_evaluation(single_or_task, raw_program_bootstrap)
     print("\n")
+    return single_or_task, raw_program_original, raw_program_bootstrap
 
 def test_default_remove():
     """What if you removed all of the blue metal things?"""
     remove_task = get_default_remove()
     filter_blue = f"(clevr_filter_color $0 clevr_blue)"
     filter_blue_metal = f"(clevr_filter_material {filter_blue} clevr_metal)"
-    raw_program = f"(lambda (clevr_difference $0 {filter_blue_metal}))"
-    check_task_evaluation(remove_task, raw_program)
+    raw_program_original = f"(lambda (clevr_difference $0 {filter_blue_metal}))"
+    check_task_evaluation(remove_task, raw_program_original)
     print("\n")
     is_blue = "(clevr_eq_color clevr_blue (clevr_query_color $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_blue} (clevr_add $1 $0) $0)))"
@@ -528,9 +544,10 @@ def test_default_remove():
     is_metal = "(clevr_eq_material clevr_metal (clevr_query_material $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_metal} (clevr_add $1 $0) $0)))"
     filter_blue_metal = f"(clevr_fold {filter_blue} clevr_empty {fold_fn})"
-    raw_program = f"(lambda (clevr_difference $0 {filter_blue_metal}))"
-    check_task_evaluation(remove_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_difference $0 {filter_blue_metal}))"
+    check_task_evaluation(remove_task, raw_program_bootstrap)
     print("\n")
+    return remove_task, raw_program_original, raw_program_bootstrap
 
 def test_default_remove_query():
     """If you removed the red things, how many spheres would be left?"""
@@ -538,8 +555,8 @@ def test_default_remove_query():
     filter_red = f"(clevr_filter_color $0 clevr_red)"
     remove = f"(clevr_difference $0 {filter_red})"
     filter_spheres = f"(clevr_filter_shape {remove} clevr_sphere)"
-    raw_program = f"(lambda (clevr_count {filter_spheres}))"
-    check_task_evaluation(remove_task, raw_program)
+    raw_program_original = f"(lambda (clevr_count {filter_spheres}))"
+    check_task_evaluation(remove_task, raw_program_original)
     print("\n")
     is_red = "(clevr_eq_color clevr_red (clevr_query_color $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_red} (clevr_add $1 $0) $0)))"
@@ -549,9 +566,10 @@ def test_default_remove_query():
     is_sphere = "(clevr_eq_shape clevr_sphere (clevr_query_shape $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_sphere} (clevr_add $1 $0) $0)))"
     filter_spheres = f"(clevr_fold {remove} clevr_empty {fold_fn})"
-    raw_program = f"(lambda (clevr_count {filter_spheres}))"
-    check_task_evaluation(remove_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_spheres}))"
+    check_task_evaluation(remove_task, raw_program_bootstrap)
     print("\n")
+    return remove_task, raw_program_original, raw_program_bootstrap
 
 def test_default_transform():
     """What if the gray sphere became a small green metal sphere?"""
@@ -562,8 +580,8 @@ def test_default_transform():
     transform_small = f"(clevr_transform_size clevr_small {single_object})"
     transform_small_green = f"(clevr_transform_color clevr_green {transform_small})"
     transform_small_green_metal = f"(clevr_transform_material clevr_metal {transform_small_green})"
-    raw_program = f"(lambda (clevr_add {transform_small_green_metal} $0))"
-    check_task_evaluation(transform_task, raw_program)
+    raw_program_original = f"(lambda (clevr_add {transform_small_green_metal} $0))"
+    check_task_evaluation(transform_task, raw_program_original)
     print("\n")
     # Bootstrap primitives
     is_gray = "(clevr_eq_color clevr_gray (clevr_query_color $1))"
@@ -576,9 +594,10 @@ def test_default_transform():
     map_transform_green = f"(clevr_map (clevr_transform_color clevr_green) {filter_gray_sphere})"
     map_transform_green_metal = f"(clevr_map (clevr_transform_material clevr_metal) {map_transform_green})"
     map_transform_small_green_metal = f"(clevr_map (clevr_transform_size clevr_small) {map_transform_green_metal})"
-    raw_program = f"(lambda (clevr_union {map_transform_small_green_metal} $0))"
-    check_task_evaluation(transform_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_union {map_transform_small_green_metal} $0))"
+    check_task_evaluation(transform_task, raw_program_bootstrap)
     print("\n")
+    return transform_task, raw_program_original, raw_program_bootstrap
     
 
 def test_default_transform_query():
@@ -589,8 +608,8 @@ def test_default_transform_query():
     map_transform = f"(clevr_map (clevr_transform_color clevr_brown) {filter_blue_sphere})"
     union = f"(clevr_union {map_transform} $0)"
     filter_brown = f"(clevr_filter_color {union} clevr_brown)"
-    raw_program = f"(lambda (clevr_count {filter_brown}))"
-    check_task_evaluation(transform_task, raw_program)
+    raw_program_original = f"(lambda (clevr_count {filter_brown}))"
+    check_task_evaluation(transform_task, raw_program_original)
     print("\n")
     is_blue = "(clevr_eq_color clevr_blue (clevr_query_color $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_blue} (clevr_add $1 $0) $0)))"
@@ -604,9 +623,10 @@ def test_default_transform_query():
     is_brown = "(clevr_eq_color clevr_brown (clevr_query_color $1))"
     fold_fn = f"(lambda (lambda (clevr_if {is_brown} (clevr_add $1 $0) $0)))"
     filter_brown = f"(clevr_fold {union} clevr_empty {fold_fn})"
-    raw_program = f"(lambda (clevr_count {filter_brown}))"
-    check_task_evaluation(transform_task, raw_program)
+    raw_program_bootstrap = f"(lambda (clevr_count {filter_brown}))"
+    check_task_evaluation(transform_task, raw_program_bootstrap)
     print("\n")
+    return transform_task, raw_program_original, raw_program_bootstrap
 
 def test_all():
     print("Running tests for clevrPrimitives....")

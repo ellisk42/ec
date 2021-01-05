@@ -153,13 +153,13 @@ def clevr_options(parser):
 def run_tests(args):
     if args.pop("run_makeClevrTasks_test"):
         test_makeClevrTasks.test_all()
-        assert False   
+        exit(0)
     if args.pop("run_clevrPrimitivesPython_test"):
         test_clevrPrimitives.test_all()
-        assert False
+        exit(0)
     if args.pop("run_clevrPrimitivesOcaml_test"):
         test_clevrPrimitivesOcaml.test_all()
-        assert False
+        exit(0)
                         
 def main(args):
     # Entrypoint for running any tasks.
