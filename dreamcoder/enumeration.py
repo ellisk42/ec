@@ -327,7 +327,7 @@ def solveForTask_ocaml(_=None,
             f.write(message)
         # Don't fail on errors
         # assert False, "MAX RAISE"
-        print("ERROR in enumeration, returning empty frontiers for tasks.")
+        print("ERROR in enumeration, returning empty frontiers for this batch of tasks.")
         response = {t.name : [] for t in tasks} # Empty response 
 
     def escape_tokens(tokens):
@@ -347,9 +347,9 @@ def solveForTask_ocaml(_=None,
                                            logLikelihood=e["logLikelihood"],
                                            tokens=escape_tokens(e["tokens"]).split(),
                                            logPrior=g.logLikelihood(t.request, p))
-                             for e in solutions
+                             for e in solutions 
                              for p in [Program.parse(e["program"])]],
-                            task=t)
+                            task=t)        
         frontiers[t] = frontier
         if frontier.empty:
             searchTimes[t] = None

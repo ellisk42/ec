@@ -331,7 +331,6 @@ def callFork(f, *arguments, **kw):
     assert len(ys) == 1
     return ys[0]
 
-
 PARALLELPROCESSDATA = None
 
 
@@ -339,7 +338,6 @@ def launchParallelProcess(f, *a, **k):
     global PARALLELPROCESSDATA
 
     PARALLELPROCESSDATA = [f, a, k]
-
     from multiprocessing import Process
     p = Process(target=_launchParallelProcess, args=tuple([]))
     p.start()

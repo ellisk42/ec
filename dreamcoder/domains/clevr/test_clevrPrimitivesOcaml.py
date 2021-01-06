@@ -10,12 +10,16 @@ The task-based tests using a raw program string import tasks and program strings
 import dreamcoder.domains.clevr.test_clevrPrimitives as test_clevrPrimitives
 
 from dreamcoder.grammar import * 
-from dreamcoder.enumeration import solveForTask_ocaml
+from dreamcoder.enumeration import solveForTask_ocaml, multicoreEnumeration
 import dreamcoder.domains.clevr.clevrPrimitives as clevrPrimitives
 
 CLEVR_PRIMITIVE_OCAML_TEST_FILE = "test_clevr_primitives"
+CLEVR_SOLVER_OCAML_FILE = "clevrSolver"
 
 CLEVR_PRIMITIVE_SETS = ['clevr_original', 'clevr_bootstrap', 'clevr_map_transform']
+CLEVR_ORIGINAL_PRIMITIVES = ['clevr_original', 'clevr_map_transform']
+CLEVR_BOOTSTRAP_PRIMITIVES = [ 'clevr_bootstrap', 'clevr_map_transform']
+EVALUTION_TIMEOUT = 0.5
 
 def check_ocaml_evaluation_for_task(task, programs_to_test, should_succeed=True):
     """Helper method to evaluate a specific program"""
@@ -42,6 +46,156 @@ def check_ocaml_evaluation_for_task(task, programs_to_test, should_succeed=True)
     assert task.name in response
     did_succeed =  response[task.name]
     assert did_succeed == should_succeed
+
+def check_ocaml_enumeration_for_single_thread(tasks, primitives_set, timeout, should_succeed=None):
+    """Helper method to test actual enumeration on a single program."""
+    # Construct a grammar object.
+    clevr_primitives = clevrPrimitives.load_clevr_primitives(primitives_set)
+    clevr_grammar = Grammar.uniform(clevr_primitives)
+    MAX_FRONTIERS = 1
+    max_frontiers_per_task = {task : MAX_FRONTIERS for task in tasks}
+    # Set the special solver to the testing file.
+    for task in tasks:
+        task.specialSolver = CLEVR_SOLVER_OCAML_FILE
+    frontiers, searchTimes, number_enumerated = solveForTask_ocaml(g=clevr_grammar,
+                       unigramGrammar=clevr_grammar,
+                       maximumFrontiers = max_frontiers_per_task,
+                       tasks=tasks,
+                       timeout=float(timeout),
+                       evaluationTimeout=float(EVALUTION_TIMEOUT),
+                       lowerBound=0,
+                       upperBound=100,
+                       budgetIncrement=0.5,
+                       verbose=True
+                       )
+    assert number_enumerated > 0
+    for task_idx, task in enumerate(tasks):
+        assert task in frontiers
+        frontier_for_task = frontiers[task]
+        assert frontier_for_task.task.name == task.name
+        assert task in searchTimes
+        
+        if should_succeed is None or should_succeed[task_idx]:
+            assert not frontier_for_task.empty
+            for entry in frontier_for_task.entries:
+                assert len(entry.tokens) > 0
+            assert len(frontier_for_task.entries) <= MAX_FRONTIERS
+        else:
+            assert frontier_for_task.empty
+
+def check_ocaml_enumeration_for_multi_thread(tasks, primitives_set, timeout, should_succeed=None, check_success=True):
+    # Construct a grammar object.
+    clevr_primitives = clevrPrimitives.load_clevr_primitives(primitives_set)
+    clevr_grammar = Grammar.uniform(clevr_primitives)
+    MAX_FRONTIERS = 1
+    # Set the special solver to the testing file.
+    for task in tasks:
+        task.specialSolver = CLEVR_SOLVER_OCAML_FILE
+    frontiers_per_task, bestSearchTime = multicoreEnumeration(clevr_grammar, tasks, _=None,
+                             enumerationTimeout=float(timeout),
+                             solver='ocaml',
+                             CPUs=1,
+                             maximumFrontier=MAX_FRONTIERS,
+                             verbose=True,
+                             evaluationTimeout=float(EVALUTION_TIMEOUT),
+                             testing=False,
+                             unigramGrammar=clevr_grammar)
+    for task_idx, task in enumerate(tasks):
+        frontier_for_task = frontiers_per_task[task_idx]
+        assert frontier_for_task.task.name == task.name
+        assert task in bestSearchTime
+        
+        if not check_success: return
+        if should_succeed is None or should_succeed[task_idx]:
+            assert not frontier_for_task.empty
+            for entry in frontier_for_task.entries:
+                assert len(entry.tokens) > 0
+            assert len(frontier_for_task.entries) <= MAX_FRONTIERS
+        else:
+            assert frontier_for_task.empty
+
+# Integration stress testing.
+def test_enumeration_localization_task_original_primitives():
+    TIMEOUT = 10
+    task, _, _ = test_clevrPrimitives.test_localization_task_original_primitives()
+    check_ocaml_enumeration_for_single_thread(task, primitives_set=CLEVR_ORIGINAL_PRIMITIVES, timeout=TIMEOUT, should_succeed=True)
+
+def test_enumeration_localization_bootstrap_primitives():
+    TIMEOUT = 10
+    task, _, _ = test_clevrPrimitives.test_localization_task_original_primitives()
+    check_ocaml_enumeration_for_single_thread(task, primitives_set=CLEVR_BOOTSTRAP_PRIMITIVES, timeout=TIMEOUT, should_succeed=False)
+
+def test_enumeration_one_hop_original_primitives():
+    TIMEOUT = 10
+    task, _, _ = test_clevrPrimitives.test_default_one_hop_query_original_primitives()
+    check_ocaml_enumeration_for_single_thread(task, primitives_set=CLEVR_ORIGINAL_PRIMITIVES, timeout=TIMEOUT, should_succeed=False)
+
+def test_enumeration_one_hop_bootstrap_primitives():
+    TIMEOUT = 10
+    task, _, _ = test_clevrPrimitives.test_one_hop_count_original_primitives()
+    check_ocaml_enumeration_for_single_thread(task, primitives_set=CLEVR_ORIGINAL_PRIMITIVES, timeout=TIMEOUT, should_succeed=False)
+
+def get_same_type_batch_of_tasks_scene():
+    """Gets a batch of tasks with scene_return_types"""
+    task_localization, _, _ = test_clevrPrimitives.test_localization_task_original_primitives()
+    task_localization_multiple, _, _ = test_clevrPrimitives.test_localization_task_multiple_filter_original_primitives()
+    task_remove, _, _ = test_clevrPrimitives.test_default_remove()
+    return [task_remove, task_localization, task_localization_multiple]
+
+def get_same_type_batch_of_tasks_int():
+    task_relate_int, _, _ = test_clevrPrimitives.test_default_same_relate_count_original_primitives()
+    task_count_int, _, _ = test_clevrPrimitives.test_one_hop_count_original_primitives()
+    return [task_relate_int, task_count_int]
+        
+def get_mixed_type_batch_of_tasks():
+    """Gets a batch of tasks with mixed return types"""
+    task_localization, _, _ = test_clevrPrimitives.test_localization_task_original_primitives()
+    task_count, _, _ = test_clevrPrimitives.test_zero_hop_task_count_original_primitives()
+    task_size, _, _ = test_clevrPrimitives.test_zero_hop_task_query_size_original_primitives()
+    task_bool, _, _ = test_clevrPrimitives.test_default_compare_integer_greater_than()
+    task_remove, _, _ = test_clevrPrimitives.test_default_remove()
+    return [task_localization, task_count, task_size, task_bool, task_remove]
+
+def get_mixed_type_batch_of_tasks_all_different_types():
+    """Gets a batch of tasks with mixed return types, but each is different -- no Python parallelism."""
+    task_localization, _, _ = test_clevrPrimitives.test_localization_task_original_primitives()
+    task_count, _, _ = test_clevrPrimitives.test_zero_hop_task_count_original_primitives()
+    task_size, _, _ = test_clevrPrimitives.test_zero_hop_task_query_size_original_primitives()
+    task_bool, _, _ = test_clevrPrimitives.test_default_compare_integer_greater_than()
+    return [task_localization, task_count, task_size, task_bool]
+    
+def test_enumeration_single_thread_multiple_task_scene_original_primitives():
+    tasks = get_same_type_batch_of_tasks_scene()
+    TIMEOUT = 10
+    check_ocaml_enumeration_for_single_thread(tasks, primitives_set=CLEVR_ORIGINAL_PRIMITIVES, timeout=TIMEOUT, should_succeed=[False, True, True])
+
+def test_enumeration_single_thread_multiple_task_scene_bootstrap_primitives():
+    tasks = get_same_type_batch_of_tasks_scene()
+    TIMEOUT = 10
+    check_ocaml_enumeration_for_single_thread(tasks, primitives_set=CLEVR_BOOTSTRAP_PRIMITIVES, timeout=TIMEOUT, should_succeed=[False, False, False])
+
+def test_enumeration_single_thread_multiple_task_scene_original_primitives():
+    tasks = get_same_type_batch_of_tasks_int()
+    TIMEOUT = 10
+    check_ocaml_enumeration_for_single_thread(tasks, primitives_set=CLEVR_ORIGINAL_PRIMITIVES, timeout=TIMEOUT, should_succeed=[True, False])
+
+def test_enumeration_single_thread_multiple_task_scene_bootstrap_primitives():
+    tasks = get_same_type_batch_of_tasks_int()
+    TIMEOUT = 10
+    check_ocaml_enumeration_for_single_thread(tasks, primitives_set=CLEVR_BOOTSTRAP_PRIMITIVES, timeout=TIMEOUT, should_succeed=[False, False])
+    
+# Tests parallel enumeration for a set of tasks.
+def test_parallel_enumeration_mini_batch_original_primitives():
+    TIMEOUT = 10
+    tasks = get_mixed_type_batch_of_tasks()
+    check_ocaml_enumeration_for_multi_thread(tasks, primitives_set=CLEVR_ORIGINAL_PRIMITIVES, timeout=TIMEOUT, should_succeed=None, check_success=False)
+
+def test_parallel_enumeration_mini_batch_bootstrap_primitives():
+    TIMEOUT = 10
+    tasks = get_mixed_type_batch_of_tasks()
+    check_ocaml_enumeration_for_multi_thread(tasks, primitives_set=CLEVR_BOOTSTRAP_PRIMITIVES, timeout=TIMEOUT, should_succeed=None, check_success=False)
+
+# Tests how we run Helmholtz samples.
 
 # Tests error handling on common error scenarios.
 def test_relate_not_in_list_ocaml():
@@ -209,29 +363,6 @@ def test_default_transform_query_ocaml():
     check_ocaml_evaluation_for_task(task, [raw_program_original, raw_program_bootstrap])
     print("\n")
 
-
-# Integration stress testing.
-def test_enumeration_localization_task_original_primitives():
-    pass
-
-def test_enumeration_localization_bootstrap_primitives():
-    pass
-
-def test_enumeration_one_hop_original_primitives():
-    pass
-
-def test_enumeration_one_hop_bootstrap_primitives():
-    pass
-
-# Tests parallel enumeration for a set of tasks.
-def test_parallel_enumeration_mini_batch_original_primitives():
-    pass
-
-def test_parallel_enumeration_mini_batch_bootstrap_primitives():
-    pass
-
-# Tests how we run Helmholtz samples.
-
     
 def test_all():
     print("Running tests for clevrPrimitivesOcaml....")
@@ -247,7 +378,7 @@ def test_all():
     # test_if_malformed_ocaml()
     # test_map_malformed_ocaml()
     # test_map_malformed_transform_only_ocaml()
-    test_fold_malformed_ocaml()
+    # test_fold_malformed_ocaml()
     
     # test_localization_task_ocaml()
     # test_localizatization_task_base_filter_ocaml()
@@ -269,6 +400,16 @@ def test_all():
     # test_default_transform_ocaml()
     # test_default_transform_query_ocaml()
     
+    # test_enumeration_localization_task_original_primitives()
+    # test_enumeration_localization_bootstrap_primitives()
+    # test_enumeration_one_hop_original_primitives()
+    # test_enumeration_one_hop_bootstrap_primitives()
+    # test_enumeration_single_thread_multiple_task_scene_original_primitives()
+    # test_enumeration_single_thread_multiple_task_scene_bootstrap_primitives()
+    # test_enumeration_single_thread_multiple_task_scene_original_primitives()
+    # test_enumeration_single_thread_multiple_task_scene_bootstrap_primitives()
+    # test_parallel_enumeration_mini_batch_original_primitives()
+    test_parallel_enumeration_mini_batch_bootstrap_primitives()
     print(".....finished running all tests!")
 
 
