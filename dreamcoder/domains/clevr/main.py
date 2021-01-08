@@ -12,7 +12,6 @@ import dreamcoder.domains.clevr.test_clevrRecognition as test_clevrRecognition
 import dreamcoder.domains.clevr.test_clevrIntegration as test_clevrIntegration
 
 import os
-import datetime
 import random
 
 """
@@ -35,10 +34,11 @@ DOMAIN_SPECIFIC_ARGS = {
     "tasks" : None, # Training tasks.
     "testingTasks" : None,
     "outputPrefix": None, # Output prefix for the checkpoint files,
-    "languageDataset" : None, # Array of all the names for the language datasets to use.
 }
 DEFAULT_CLEVR_EVALUATION_TIMEOUT = 0.5
 DEFAULT_CLEVR_DOMAIN_NAME_PREFIX = "clevr"
+DEFAULT_TASK_DATASET_DIR = f"data/{DEFAULT_CLEVR_DOMAIN_NAME_PREFIX}"
+DEFAULT_LANGUAGE_DIR = f"data/{DEFAULT_CLEVR_DOMAIN_NAME_PREFIX}/language/"
 
 def clevr_options(parser):
     ### Dataset loading options.
@@ -46,12 +46,13 @@ def clevr_options(parser):
                         default=[],
                         help="A list of curriculum datasets, stored as JSON CLEVR question files. These will be run through separately.")
     parser.add_argument("--taskDatasets", type=str, nargs="*",
+                        default=["all"],
                         help="Which task datasets to load, stored as JSON CLEVR question files, or 'all' to load all of the datasets in the directory.")
     parser.add_argument("--taskDatasetDir",
-                        default="data/clevr",
+                        default=DEFAULT_TASK_DATASET_DIR,
                         help="Top level directory for the dataset.")
     parser.add_argument("--languageDatasetDir",
-                        default="data/clevr/language/")
+                        default=DEFAULT_LANGUAGE_DIR)
     parser.add_argument("--topLevelOutputDirectory",
                         default=DEFAULT_OUTPUT_DIRECTORY, # Defined in utilities.py
                         help="Top level directory in which to store outputs. By default, this is the experimentOutputs directory.")
@@ -108,9 +109,9 @@ def run_entrypoint_functionalities(args):
     if args.pop("generate_ocaml_definitions"):
         generate_ocaml_definitions()
         
-def run_integration_test(args):
+def run_integration_test(DOMAIN_SPECIFIC_ARGS, args):
     if args.pop("run_clevrIntegration_test"):
-        test_clevrIntegration.test_all()
+        test_clevrIntegration.test_all(DOMAIN_SPECIFIC_ARGS, args)
         exit(0)
                 
 def main(args):
@@ -129,13 +130,7 @@ def main(args):
     # Get the evaluation timeout for each task, and the iterations we should run as a whole.
     evaluation_timeout = args.pop("evaluationTimeout")
     eprint(f"Now running with an evaluation timeout of [{evaluation_timeout}].")
-    
-    use_epochs = args.pop("iterations_as_epochs")
-    if use_epochs and args["taskBatchSize"] is not None:
-        eprint("Using iterations as epochs")
-        intended_epochs = args["iterations"]
-        args["iterations"] *= int(len(train_tasks) / args["taskBatchSize"]) 
-        eprint(f"Now running for n={intended_epochs} epochs, which with {len(train_tasks)} training tasks is n={args["iterations"]} iterations.")
+    convert_iterations_to_training_task_epochs(args, train_tasks)
     
     # Create a directory 
     top_level_output_dir = args.pop("topLevelOutputDirectory")
@@ -143,15 +138,19 @@ def main(args):
     
     
     # Set all of the domain specific arguments.
+    args["languageDataset"] = language_dataset
     DOMAIN_SPECIFIC_ARGS["tasks"] = train_tasks
     DOMAIN_SPECIFIC_ARGS["testingTasks"] = test_tasks
-    DOMAIN_SPECIFIC_ARGS["languageDataset"] = language_dataset
     DOMAIN_SPECIFIC_ARGS["grammar"] = initial_grammar
-    DOMAIN_SPECIFIC_ARGS["outputPrefix"] = output_prefix
+    DOMAIN_SPECIFIC_ARGS["outputPrefix"] = checkpoint_output_prefix
     DOMAIN_SPECIFIC_ARGS['evaluationTimeout'] = evaluation_timeout
     
-    # Run the integration test immediately before we execute the iterator itself.
+    # Run the integration test immediately before we remove all domain-specific arguments
+    # and run the iterator itself.
     run_integration_test(DOMAIN_SPECIFIC_ARGS, args)
+    
+    # Utility to pop off any additional arguments that are specific to this domain.
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
     generator = ecIterator(**DOMAIN_SPECIFIC_ARGS,
                            **args)
     for result in generator:

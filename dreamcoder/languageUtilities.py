@@ -31,7 +31,8 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
                             taskDict[t_name] = languageData[t_name]
                 with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
                     vocabularies[split].update(json.load(f))
-            except:
+            except Exception as e:
+                print(e)
                 print(f"Not found: dataset for {split_path}")
                 continue
     

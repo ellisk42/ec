@@ -2,6 +2,7 @@ import inspect
 import signal
 import random
 import time
+import datetime
 import traceback
 import sys
 import os
@@ -45,6 +46,30 @@ def get_timestamped_output_directory_for_checkpoints(top_level_output_dir, domai
     os.system("mkdir -p %s"%outputDirectory)
     output_prefix = f"{outputDirectory}/{domain_name}"
     return output_prefix
+
+def convert_iterations_to_training_task_epochs(args, train_tasks):
+    """Converts an args dict containing 'iterations' into the corresponding 'epochs'
+    based on how many tasks there are and the minibatch size.
+    Mutates the 'iterations' argument in args
+    """
+    use_epochs = args.pop("iterations_as_epochs")
+    if use_epochs and args["taskBatchSize"] is not None:
+        print("Using iterations as epochs")
+        intended_epochs = args["iterations"]
+        args["iterations"] *= int(len(train_tasks) / args["taskBatchSize"]) 
+        print(f"Now running for n={intended_epochs} epochs, which with {len(train_tasks)} training tasks is n={args['iterations']} iterations.")
+
+def pop_all_domain_specific_args(args_dict, iterator_fn):
+    """Pops any additional domain-specific arguments that may have been added at the command line
+    but are not present in the main iterator.
+    Mutates: args_dict
+    """
+    print("Popping off additional domain specific arguments:")
+    initial_args = list(args_dict.keys())
+    for arg in initial_args:
+        if arg not in inspect.signature(iterator_fn).parameters:
+            print(f"Arg {arg} not in main iterator function; removing.")
+            args_dict.pop(arg)
 
 def computeMD5hash(my_string):
     #https://stackoverflow.com/questions/13259691/convert-string-to-md5

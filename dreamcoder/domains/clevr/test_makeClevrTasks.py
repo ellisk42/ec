@@ -12,13 +12,14 @@ DEFAULT_CLEVR_DATASET_DIR = 'data/clevr'
         
 def get_all_scene_data():
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR)
+    mock_args = var(mock_args)
     all_scene_data = to_test.load_all_scenes(mock_args)
     return all_scene_data
 
 def test_buildCLEVRQuestionClassesRegistry():
     print("....running test_buildCLEVRQuestionClassesRegistry")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR)
-    
+    mock_args = var(mock_args)
     question_class_to_files_dict = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
     assert len(question_class_to_files_dict) == 8
@@ -30,6 +31,7 @@ def test_buildCLEVRQuestionClassesRegistry():
 def test_load_all_scenes():
     print("....running test_load_all_scenes")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR)
+    mock_args = var(mock_args)
     all_scene_data = to_test.load_all_scenes(mock_args)
     
     for split in [to_test.TRAIN_SPLIT, to_test.VAL_SPLIT]:
@@ -41,6 +43,7 @@ def test_load_all_scenes():
 def test_buildCLEVRTasksForAllQuestionFiles_one_dataset():
     print("....running test_buildCLEVRTasksForAllQuestionFiles_one_dataset")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR)
+    mock_args = var(mock_args)
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     all_scene_data = get_all_scene_data() 
     
@@ -58,6 +61,7 @@ def test_buildCLEVRTasksForAllQuestionFiles_one_dataset():
 def test_buildCLEVRTasksForAllQuestionFiles_all_datasets():
     print("....running test_buildCLEVRTasksForAllQuestionFiles_all_dataset")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR)
+    mock_args = var(mock_args)
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     all_scene_data = get_all_scene_data() 
     
@@ -76,6 +80,7 @@ def test_buildCLEVRTasksForAllQuestionFiles_all_datasets():
 def test_loadAllTaskDatasets():
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["all"])
+    mock_args = var(mock_args)
     
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
@@ -92,6 +97,7 @@ def test_loadAllTaskDatasets():
 def test_loadAllLanguageDatasets():
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["all"])
+    mock_args = var(mock_args)
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
     language_datasets = to_test.loadAllLanguageDatasets(mock_args)
@@ -101,6 +107,7 @@ def test_loadAllLanguageDatasets():
 def test_loadAllTaskAndLanguageDatasets():
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["all"])
+    mock_args = var(mock_args)
     
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
@@ -158,6 +165,7 @@ def test_serialize_clevr_object_localization():
     print("....running test_serialize_clevr_object_localization")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["2_localization"])
+    mock_args = var(mock_args)
     
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
@@ -169,7 +177,7 @@ def test_serialize_clevr_object_zero_hop():
     print("....running test_serialize_clevr_object_zero_hop")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["2_zero_hop"])
-    
+    mock_args = var(mock_args)
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
     all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)
@@ -181,7 +189,7 @@ def test_serialize_clevr_object_transform():
     print("....running test_serialize_clevr_object_transform")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["2_transform"])
-    
+    mock_args = var(mock_args)
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
     all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)
@@ -193,7 +201,7 @@ def test_serialize_clevr_object_all():
     print("....running test_serialize_clevr_object_transform")
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["all"])
-    
+    mock_args = var(mock_args)
     question_classes_registry = to_test.buildCLEVRQuestionClassesRegistry(mock_args)
     
     all_train_tasks, all_test_tasks = to_test.loadAllTaskDatasets(mock_args)

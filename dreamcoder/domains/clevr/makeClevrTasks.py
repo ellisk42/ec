@@ -68,12 +68,12 @@ def loadAllTaskDatasets(args):
     
     all_train_tasks, all_test_tasks = [], []
     # Load the curriculum datasets, which we don't expect to have a validation set for. 
-    curriculum_datasets = args.curriculumDatasets
+    curriculum_datasets = args["curriculumDatasets"]
     curriculum_tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=curriculum_datasets, question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, is_curriculum=True)
     all_train_tasks += curriculum_tasks[TRAIN_SPLIT]
     
     # Load the training and validation datasets.
-    task_datasets = args.taskDatasets
+    task_datasets = args["taskDatasets"]
     main_tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=task_datasets, question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, is_curriculum=False)
     all_train_tasks += main_tasks[TRAIN_SPLIT]
     all_test_tasks +=  main_tasks[VAL_SPLIT]
@@ -90,7 +90,7 @@ def buildCLEVRQuestionClassesRegistry(args):
         question_class : {"train": filepath; "val" : filepath}
     }
     """
-    questions_directory = os.path.join(args.taskDatasetDir, QUESTIONS_DIRECTORY)
+    questions_directory = os.path.join(args["taskDatasetDir"], QUESTIONS_DIRECTORY)
     
     candidate_question_files = [file for file in os.listdir(questions_directory) if file.endswith('.json') and file.startswith(QUESTION_FILE_PREFIX)]
     
@@ -132,7 +132,7 @@ def load_all_scenes(args):
     all_scene_data = dict()
     for split in [TRAIN_SPLIT, VAL_SPLIT]:
         clevr_scene_file = f"{QUESTION_FILE_PREFIX}_{split}_{SCENES_DIRECTORY}_5000.json"
-        clevr_scene_full_filepath = os.path.join(args.taskDatasetDir, SCENES_DIRECTORY, clevr_scene_file)
+        clevr_scene_full_filepath = os.path.join(args["taskDatasetDir"], SCENES_DIRECTORY, clevr_scene_file)
         with open(clevr_scene_full_filepath) as f:
             scenes = json.load(f)['scenes']    
             all_scene_data[split] = scenes

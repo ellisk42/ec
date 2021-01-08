@@ -221,7 +221,9 @@ def ecIterator(grammar, tasks,
                synchronous_grammar=False,
                language_compression=False,
                lc_score=False,
-               max_compression=0):
+               max_compression=0,
+               test_task_language=False # Integration test on the language we add to tasks.
+               ):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -499,6 +501,9 @@ def ecIterator(grammar, tasks,
         # May need to separately specify train and test.
         result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
         eprint("Loaded language dataset from ", languageDataset)
+        if test_task_language: 
+            yield result # Integration test outpoint.
+        
     # Preload any supervision if available into the all frontiers.
     print(f"Found n={len([t for t in tasks if t.add_as_supervised])} supervised tasks; initializing frontiers.")
     for t in tasks:

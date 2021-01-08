@@ -15,6 +15,7 @@ They are passed to the RecognitionModel defined in recognition.py, which assembl
 """
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.clevr.clevrPrimitives import clevr_lexicon
+from dreamcoder.domains.clevr.makeClevrTasks import serialize_clevr_object
 
 class ClevrFeatureExtractor(RecurrentFeatureExtractor):
     """
