@@ -31,6 +31,20 @@ PUNCTUATION_TO_STRING = {
  "*" : "MULT", 
  "\\" : "DIV"
 }
+DEFAULT_OUTPUT_DIRECTORY = "experimentOutputs"
+
+def get_timestamped_output_directory_for_checkpoints(top_level_output_dir, domain_name):
+    """Creates a timestamped output directory in which to store the checkpoints.
+    Returns the corresponding 'outputPrefix' that should be used for the checkpoints.
+    """
+    timestamp = datetime.datetime.now().isoformat()
+    # Escape the timestamp.
+    timestamp = timestamp.replace(":", "-")
+    timestamp = timestamp.replace(".", "-")
+    outputDirectory = f"experimentOutputs/{domain_name}/{timestamp}"
+    os.system("mkdir -p %s"%outputDirectory)
+    output_prefix = f"{outputDirectory}/{domain_name}"
+    return output_prefix
 
 def computeMD5hash(my_string):
     #https://stackoverflow.com/questions/13259691/convert-string-to-md5

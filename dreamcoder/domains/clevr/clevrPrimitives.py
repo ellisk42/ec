@@ -18,11 +18,12 @@ CLEVR tasks have examples of the form:
     Array of [ ([x], y)]    # Where x is a scene, and y is an answer object.
 """
 # A 'null object' to allow safe operations that remove an object from an already empty list.
+NULL_STRING = "NULL"
 NULL_OBJECT = {   "id" : -1,
-        "color" : "NULL", 
-        "size" : "NULL",
-        "shape" : "NULL",
-        "material" : "NULL",
+        "color" : NULL_STRING, 
+        "size" : NULL_STRING,
+        "shape" : NULL_STRING,
+        "material" : NULL_STRING,
         "left" : [],
         "right" : [],
         "front" : [],
@@ -52,13 +53,15 @@ attribute_constants = {
     'material' : ["rubber", "metal"]
 }
 def clevr_lexicon():
+    """Defines the token lexicon for all CLEVR I/O examples."""
     lexicon = set()
     for k, values in attribute_constants.items():
         lexicon.add(k)
         lexicon.update(values)
-    lexicon.update([str(val) for val in range(100)]) # Since we could accidentally count something large.
+    lexicon.update([str(val) for val in range(-1, 100)]) # Since we could accidentally count something large.
     lexicon.update([str(val) for val in (True, False)])
     lexicon.add("id")
+    lexicon.add(NULL_STRING)
     return list(lexicon)
 
 """Base Types: in addition to these, CLEVR answers also use the Boolean, integer, and List(ClevrObject) types."""
@@ -308,21 +311,22 @@ def clevr_bootstrap_v1_primitives():
     + clevr_constants()  
 
 def load_clevr_primitives(primitive_names):
+    load_all_primitives = primitive_names == ['ALL']
     prims = []
     for pname in primitive_names:
-        if pname == 'clevr_test':
+        if pname == 'clevr_test' or load_all_primitives:
             prims += clevr_test_primitives()
-        elif pname == 'clevr_original':
+        elif pname == 'clevr_original' or load_all_primitives:
             prims += clevr_original_v1_primitives()
-        elif pname == 'clevr_bootstrap':
+        elif pname == 'clevr_bootstrap' or load_all_primitives:
             prims += clevr_bootstrap_v1_primitives()
-        elif pname == 'clevr_map_transform':
+        elif pname == 'clevr_map_transform' or load_all_primitives:
             prims += clevr_map_transform_primitives()
-        elif pname == 'clevr_filter':
+        elif pname == 'clevr_filter' or load_all_primitives:
             prims += [clevr_filter]
-        elif pname == 'clevr_filter_except' : 
+        elif pname == 'clevr_filter_except' or load_all_primitives: 
             prims += [clevr_filter_except]
-        elif pname == 'clevr_difference': 
+        elif pname == 'clevr_difference' or load_all_primitives: 
             prims += [clevr_difference]
         else:
             print(f"Unknown primitive set: {pname}")
@@ -336,14 +340,14 @@ def load_clevr_primitives(primitive_names):
             primitive_names.add(primitive.name)
     return final_prims
 
-def generate_ocaml_definitions(primitive_names):
+def generate_ocaml_definitions():
     print("(** CLEVR Types -- types.ml **)")
     for t in clevr_types:
         print(f'let {t.name} = make_ground "{t.name}";;')
         
     print("\n")
     print("(** CLEVR Function Shell Definitions -- program.ml **)")
-    primitives = load_clevr_primitives(primitive_names)
+    primitives = load_clevr_primitives(["ALL"])
     constant_values = []
     for k in attribute_constants:
         constant_values += attribute_constants[k]

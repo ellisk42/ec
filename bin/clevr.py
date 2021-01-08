@@ -3,7 +3,8 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.domains.clevr.main import main, clevr_options, ClevrFeatureExtractor
+from dreamcoder.domains.clevr.main import main, clevr_options
+from dreamcoder.domains.clevr.clevrRecognition import ClevrFeatureExtractor
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 

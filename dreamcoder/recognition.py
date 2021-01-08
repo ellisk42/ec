@@ -615,6 +615,21 @@ class ContextualGrammarNetwork(nn.Module):
         return ll
 
 class RecognitionModel(nn.Module):
+    """
+    Defines the full-stack RecognitionModel used for neurally-guided search. 
+    It contains:
+        self.featureExtractor: a feed-forward encoder used to encode the I/O examples of a given task. 
+        This should produce an [n_task x featureExtractor.outputDimensionality] feature encoding tensor.
+        
+        self.language_encoder: a feed-forward encoder used to encode the language annotations of a given task.
+        This should produce an [n_task x language_encoder.outputDimensionality] language encoding tensor.
+        
+        These are both concatenated to produce a task encoding tensor.
+        
+        self._MLP: a 2-layer perception module that takes the task encoding tensor and passes it through a hidden layer and an activation layer to produce an [n_task x self.outputDimensionality] tensor.
+        
+        self.grammarBuilder: this takes an [n_task x self.outputDimensionality] tensor and produces a transition matrix over the grammar (if contextual); or weights over the unigrams.
+    """
     def __init__(self,
                 example_encoder=None,
                 language_encoder=None,
@@ -1004,13 +1019,15 @@ class RecognitionModel(nn.Module):
             eprint("You didn't give me any nonempty replay frontiers to learn from. Going to learn from 100% Helmholtz samples")
             helmholtzRatio = 1.
             
-        # Should we sample programs or use the enumerated programs?
+        # This determines whether we have pre-enumerated a set of helmholtzFrontiers: if we have not,
+        # we will need to sample them during the training loop itself.
         randomHelmholtz = len(helmholtzFrontiers) < 2
         if randomHelmholtz:
-            print("Insufficient Helmholtz; sampling randomly.")
+            print("No pre-enumerated helmholtzFrontiers: we will sample randomly during the training loop.")
             helmholtzFrontiers = []
         
         class HelmholtzEntry:
+            """Wrapper class to mix executed Helmholtz programs as 'tasks' into the training schedule."""
             def __init__(self, frontier, owner):
                 frontier.task.name += f"{owner.get_fresh_helmholtz_name()}"
                 self.request = frontier.task.request
@@ -1052,14 +1069,20 @@ class RecognitionModel(nn.Module):
         # wastes time.
         if not hasattr(self.featureExtractor, 'recomputeTasks') and (not self.featureExtractor is None):
             self.featureExtractor.recomputeTasks = True
+        
+        ## Initializes HelmholtzEntry objects from the pre-enumerated frontiers. 
         helmholtzFrontiers = [HelmholtzEntry(f, self)
                               for f in helmholtzFrontiers]
         if len(helmholtzFrontiers) > 0:
-            self.update_helmholtz_language(helmholtzFrontiers)
+            # Generate natural language for the helmholtz programs.
+            self.update_helmholtz_language(helmholtzFrontiers) 
         random.shuffle(helmholtzFrontiers)
         
+        ## Helper methods for getting Helmholtz entries in the training loop, which can involve
+        # sampling new entries if we run out.
         helmholtzIndex = [0]
         def getHelmholtz(max_tries=0):
+            """Helper method to get the Helmholtz frontiers we have generated, or sample new ones if we ran out."""
             switchToRandom = False
             if max_tries > 100:
                 print("Switching to random...")
@@ -1147,7 +1170,7 @@ class RecognitionModel(nn.Module):
             for i in reversed(badIndices):
                 assert helmholtzFrontiers[i].task is None
                 del helmholtzFrontiers[i]
-            self.update_helmholtz_language(helmholtzFrontiers)
+            self.update_helmholtz_language(helmholtzFrontiers) # Generate language for all sampled programs.
 
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types
@@ -1474,8 +1497,9 @@ class RecurrentFeatureExtractor(nn.Module):
         # activations...
         return hidden[0, :, :] + hidden[1, :, :]
 
-    def forward(self, examples):
-        tokenized = self.tokenize(examples)
+    def forward(self, examples_or_task):
+        # Takes either the examples themselves, or the task.
+        tokenized = self.tokenize(examples_or_task) 
         if not tokenized:
             return None
 

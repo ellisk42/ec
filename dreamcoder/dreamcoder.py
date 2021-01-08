@@ -668,6 +668,7 @@ def ecIterator(grammar, tasks,
                                  'frontier')
         
         ### Induce synchronous grammar for generative model with language.
+        # We use this to pre-generate information that can be used to label the Helmholtz samples.
         translation_info = None
         if "language" in recognition_1 and synchronous_grammar:
             if all( f.empty for f in result.allFrontiers.values() ):
@@ -686,8 +687,7 @@ def ecIterator(grammar, tasks,
                                 debug=debug,
                                 iteration=j)
         
-        #### Recognition model round 1. With language.
-        # Optionally tries to relabel Helmholtz with the nearest language.
+        #### Recognition model round 1. With language, using the joint generative model to label the Helmholtz samples.
         if len(recognition_1) > 0:
             result.tasksAttempted.update(wakingTaskBatch)
             recognition_iteration = 1
@@ -980,7 +980,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       helmholtz_translation_info=None,
                       test_only_after_recognition=False,
                       pretrained_word_embeddings=None):
-    # Exit if language only and we have no frontiers to train on.
+    ### Pre-check: have we discovered any program solutions on the training set?
+    ## If not, we have no data from which to train a joint language-example-based model, so we skip this round if you required training on both language and examples.
     n_frontiers = len([f for f in allFrontiers if not f.empty])
     eprint(f"Recognition iteration [{recognition_iteration}]. Attempting training using: {[recognition_inputs]} on {n_frontiers}.")
     if not 'examples' in recognition_inputs and 'language' in recognition_inputs and n_frontiers < 1:
@@ -991,16 +992,20 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     
     example_encoders, language_encoders = [None] * ensembleSize, [None] * ensembleSize
     pretrained_model = None
+
     if 'examples' in recognition_inputs:
+        # Initialize the I/O example encoders. We pass in all of the tasks in the entire training set at once, which are used to pre-calculate Helmholtz inputs, language, and other dataset-based statistics. 
         example_encoders = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
         if recognition_iteration > 0 and finetune_from_example_encoder:
             eprint("Finetuning from the previous iteration's example encoder and model.")
             pretrained_model = result.models[recognition_iteration - 1]
             assert(pretrained_model.featureExtractor is not None)
     if 'language' in recognition_inputs:
+        # Initialize the language-only example encoders.
         language_encoders = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=language_data, lexicon=language_lexicon, smt_translation_info=helmholtz_translation_info,
         pretrained_word_embeddings=pretrained_word_embeddings) for i in range(ensembleSize)]
     if recognition_iteration > 0 and helmholtz_nearest_language > 0:
+        # This labels helmholtz with the 'nearest' language. It is an experimental feature that we do not use in the released papers.
         nearest_encoder = result.models[recognition_iteration - 1]
         nearest_tasks = tasks
         helmholtzFrontiers = [] # For now, reset the frontiers so we're guaranteed to freshly name them
@@ -1008,6 +1013,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
         nearest_encoder, nearest_tasks = None, None
         helmholtz_nearest_language = 0
     
+    # Initializes the full recognition model architecture.
     recognizers = [RecognitionModel(example_encoder=example_encoders[i],
                                     language_encoder=language_encoders[i],
                                     grammar=grammar,
@@ -1018,7 +1024,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     contextual=contextual,
                                     pretrained_model=pretrained_model,
                                     helmholtz_nearest_language=helmholtz_nearest_language,
-                                    helmholtz_translations=helmholtz_translation_info,
+                                    helmholtz_translations=helmholtz_translation_info, # This object contains information for using the joint generative model over programs and language.
                                     nearest_encoder=nearest_encoder,
                                     nearest_tasks=nearest_tasks,
                                     id=i) for i in range(ensembleSize)]
