@@ -222,7 +222,12 @@ def ecIterator(grammar, tasks,
                language_compression=False,
                lc_score=False,
                max_compression=0,
-               test_task_language=False # Integration test on the language we add to tasks.
+               # Entrypoint flags for integration tests. If these are set, we return early at semantic breakpoints in the iteration.
+               test_task_language=False, # Integration test on the language we add to tasks.
+               test_background_helmholtz=False, # Integration test for enumerating Helmholtz frontiers in the background.
+               test_wake_generative_enumeration=False, # Integration test for enumeration.
+               test_sleep_recognition_0=False, # Integration test for the examples-only recognizer.
+               test_next_iteration_settings=False, # Integration test for the second iteration.
                ):
     if enumerationTimeout is None:
         eprint(
@@ -364,7 +369,7 @@ def ecIterator(grammar, tasks,
             "initialTimeoutIterations"
         ]
         parameters["iterations"] = iteration
-        checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
+        checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path and not k.startswith('test_')]
         kvs = [
             "{}={}".format(
                 ECResult.abbreviate(k),
@@ -573,6 +578,8 @@ def ecIterator(grammar, tasks,
                                                                     executable='helmholtz',
                                                                     serialize_special=serialize_special,
                                                                     maximum_size=maximum_helmholtz)
+                if test_background_helmholtz: # Integration test exitpoint for testing frontiers.
+                    yield helmholtzFrontiers
             else:
                 print("Reusing dreams from previous iteration.")
         else:
@@ -590,7 +597,6 @@ def ecIterator(grammar, tasks,
                 if j < initialTimeoutIterations:
                     eprint(f"Found an annealing schedule; using {initialTimeout}s enumeration.")
                     enumeration_time = initialTimeout
-                    
             result.tasksAttempted.update(wakingTaskBatch)
             wake_generative = custom_wake_generative if custom_wake_generative is not None else default_wake_generative
             topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
@@ -616,6 +622,7 @@ def ecIterator(grammar, tasks,
 
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
         eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
+        if test_wake_generative_enumeration: yield result
         
         #### Recognition model round 0. No language.
         result.models = [] # Reset the list of models at each iteration.
@@ -671,6 +678,7 @@ def ecIterator(grammar, tasks,
                                                                  for f in result.allFrontiers.values()
                                                                  if len(f) > 0},
                                  'frontier')
+        if test_sleep_recognition_0: yield result
         
         ### Induce synchronous grammar for generative model with language.
         # We use this to pre-generate information that can be used to label the Helmholtz samples.

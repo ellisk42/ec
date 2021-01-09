@@ -13,9 +13,10 @@ All featureExtractors must follow a featureExtractor(tasks, testingTasks=testing
     tasksOfPrograms(prgrams, types): if defined, performs taskOfProgram in a batch.
 They are passed to the RecognitionModel defined in recognition.py, which assembles the full stack architecture.
 """
+import dreamcoder.domains.clevr.makeClevrTasks as makeClevrTasks
 from dreamcoder.recognition import RecurrentFeatureExtractor
-from dreamcoder.domains.clevr.clevrPrimitives import clevr_lexicon
-from dreamcoder.domains.clevr.makeClevrTasks import serialize_clevr_object
+from dreamcoder.type import *
+from dreamcoder.domains.clevr.clevrPrimitives import *
 
 class ClevrFeatureExtractor(RecurrentFeatureExtractor):
     """
@@ -25,9 +26,9 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
     tasks: a list of all of the tasks. This is used to extract all of their I/O examples, which we will use to execute Helmholtz programs later on.
     
     """
-    special = 'clevr' # Special flag passed to the OCaml solver.
-    serialize_special = serialize_clevr_object # Special flag passed to the serializer for the OCaml solver.
-    maximum_helmholtz = 20000 
+    special = 'clevr' # Special flag passed to the OCaml Helmholtz enumerator.
+    serialize_special = makeClevrTasks.serialize_clevr_object # Special flag passed to the OCaml Helmholtz enumerator.
+    maximum_helmholtz = 5000  # Special flag passed to cap how many Helmholtz we enumerate.
     
     def __init__(self, tasks, testingTasks=[], cuda=False):
         self.recomputeTasks = True
@@ -50,7 +51,7 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
         
         """
         tokenized = []
-        return_type, _ = infer_return_type([task.examples[0][-1]])
+        return_type, _ = makeClevrTasks.infer_return_type([task.examples[0][-1]])
         def tokenize_obj_list(obj_list):
             flattened = []
             for o in obj_list:

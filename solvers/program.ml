@@ -643,8 +643,8 @@ let primitive_clevr_query_size = primitive "clevr_query_size" (tclevrobject @> t
 let primitive_clevr_query_material = primitive "clevr_query_material" (tclevrobject @> tclevrmaterial) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "material" ~equal:(=) in attr);;
 let primitive_clevr_query_shape = primitive "clevr_query_shape" (tclevrobject @> tclevrshape) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "shape" ~equal:(=) in attr);;
 
-let primitive_clevr_eq_size = primitive "clevr_eq_size" (tclevrsize @> tclevrsize @> tboolean) (fun (a : string) (b : string) -> a = b);;
 let primitive_clevr_eq_color = primitive "clevr_eq_color" (tclevrcolor @> tclevrcolor @> tboolean) (fun (a : string) (b : string) -> a = b);;
+let primitive_clevr_eq_size = primitive "clevr_eq_size" (tclevrsize @> tclevrsize @> tboolean) (fun (a : string) (b : string) -> a = b);;
 let primitive_clevr_eq_material = primitive "clevr_eq_material" (tclevrmaterial @> tclevrmaterial @> tboolean) (fun (a : string) (b : string) -> a = b);;
 let primitive_clevr_eq_shape = primitive "clevr_eq_shape" (tclevrshape @> tclevrshape @> tboolean) (fun (a : string) (b : string) -> a = b);;
 let primitive_clevr_eq_objects = primitive "clevr_eq_objects" (tclevrobject @> tclevrobject @> tboolean) (fun obj1 obj2 ->
@@ -755,7 +755,7 @@ let clevr_add obj1 obj_list =
       ) in 
   sort_dedup (obj1 :: filtered_obj_list);;
 
-let primitive_clevr_fold = primitive "clevr_fold" (tlist tclevrobject @> t1 @> (tclevrobject @> t1 @> t1) @> t1) (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
+let primitive_clevr_fold = primitive "clevr_fold" (tlist tclevrobject @> tlist tclevrobject @> (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) @> tlist tclevrobject) (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
 let primitive_clevr_add = primitive "clevr_add" (tclevrobject @> tlist tclevrobject  @> tlist tclevrobject) (fun x xs -> (clevr_add x xs));;
 
 let primitive_clevr_car = primitive "clevr_car" (tlist tclevrobject @> tclevrobject) (fun xs -> List.hd_exn xs);;

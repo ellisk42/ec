@@ -1062,7 +1062,7 @@ class ContextualGrammar:
             possibles += [Index(0)]
 
         f, xs = expression.applicationParse()
-
+        
         assert f in candidates
 
         thisSummary = self.LS(self)

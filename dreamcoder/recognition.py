@@ -52,7 +52,6 @@ def is_torch_invalid(v):
 def _relu(x): return x.clamp(min=0)
 
 class Entropy(nn.Module):
-    """Calculates the entropy of logits"""
     def __init__(self):
         super(Entropy, self).__init__()
 
@@ -1135,6 +1134,7 @@ class RecognitionModel(nn.Module):
                 helmholtzFrontiers.clear()
                 helmholtzFrontiers.extend(newEntries)
                 self.update_helmholtz_language(helmholtzFrontiers)
+                print(f"We now have {len(helmholtzFrontiers)} Helmholtz entries.")
                 return 
 
             # Save some memory by freeing up the tasks as we go through them
@@ -1498,7 +1498,8 @@ class RecurrentFeatureExtractor(nn.Module):
         return hidden[0, :, :] + hidden[1, :, :]
 
     def forward(self, examples_or_task):
-        # Takes either the examples themselves, or the task.
+        # Takes either the examples themselves, or the task, depending on the tokenization function.
+        # If the self.useTask == True, this is a task.
         tokenized = self.tokenize(examples_or_task) 
         if not tokenized:
             return None
@@ -1554,7 +1555,7 @@ class RecurrentFeatureExtractor(nn.Module):
                     if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
                         return Task("Helmholtz", tp, examples)
                 except: 
-                    continue
+                    continue # Try searching for more inputs on which we can run.
 
         else:
             candidateInputs = list(self.requestToInputs[tp])

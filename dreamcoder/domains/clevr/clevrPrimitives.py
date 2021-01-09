@@ -19,11 +19,16 @@ CLEVR tasks have examples of the form:
 """
 # A 'null object' to allow safe operations that remove an object from an already empty list.
 NULL_STRING = "NULL"
+NULL_COLOR = f"{NULL_STRING}_COLOR"
+NULL_SIZE = f"{NULL_STRING}_SIZE"
+NULL_SHAPE = f"{NULL_STRING}_SHAPE"
+NULL_MATERIAL = f"{NULL_STRING}_MATERIAL"
+
 NULL_OBJECT = {   "id" : -1,
-        "color" : NULL_STRING, 
-        "size" : NULL_STRING,
-        "shape" : NULL_STRING,
-        "material" : NULL_STRING,
+        "color" : NULL_COLOR, 
+        "size" : NULL_SIZE,
+        "shape" : NULL_SHAPE,
+        "material" : NULL_MATERIAL,
         "left" : [],
         "right" : [],
         "front" : [],
@@ -61,7 +66,7 @@ def clevr_lexicon():
     lexicon.update([str(val) for val in range(-1, 100)]) # Since we could accidentally count something large.
     lexicon.update([str(val) for val in (True, False)])
     lexicon.add("id")
-    lexicon.add(NULL_STRING)
+    lexicon.update([NULL_COLOR, NULL_SIZE, NULL_SHAPE, NULL_MATERIAL])
     return list(lexicon)
 
 """Base Types: in addition to these, CLEVR answers also use the Boolean, integer, and List(ClevrObject) types."""

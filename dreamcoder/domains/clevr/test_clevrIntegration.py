@@ -2,7 +2,8 @@
 Integration tests for clevr/main.py | Author : Catherine Wong.
 
 These are full integration tests for the functionality of the various components
-of a DreamCoder iteration using the CLEVR dataset. 
+of a DreamCoder iteration using the CLEVR dataset, essentially moving 'chronologically'
+through an iteration.
 
 All tests are manually added to a 'test_all' function.
 """
@@ -10,6 +11,13 @@ from dreamcoder.utilities import DEFAULT_OUTPUT_DIRECTORY, pop_all_domain_specif
 from dreamcoder.dreamcoder import ecIterator
 import inspect
 import os
+
+def set_default_args(args):
+    """Helper function to set default arguments in the args dictionary."""
+    args['contextual'] = True
+    args['biasOptimal'] = True
+    args['taskBatchSize'] = 10
+
 def test_clevr_specific_command_line_args(DOMAIN_SPECIFIC_ARGS, args):
     """
     Test that we correctly use and remove all CLEVR-specific command line arguments.
@@ -34,7 +42,8 @@ def test_clevr_specific_command_line_args(DOMAIN_SPECIFIC_ARGS, args):
     assert os.path.isdir(checkpoint_dir)
     assert args["iterations"] > 1
 
-def test_integration_task_language(DOMAIN_SPECIFIC_ARGS, args):
+def test_integration_task_language_synthetic(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we correctly load all synthetic language for all CLEVR tasks"""
     pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
     args['enumerationTimeout'] = 0
     generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
@@ -47,7 +56,7 @@ def test_integration_task_language(DOMAIN_SPECIFIC_ARGS, args):
     assert len(vocabularies['train']) > 0
     assert len(vocabularies['test']) > 0
     
-    # Check that all of the tasks ave language.
+    # Check that all of the tasks have language.
     for task in DOMAIN_SPECIFIC_ARGS['tasks']:
         assert task.name in language_for_tasks
         assert len(language_for_tasks) > 0
@@ -55,6 +64,151 @@ def test_integration_task_language(DOMAIN_SPECIFIC_ARGS, args):
     for task in DOMAIN_SPECIFIC_ARGS['testingTasks']:
         assert task.name in language_for_tasks
         assert len(language_for_tasks) > 0
+
+def test_integration_background_helmholtz_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we successfully retrieve Helmholtz frontiers during the initial background
+    Helmholtz enumeration using the bootstrap primitives as our starting grammar.
+    """
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_background_helmholtz=True)
+    helmholtz_frontiers_fn = next(generator)
+    helmholtz_frontiers = helmholtz_frontiers()
+    assert len(helmholtz_frontiers) > 0
+
+def test_wake_generative_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully run a round of top-down enumeration."""
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_wake_generative_enumeration=True)
+    result = next(generator)
+    assert len(result.tasksAttempted) == args['taskBatchSize']
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
+
+def test_sleep_recognition_round_0_no_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully train and enumerate using a no-language recognizer."""
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 100
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_sleep_recognition_0=True)
+    result = next(generator)
+    
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
+
+def test_sleep_recognition_round_0_helmholtz_only_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully train and enumerate using a no-language recognizer with only Helmholtz entries."""
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 100
+    args['helmholtzRatio'] = 1.0
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_sleep_recognition_0=True)
+    result = next(generator)
+    
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
+
+def test_sleep_recognition_round_1_with_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully train and enumerate using a with-language recognizer."""
+    pass
+
+def test_integration_consolidation_no_language_original_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Integration test that we can run through a round of consolidation completely.
+    Note that running this test requires setting the primitives at the command line to
+    --primitives clevr_original clevr_map_transform
+    """
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 50
+    args['helmholtzRatio'] = 1.0
+    args['taskBatchSize'] = 30
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args) # We naturally return the result after consolidation; no flag is needed.
+    result = next(generator)
+    
+    assert len(result.grammars) == 2 
+    
+def test_consolidation_no_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully run a consolidation round with bootstrapped primitives."""
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 50
+    args['helmholtzRatio'] = 1.0
+    args['taskBatchSize'] = 30
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args) # We naturally return the result after consolidation; no flag is needed.
+    result = next(generator)
+    
+    assert len(result.grammars) == 2 
+
+def test_integration_next_iteration_discovered_primitives_original_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Integration test using the original primitives to determine that we can run a second round with new primitives in the grammar.
+    Note that running this test requires setting the primitives at the command line to
+    --primitives clevr_original clevr_map_transform
+    """
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['testingTimeout'] = 0.5
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 50
+    args['helmholtzRatio'] = 1.0
+    args['taskBatchSize'] = 30
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args) # We naturally return the result after consolidation; no flag is needed.
+    _ = next(generator)
+    result = next(generator)
+    
+    assert len(result.grammars) == 3
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
+
+def test_next_iteration_settings_random_shuffle_and_annealing(DOMAIN_SPECIFIC_ARGS, args):
+    """
+    Integration tests the appropriate settings on the next iteration
+    Test that we can successfully get a new task batch with random shuffle and annealing."""
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['testingTimeout'] = 1.0
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 50
+    args['helmholtzRatio'] = 1.0
+    args['taskBatchSize'] = 30
+    args['initialTimeout'] = 1.0
+    args['initialTimeoutIterations'] = 1
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args) # We naturally return the result after consolidation; no flag is needed.
+    result = next(generator)
+    assert len(result.grammars) == 2
+    num_tasks_attempted = len(result.tasksAttempted)
+    
+    result = next(generator)
+    assert len(result.grammars) == 3
+    assert len(result.tasksAttempted) == num_tasks_attempted * 2
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
 
 def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
     """Utility function for running tests"""
@@ -65,45 +219,12 @@ def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
 def test_all(DOMAIN_SPECIFIC_ARGS, args):
     print("Running tests for clevrIntegration.py...")
     # run_test(test_clevr_specific_command_line_args, DOMAIN_SPECIFIC_ARGS, args)
-    run_test(test_integration_task_language, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_integration_task_language_synthetic, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_integration_background_helmholtz_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_wake_generative_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_sleep_recognition_round_0_no_language_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_sleep_recognition_round_0_helmholtz_only_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_integration_consolidation_no_language_original_primitives,DOMAIN_SPECIFIC_ARGS, args) # Requires setting primitives at command line.
+    # run_test(test_integration_next_iteration_discovered_primitives_original_primitives,DOMAIN_SPECIFIC_ARGS, args)  # Requires setting primitives at command line.
+    run_test(test_next_iteration_settings_random_shuffle_and_annealing, DOMAIN_SPECIFIC_ARGS, args)
     print(".....finished running all tests!")
-    
-
-
-# if args.pop("run_ocaml_test"):
-#     # Test the Helmholtz enumeration
-#     # tasks = [buildClevrMockTask(train[0])]
-#     tasks = train[:10]
-#     if True:
-#         from dreamcoder.dreaming import backgroundHelmholtzEnumeration
-#         print(baseGrammar)
-#         helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
-#                                                             baseGrammar, 
-#                                                             timeout=5,
-#                                                             evaluationTimeout=0.05,
-#                                                             special='clevr',
-#                                                             executable='clevrTest',
-#                                                             serialize_special=serialize_clevr_object,
-#                                                             maximum_size=20000) # TODO: check if we need special to check tasks later
-#         f = helmholtzFrontiers()
-#         helmholtzFrontiers = backgroundHelmholtzEnumeration(train, 
-#                                                             baseGrammar, 
-#                                                             timeout=5,
-#                                                             evaluationTimeout=0.05,
-#                                                             special='clevr',
-#                                                             executable='helmholtz',
-#                                                             serialize_special=serialize_clevr_object,
-#                                                             maximum_size=20000) # TODO: check if we need special to check tasks later
-#         f = helmholtzFrontiers()
-#         assert False
-#     if False:
-#         # Check enumeration.
-#         tasks = [train[10]]
-#         default_wake_generative(baseGrammar, tasks, 
-#                             maximumFrontier=5,
-#                             enumerationTimeout=1,
-#                             CPUs=1,
-#                             solver='ocaml',
-#                             evaluationTimeout=0.05)
-#         assert False
-
