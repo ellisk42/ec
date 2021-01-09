@@ -29,7 +29,7 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
     if special: message["special"] = special
     if use_vars_in_tokenized: message["use_vars_in_tokenized"] = use_vars_in_tokenized
     message = json.dumps(message)
-    with open('/tmp/hm', 'w') as handle:
+    with open('./tmp/hm', 'w') as handle:
         handle.write(message)
     try:
         binary_name = 'helmholtz' if executable is None else executable

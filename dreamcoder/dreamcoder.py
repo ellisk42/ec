@@ -389,6 +389,23 @@ def ecIterator(grammar, tasks,
         grammar = result.grammars[-1] if result.grammars else grammar
         # Backward compatability if we weren't tracking attempted tasks.
         if not hasattr(result, 'tasksAttempted'): result.tasksAttempted = set()
+	
+	# Use any new tasks.
+        numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
+        result.numTestingTasks = numTestingTasks
+        
+        new_tasks = [t for t in tasks if t not in result.allFrontiers]
+        new_testing = [t for t in testingTasks if t.name not in result.taskLanguage]
+        print(f"Found {len(new_tasks)} new tasks and {len(new_testing)} new testing tasks")
+        for t in tasks:
+            if t not in result.taskSolutions:
+                result.taskSolutions[t] = Frontier([],
+                            task=t)
+            if t not in result.allFrontiers:
+                result.allFrontiers[t] =  Frontier([],task=t)
+        for t in tasks + testingTasks:
+            if t.name not in result.taskLanguage:
+                result.taskLanguage[t.name] = []
     else:  # Start from scratch
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
