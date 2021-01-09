@@ -127,8 +127,11 @@ def test_sleep_recognition_round_0_helmholtz_only_bootstrap_primitives(DOMAIN_SP
         if not result.allFrontiers[task].empty: found_frontier = True
     assert found_frontier
 
-def test_sleep_recognition_round_1_with_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
-    """Test that we can successfully train and enumerate using a with-language recognizer."""
+def test_sleep_recognition_round_1_with_language_original_primitives(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully train and enumerate using a with-language recognizer.
+    Note that running this test requires setting the primitives at the command line to
+    --primitives clevr_original clevr_map_transform
+    """
     pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
     set_default_args(args)
     args['enumerationTimeout'] = 10.0
@@ -202,10 +205,31 @@ def test_integration_next_iteration_discovered_primitives_original_primitives(DO
         if not result.allFrontiers[task].empty: found_frontier = True
     assert found_frontier
 
-def test_integration_next_iteration_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
+
+def test_integration_next_iteration_language_original_primitives(DOMAIN_SPECIFIC_ARGS, args):
     """
     Integration tests the appropriate settings on the next iteration when we have language in the loop."""
-    pass
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 10.0
+    args['recognitionSteps'] = 50
+    args['recognition_0'] = []
+    args['recognition_1'] = ["examples", "language"]
+    args['language_encoder'] = 'recurrent'
+    args['synchronous_grammar'] = True
+    args['moses_dir'] = './moses_compiled'
+    args['smt_phrase_length'] = 1
+    args['taskBatchSize'] = 30
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args)
+    _ = next(generator)
+    result = next(generator)
+    
+    assert len(result.grammars) == 3
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
 
 def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
     """Utility function for running tests"""
@@ -221,8 +245,9 @@ def test_all(DOMAIN_SPECIFIC_ARGS, args):
     # run_test(test_wake_generative_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_sleep_recognition_round_0_no_language_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_sleep_recognition_round_0_helmholtz_only_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
-    run_test(test_sleep_recognition_round_1_with_language_bootstrap_primitives,DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_sleep_recognition_round_1_with_language_bootstrap_primitives,DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_integration_consolidation_no_language_original_primitives,DOMAIN_SPECIFIC_ARGS, args) # Requires setting primitives at command line.
     # run_test(test_integration_next_iteration_discovered_primitives_original_primitives,DOMAIN_SPECIFIC_ARGS, args)  # Requires setting primitives at command line.
     # run_test(test_next_iteration_settings_random_shuffle_and_annealing, DOMAIN_SPECIFIC_ARGS, args)
+    run_test(test_integration_next_iteration_language_original_primitives, DOMAIN_SPECIFIC_ARGS, args)
     print(".....finished running all tests!")
