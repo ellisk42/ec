@@ -131,7 +131,7 @@ def test_sleep_recognition_round_1_with_language_bootstrap_primitives(DOMAIN_SPE
     """Test that we can successfully train and enumerate using a with-language recognizer."""
     pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
     set_default_args(args)
-    args['enumerationTimeout'] = 2.0
+    args['enumerationTimeout'] = 10.0
     args['recognitionSteps'] = 50
     args['recognition_0'] = []
     args['recognition_1'] = ["examples", "language"]
@@ -139,6 +139,7 @@ def test_sleep_recognition_round_1_with_language_bootstrap_primitives(DOMAIN_SPE
     args['synchronous_grammar'] = True
     args['moses_dir'] = './moses_compiled'
     args['smt_phrase_length'] = 1
+    args['taskBatchSize'] = 30
     generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
      test_sleep_recognition_1=True)
     result = next(generator)
