@@ -27,6 +27,9 @@ def loadRe2Dataset(task_dataset, task_dataset_dir, type_request):
         request = arrow(tlist(tcharacter), tlist(tcharacter))
     elif type_request == "tfullstr":
         request = arrow(tfullstr, tfullstr)
+    else: 
+        print(type_request)
+        assert False
     for split in ("train", "test"):
         split_path = os.path.join(dataset_path, split)
         with open(os.path.join(split_path, "tasks.json")) as f:

@@ -126,8 +126,9 @@ let run_job channel =
   let inputs = (j |> member "extras") in
   let behavior_hash = (k ~timeout:evaluationTimeout request (j |> member "extras")) in
   let raw  = "(lambda (clevr_add (clevr_car $0) $0))" in 
-  let p = parse_program raw |> get_some in
-  behavior_hash p
+  let unpacked_inputs : 'a list list = unpack_clevr inputs in
+  (* let p = parse_program raw |> get_some in
+  behavior_hash p  *)
   (** Test behavior hash **)
   (* let unpacked_inputs : 'a list list = unpack_clevr inputs in
   let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
@@ -157,7 +158,7 @@ let rec loop lb =
   loop 0. *)
   
   (** Test the evaluation **)
-  (* let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
+  let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
     let raw =  "(lambda (clevr_eq_size (clevr_query_size (clevr_car $0)) clevr_small))" in
     let raw =  "(lambda (clevr_eq_objects (clevr_car $0) (clevr_car $0)))" in
     let raw = "(lambda (clevr_filter_size $0 clevr_large))" in
@@ -178,6 +179,7 @@ let rec loop lb =
     let raw = "(lambda (clevr_if (clevr_not (clevr_empty? $0)) (clevr_add (clevr_car $0) $0) $0))" in
     let raw  = "(lambda (clevr_add (clevr_car $0) clevr_empty))" in 
     let raw = "(lambda (clevr_map (clevr_transform_color clevr_blue) $0))" in
+    let raw = "(lambda (clevr_fold $0 clevr_empty (lambda (lambda (clevr_if (clevr_eq_size clevr_small (clevr_query_size $1)) (clevr_add $1 $0) $0)))))" in 
     test_program "test" raw input
     ) in
   let message : json = 
@@ -188,7 +190,7 @@ let rec loop lb =
                 "tokens", `Float(1.0);
                 ])])
   in 
-  message  *)
+  message 
   
 let _ = 
   run_job Pervasives.stdin 
