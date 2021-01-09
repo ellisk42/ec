@@ -227,6 +227,7 @@ def ecIterator(grammar, tasks,
                test_background_helmholtz=False, # Integration test for enumerating Helmholtz frontiers in the background.
                test_wake_generative_enumeration=False, # Integration test for enumeration.
                test_sleep_recognition_0=False, # Integration test for the examples-only recognizer.
+               test_sleep_recognition_1=False, # Integration test for the language-based recognizer.
                test_next_iteration_settings=False, # Integration test for the second iteration.
                ):
     if enumerationTimeout is None:
@@ -750,6 +751,8 @@ def ecIterator(grammar, tasks,
                                                                  for f in result.allFrontiers.values()
                                                                  if len(f) > 0},
                                  'frontier')
+        
+        if test_sleep_recognition_1: yield result
         
         # Interactive mode.
         if interactive or useWakeLanguage:

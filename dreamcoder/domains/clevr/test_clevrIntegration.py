@@ -129,7 +129,25 @@ def test_sleep_recognition_round_0_helmholtz_only_bootstrap_primitives(DOMAIN_SP
 
 def test_sleep_recognition_round_1_with_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
     """Test that we can successfully train and enumerate using a with-language recognizer."""
-    pass
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 2.0
+    args['recognitionSteps'] = 50
+    args['recognition_0'] = []
+    args['recognition_1'] = ["examples", "language"]
+    args['language_encoder'] = 'recurrent'
+    args['synchronous_grammar'] = True
+    args['moses_dir'] = './moses_compiled'
+    args['smt_phrase_length'] = 1
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_sleep_recognition_1=True)
+    result = next(generator)
+    
+    found_frontier = False
+    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier
 
 def test_integration_consolidation_no_language_original_primitives(DOMAIN_SPECIFIC_ARGS, args):
     """Integration test that we can run through a round of consolidation completely.
@@ -183,32 +201,10 @@ def test_integration_next_iteration_discovered_primitives_original_primitives(DO
         if not result.allFrontiers[task].empty: found_frontier = True
     assert found_frontier
 
-def test_next_iteration_settings_random_shuffle_and_annealing(DOMAIN_SPECIFIC_ARGS, args):
+def test_integration_next_iteration_language_bootstrap_primitives(DOMAIN_SPECIFIC_ARGS, args):
     """
-    Integration tests the appropriate settings on the next iteration
-    Test that we can successfully get a new task batch with random shuffle and annealing."""
-    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
-    set_default_args(args)
-    args['testingTimeout'] = 1.0
-    args['enumerationTimeout'] = 2.0
-    args['recognitionSteps'] = 50
-    args['helmholtzRatio'] = 1.0
-    args['taskBatchSize'] = 30
-    args['initialTimeout'] = 1.0
-    args['initialTimeoutIterations'] = 1
-    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args) # We naturally return the result after consolidation; no flag is needed.
-    result = next(generator)
-    assert len(result.grammars) == 2
-    num_tasks_attempted = len(result.tasksAttempted)
-    
-    result = next(generator)
-    assert len(result.grammars) == 3
-    assert len(result.tasksAttempted) == num_tasks_attempted * 2
-    found_frontier = False
-    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
-        assert task in result.allFrontiers
-        if not result.allFrontiers[task].empty: found_frontier = True
-    assert found_frontier
+    Integration tests the appropriate settings on the next iteration when we have language in the loop."""
+    pass
 
 def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
     """Utility function for running tests"""
@@ -224,7 +220,8 @@ def test_all(DOMAIN_SPECIFIC_ARGS, args):
     # run_test(test_wake_generative_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_sleep_recognition_round_0_no_language_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_sleep_recognition_round_0_helmholtz_only_bootstrap_primitives, DOMAIN_SPECIFIC_ARGS, args)
+    run_test(test_sleep_recognition_round_1_with_language_bootstrap_primitives,DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_integration_consolidation_no_language_original_primitives,DOMAIN_SPECIFIC_ARGS, args) # Requires setting primitives at command line.
     # run_test(test_integration_next_iteration_discovered_primitives_original_primitives,DOMAIN_SPECIFIC_ARGS, args)  # Requires setting primitives at command line.
-    run_test(test_next_iteration_settings_random_shuffle_and_annealing, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_next_iteration_settings_random_shuffle_and_annealing, DOMAIN_SPECIFIC_ARGS, args)
     print(".....finished running all tests!")
