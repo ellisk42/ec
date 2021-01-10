@@ -17,17 +17,30 @@ All experiments must be manually added to an experiment registry in register_all
 
 DEFAULT_CLEVR_DOMAIN_NAME_PREFIX = 'clevr'
 DEFAULT_LOG_DIRECTORY = f"../ec_language_logs/{DEFAULT_CLEVR_DOMAIN_NAME_PREFIX}"
+DEFAULT_PYTHON_MAIN_COMMAND = f"python bin/clevr.py "
+
+# Default parameters for running on OpenMind
 OM_FLAG = 'om'
-
+OM_SCP_COMMAND = "zyzzyva@openmind7.mit.edu" # Specific to Catherine Wong
 DEFAULT_OM_CPUS_PER_TASK = 12
-DEFAULT_OM_MEM_PER_TASK = 15000
+DEFAULT_OM_MEM_PER_TASK = 30000
 
+# Default parameters for each experiment.
+DEFAULT_TASK_BATCH_SIZE = 25
+DEFAULT_RECOGNITION_STEPS = 10000
+DEFAULT_TEST_EVERY = 3
+DEFAULT_ITERATIONS = 10
+DEFAULT_ENUMERATION_TIMEOUT = 3600
+
+# Tags for experiment classes.
 EXPERIMENTS_REGISTRY = dict()
-EXPERIMENT_TAG_NO_LANGUAGE_BASELINE = 'no_language_baseline'
+EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP = 'no_language_baseline_bootstrap'
+EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP = 'full_language_generative_bootstrap'
 
 GENERATE_ALL_FLAG = 'all'
 import sys
 import argparse
+import datetime
 from collections import defaultdict
 parser = argparse.ArgumentParser()
 parser.add_argument('--cloud_platform',
@@ -50,10 +63,80 @@ parser.add_argument('--output_all_commands_at_once',
                     action='store_true',
                     help="If true, we print all commands at once, rather than iteratively by experiment type.")
 
-def generate_timestamped_record_for_csv_logs():
-    """Generates a record of experiments for the CSV logs."""
-    pass
 
+def generate_timestamped_record_for_csv_logs(args, experiment_name, all_final_commands, experiment_information_dict):
+    """Generates a record of these experiments for the CSV logs."""
+    experiment_tags = input(f"Comma-separated experiment-level tags? (Default: None)") or ""
+    # Builds a list based on the current spreadsheet layout.
+    csv_log_entries_for_experiment = []
+    for replication_idx, replication_full_command in enumerate(all_final_commands):
+        logfile_path, logfile_command = get_logfile_path_and_scp_command(args, replication_full_command)
+        csv_log_entry = [ #The tags in each tuple are only for our own readability.
+            ("completed_success_fail", ""),
+            ("last_monitored_iteration", str(0)),
+            ("last_monitored_test_accuracy", "--/-- --"),
+            ("last_monitored_date",  get_current_date_formatted()),
+            ("launch_date",  get_current_date_formatted()),
+            ("experiment_class",  experiment_information_dict['experiment_basename']),
+            ("experiment_name", experiment_name),
+            ("replication_idx", f"{replication_idx} / {len(all_final_commands)}"),
+            ("experiment_parameters", experiment_information_dict['interactive_parameters']),
+            ("tags", experiment_tags),
+            ("compute_class", args.cloud_platform),
+            ("logfile_location", logfile_path),
+            ("scp_logfile_command", logfile_command),
+            ("original_launch_command", replication_full_command)
+            
+        ]
+        csv_log_entries_for_experiment.append(csv_log_entry)
+    # Prints out the entries as CSV lines
+    for csv_log_entry in csv_log_entries_for_experiment:
+        print(",".join([value for (key, value) in csv_log_entry]))
+        print("\n")
+    print("\n")
+
+def get_current_date_formatted():
+    """Utility to get the current date, formatted by Month-Date-Year-Hour"""
+    current_time = datetime.datetime.now()
+    return current_time.strftime("%m-%d-%y %I:00%p")
+
+def get_logfile_path_and_scp_command(args, full_command):
+    """Utility to get the logifle path and the SCP command to get the file, based on the launch platform."""
+    if args.cloud_platform == OM_FLAG:
+        logfile_path = full_command.split('--output=')[1].split(" ")[0]
+        full_logfile_path = logfile_path.replace('..', '/om2/user/zyzzyva')
+        scp_command = f"scp {logfile_path} {OM_SCP_COMMAND}:{full_logfile_path}"
+        return full_logfile_path, scp_command
+    else:
+        print(f"Unknown cloud platform: {args.cloud_platform}")
+        sys.exit(0)
+    
+def output_launch_commands_and_log_lines(cloud_launcher_command, experiment_commands, args):
+    """Outputs the launch commands for a set of experiments, and a comma separated line that can be logged in an experiment spreadsheet."""
+    for experiment_name in experiment_commands:
+        print(f"Outputting experiment commands for: {experiment_name}\n")
+        all_final_commands = []
+        
+        experiment_information_dict = experiment_commands[experiment_name]
+        replication_commands = experiment_information_dict['replication_commands']
+        for replication_idx, replication_command in enumerate(replication_commands):
+            final_command = build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx)
+            all_final_commands.append(final_command)
+            print(final_command)
+        print("\n")
+        generate_timestamped_record_for_csv_logs(args, experiment_name, all_final_commands, experiment_information_dict)
+        if not args.output_all_commands_at_once:
+            input("....hit enter for next experiments\n")
+            
+def build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx):
+    """Builds the final launch command from a given experimental command and its cloud launcher."""
+    if args.cloud_platform == OM_FLAG:
+        formatted_launch_command = cloud_launcher_command.format(experiment_name, replication_idx, experiment_name, replication_idx)
+        return formatted_launch_command + replication_command + " &"
+    else:
+        print(f"Unknown cloud platform: {args.cloud_platform}")
+        sys.exit(0)
+    
 def build_cloud_launcher_command(args):
     """Builds the cloud launcher command for a given cloud platform, with additional prompts if needed.
     """
@@ -69,7 +152,7 @@ def build_om_launcher_command(args):
     print("Running on OpenMind. Please input the following parameters:")
     number_cpus_per_task = input(f"Number of CPUS per task? (Default: {DEFAULT_OM_CPUS_PER_TASK})") or DEFAULT_OM_CPUS_PER_TASK
     memory_per_cpu = input(f"Memory per task? (Default: {DEFAULT_OM_MEM_PER_TASK})") or DEFAULT_OM_MEM_PER_TASK
-    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{} --output="+args.experiment_log_directory+"/{} --ntasks=1 --mem-per-cpu="+memory_per_cpu+" --gres=gpu --cpus-per-task "+number_cpus_per_task+" --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem-per-cpu="+str(memory_per_cpu)+" --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
     print("\n")
     return om_base_command
 
@@ -77,7 +160,11 @@ def build_experiment_commands(args):
     """Given a set of experiment tags to run, builds the appropriate commands from the registry, including their replications.
     
     Returns: dict {
-        full_experiment_name : [array of experiment_replication_commands]
+        full_experiment_name : {
+            'replication_commands' : all_replication_commands,
+            'experiment_basename' : basename,
+            'interactive_parameters' : interactive_experiment_parameters,
+        }
     }
     """
     experiment_classes = args.experiment_classes
@@ -89,28 +176,92 @@ def build_experiment_commands(args):
             print(f"Not found in the experiments registry: {experiment_class}")
             sys.exit(0)
         experiment_command_builder_fn = EXPERIMENTS_REGISTRY[experiment_class]
-        experiment_name, experiment_commmands = experiment_command_builder_fn()
-        experiment_classes[experiment_name] = experiment_commands
+        experiment_name, experiment_information_dict = experiment_command_builder_fn(experiment_class, args)
+        experiment_commands_dict[experiment_name] = experiment_information_dict
     return experiment_commands_dict
 
-def output_launch_commands_and_log_lines(cloud_launcher_command, experiment_commands, args):
-    """Outputs the launch commands for a set of experiments, and a comma separated line that can be logged in an experiment spreadsheet."""
-    pass
-        
+def build_replication_commands(experiment_command, args):
+    """Takes a basic experiment class command and builds a set of replication commands for it. Returns : [array of experiment_replication_commands]"""
+    return [
+        experiment_command + f' --taskReranker randomShuffle --seed {replication_idx} '
+        for replication_idx in range(1, args.number_random_replications + 1)
+    ]
     
-def build_experiment_baseline_bootstrap_primitives(args):
+def get_interactive_experiment_parameters():
+    """Prompts the user for interactive experiment parameters, which vary for most experiments. 
+    Returns a set of experiment parameters as a command.
+    A string tag that distinguishes this particular experiment"""
+    task_datasets = input(f"Tasks to test on? (Default: {GENERATE_ALL_FLAG})") or GENERATE_ALL_FLAG
+    task_batch_size = input(f"Task batch size? (Default: {DEFAULT_TASK_BATCH_SIZE})") or DEFAULT_TASK_BATCH_SIZE
+    number_of_iterations = input(f"Number of iterations? (Default: {DEFAULT_ITERATIONS})") or DEFAULT_ITERATIONS
+    test_every = input(f"Test on every N iterations? (Default: {DEFAULT_TEST_EVERY})") or DEFAULT_TEST_EVERY
+    enumeration_timeout = input(f"Enumeration timeout per task? Same as testing timeout. (Default: {DEFAULT_ENUMERATION_TIMEOUT})") or DEFAULT_ENUMERATION_TIMEOUT
+    
+    interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {enumeration_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --taskDatasets {task_datasets} "
+    
+    interactive_experiment_tag = f"et_{enumeration_timeout}_it_{number_of_iterations}_batch_{task_batch_size}"
+    return interactive_experiment_parameters, interactive_experiment_tag  
+
+def get_shared_experiment_parameters():
+    """Gets parameters that are shared across all experiments. Returns a set of experiment parameters as a command."""
+    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --recognitionSteps {DEFAULT_RECOGNITION_STEPS} "
+
+def build_experiment_baseline_bootstrap_primitives(basename, args):
     """Builds the baseline experiments: these run DreamCoder without any language in the loop. Uses bootstrap primitives.
+    Returns: 
+        full_experiment_name, experiment_information_dict = {
+            'replication_commands' : all_replication_commands,
+            'experiment_basename' : basename,
+            'interactive_parameters' : interactive_experiment_parameters,
+        }
+    """
+    print(f"Building an experiment for class: {basename}.")
+    
+    interactive_experiment_parameters, interactive_experiment_tag  = get_interactive_experiment_parameters() 
+    shared_experiment_parameters = get_shared_experiment_parameters()
+    experiment_class_parameters = "--recognition_0 examples --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform"
+    
+    experiment_command = DEFAULT_PYTHON_MAIN_COMMAND + interactive_experiment_parameters + shared_experiment_parameters + experiment_class_parameters
+    
+    all_replication_commands = build_replication_commands(experiment_command, args)
+    experiment_name = f"{basename}-{interactive_experiment_tag}"
+    experiment_information_dict = {
+        'replication_commands' : all_replication_commands,
+        'experiment_basename' : basename,
+        'interactive_parameters' : interactive_experiment_parameters,
+    }
+    return experiment_name, experiment_information_dict
+
+def build_experiment_full_language_generative_bootstrap_primitives(basename, args):
+    """Builds the basic full language experiment: this uses language, but not any pseudoalignments or language-guided compression. Uses bootstrap primitives.
     Returns: 
         full_experiment_name, [array of experiment replication commands]
     """
-    pass
+    print(f"Building an experiment for class: {basename}.")
+    
+    interactive_experiment_parameters, interactive_experiment_tag  = get_interactive_experiment_parameters() 
+    shared_experiment_parameters = get_shared_experiment_parameters()
+    experiment_class_parameters = "--recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform  --synchronous_grammar --lc_score 0 "
+    
+    experiment_command = DEFAULT_PYTHON_MAIN_COMMAND + interactive_experiment_parameters + shared_experiment_parameters + experiment_class_parameters
+    
+    all_replication_commands = build_replication_commands(experiment_command, args)
+    experiment_name = f"{basename}-{interactive_experiment_tag}"
+    experiment_information_dict = {
+        'replication_commands' : all_replication_commands,
+        'experiment_basename' : basename,
+        'interactive_parameters' : interactive_experiment_parameters,
+    }
+    return experiment_name, experiment_information_dict
+    
 
 def register_all_experiments():
     """Adds functions for a given experiment type to a global registry.
     Mutates: EXPERIMENTS_REGISTRY
     """
     print("Registering experiments for CLEVR...")
-    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_LANGUAGE_BASELINE] = build_experiment_baseline_bootstrap_primitive
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP] = build_experiment_baseline_bootstrap_primitives # Baseline experiment.
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP] = build_experiment_full_language_generative_bootstrap_primitives # Full language with generative model.
     
     print(f"Registered a total of {len(EXPERIMENTS_REGISTRY)} experiments:")
     for experiment_name in EXPERIMENTS_REGISTRY:
@@ -126,3 +277,4 @@ def main(args):
 if __name__ == '__main__':
   args = parser.parse_args()
   main(args) 
+  # TODO: should be able to add any other spreadsheet 'tags'
