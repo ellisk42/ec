@@ -222,6 +222,7 @@ def ecIterator(grammar, tasks,
                language_compression=False,
                lc_score=False,
                max_compression=0,
+               max_mem_per_enumeration_thread=1000000,
                # Entrypoint flags for integration tests. If these are set, we return early at semantic breakpoints in the iteration.
                test_task_language=False, # Integration test on the language we add to tasks.
                test_background_helmholtz=False, # Integration test for enumerating Helmholtz frontiers in the background.
@@ -564,7 +565,8 @@ def ecIterator(grammar, tasks,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
                                    solver=solver,
                                    enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout,
-                                   test_dsl_only=test_dsl_only)            
+                                   test_dsl_only=test_dsl_only,
+                                   max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if n_models > 0 and biasOptimal and helmholtzRatio > 0 and \
@@ -605,7 +607,8 @@ def ecIterator(grammar, tasks,
                                                       maximumFrontier=maximumFrontier,
                                                       enumerationTimeout=enumeration_time,
                                                       CPUs=CPUs,
-                                                      evaluationTimeout=evaluationTimeout)
+                                                      evaluationTimeout=evaluationTimeout,
+                                                      max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
             result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
         else:
             eprint("Skipping top-down enumeration because we are not using the generative model")
@@ -665,7 +668,8 @@ def ecIterator(grammar, tasks,
                                language_data=None,
                                language_lexicon=None,
                                test_only_after_recognition=test_only_after_recognition,
-                               pretrained_word_embeddings=pretrained_word_embeddings)
+                               pretrained_word_embeddings=pretrained_word_embeddings,
+                               max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_0, wakingTaskBatch)
             
@@ -737,7 +741,8 @@ def ecIterator(grammar, tasks,
                                helmholtz_nearest_language=helmholtz_nearest_language,
                                helmholtz_translation_info=translation_info,
                                test_only_after_recognition=test_only_after_recognition,
-                               pretrained_word_embeddings=pretrained_word_embeddings)
+                               pretrained_word_embeddings=pretrained_word_embeddings,
+                               max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_1, wakingTaskBatch)
             
@@ -847,7 +852,7 @@ def showHitMatrix(top, bottom, tasks):
 
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None,
-                           test_dsl_only= False):
+                           test_dsl_only= False,max_mem_per_enumeration_thread=1000000):
     
     if len(result.models) > 0 and not test_dsl_only:
         eprint("Evaluating on testing tasks using the recognizer.")
@@ -859,7 +864,8 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                                        maximumFrontier=maximumFrontier,
                                        enumerationTimeout=enumerationTimeout,
                                        evaluationTimeout=evaluationTimeout,
-                                       testing=True)
+                                       testing=True,
+                                       max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
@@ -872,7 +878,8 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                                                        enumerationTimeout=enumerationTimeout,
                                                        CPUs=CPUs,
                                                        evaluationTimeout=evaluationTimeout,
-                                                       testing=True)
+                                                       testing=True,
+                                                       max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, times, 'heldoutTestingTimes')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                      {f.task: f for f in testingFrontiers if len(f) > 0 },
@@ -900,7 +907,8 @@ def default_wake_language(grammar, tasks,
                     language_encoder=None,
                     program_featurizer=None,
                     epochs=None,
-                    cuda=False):
+                    cuda=False,
+                    max_mem_per_enumeration_thread=1000000):
     # Get interactive descriptions for all solutions.
     if get_language_fn is not None:
         solutions = [f for f in currentResult.allFrontiers.values() if not f.empty]
@@ -939,13 +947,15 @@ def default_wake_generative(grammar, tasks,
                     enumerationTimeout=None,
                     CPUs=None,
                     solver=None,
-                    evaluationTimeout=None):
+                    evaluationTimeout=None,
+                    max_mem_per_enumeration_thread=1000000):
     topDownFrontiers, times = multicoreEnumeration(grammar, tasks, 
                                                    maximumFrontier=maximumFrontier,
                                                    enumerationTimeout=enumerationTimeout,
                                                    CPUs=CPUs,
                                                    solver=solver,
-                                                   evaluationTimeout=evaluationTimeout)
+                                                   evaluationTimeout=evaluationTimeout,
+                                                   max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
     eprint("Generative model enumeration results:")
     eprint(Frontier.describe(topDownFrontiers))
     summaryStatistics("Generative model", [t for t in times.values() if t is not None])
@@ -995,7 +1005,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       helmholtz_nearest_language=0,
                       helmholtz_translation_info=None,
                       test_only_after_recognition=False,
-                      pretrained_word_embeddings=None):
+                      pretrained_word_embeddings=None,
+                      max_mem_per_enumeration_thread=1000000):
     ### Pre-check: have we discovered any program solutions on the training set?
     ## If not, we have no data from which to train a joint language-example-based model, so we skip this round if you required training on both language and examples.
     n_frontiers = len([f for f in allFrontiers if not f.empty])
@@ -1068,7 +1079,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                CPUs=CPUs, maximumFrontier=maximumFrontier,
                                solver=solver,
                                enumerationTimeout=enumerationTimeout, evaluationTimeout=evaluationTimeout,
-                               test_dsl_only=False)   
+                               test_dsl_only=False,
+                               max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)   
         
         sys.exit(0)
     # Enumerate frontiers for each of the recognizers.
@@ -1085,7 +1097,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                       maximumFrontier=maximumFrontier,
                                                       enumerationTimeout=enumerationTimeout,
                                                       evaluationTimeout=evaluationTimeout,
-                                                      solver=solver)
+                                                      solver=solver,
+                                                      max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
         ensembleFrontiers.append(bottomupFrontiers)
         ensembleTimes.append([t for t in allRecognitionTimes.values() if t is not None])
         ensembleRecognitionTimes.append(allRecognitionTimes)
@@ -1316,6 +1329,9 @@ def commandlineArguments(_=None,
                         type=str)
 
     ### Algorithm training details.
+    parser.add_argument("--max_mem_per_enumeration_thread",	
+                        default=1000000,	
+                        help="""The maximum memory to allow for an enumeration thread.""")
     parser.add_argument("--skip_first_test",	
                         action="store_true",	
                         dest="skip_first_test",	

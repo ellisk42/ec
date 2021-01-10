@@ -1,6 +1,6 @@
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 from dreamcoder.grammar import *
-from dreamcoder.utilities import get_root_dir
+from dreamcoder.utilities import get_root_dir, limit_virtual_memory_fn
 
 import os
 import traceback
@@ -15,7 +15,8 @@ def multicoreEnumeration(g, tasks, _=None,
                          verbose=True,
                          evaluationTimeout=None,
                          testing=False,
-                         unigramGrammar=None):
+                         unigramGrammar=None,
+                         max_mem_per_enumeration_thread=1000000):
     '''g: Either a Grammar, or a map from task to grammar.
     Returns (list-of-frontiers, map-from-task-to-search-time)'''
 
@@ -166,7 +167,8 @@ def multicoreEnumeration(g, tasks, _=None,
                                  maximumFrontiers=maximumFrontiers(j),
                                  testing=testing,
                                  likelihoodModel=likelihoodModel,
-                                 unigramGrammar=unigramGrammar)
+                                 unigramGrammar=unigramGrammar,
+                                 max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -260,7 +262,8 @@ def solveForTask_ocaml(_=None,
                        likelihoodModel=None,
                        evaluationTimeout=None, maximumFrontiers=None,
                        unigramGrammar=None,
-                       verbose=False):
+                       verbose=False,
+                       max_mem_per_enumeration_thread=1000000):
 
     import json
 
@@ -312,9 +315,12 @@ def solveForTask_ocaml(_=None,
 
     try:
         solver_file = os.path.join(get_root_dir(), solver_file)
+        open_solver_file_with_memory_limit = f'ulimit -v {max_mem_per_enumeration_thread}; {solver_file}'
+        max_memory_fn = limit_virtual_memory_fn(max_mem_per_enumeration_thread)
         process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
+                                   stdout=subprocess.PIPE,
+                                   preexec_fn=max_memory_fn)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
         response = json.loads(response.decode("utf-8"))
     except OSError as exc:

@@ -1331,7 +1331,8 @@ class RecognitionModel(nn.Module):
                            CPUs=1,
                            frontierSize=None,
                            maximumFrontier=None,
-                           evaluationTimeout=None):
+                           evaluationTimeout=None,
+                           max_mem_per_enumeration_thread=1000000):
         with timing("Evaluated recognition model"):
             grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
@@ -1344,7 +1345,8 @@ class RecognitionModel(nn.Module):
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
                                     evaluationTimeout=evaluationTimeout,
-                                    unigramGrammar=self.generativeModel)
+                                    unigramGrammar=self.generativeModel,
+                                    max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
 
 
 class RecurrentFeatureExtractor(nn.Module):

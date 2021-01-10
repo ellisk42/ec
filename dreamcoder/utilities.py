@@ -14,6 +14,7 @@ import heapq
 from frozendict import frozendict
 
 import hashlib
+import resource
 
 # UTILS FOR ESCAPING TOKENS
 PUNCTUATION_TO_STRING = {
@@ -33,6 +34,16 @@ PUNCTUATION_TO_STRING = {
  "\\" : "DIV"
 }
 DEFAULT_OUTPUT_DIRECTORY = "experimentOutputs"
+
+def limit_virtual_memory_fn(max_mem_per_enumeration_thread):
+    # The tuple below is of the form (soft limit, hard limit). Limit only
+    # the soft part so that the limit can be increased later (setting also
+    # the hard limit would prevent that).
+    # When the limit cannot be changed, setrlimit() raises ValueError.
+    print(f"Limiting memory to {max_mem_per_enumeration_thread}")
+    def limit_virtual_memory_to_max():
+        resource.setrlimit(resource.RLIMIT_AS, (max_mem_per_enumeration_thread, resource.RLIM_INFINITY))
+    return limit_virtual_memory_to_max
 
 def get_timestamped_output_directory_for_checkpoints(top_level_output_dir, domain_name):
     """Creates a timestamped output directory in which to store the checkpoints.
