@@ -24,6 +24,7 @@ OM_FLAG = 'om'
 OM_SCP_COMMAND = "zyzzyva@openmind7.mit.edu" # Specific to Catherine Wong
 DEFAULT_OM_CPUS_PER_TASK = 12
 DEFAULT_OM_MEM_PER_TASK = 30000
+DEFAULT_OM_TIME_PER_TASK = 10000
 
 # Default parameters for each experiment.
 DEFAULT_TASK_BATCH_SIZE = 25
@@ -173,7 +174,7 @@ def get_current_date_formatted():
     return current_time.strftime("%m-%d-%y %I:00%p")
 
 def get_logfile_path_and_scp_command(args, full_command):
-    """Utility to get the logifle path and the SCP command to get the file, based on the launch platform."""
+    """Utility to get the logfile path and the SCP command to get the file, based on the launch platform."""
     if args.cloud_platform == OM_FLAG:
         logfile_path = full_command.split('--output=')[1].split(" ")[0]
         full_logfile_path = logfile_path.replace('..', '/om2/user/zyzzyva')
@@ -185,12 +186,6 @@ def get_logfile_path_and_scp_command(args, full_command):
     
 def output_launch_commands_and_log_lines(cloud_launcher_command, experiment_commands, args):
     """Outputs the launch commands for a set of experiments, and a comma separated line that can be logged in an experiment spreadsheet.
-    Expects experiment_commands of the form:
-        {
-        experiment_name : {
-        
-        }
-        }
     """
     for experiment_name in experiment_commands:
         print(f"Outputting experiment commands for: {experiment_name}\n")
@@ -232,7 +227,7 @@ def build_om_launcher_command(args):
     print("Running on OpenMind. Please input the following parameters:")
     number_cpus_per_task = input(f"Number of CPUS per task? (Default: {DEFAULT_OM_CPUS_PER_TASK})") or DEFAULT_OM_CPUS_PER_TASK
     memory_per_cpu = input(f"Memory per task? (Default: {DEFAULT_OM_MEM_PER_TASK})") or DEFAULT_OM_MEM_PER_TASK
-    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem-per-cpu="+str(memory_per_cpu)+" --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem-per-cpu="+str(memory_per_cpu)+" --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_OM_TIME_PER_TASK) + ":00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
     print("\n")
     return om_base_command
 
@@ -375,4 +370,3 @@ def main(args):
 if __name__ == '__main__':
   args = parser.parse_args()
   main(args) 
-  # TODO: should be able to add any other spreadsheet 'tags'
