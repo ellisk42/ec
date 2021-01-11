@@ -253,7 +253,7 @@ def test_integration_wake_enumeration_throttle_memory_per_thread(DOMAIN_SPECIFIC
     assert not found_frontier 
     
     # Higher memory limit to 1GB
-    args['max_mem_per_enumeration_thread'] = 1000000
+    args['max_mem_per_enumeration_thread'] = 1000000000
     generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
      test_wake_generative_enumeration=True)
     result = next(generator)
