@@ -16,7 +16,7 @@ Available experiments:
     full_language_generative_bootstrap 
 All experiments must be manually added to an experiment registry in register_all_experiment.
 """
-
+GENERATE_ALL_FLAG = 'all' # Generate all experiment tasks.
 DEFAULT_CLEVR_DOMAIN_NAME_PREFIX = 'clevr'
 DEFAULT_LOG_DIRECTORY = f"../ec_language_logs/{DEFAULT_CLEVR_DOMAIN_NAME_PREFIX}"
 DEFAULT_PYTHON_MAIN_COMMAND = f"python bin/clevr.py "
@@ -24,7 +24,7 @@ DEFAULT_PYTHON_MAIN_COMMAND = f"python bin/clevr.py "
 # Default parameters for running on OpenMind
 OM_FLAG = 'om'
 OM_SCP_COMMAND = "zyzzyva@openmind7.mit.edu" # Specific to Catherine Wong
-DEFAULT_OM_CPUS_PER_TASK = 12
+DEFAULT_OM_CPUS_PER_TASK = 24
 DEFAULT_OM_TIME_PER_TASK = 10000
 
 # Default parameters for each experiment.
@@ -40,7 +40,9 @@ EXPERIMENTS_REGISTRY = dict()
 EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP = 'no_language_baseline_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP = 'full_language_generative_bootstrap'
 
-GENERATE_ALL_FLAG = 'all'
+# Global registry for aguments.
+GLOBAL_EXPERIMENTS_ARGUMENTS = dict()
+NUM_CPUS_TAG = 'CPUs'
 import os
 import sys
 import subprocess
@@ -228,6 +230,9 @@ def build_om_launcher_command(args):
     Returns a string command that can be run """
     print("Running on OpenMind. Please input the following parameters:")
     number_cpus_per_task = input(f"Number of CPUS per task? (Default: {DEFAULT_OM_CPUS_PER_TASK})") or DEFAULT_OM_CPUS_PER_TASK
+    # This requires limitation on the program side, so we set it in the global dictionary.
+    GLOBAL_EXPERIMENTS_ARGUMENTS[NUM_CPUS_TAG] = number_cpus_per_task
+    
     om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem=MaxMemPerNode --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_OM_TIME_PER_TASK) + ":00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
     print("\n")
     return om_base_command
@@ -298,7 +303,11 @@ def get_interactive_experiment_parameters():
 def get_shared_experiment_parameters():
     """Gets parameters that are shared across all experiments. Returns a set of experiment parameters as a command."""
     max_mem_per_enumeration_thread = input(f"Maximum memory per enumeration thread? (Default: {DEFAULT_MEM_PER_ENUMERATION_THREAD})") or DEFAULT_MEM_PER_ENUMERATION_THREAD
-    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --recognitionSteps {DEFAULT_RECOGNITION_STEPS} --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} "
+    
+    # Add any global parameters.
+    global_parameters_command = " ".join([f"--{global_param} {global_param_value} " for (global_param, global_param_value) in GLOBAL_EXPERIMENTS_ARGUMENTS.items()])
+    
+    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --recognitionSteps {DEFAULT_RECOGNITION_STEPS} --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
 
 def build_experiment_baseline_bootstrap_primitives(basename, args):
     """Builds the baseline experiments: these run DreamCoder without any language in the loop. Uses bootstrap primitives.
