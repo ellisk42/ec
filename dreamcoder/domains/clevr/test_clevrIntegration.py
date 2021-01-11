@@ -13,6 +13,7 @@ from dreamcoder.utilities import DEFAULT_OUTPUT_DIRECTORY, pop_all_domain_specif
 from dreamcoder.dreamcoder import ecIterator
 import inspect
 import os
+import sys
 
 def set_default_args(args):
     """Helper function to set default arguments in the args dictionary."""
@@ -232,11 +233,22 @@ def test_integration_next_iteration_language_original_primitives(DOMAIN_SPECIFIC
         assert task in result.allFrontiers
         if not result.allFrontiers[task].empty: found_frontier = True
     assert found_frontier
-
+    
+def assert_solved_or_not_solved_tasks(tasks, result, should_have_solved_one_task):
+    """Tests that we either have or haven't solved at least one task."""
+    found_frontier = False
+    for task in tasks:
+        assert task in result.allFrontiers
+        if not result.allFrontiers[task].empty: found_frontier = True
+    assert found_frontier == should_have_solved_one_task
+    
 def test_integration_wake_enumeration_throttle_memory_per_thread(DOMAIN_SPECIFIC_ARGS, args):
     """Test that we can successfully run a round of top-down enumeration with a memory limit per thread, and kill the process if we use too much memory.
         Note that this should only succeed on a Linux machine.
+        This should also be run with --primitives clevr_original clevr_map_transform,
+        where we can see the difference.
     """
+    is_linux_system = 'linux' in sys.platform
     pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
     set_default_args(args)
     args['enumerationTimeout'] = 2.0
@@ -246,23 +258,17 @@ def test_integration_wake_enumeration_throttle_memory_per_thread(DOMAIN_SPECIFIC
      test_wake_generative_enumeration=True)
     result = next(generator)
     assert len(result.tasksAttempted) == args['taskBatchSize']
-    found_frontier = False
-    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
-        assert task in result.allFrontiers
-        if not result.allFrontiers[task].empty: found_frontier = True
-    assert not found_frontier 
+    should_have_solved_one_task = not(is_linux_system)
+    assert_solved_or_not_solved_tasks(tasks=DOMAIN_SPECIFIC_ARGS['tasks'], result=result, should_have_solved_one_task=should_have_solved_one_task)
     
-    # Higher memory limit to 1GB
+    # Higher memory limit to 1GB. Now we should always solve tasks.
     args['max_mem_per_enumeration_thread'] = 1000000000
     generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
      test_wake_generative_enumeration=True)
     result = next(generator)
     assert len(result.tasksAttempted) == args['taskBatchSize']
-    found_frontier = False
-    for task in DOMAIN_SPECIFIC_ARGS['tasks']:
-        assert task in result.allFrontiers
-        if not result.allFrontiers[task].empty: found_frontier = True
-    assert not found_frontier 
+    assert_solved_or_not_solved_tasks(tasks=DOMAIN_SPECIFIC_ARGS['tasks'], result=result, should_have_solved_one_task=True)
+    
 
 def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
     """Utility function for running tests"""

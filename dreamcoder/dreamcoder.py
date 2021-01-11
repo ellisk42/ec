@@ -1330,7 +1330,7 @@ def commandlineArguments(_=None,
 
     ### Algorithm training details.
     parser.add_argument("--max_mem_per_enumeration_thread",	
-                        default=1000000,	
+                        default=1000000000,	
                         help="""The maximum memory to allow for an enumeration thread.""")
     parser.add_argument("--skip_first_test",	
                         action="store_true",	

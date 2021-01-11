@@ -293,7 +293,6 @@ def solveForTask_ocaml(_=None,
     message = {"DSL": g.json(),
                "tasks": [taskMessage(t)
                          for t in tasks],
-
                "programTimeout": evaluationTimeout,
                "nc": CPUs,
                "timeout": timeout,
@@ -315,14 +314,10 @@ def solveForTask_ocaml(_=None,
 
     try:
         solver_file = os.path.join(get_root_dir(), solver_file)
-        open_solver_file_with_memory_limit = f'ulimit -v {max_mem_per_enumeration_thread}; {solver_file}'
-        max_memory_fn = limit_virtual_memory_fn(max_mem_per_enumeration_thread)
-        import psutil
         process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
-        psutil.Process(process.pid).rlimit(
-        psutil.RLIMIT_AS, (max_mem_per_enumeration_thread, max_mem_per_enumeration_thread))
+        limit_virtual_memory_with_psutil_if_possible(process, max_mem_per_enumeration_thread)
         
         response, error = process.communicate(bytes(message, encoding="utf-8"))
         response = json.loads(response.decode("utf-8"))

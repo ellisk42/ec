@@ -12,6 +12,7 @@ import pickle as pickle
 from itertools import chain
 import heapq
 from frozendict import frozendict
+import psutil
 
 import hashlib
 import resource
@@ -34,6 +35,13 @@ PUNCTUATION_TO_STRING = {
  "\\" : "DIV"
 }
 DEFAULT_OUTPUT_DIRECTORY = "experimentOutputs"
+
+def limit_virtual_memory_with_psutil_if_possible(process, max_mem_per_enumeration_thread):
+    # Limits the amount of virtual memory if possible. This is only avaialble on Linux.
+    if 'linux' in sys.platform:
+        print(f"Limiting virtual memory to: {max_mem_per_enumeration_thread}")
+        psutil.Process(process.pid).rlimit(
+        psutil.RLIMIT_AS, (max_mem_per_enumeration_thread, max_mem_per_enumeration_thread))
 
 def limit_virtual_memory_fn(max_mem_per_enumeration_thread):
     # The tuple below is of the form (soft limit, hard limit). Limit only
