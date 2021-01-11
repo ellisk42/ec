@@ -319,8 +319,9 @@ def solveForTask_ocaml(_=None,
         max_memory_fn = limit_virtual_memory_fn(max_mem_per_enumeration_thread)
         process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   preexec_fn=max_memory_fn)
+                                   stdout=subprocess.PIPE)
+                                   # ,
+                                   # # preexec_fn=max_memory_fn)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
         response = json.loads(response.decode("utf-8"))
     except OSError as exc:
