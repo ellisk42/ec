@@ -251,7 +251,7 @@ def test_integration_wake_enumeration_throttle_memory_per_thread(DOMAIN_SPECIFIC
     is_linux_system = 'linux' in sys.platform
     pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
     set_default_args(args)
-    args['enumerationTimeout'] = 2.0
+    args['enumerationTimeout'] = 10.0 if is_linux_system else 2.0
     # Throttle memory.
     args['max_mem_per_enumeration_thread'] = 0
     generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
