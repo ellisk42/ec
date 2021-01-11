@@ -321,8 +321,8 @@ def solveForTask_ocaml(_=None,
         process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
-        psutil.Process(process.pid).rlimit(
-        psutil.RLIMIT_AS, (max_mem_per_enumeration_thread, max_mem_per_enumeration_thread))
+        # psutil.Process(process.pid).rlimit(
+        # psutil.RLIMIT_AS, (max_mem_per_enumeration_thread, max_mem_per_enumeration_thread))
         
         response, error = process.communicate(bytes(message, encoding="utf-8"))
         response = json.loads(response.decode("utf-8"))
