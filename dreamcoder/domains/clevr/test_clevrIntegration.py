@@ -294,6 +294,19 @@ def test_integration_sleep_recogniion_throttle_memory_per_thread(DOMAIN_SPECIFIC
     result = next(generator)
     assert_solved_or_not_solved_tasks(tasks=DOMAIN_SPECIFIC_ARGS['tasks'], result=result, should_have_solved_one_task=True)
 
+def test_integration_wake_enumeration_throttle_num_cpus(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully run a round of top-down enumeration with a CPU limit. This test requires manual assertation that this succeeded.
+    """
+    is_linux_system = 'linux' in sys.platform
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 10.0 if is_linux_system else 2.0
+    args['CPUs'] = 2.0
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_wake_generative_enumeration=True)
+    result = next(generator)
+    input("This test requires manual assertation that this succeeded.")
+
 def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
     """Utility function for running tests"""
     print(f"Running {test_fn.__name__}...")
@@ -313,5 +326,5 @@ def test_all(DOMAIN_SPECIFIC_ARGS, args):
     # run_test(test_integration_next_iteration_discovered_primitives_original_primitives,DOMAIN_SPECIFIC_ARGS, args)  # Requires setting primitives at command line.
     # run_test(test_next_iteration_settings_random_shuffle_and_annealing, DOMAIN_SPECIFIC_ARGS, args)
     # run_test(test_integration_wake_enumeration_throttle_memory_per_thread, DOMAIN_SPECIFIC_ARGS, args)
-    run_test(test_integration_sleep_recogniion_throttle_memory_per_thread, DOMAIN_SPECIFIC_ARGS, args)
+    run_test(test_integration_wake_enumeration_throttle_num_cpus,DOMAIN_SPECIFIC_ARGS, args)
     print(".....finished running all tests!")

@@ -11,7 +11,9 @@ python icml_clevr_experiments.py
     --experiment_classes all
     --output_all_commands_at_once
 
-Available experiments: TODO
+Available experiments: 
+    no_language_baseline_bootstrap 
+    full_language_generative_bootstrap 
 All experiments must be manually added to an experiment registry in register_all_experiment.
 """
 
@@ -23,7 +25,6 @@ DEFAULT_PYTHON_MAIN_COMMAND = f"python bin/clevr.py "
 OM_FLAG = 'om'
 OM_SCP_COMMAND = "zyzzyva@openmind7.mit.edu" # Specific to Catherine Wong
 DEFAULT_OM_CPUS_PER_TASK = 12
-DEFAULT_OM_MEM_PER_TASK = 30000
 DEFAULT_OM_TIME_PER_TASK = 10000
 
 # Default parameters for each experiment.
@@ -32,6 +33,7 @@ DEFAULT_RECOGNITION_STEPS = 10000
 DEFAULT_TEST_EVERY = 3
 DEFAULT_ITERATIONS = 10
 DEFAULT_ENUMERATION_TIMEOUT = 3600
+DEFAULT_MEM_PER_ENUMERATION_THREAD = 5000000000 # 5 GB
 
 # Tags for experiment classes.
 EXPERIMENTS_REGISTRY = dict()
@@ -226,8 +228,7 @@ def build_om_launcher_command(args):
     Returns a string command that can be run """
     print("Running on OpenMind. Please input the following parameters:")
     number_cpus_per_task = input(f"Number of CPUS per task? (Default: {DEFAULT_OM_CPUS_PER_TASK})") or DEFAULT_OM_CPUS_PER_TASK
-    memory_per_cpu = input(f"Memory per task? (Default: {DEFAULT_OM_MEM_PER_TASK})") or DEFAULT_OM_MEM_PER_TASK
-    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem-per-cpu="+str(memory_per_cpu)+" --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_OM_TIME_PER_TASK) + ":00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem=MaxMemPerNode --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_OM_TIME_PER_TASK) + ":00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
     print("\n")
     return om_base_command
 
@@ -296,7 +297,8 @@ def get_interactive_experiment_parameters():
 
 def get_shared_experiment_parameters():
     """Gets parameters that are shared across all experiments. Returns a set of experiment parameters as a command."""
-    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --recognitionSteps {DEFAULT_RECOGNITION_STEPS} "
+    max_mem_per_enumeration_thread = input(f"Maximum memory per enumeration thread? (Default: {DEFAULT_MEM_PER_ENUMERATION_THREAD})") or DEFAULT_MEM_PER_ENUMERATION_THREAD
+    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --recognitionSteps {DEFAULT_RECOGNITION_STEPS} --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} "
 
 def build_experiment_baseline_bootstrap_primitives(basename, args):
     """Builds the baseline experiments: these run DreamCoder without any language in the loop. Uses bootstrap primitives.

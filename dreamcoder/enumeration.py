@@ -23,7 +23,7 @@ def multicoreEnumeration(g, tasks, _=None,
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
     #from multiprocess import Process, Queue
-
+    print(f"Beginning enumeration with a total of {CPUs} CPUs.")
     from multiprocessing import Queue
 
      # everything that gets sent between processes will be dilled
