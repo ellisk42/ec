@@ -268,7 +268,31 @@ def test_integration_wake_enumeration_throttle_memory_per_thread(DOMAIN_SPECIFIC
     result = next(generator)
     assert len(result.tasksAttempted) == args['taskBatchSize']
     assert_solved_or_not_solved_tasks(tasks=DOMAIN_SPECIFIC_ARGS['tasks'], result=result, should_have_solved_one_task=True)
+
+def test_integration_sleep_recogniion_throttle_memory_per_thread(DOMAIN_SPECIFIC_ARGS, args):
+    """Test that we can successfully run a round of bottom up enumeration with a memory limit per thread, and kill the process if we use too much memory.
+        Note that this should only succeed on a Linux machine.
+        This should also be run with --primitives clevr_original clevr_map_transform,
+        where we can see the difference.
+    """
+    is_linux_system = 'linux' in sys.platform
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    set_default_args(args)
+    args['enumerationTimeout'] = 10.0 if is_linux_system else 2.0
+    args['recognitionSteps'] = 50
+    args['helmholtzRatio'] = 1.0
+    args['max_mem_per_enumeration_thread'] = 0 # Throttle memory.
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_sleep_recognition_0=True)
+    result = next(generator)
+    should_have_solved_one_task = not(is_linux_system)
+    assert_solved_or_not_solved_tasks(tasks=DOMAIN_SPECIFIC_ARGS['tasks'], result=result, should_have_solved_one_task=should_have_solved_one_task)
     
+    args['max_mem_per_enumeration_thread'] = 1000000000
+    generator = ecIterator(**DOMAIN_SPECIFIC_ARGS, **args,
+     test_sleep_recognition_0=True)
+    result = next(generator)
+    assert_solved_or_not_solved_tasks(tasks=DOMAIN_SPECIFIC_ARGS['tasks'], result=result, should_have_solved_one_task=True)
 
 def run_test(test_fn, DOMAIN_SPECIFIC_ARGS, args):
     """Utility function for running tests"""
@@ -288,5 +312,6 @@ def test_all(DOMAIN_SPECIFIC_ARGS, args):
     # run_test(test_integration_consolidation_no_language_original_primitives,DOMAIN_SPECIFIC_ARGS, args) # Requires setting primitives at command line.
     # run_test(test_integration_next_iteration_discovered_primitives_original_primitives,DOMAIN_SPECIFIC_ARGS, args)  # Requires setting primitives at command line.
     # run_test(test_next_iteration_settings_random_shuffle_and_annealing, DOMAIN_SPECIFIC_ARGS, args)
-    run_test(test_integration_wake_enumeration_throttle_memory_per_thread, DOMAIN_SPECIFIC_ARGS, args)
+    # run_test(test_integration_wake_enumeration_throttle_memory_per_thread, DOMAIN_SPECIFIC_ARGS, args)
+    run_test(test_integration_sleep_recogniion_throttle_memory_per_thread, DOMAIN_SPECIFIC_ARGS, args)
     print(".....finished running all tests!")
