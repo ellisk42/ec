@@ -92,4 +92,5 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
             xs, y = t.examples[0]
             if type(y) == list: # Sort and dedup any object list
                 t.examples = [(xs, sort_and_dedup_obj_list(y)) for xs, y in t.examples]
+            t.examples = t.examples[:self.max_examples]
         return t

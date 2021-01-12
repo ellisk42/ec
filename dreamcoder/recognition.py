@@ -1537,6 +1537,11 @@ class RecurrentFeatureExtractor(nn.Module):
         # this gives better generalization on held out tasks
         # the other half of the time we train on sets of inputs in the training data
         # this gives better generalization on unsolved training tasks
+        def is_not_degenerate_outputs(examples):
+            """Ensure that we don't have all degenerate outputs, in which every example is the same."""
+            outputs = [y for (xs, y) in examples]
+            return not (all(y == outputs[0] for y in outputs))
+            
         if random.random() < 0.5:
             def randomInput(t): return random.choice(self.argumentsWithType[t])
             # Loop over the inputs in a random order and pick the first ones that
@@ -1544,6 +1549,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
             startTime = time.time()
             examples = []
+                
             while True:
                 # TIMEOUT! this must not be a very good program
                 if time.time() - startTime > self.helmholtzTimeout: 
@@ -1555,8 +1561,10 @@ class RecurrentFeatureExtractor(nn.Module):
                     y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
                     examples.append((tuple(xs),y))
                     if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
-                        return Task("Helmholtz", tp, examples)
-                except: 
+                        if is_not_degenerate_outputs(examples):
+                            return Task("Helmholtz", tp, examples)
+                        return None
+                except Exception as e:
                     continue # Try searching for more inputs on which we can run.
 
         else:
@@ -1567,13 +1575,14 @@ class RecurrentFeatureExtractor(nn.Module):
                 for xs in xss:
                     try: 
                         y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
-                    except RunWithTimeout: 
-                        return None
-                    finally:
+                    except Exception as e:
                         return None
                     ys.append(y)
                 if len(ys) == len(xss):
-                    return Task("Helmholtz", tp, list(zip(xss, ys)))
+                    examples = list(zip(xss, ys))
+                    if is_not_degenerate_outputs(examples):
+                        return Task("Helmholtz", tp, examples)
+                    return None
             return None
                 
             

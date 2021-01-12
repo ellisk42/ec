@@ -21,8 +21,8 @@ def check_task_evaluation(test_task, raw_program, should_succeed=True):
     assert test_pass == should_succeed
 
 def get_train_task_datasets(task_dataset):
-    mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
-    curriculumDatasets=[],taskDatasets=[task_dataset])
+    mock_args = vars(MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
+    curriculumDatasets=[],taskDatasets=[task_dataset]))
     if task_dataset not in DATASET_CACHE:
         all_train_tasks, all_test_tasks = makeClevrTasks.loadAllTaskDatasets(mock_args)
         DATASET_CACHE[task_dataset] = all_train_tasks
@@ -892,7 +892,7 @@ def test_all():
     # test_if_malformed()
     # test_map_malformed()
     # test_map_malformed_transform_only()
-    test_fold_malformed()
+    # test_fold_malformed()
     # Tests that should succeed
     # test_localization_task_original_primitives()
     # test_localization_task_original_primitives_base_filter()
@@ -913,7 +913,7 @@ def test_all():
     # test_default_single_or()
     # test_default_remove()
     # test_default_remove_query()
-    # test_default_transform()
+    test_default_transform()
     # test_default_transform_query()
-    # 
+    # # 
     # pass

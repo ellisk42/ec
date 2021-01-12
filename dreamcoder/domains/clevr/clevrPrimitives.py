@@ -243,12 +243,12 @@ clevr_transform_material = Primitive("clevr_transform_material", arrow(tclevrmat
 clevr_test = Primitive("clevr_test", arrow(tclevrcolor, tclevrobject, tclevrobject), make_transform_handler("color"))
 
 ### List operators, restricted to be of type object; we can undo this later
-def _clevr_safe_map(l):
+def _clevr_safe_map(f,l):
     try:
         return sort_and_dedup_obj_list([f(o) for o in l])
     except:
         return []
-def _clevr_map(f): return lambda l: _clevr_safe_map(l)
+def _clevr_map(f): return lambda l: _clevr_safe_map(f,l)
 
 # Removes any duplicate object from the list before adding a new one.
 def __clevr_add(obj1, obj_list):
