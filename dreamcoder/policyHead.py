@@ -244,8 +244,10 @@ class NeuralPolicyHead(nn.Module):
         raise NotImplementedError
 
 class DeepcoderListPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, extractor, cfg):
+    def __init__(self, g, em, cfg):
         super().__init__()
+        extractor = em.encoder
+        self.em = em
         self.featureExtractor = extractor
         self.cfg = cfg
         from dreamcoder.recognition import RecognitionModel
@@ -286,8 +288,10 @@ class DeepcoderListPolicyHead(NeuralPolicyHead):
 
 
 class RNNPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, extractor, cfg, maxVar=15):
+    def __init__(self, g, em, cfg, maxVar=15):
         super().__init__() #should have featureExtractor?
+        extractor = em.encoder
+
         cuda = cfg.cuda
         H = cfg.model.H
         encodeTargetHole = cfg.model.encodeTargetHole
@@ -295,6 +299,7 @@ class RNNPolicyHead(NeuralPolicyHead):
 
         self.cfg = cfg
         self.use_cuda = cuda
+        self.em = em
         self.featureExtractor = extractor
         self.H = H
         self.vhead = SimpleRNNValueHead(g=g, extractor=extractor, cfg=cfg) #hack
@@ -363,8 +368,10 @@ class RNNPolicyHead(NeuralPolicyHead):
         return dist
 
 class ListREPLPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, extractor, cfg, maxVar=10):
+    def __init__(self, g, em, cfg, maxVar=10):
         super().__init__() #should have featureExtractor?
+        extractor = em.encoder
+
         H = cfg.model.H
         cuda = cfg.cuda
         encodeTargetHole = cfg.model.encodeTargetHole
@@ -375,6 +382,7 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         self.use_cuda = cuda
         self.featureExtractor = extractor
         self.H = H
+        self.em = em
         self.vhead = ListREPLValueHead(g=g, extractor=extractor, cfg=cfg)
         self.encodeTargetHole = encodeTargetHole
         self.ordering = ordering

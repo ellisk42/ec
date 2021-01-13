@@ -810,7 +810,7 @@ class LambdaCtx:
         return self._holes[tp]
 class ListREPLValueHead(BaseValueHead):
 
-    def __init__(self, g, extractor, cfg):
+    def __init__(self, g, em, cfg):
         super().__init__()
         H = cfg.model.H
         ordering = cfg.model.ordering
@@ -818,35 +818,35 @@ class ListREPLValueHead(BaseValueHead):
 
         self.cfg = cfg
         self.ordering = ordering
-        self.featureExtractor = extractor
+        self.featureExtractor = em.extractor
         self.allow_concrete_eval = allow_concrete_eval
         self.H = H
         self.validator_vhead = InvalidIntermediatesValueHead(cfg)
         #self.outputDimensionality = H
-        assert self.H == extractor.H
+        assert self.H == em.extractor.H
 
         # populate fnModules
-        self.fnModules = nn.ModuleDict()
-        for p in g.primitives:
-            assert p.isPrimitive
-            argc = len(p.tp.functionArguments())
-            self.fnModules[p.name] = NM(argc, H)
+        # self.fnModules = nn.ModuleDict()
+        # for p in g.primitives:
+        #     assert p.isPrimitive
+        #     argc = len(p.tp.functionArguments())
+        #     self.fnModules[p.name] = NM(argc, H)
 
         # populate holeModules
-        self.holeModules = nn.ModuleDict()
-        for tp in [tlist(tint), tint]: # these ones can be functions of the input (e.g. tint as a result of Access())
-            self.holeModules[tp.show(True)] = NM(1, H)
-        for tp in [int_to_int, int_to_bool, int_to_int_to_int]: # these holes are always lambdas and never functions of the argument
-            self.holeModules[tp.show(True)] = NM(0, H)
+        # self.holeModules = nn.ModuleDict()
+        # for tp in [tlist(tint), tint]: # these ones can be functions of the input (e.g. tint as a result of Access())
+        #     self.holeModules[tp.show(True)] = NM(1, H)
+        # for tp in [int_to_int, int_to_bool, int_to_int_to_int]: # these holes are always lambdas and never functions of the argument
+        #     self.holeModules[tp.show(True)] = NM(0, H)
 
         self.compareModule = NM(2, H)
-        self.indexModule = NM(0, H)
-        nargs = 1 if self.cfg.model.ctxful_lambdas else 0
-        self.lambdaIndexModules = nn.ModuleList([NM(nargs,H) for _ in range(2)])
+        # self.indexModule = NM(0, H)
+        # nargs = 1 if self.cfg.model.ctxful_lambdas else 0
+        # self.lambdaIndexModules = nn.ModuleList([NM(nargs,H) for _ in range(2)])
 
-        self.lambdaHoleModules = nn.ModuleDict()
-        for tp in [tint,tbool]:
-            self.lambdaHoleModules[tp.show(True)] = NM(nargs, H) # TODO <- 1
+        # self.lambdaHoleModules = nn.ModuleDict()
+        # for tp in [tint,tbool]:
+        #     self.lambdaHoleModules[tp.show(True)] = NM(nargs, H) # TODO <- 1
 
 
 

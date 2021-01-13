@@ -45,3 +45,13 @@ exps/t3_canonical_reverse
 exps/t3_reverse
 exps/testing
 exps/run.xsh
+dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_test.txt
+dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_train.txt
+dreamcoder/domains/list/DeepCoder_data/T1_A2_V512_L10_validation.txt
+dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_test.txt
+dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_train.txt
+dreamcoder/domains/list/DeepCoder_data/T2_A2_V512_L10_validation.txt
+dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_test.txt
+dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_train.txt
+dreamcoder/domains/list/DeepCoder_data/T3_A2_V512_L10_validation.txt
+dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt

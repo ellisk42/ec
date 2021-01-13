@@ -1,3 +1,4 @@
+from dreamcoder.ptree import ExecutionModule
 from dreamcoder.matt.util import *
 from collections import defaultdict
 import pathlib
@@ -88,7 +89,9 @@ class State:
             mode='test'
             )
 
+        g = Grammar.uniform(prims, g_lambdas = taskloader.g_lambdas)
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = max([taskloader.L_big,testloader.L_big])+2)
+        em = ExecutionModule(cfg,g,extractor,1)
 
         #taskloader.check()
         test_frontiers = testloader.getTasks()
@@ -107,7 +110,6 @@ class State:
             prims = deepcoderPrimitives()
 
         
-        g = Grammar.uniform(prims, g_lambdas = taskloader.g_lambdas)
 
         #taskloader.check()
 
@@ -117,7 +119,7 @@ class State:
                 'repl': ListREPLPolicyHead,
                 'dc': DeepcoderListPolicyHead,
                 'rb': get_robustfill,
-            }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
+            }[cfg.model.type](cfg=cfg, em=em, g=g)
         else:
             phead = BasePolicyHead(cfg)
         if cfg.model.value:
@@ -128,7 +130,7 @@ class State:
                 vhead = {
                     'rnn': SimpleRNNValueHead,
                     'repl': ListREPLValueHead,
-                }[cfg.model.type](cfg=cfg, extractor=extractor(0), g=g)
+                }[cfg.model.type](cfg=cfg, em=em, g=g)
         else:
             vhead = SampleDummyValueHead()
 

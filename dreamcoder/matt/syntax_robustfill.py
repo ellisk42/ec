@@ -159,7 +159,8 @@ def check_candidate(task, raw_candidate):
     except TypeError: return False, p
     except KeyError: return False, p
 
-def get_robustfill(cfg, extractor, g):
+def get_robustfill(cfg, em, g):
+    extractor = em.encoder
 
     extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
 
