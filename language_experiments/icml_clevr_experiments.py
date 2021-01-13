@@ -12,9 +12,13 @@ python icml_clevr_experiments.py
     --output_all_commands_at_once
 
 Available experiments: 
-    no_language_baseline_bootstrap 
+    no_language_baseline_bootstrap  
+    no_induced_language_no_compression_baseline_bootstrap
     full_language_generative_bootstrap 
-All experiments must be manually added to an experiment registry in register_all_experiment.
+    full_language_mutual_exclusivity_bootstrap
+    full_language_language_compression_bootstrap
+    full_language_both_add_ons_bootstrap
+All experiments must be manually added to an experiment registry in register_all_experiment. The procedure for adding in an experiment is: add a human readable string tag; add a 'build_experiment' function that constructs the experiment-specific parameters, and then add that to the registry.
 """
 GENERATE_ALL_FLAG = 'all' # Generate all experiment tasks.
 DEFAULT_CLEVR_DOMAIN_NAME_PREFIX = 'clevr'
@@ -28,19 +32,28 @@ DEFAULT_OM_CPUS_PER_TASK = 24
 DEFAULT_OM_TIME_PER_TASK = 10000
 
 # Default parameters for each experiment.
-DEFAULT_TASK_BATCH_SIZE = 25
+DEFAULT_TASK_BATCH_SIZE = 40
 DEFAULT_RECOGNITION_STEPS = 10000
 DEFAULT_TEST_EVERY = 3
 DEFAULT_ITERATIONS = 10
-DEFAULT_ENUMERATION_TIMEOUT = 3600
+DEFAULT_ENUMERATION_TIMEOUT = 2400
 DEFAULT_MEM_PER_ENUMERATION_THREAD = 5000000000 # 5 GB
+DEFAULT_BOOTSTRAP_PRIMITIVES_STRING = 'clevr_bootstrap clevr_map_transform' # Primitives for the bootstrap primitives experiments.
+DEFAULT_PSEUDOALIGNMENTS_WEIGHT = 0.05
+DEFAULT_LANGUAGE_COMPRESSION_WEIGHT = 0.05
+DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION = 5 
 
 # Tags for experiment classes.
 EXPERIMENTS_REGISTRY = dict()
 EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP = 'no_language_baseline_bootstrap'
+EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP = 'no_induced_language_no_compression_baseline_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP = 'full_language_generative_bootstrap'
-
+EXPERIMENT_TAG_FULL_LANGUAGE_MUTUAL_EXCLUSIVITY_BOOTSTRAP = 'full_language_mutual_exclusivity_bootstrap'
+EXPERIMENT_TAG_FULL_LANGUAGE_LANGUAGE_COMPRESSION_BOOTSTRAP = 'full_language_language_compression_bootstrap'
+EXPERIMENT_TAG_FULL_LANGUAGE_BOTH_ADD_ONS_BOOTSTRAP = 'full_language_both_add_ons_bootstrap'
 # Global registry for aguments.
+EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP
+
 GLOBAL_EXPERIMENTS_ARGUMENTS = dict()
 NUM_CPUS_TAG = 'CPUs'
 import os
@@ -284,6 +297,10 @@ def build_replication_commands(experiment_command, args):
         experiment_command + f' --taskReranker randomShuffle --seed {replication_idx} '
         for replication_idx in range(1, args.number_random_replications + 1)
     ]
+
+def get_input_or_default(input_string, default_value):
+    """Utility method for a common pattern of asking user for input or getting defaults"""
+    return input(f"{input_string} (Default: {default_value})") or default_value
     
 def get_interactive_experiment_parameters():
     """Prompts the user for interactive experiment parameters, which vary for most experiments. 
@@ -294,8 +311,9 @@ def get_interactive_experiment_parameters():
     number_of_iterations = input(f"Number of iterations? (Default: {DEFAULT_ITERATIONS})") or DEFAULT_ITERATIONS
     test_every = input(f"Test on every N iterations? (Default: {DEFAULT_TEST_EVERY})") or DEFAULT_TEST_EVERY
     enumeration_timeout = input(f"Enumeration timeout per task? Same as testing timeout. (Default: {DEFAULT_ENUMERATION_TIMEOUT})") or DEFAULT_ENUMERATION_TIMEOUT
+    recognition_steps = input(f"Total recognition steps? (Default: {DEFAULT_RECOGNITION_STEPS})") or DEFAULT_RECOGNITION_STEPS
     
-    interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {enumeration_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --taskDatasets {task_datasets} "
+    interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {enumeration_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --taskDatasets {task_datasets} --recognitionSteps {recognition_steps} "
     
     interactive_experiment_tag = f"et_{enumeration_timeout}_it_{number_of_iterations}_batch_{task_batch_size}"
     return interactive_experiment_parameters, interactive_experiment_tag  
@@ -307,23 +325,26 @@ def get_shared_experiment_parameters():
     # Add any global parameters.
     global_parameters_command = " ".join([f"--{global_param} {global_param_value} " for (global_param, global_param_value) in GLOBAL_EXPERIMENTS_ARGUMENTS.items()])
     
-    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --recognitionSteps {DEFAULT_RECOGNITION_STEPS} --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
+    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
 
-def build_experiment_baseline_bootstrap_primitives(basename, args):
-    """Builds the baseline experiments: these run DreamCoder without any language in the loop. Uses bootstrap primitives.
-    Returns: 
-        full_experiment_name, experiment_information_dict = {
-            'replication_commands' : all_replication_commands,
-            'experiment_basename' : basename,
-            'interactive_parameters' : interactive_experiment_parameters,
-        }
+def get_shared_full_language_experiment_parameters(primitives_string):
+    """Gets experiment parameters that are shared across all the full language experiments. Takes a string indicating which primitives to use.
+    Returns a set of experiment parameters as a command."""
+    return f"--recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives {primitives_string}  --synchronous_grammar "
+
+def build_experiment_command_information(basename, args, experiment_parameters_fn):
+    """Builds an experiment command by querying for interactive parameters, then running a query for any experiment parameters. 
+        Returns: 
+            full_experiment_name, experiment_information_dict = {
+                'replication_commands' : all_replication_commands,
+                'experiment_basename' : basename,
+                'interactive_parameters' : interactive_experiment_parameters,
+            }
     """
     print(f"Building an experiment for class: {basename}.")
-    
     interactive_experiment_parameters, interactive_experiment_tag  = get_interactive_experiment_parameters() 
     shared_experiment_parameters = get_shared_experiment_parameters()
-    experiment_class_parameters = "--recognition_0 examples --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform"
-    
+    experiment_class_parameters = experiment_parameters_fn()
     experiment_command = DEFAULT_PYTHON_MAIN_COMMAND + interactive_experiment_parameters + shared_experiment_parameters + experiment_class_parameters
     
     all_replication_commands = build_replication_commands(experiment_command, args)
@@ -334,6 +355,20 @@ def build_experiment_baseline_bootstrap_primitives(basename, args):
         'interactive_parameters' : interactive_experiment_parameters,
     }
     return experiment_name, experiment_information_dict
+
+def build_experiment_baseline_bootstrap_primitives(basename, args):
+    """Builds the baseline experiments: these run DreamCoder without any language in the loop. Uses bootstrap primitives.
+    """
+    def experiment_parameters_fn():
+        return  " --recognition_0 examples --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_no_induced_language_no_compression_baseline_bootstrap_primitives(basename, args):
+    """Builds a baseline experiment that only trains directly on the language annotations, with no compression.
+    """
+    def experiment_parameters_fn():
+        return  " --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform  --no-consolidation "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
 def build_experiment_full_language_generative_bootstrap_primitives(basename, args):
     """Builds the basic full language experiment: this uses language, but not any pseudoalignments or language-guided compression. Uses bootstrap primitives.
@@ -342,21 +377,36 @@ def build_experiment_full_language_generative_bootstrap_primitives(basename, arg
     """
     print(f"Building an experiment for class: {basename}.")
     
-    interactive_experiment_parameters, interactive_experiment_tag  = get_interactive_experiment_parameters() 
-    shared_experiment_parameters = get_shared_experiment_parameters()
-    experiment_class_parameters = "--recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform  --synchronous_grammar --lc_score 0 "
-    
-    experiment_command = DEFAULT_PYTHON_MAIN_COMMAND + interactive_experiment_parameters + shared_experiment_parameters + experiment_class_parameters
-    
-    all_replication_commands = build_replication_commands(experiment_command, args)
-    experiment_name = f"{basename}-{interactive_experiment_tag}"
-    experiment_information_dict = {
-        'replication_commands' : all_replication_commands,
-        'experiment_basename' : basename,
-        'interactive_parameters' : interactive_experiment_parameters,
-    }
-    return experiment_name, experiment_information_dict
-    
+    def experiment_parameters_fn():      
+        return get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + "--lc_score 0 "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_full_language_mutual_exclusivity_bootstrap_primitives(basename, args):
+    """Builds the full language experiment with the 'mutual exclusivity' prior added on top. Uses bootstrap primitives.
+    """
+    def experiment_parameters_fn():
+        pseudoalignments_weight = input(f"Pseudoalignments weight for mutual exclusivity? (Default: {DEFAULT_PSEUDOALIGNMENTS_WEIGHT})") or DEFAULT_PSEUDOALIGNMENTS_WEIGHT
+        return get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f"--lc_score 0 --smt_pseudoalignments {pseudoalignments_weight} "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_full_language_language_compression_bootstrap_primitives(basename, args):
+    """Builds the full language experiment with language-guided compression added on top. Uses bootstrap primitives.
+    """
+    def experiment_parameters_fn():
+        language_compression_score = get_input_or_default("Language compression score?", DEFAULT_LANGUAGE_COMPRESSION_WEIGHT)
+        max_compression = get_input_or_default("Maximum number of abstractions to add to compression", DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION)
+        return  get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f"--lc_score {language_compression_score} --max_compression {DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION} "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_full_language_both_add_ons_bootstrap_primitives(basename, args):
+    """Builds the full language experiment with both mutual exclusivity and language-guided compression added on top. Uses bootstrap primitives.
+    """
+    def experiment_parameters_fn():
+        pseudoalignments_weight = get_input_or_default("Pseudoalignments weight for mutual exclusivity?", DEFAULT_PSEUDOALIGNMENTS_WEIGHT)
+        language_compression_score = get_input_or_default("Language compression score?", DEFAULT_LANGUAGE_COMPRESSION_WEIGHT)
+        max_compression = get_input_or_default("Maximum number of abstractions to add to compression", DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION)
+        return  get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f" --smt_pseudoalignments {pseudoalignments_weight} --lc_score {language_compression_score} --max_compression {DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION} "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
 def register_all_experiments():
     """Adds functions for a given experiment type to a global registry.
@@ -364,7 +414,13 @@ def register_all_experiments():
     """
     print("Registering experiments for CLEVR...")
     EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP] = build_experiment_baseline_bootstrap_primitives # Baseline experiment.
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP] = build_experiment_no_induced_language_no_compression_baseline_bootstrap_primitives # DeepCoder style
+    
     EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP] = build_experiment_full_language_generative_bootstrap_primitives # Full language with generative model.
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_MUTUAL_EXCLUSIVITY_BOOTSTRAP] = build_experiment_full_language_mutual_exclusivity_bootstrap_primitives # Mutual exclusivity
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_LANGUAGE_COMPRESSION_BOOTSTRAP] = build_experiment_full_language_language_compression_bootstrap_primitives # Language compression
+    
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_BOTH_ADD_ONS_BOOTSTRAP] = build_experiment_full_language_both_add_ons_bootstrap_primitives #ME + Language compression
     
     print(f"Registered a total of {len(EXPERIMENTS_REGISTRY)} experiments:")
     for experiment_name in EXPERIMENTS_REGISTRY:
