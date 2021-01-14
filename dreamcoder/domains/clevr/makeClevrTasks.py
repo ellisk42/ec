@@ -138,6 +138,7 @@ def load_all_scenes(args):
             all_scene_data[split] = scenes
     return all_scene_data
 
+    
 def buildCLEVRTasksForAllQuestionFiles(task_datasets,  question_classes_registry, all_scene_data, is_curriculum):
     """
     Builds the CLEVR tasks for a set of question files. 
@@ -155,7 +156,7 @@ def buildCLEVRTasksForAllQuestionFiles(task_datasets,  question_classes_registry
     
     generate_all = (task_datasets == [GENERATE_ALL_FLAG])
     tasks = defaultdict(list)
-    for candidate_dataset in question_classes_registry:
+    for candidate_dataset in sorted(question_classes_registry):
         if candidate_dataset in task_datasets or generate_all:
             for split in splits:
                 # Load the questions and construct tasks from them iteratively.

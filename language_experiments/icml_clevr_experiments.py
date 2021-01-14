@@ -52,9 +52,10 @@ EXPERIMENT_TAG_FULL_LANGUAGE_MUTUAL_EXCLUSIVITY_BOOTSTRAP = 'full_language_mutua
 EXPERIMENT_TAG_FULL_LANGUAGE_LANGUAGE_COMPRESSION_BOOTSTRAP = 'full_language_language_compression_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_BOTH_ADD_ONS_BOOTSTRAP = 'full_language_both_add_ons_bootstrap'
 # Global registry for aguments.
-EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP
+EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP = 'no_induced_language_no_compression_baseline_bootstrap'
 
-GLOBAL_EXPERIMENTS_ARGUMENTS = dict()
+GLOBAL_EXPERIMENTS_ARGUMENTS = dict() # Tracks globally set arguments.
+USER_INPUT_DEFAULT_PARAMETERS = dict() # Tracks the latest user input parameter so we can offer it as a default.
 NUM_CPUS_TAG = 'CPUs'
 import os
 import sys
@@ -156,7 +157,7 @@ def extract_checkpoint_from_logfile(local_logfile_path):
 
 def generate_timestamped_record_for_csv_logs(args, experiment_name, all_final_commands, experiment_information_dict):
     """Generates a record of these experiments for the CSV logs."""
-    experiment_tags = input(f"Comma-separated experiment-level tags? (Default: None)") or ""
+    experiment_tags = get_input_or_default("Comma-separated experiment-level tags?", "")
     # Builds a list based on the current spreadsheet layout.
     csv_log_entries_for_experiment = []
     for replication_idx, replication_full_command in enumerate(all_final_commands):
@@ -242,7 +243,7 @@ def build_om_launcher_command(args):
     """Builds the launcher command for running on OpenMind. 
     Returns a string command that can be run """
     print("Running on OpenMind. Please input the following parameters:")
-    number_cpus_per_task = input(f"Number of CPUS per task? (Default: {DEFAULT_OM_CPUS_PER_TASK})") or DEFAULT_OM_CPUS_PER_TASK
+    number_cpus_per_task = get_input_or_default("Number of CPUS per task?", DEFAULT_OM_CPUS_PER_TASK)
     # This requires limitation on the program side, so we set it in the global dictionary.
     GLOBAL_EXPERIMENTS_ARGUMENTS[NUM_CPUS_TAG] = number_cpus_per_task
     
@@ -292,26 +293,45 @@ def add_resume_commands(experiment_class, experiment_information_dict, experimen
         experiment_information_dict['resume_command'] = f" --resume {checkpoint_to_resume} "
         
 def build_replication_commands(experiment_command, args):
-    """Takes a basic experiment class command and builds a set of replication commands for it. Returns : [array of experiment_replication_commands]"""
-    return [
-        experiment_command + f' --taskReranker randomShuffle --seed {replication_idx} '
-        for replication_idx in range(1, args.number_random_replications + 1)
-    ]
+    """Takes a basic experiment class command and builds a set of replication commands for it.
+    This prompts the user if we want to use a sentence_ordered curriculum instead.
+     Returns : [array of experiment_replication_commands]"""
+    use_sentence_ordered_curriculum = get_input_or_default("Use a sentence length curriculum? ", True)
+    
+    if use_sentence_ordered_curriculum:
+        return [
+            experiment_command + f' --taskReranker sentence_length --seed {replication_idx} '
+            for replication_idx in range(1, args.number_random_replications + 1)
+        ]
+    else:
+        return [
+            experiment_command + f' --taskReranker randomShuffle --seed {replication_idx} '
+            for replication_idx in range(1, args.number_random_replications + 1)
+        ]
 
 def get_input_or_default(input_string, default_value):
-    """Utility method for a common pattern of asking user for input or getting defaults"""
-    return input(f"{input_string} (Default: {default_value})") or default_value
+    """Utility method for a common pattern of asking user for input or getting defaults. We then store the default for next time."""
+    if input_string in USER_INPUT_DEFAULT_PARAMETERS:
+        previous_user_input_value = USER_INPUT_DEFAULT_PARAMETERS[input_string]
+        user_input_value = input(f"{input_string} (Use previous value {previous_user_input_value}? Original default was {default_value})")
+        value_to_return = user_input_value or previous_user_input_value
+    else:
+        user_input_value = input(f"{input_string} (Default: {default_value})")
+        value_to_return = user_input_value or default_value
+    if user_input_value is not None:
+        USER_INPUT_DEFAULT_PARAMETERS[input_string] = user_input_value
+    return value_to_return
     
 def get_interactive_experiment_parameters():
     """Prompts the user for interactive experiment parameters, which vary for most experiments. 
     Returns a set of experiment parameters as a command.
     A string tag that distinguishes this particular experiment"""
-    task_datasets = input(f"Tasks to test on? (Default: {GENERATE_ALL_FLAG})") or GENERATE_ALL_FLAG
-    task_batch_size = input(f"Task batch size? (Default: {DEFAULT_TASK_BATCH_SIZE})") or DEFAULT_TASK_BATCH_SIZE
-    number_of_iterations = input(f"Number of iterations? (Default: {DEFAULT_ITERATIONS})") or DEFAULT_ITERATIONS
-    test_every = input(f"Test on every N iterations? (Default: {DEFAULT_TEST_EVERY})") or DEFAULT_TEST_EVERY
-    enumeration_timeout = input(f"Enumeration timeout per task? Same as testing timeout. (Default: {DEFAULT_ENUMERATION_TIMEOUT})") or DEFAULT_ENUMERATION_TIMEOUT
-    recognition_steps = input(f"Total recognition steps? (Default: {DEFAULT_RECOGNITION_STEPS})") or DEFAULT_RECOGNITION_STEPS
+    task_datasets = get_input_or_default("Tasks to test on?", GENERATE_ALL_FLAG)
+    task_batch_size = get_input_or_default("Task batch size?", DEFAULT_TASK_BATCH_SIZE)
+    number_of_iterations = get_input_or_default("Number of iterations?", DEFAULT_ITERATIONS)
+    test_every = get_input_or_default("Test on every N iterations?", DEFAULT_TEST_EVERY)
+    enumeration_timeout = get_input_or_default("Enumeration timeout per task? Same as testing timeout.", DEFAULT_ENUMERATION_TIMEOUT)
+    recognition_steps = get_input_or_default("Total recognition steps? ", DEFAULT_RECOGNITION_STEPS)
     
     interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {enumeration_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --taskDatasets {task_datasets} --recognitionSteps {recognition_steps} "
     
@@ -320,7 +340,7 @@ def get_interactive_experiment_parameters():
 
 def get_shared_experiment_parameters():
     """Gets parameters that are shared across all experiments. Returns a set of experiment parameters as a command."""
-    max_mem_per_enumeration_thread = input(f"Maximum memory per enumeration thread? (Default: {DEFAULT_MEM_PER_ENUMERATION_THREAD})") or DEFAULT_MEM_PER_ENUMERATION_THREAD
+    max_mem_per_enumeration_thread = get_input_or_default("Maximum memory per enumeration thread?", DEFAULT_MEM_PER_ENUMERATION_THREAD)
     
     # Add any global parameters.
     global_parameters_command = " ".join([f"--{global_param} {global_param_value} " for (global_param, global_param_value) in GLOBAL_EXPERIMENTS_ARGUMENTS.items()])
@@ -385,7 +405,8 @@ def build_experiment_full_language_mutual_exclusivity_bootstrap_primitives(basen
     """Builds the full language experiment with the 'mutual exclusivity' prior added on top. Uses bootstrap primitives.
     """
     def experiment_parameters_fn():
-        pseudoalignments_weight = input(f"Pseudoalignments weight for mutual exclusivity? (Default: {DEFAULT_PSEUDOALIGNMENTS_WEIGHT})") or DEFAULT_PSEUDOALIGNMENTS_WEIGHT
+        pseudoalignments_weight = get_input_or_default("Pseudoalignments weight for mutual exclusivity?", DEFAULT_PSEUDOALIGNMENTS_WEIGHT)
+        
         return get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f"--lc_score 0 --smt_pseudoalignments {pseudoalignments_weight} "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 

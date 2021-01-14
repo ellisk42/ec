@@ -76,7 +76,7 @@ def test_buildCLEVRTasksForAllQuestionFiles_all_datasets():
             dataset_name = task.name.split("-")[1]
             assert dataset_name in question_classes_registry
     print("\n")
-
+    
 def test_loadAllTaskDatasets():
     mock_args = MockArgs(taskDatasetDir=DEFAULT_CLEVR_DATASET_DIR,
     curriculumDatasets=[],taskDatasets=["all"])
