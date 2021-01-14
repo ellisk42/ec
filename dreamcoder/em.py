@@ -103,7 +103,7 @@ class ExecutionModule(nn.Module):
         self.fn_nms = nn.ModuleDict()
         for p in g.primitives:
             argc = len(p.tp.functionArguments())
-            self.fnModules[p.name] = NM(argc, cfg.model.H)
+            self.fn_nms[p.name] = nn.ModuleList([NM(argc, cfg.model.H) for _ in range(argc)+1])
 
         self.index_nm = NM(0, cfg.model.H)
         # TODO in the future to allow for >1 toplevel arg the above could be replaced with:
@@ -334,10 +334,12 @@ class PNode:
         elif self.isIndex:
             # if the index is bound to something return that
             # otherwise return self.index_nm[self.i]()
-            asn = self.ctx[self.i]
-            if asn.is_set:
-                return Examplewise([asn.val for _ in range(self.task.num_exs)])
-            return Examplewise(sing.em.index_nms[self.i]().expand(self.task.num_exs,-1))
+            exwise = self.ctx[self.i]
+            if exwise is not None:
+                # this branch is taken for all toplevel args
+                return exwise
+            # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
+            return Examplewise(sing.em.lambda_index_nms[self.i]().expand(self.task.num_exs,-1))
 
         elif self.isHole:
             ctx = sing.em.encode_ctx(self.ctx) # TODO. Note we want a [num_exs,H] vector out
