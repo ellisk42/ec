@@ -10,15 +10,16 @@ import functools
 import torch
 import mlb
 
+import dreamcoder.matt.sing as sing
 
 
-class Asn:
-    def __init__(self) -> None:
-        super().__init__()
-        self.val = Asn.UNSET
-    @property
-    def is_set(self):
-        return self.val is Asn.UNSET
+# class Asn:
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.val = None
+#     @property
+#     def is_set(self):
+#         return self.val is None
 
 
 class PTask:
@@ -40,13 +41,14 @@ class PTask:
         self.request = task.request
         self.num_exs = len(task.examples)
         self.outputs = Examplewise([o for i,o in task.examples])
-        argcs = [len(i) for i,o in task.examples]
-        self.argc = argcs[0]
-        assert all(argc == self.argc for argc in argcs), "not all io examples have the same argc"
-        exwise = [i for i,o in task.examples] # outer list = examples, inner list = args
-        argwise = list(zip(*exwise)) # outer list = args, inner list = examples
-        assert len(argwise) == self.argc
-        self.inputs = [Examplewise(arg) for arg in argwise]
+        _argcs = [len(i) for i,o in task.examples]
+        self.argc = _argcs[0]
+        assert all(argc == self.argc for argc in _argcs), "not all io examples have the same argc"
+        # self.inputs takes a little more effort since each input is a tuple of values and we need to list(zip(*)) it
+        _exwise = [i for i,o in task.examples] # outer list = examples, inner list = args
+        _argwise = list(zip(*_exwise)) # outer list = args, inner list = examples
+        assert len(_argwise) == self.argc
+        self.inputs = [Examplewise(arg) for arg in _argwise]
     def reset_encodings(self):
         self.outputs._neural = None
         for input in self.inputs:
@@ -83,7 +85,6 @@ class ExecutionModule(nn.Module):
 
         """
         super().__init__()
-        Examplewise.set_execution_module(self)
         self.cfg = cfg
         self.num_exs = cfg.data.train.N
         # encoder
@@ -134,8 +135,9 @@ class ExecutionModule(nn.Module):
             notice the num_exs bit bc the ctx should look diff for each example
         uses self.encoder
         """
+        raise NotImplementedError
         for asn in ctx:
-            if asn.is_unset:
+            if asn is None:
                 raise NotImplementedError
         vectors = [asn.val.encode() for asn in ctx]
 
@@ -162,11 +164,9 @@ class Examplewise:
             before itll just return you the same Tensor result as before, so no worries about
             overusing it
     """
-    _execution_module = None
     def __init__(self,data) -> None:
         super().__init__()
-        assert self._execution_module is not None, f"please set the execution module with {type(self)}.set_execution_module()"
-        self.concrete = self.abstract = None
+        self.concrete = self._abstract = None
 
         if torch.is_tensor(data):
             assert data.dim() == 2
@@ -176,19 +176,13 @@ class Examplewise:
             assert isinstance(data,(list,tuple))
             self.concrete = data
             self.num_exs = len(data)
-            check_in_range(self.data,self._execution_module.cfg.data.test.V) # may raise InvalidSketchError
+            check_in_range(self.data,sing.em.cfg.data.test.V) # may raise InvalidSketchError
 
     @property
     def abstract(self):
         if self._abstract is None:
-            self._abstract = self._execution_module.encode_val(self.concrete)
+            self._abstract = sing.em.encode_val(self.concrete)
         return self._abstract
-
-    @classmethod
-    def set_execution_module(cls, em:ExecutionModule):
-        if cls._execution_module is not None and cls._execution_module is not em:
-            mlb.red(f'[warning] it appears that {cls.__name__}.set_execution_module is being called a second time with a new EM. This is usually not inteneded, be careful.')
-        cls._execution_module = em
 
     def as_concrete_fn(self,*args):
         """
@@ -231,18 +225,18 @@ class PNode:
         node.evaluate(output_node=None)
 
     """
-    _execution_module = None
     def __init__(self, p: Program, parent:PNode, ctx:list, from_task=None) -> None:
         super().__init__()
-        assert self._execution_module is not None, f"please set the execution module with {type(self)}.set_execution_module()"
-        assert p is not None
 
         if from_task is not None:
+            # create a full program from the top level task and program
+            # meaning this will be our isOutput node
             assert parent is None
             assert p is not None
             assert isinstance(from_task,Task)
             self.task = PTask(from_task)
         else:
+            # continue building new nodes off an existing task/program
             assert parent is not None
             self.task = parent.task
 
@@ -251,50 +245,45 @@ class PNode:
         self.ctx = ctx
         self.isPrimitive = self.isIndex = self.isHole = self.isAbstraction = self.isApplication = self.isOutput = False
         self.hasHoles = p.hasHoles
-        if isinstance(parent,PTask):
-            self.parent = None
-            self.task = parent
-        elif isinstance(parent,PNode):
-            self.task = parent.task
-        else:
-            raise TypeError
 
-        if isinstance(p,Task): # output node
-            # p = PTask(p) # XXX it's important that this happens here, or at least that outputs._neural values arent shared among different programs for the same Task so each program needs a unique PTask object
-            self.p = p
-            # self.inputs = p.inputs
-            # self.outputs = p.outputs
-            # self.argc = p.argc
-            # assert all([len(input) == self.argc for input in self.inputs]), "argc seems to vary between examples"
-            # self.request = p.request
-
-            self.ast = PNode(p, parent=self)
+        if from_task is not None:
+            # OUTPUT
+            self.tree = PNode(p, parent=self)
             self.isOutput = True
         elif p.isPrimitive:
+            # PRIM
             self.name = p.name
             self.value = p.value
             self.isPrimitive = True
         elif p.isIndex:
+            # IDX
             self.i = p.i
             assert self.i < len(self.ctx)
             self.isIndex = True
         elif p.isHole:
+            # HOLE
             self.tp = p.tp
             self.isHole = True
         elif p.isAbstraction:
-            self.body = PNode(p.body, parent=self, ctx=[Asn()]+ctx)
+            # LAMBDA
+            which_toplevel_arg = len(ctx) # ie if we're just entering the first level of lambda this will be 0
+
+            # now if this arg is one of our inputs we grab that input, otherwise we just return None
+            # (so for non toplevel lambdas this is always None)
+            exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) >= which_toplevel_arg else None
+
+            # push it onto the ctx stack
+            self.body = PNode(p.body, parent=self, ctx=[exwise]+ctx)
+
+            # do some sanity checks
             if self.parent.isOutput:
-                node,num_args = self.unwrap_abstractions()
+                inner_node,num_args = self.unwrap_abstractions()
                 assert self.task.argc == num_args, "task argc doesnt match number of toplevel abstraction"
-                # innermost abstraction is first Asn in node.ctx
-                # so 
-                # TODO populate the node.ctx
-                for i in range(num_args):
-                    reversed(self.parent.inputs)
-                node.ctx
-                # TODO
+                assert all(exwise is not None for exwise in inner_node.ctx), "toplevel ctx was somehow not populated"
+
             self.isAbstraction = True
         elif p.isApplication:
+            # FN APPLICATION
             f,xs = p.applicationParse()
             self.xs = [PNode(x,parent=self, ctx=ctx) for x in xs]
             self.f = PNode(f, parent=self, ctx=ctx) # an abstraction or a primitive
@@ -327,7 +316,7 @@ class PNode:
         if self.isOutput:
             if towards is not None:
                 # propagate downward
-                return self.outputs
+                return self.task.outputs
             else:
                 # propagate upwards: evaluate the whole tree
                 return self.tree.propagate(self)
@@ -348,11 +337,11 @@ class PNode:
             asn = self.ctx[self.i]
             if asn.is_set:
                 return Examplewise([asn.val for _ in range(self.task.num_exs)])
-            return Examplewise(self._execution_module.index_nms[self.i]().expand(self.task.num_exs,-1))
+            return Examplewise(sing.em.index_nms[self.i]().expand(self.task.num_exs,-1))
 
         elif self.isHole:
-            ctx = self._execution_module.encode_ctx(self.ctx) # TODO. Note we want a [num_exs,H] vector out
-            return  Examplewise(self._execution_module.hole_nms[self.tp.show(True)](ctx))
+            ctx = sing.em.encode_ctx(self.ctx) # TODO. Note we want a [num_exs,H] vector out
+            return  Examplewise(sing.em.hole_nms[self.tp.show(True)](ctx))
 
         elif self.isAbstraction:
             # in terms of evaluation, abstractions do nothing but pass along data
@@ -380,7 +369,7 @@ class PNode:
                 # to apply it to other examplewise arguments
                 return self.fn.evaluate().as_concrete_fn(*evaluated_args)
             ## ABSTRACT EVAL
-            nm = self._execution_module.fn_nms[self.fn.name][propagation_direction]
+            nm = sing.em.fn_nms[self.fn.name][propagation_direction]
             return nm(*[arg.abstract for arg in evaluated_args])
 
         else:
@@ -417,11 +406,6 @@ class PNode:
             node = node.body
             i += 1
         return node,i
-    @classmethod
-    def set_execution_module(cls, em:ExecutionModule):
-        if cls._execution_module is not None and cls._execution_module is not em:
-            mlb.red(f'[warning] it appears that {cls.__name__}.set_execution_module is being called a second time with a new EM. This is usually not inteneded, be careful.')
-        cls._execution_module = em
 
 
 
