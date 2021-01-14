@@ -224,6 +224,7 @@ def output_launch_commands_and_log_lines(cloud_launcher_command, experiment_comm
 def build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx, resume_command):
     """Builds the final launch command from a given experimental command and its cloud launcher."""
     if args.cloud_platform == OM_FLAG:
+        # This builds the output file name, which is of the form {experiment_name}_replication_idx.
         formatted_launch_command = cloud_launcher_command.format(experiment_name, replication_idx, experiment_name, replication_idx)
         return formatted_launch_command + replication_command + resume_command + " &"
     else:
@@ -238,7 +239,7 @@ def build_cloud_launcher_command(args):
     else:
         print(f"Unknown cloud platform: {args.cloud_platform}")
         sys.exit(0)
-        
+     
 def build_om_launcher_command(args):
     """Builds the launcher command for running on OpenMind. 
     Returns a string command that can be run """
@@ -278,19 +279,29 @@ def build_experiment_commands(args, experiment_to_resume_checkpoint):
             print("Generating a resume command.")
         experiment_command_builder_fn = EXPERIMENTS_REGISTRY[experiment_class]
         experiment_name, experiment_information_dict = experiment_command_builder_fn(experiment_class, args)
-        add_resume_commands(experiment_class, experiment_information_dict, experiment_to_resume_checkpoint)
+        experiment_name = add_resume_commands(experiment_class, experiment_name, experiment_information_dict, experiment_to_resume_checkpoint)
         experiment_commands_dict[experiment_name] = experiment_information_dict
     return experiment_commands_dict
 
-def add_resume_commands(experiment_class, experiment_information_dict, experiment_to_resume_checkpoint):
+def add_resume_commands(experiment_class, experiment_name, experiment_information_dict, experiment_to_resume_checkpoint):
     """
     Adds the resume command to the experiment information_dict if we have found an appropriate checkpoint.
+    Updates the experiment name to contain the starting iteration.
     Mutates: experiment_information_dict
     """
+    starting_iteration = 0
     experiment_information_dict['resume_command'] = " "
     if experiment_class in experiment_to_resume_checkpoint:
         checkpoint_to_resume = experiment_to_resume_checkpoint[experiment_class]
         experiment_information_dict['resume_command'] = f" --resume {checkpoint_to_resume} "
+        starting_iteration = get_iteration_from_resume_checkpoint(checkpoint_to_resume)
+    experiment_name = f"{experiment_name}_start_{starting_iteration}"
+    return experiment_name
+
+def get_iteration_from_resume_checkpoint(checkpoint_to_resume):
+    """Extracts the integer string of the checkpoint, which has an '_it=ITERATION_' substring."""
+    iteration_string = checkpoint_to_resume.split("_it=")[1].split("_")[0]
+    return int(iteration_string)
         
 def build_replication_commands(experiment_command, args):
     """Takes a basic experiment class command and builds a set of replication commands for it.
