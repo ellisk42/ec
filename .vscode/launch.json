@@ -105,7 +105,7 @@
                 "data.T=2",
                 "data.lambda_depth=3",
                 "data.expressive_lambdas=True",
-                "loop.search_valid_num_tasks=5",
+                "loop.search_valid_num_tasks=2",
                 "device=cpu",
                 // "cuda=True",
                 //"loop.search_valid_every=null",

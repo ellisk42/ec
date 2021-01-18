@@ -66,6 +66,7 @@ from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
+from dreamcoder.em import PNode,PTask
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
@@ -151,6 +152,14 @@ class NeuralPolicyHead(nn.Module):
             fullProg = entry.program
         else:
             fullProg = entry.program._fullProg
+
+        p = PNode(fullProg,parent=None,ctx=[],from_task=frontier.task)
+        # make sure concrete part of propagate() works
+        assert p.upward_only_embedding().concrete == p.task.outputs.concrete
+        # make sure execute_single() works
+        #assert p.execute_single([]) == p.task.outputs.concrete
+        assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
+
 
         mlb.log(f'program: {fullProg}')
         #print(f'program: {fullProg}')
