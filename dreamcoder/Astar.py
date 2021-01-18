@@ -38,6 +38,8 @@ class Astar(Solver):
                  #initialParticles=8, exponentialGrowthFactor=2,
                  criticCoefficient=1.,
                  maxDepth=16,
+                 max_particles=None, # not used for astar
+                 no_resample=None, # not used for astar
                  holeProb=0.2,
                  reportNodeExpansions=True):
 
