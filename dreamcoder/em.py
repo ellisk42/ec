@@ -198,20 +198,6 @@ class Examplewise:
 
         fn = self.concrete[0]
 
-        def uncurry(fn,args):
-            """
-            if youd normally call the fn like fn(a)(b)(c)
-            you can call it like uncurry(fn,[a,b,c])
-            """
-            if len(args) == 0:
-                return fn()
-            res = None
-            for arg in args:
-                if res is not None:
-                    res = res(arg)
-                else:
-                    res = fn(arg)
-            return res
 
         results = []
         for ex in range(sing.num_exs):
@@ -253,6 +239,20 @@ class Examplewise:
         return repr(self.abstract) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
 
 
+def uncurry(fn,args):
+    """
+    if youd normally call the fn like fn(a)(b)(c)
+    you can call it like uncurry(fn,[a,b,c])
+    """
+    if len(args) == 0:
+        return fn()
+    res = None
+    for arg in args:
+        if res is not None:
+            res = res(arg)
+        else:
+            res = fn(arg)
+    return res
 class PNode:
     """
 
@@ -411,6 +411,14 @@ class PNode:
         elif self.isAbstraction:
             # in terms of evaluation, abstractions do nothing but pass along data
             if towards is self.parent: # evaluate self.body
+                # this handles the case where our parent is an HOF who's about to do concrete application
+                # and we're the HOF so it needs us to return a python lambda that it can feed to its HOF
+                # primitive function. We use execute_single() to get that python lambda version of ourselves
+                if self.body.in_HOF_lambda and not self.hasHoles:
+                    assert self.parent.isApplication
+                    if not self.parent.hasHoles:
+                        fn = self.execute_single([])
+                        return Examplewise([fn for _ in range(sing.num_exs)])
                 return self.body.propagate(self)
             elif towards is self.body: # evaluate self.parent
                 return self.parent.propagate(self)
@@ -439,6 +447,46 @@ class PNode:
 
         else:
             raise TypeError
+    def execute_single(self,ctx_single):
+        """
+        if you call this on an abstraction youll get out a callable version of it. If you call
+        this on something fully concrete youll get the actual value.
+        
+        you can call this on isOutput and itll just return the result of calling it on 
+        its child, so thats safe.
+
+        It only goes upward, everything must be concrete, and it works over
+        individual values instead of Examplewise sets of values.
+
+        Calling code should always set ctx_single to `[]` because it should
+        only ever get populated by recursive calls within this function (ie
+        when Abstractions are encountered).
+
+        """
+        if self.isOutput:
+            assert ctx_single == [] # why would you ever pass in anything else at top level
+            return self.tree.execute_single(ctx_single)
+
+        elif self.isPrimitive:
+            return self.value
+
+        elif self.isIndex:
+            return ctx_single[self.i]
+
+        elif self.isHole:
+            assert False
+
+        elif self.isAbstraction:
+            return lambda x: self.body.execute_single([x] + ctx_single)
+
+        elif self.isApplication:
+            # execute self, execute args, apply self to args
+            return uncurry(self.fn.execute_single(ctx_single), [x.execute_single(ctx_single) for x in self.xs])
+
+        else:
+            raise TypeError
+
+
     def traverse(self,fn):
         """
         simple helper that just calls fn() on every PNode in the tree.
@@ -447,30 +495,40 @@ class PNode:
         just a `nonlocal` variable closured in)
         """
         fn(self)
+        if self.isOutput:
+            self.tree.traverse(fn)
         if self.isAbstraction:
-            fn(self.body)
+            self.body.traverse(fn)
         elif self.isApplication:
-            fn(self.f)
+            self.fn.traverse(fn)
             for x in self.xs:
-                fn(x)
-    def has_unset_index(self):
-        found = False
-        def finder(node):
-            nonlocal found
-            if node.isIndex and node.ctx[node.i].is_unset:
-                found = True
-        self.traverse(finder)
-        return found
-    def unwrap_abstractions(self):
-        """
-        traverse down .body attributes until you get to the first non-abstraction PNode
-        """
-        node = self
-        i = 0
-        while node.isAbstraction:
-            node = node.body
-            i += 1
-        return node,i
+                x.traverse(fn)
+    def size(self):
+        sz = 0
+        def _size(node):
+            nonlocal sz
+            if not node.isAbstraction and not node.isOutput:
+                sz += 1
+        self.traverse(_size)
+        return sz
+    # def has_unset_index(self):
+    #     found = False
+    #     def finder(node):
+    #         nonlocal found
+    #         if node.isIndex and node.ctx[node.i].is_unset:
+    #             found = True
+    #     self.traverse(finder)
+    #     return found
+    # def unwrap_abstractions(self):
+    #     """
+    #     traverse down .body attributes until you get to the first non-abstraction PNode
+    #     """
+    #     node = self
+    #     i = 0
+    #     while node.isAbstraction:
+    #         node = node.body
+    #         i += 1
+    #     return node,i
 
 
         

@@ -16,20 +16,21 @@ import functools
 class StatTrack():
     def __init__(self) -> None:
         super().__init__()
-        self.concrete_ct = 0
+        self.total_ct = 0
         self.abstract_ct = 0
     def concrete_ratio(self):
-        if self.concrete_ct + self.abstract_ct == 0:
-            return None # untracked or no data yet
-        return self.concrete_ct / (self.concrete_ct + self.abstract_ct)
+        if self.total_ct == 0:
+            return -1 # untracked or no data yet
+        return 1-(self.abstract_ct / self.total_ct)
     def track_concrete_ratio(self,propagate):
         @functools.wraps(propagate)
-        def _propagate(*args,**kwargs):
-            res = propagate(*args,**kwargs)
-            if res._abstract is None:
-                self.concrete_ct += 1
-            else:
+        def _propagate(node,*args,**kwargs):
+            res = propagate(node,*args,**kwargs)
+            if not node.isOutput and not node.isAbstraction: # bc these dont count towards size() either
+              if res._abstract is not None:
                 self.abstract_ct += 1
+            if node.isOutput:
+              self.total_ct += node.size()
             return res
         return _propagate
 

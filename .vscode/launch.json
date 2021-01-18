@@ -68,6 +68,7 @@
                  "test.model_result_path=boop",
                  "data.train.buf_size=20",
                  "data.test.buf_size=10",
+                 "cuda=False",
                 //"test.lucas.version=1",
                 //"test.from_fn=josh",
                 //"test.josh.wave=3",
