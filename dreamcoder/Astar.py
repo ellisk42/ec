@@ -39,7 +39,10 @@ class Astar(Solver):
                  criticCoefficient=1.,
                  maxDepth=16,
                  holeProb=0.2,
-                 reportNodeExpansions=True):
+                 reportNodeExpansions=True,
+                 max_particles=None, # not used for astar
+                 no_resample=None, # not used for astar
+                 ): 
 
         #which type of reporting: full programs or sketches:
         self.reportNodeExpansions = reportNodeExpansions 

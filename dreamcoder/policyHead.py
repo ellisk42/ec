@@ -368,9 +368,8 @@ class RNNPolicyHead(NeuralPolicyHead):
         return dist
 
 class ListREPLPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, em, cfg, maxVar=10):
+    def __init__(self, g, cfg, maxVar=10):
         super().__init__() #should have featureExtractor?
-        extractor = em.encoder
 
         H = cfg.model.H
         cuda = cfg.cuda
@@ -380,10 +379,8 @@ class ListREPLPolicyHead(NeuralPolicyHead):
         self.cfg = cfg
 
         self.use_cuda = cuda
-        self.featureExtractor = extractor
         self.H = H
-        self.em = em
-        self.vhead = ListREPLValueHead(g=g, extractor=extractor, cfg=cfg)
+        self.vhead = ListREPLValueHead(g=g, cfg=cfg)
         self.encodeTargetHole = encodeTargetHole
         self.ordering = ordering
 

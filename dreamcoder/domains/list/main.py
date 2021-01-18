@@ -343,7 +343,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             tokenized.append((tuple(serializedInputs), y))
 
         return tokenized
-    def inputFeatures(self,task):
+    def old_inputFeatures(self,task):
         if not self.modular:
             # TODO old code just kept for comparison
             tokenized = self.tokenize(task.examples)
@@ -404,7 +404,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         assert not close(res1[0],res1[1]), "your allclose() metric is not good for telling if things are equal"
 
         return
-    def outputFeatures(self,task):
+    def old_outputFeatures(self,task):
         if not self.modular:
             # TODO old code just kept for comparison
             tokenized = self.tokenize(task.examples)

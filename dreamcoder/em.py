@@ -1,14 +1,15 @@
 
-from dreamcoder.domains.list.makeDeepcoderData import check_in_range
 from dreamcoder.program import Program
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 from dreamcoder.task import Task
 from dreamcoder.type import tlist,tbool,tint
 from torch import nn
-from typing import Union
+from typing import Union,List
 import functools
 import torch
 import mlb
+import numpy as np
+from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
 import dreamcoder.matt.sing as sing
 
@@ -39,7 +40,7 @@ class PTask:
         super().__init__()
         self.task = task
         self.request = task.request
-        self.num_exs = len(task.examples)
+        assert len(task.examples) == sing.num_exs
         self.outputs = Examplewise([o for i,o in task.examples])
         _argcs = [len(i) for i,o in task.examples]
         self.argc = _argcs[0]
@@ -49,6 +50,10 @@ class PTask:
         _argwise = list(zip(*_exwise)) # outer list = args, inner list = examples
         assert len(_argwise) == self.argc
         self.inputs = [Examplewise(arg) for arg in _argwise]
+    def output_features(self):
+        return self.outputs.abstract
+    def input_features(self):
+        return sing.em.encode_known_ctx(self.inputs)
     def reset_encodings(self):
         self.outputs._neural = None
         for input in self.inputs:
@@ -86,7 +91,6 @@ class ExecutionModule(nn.Module):
         """
         super().__init__()
         self.cfg = cfg
-        self.num_exs = cfg.data.train.N
         # encoder
         self.encoder = encoder # very important so the params are in the optimizer
 
@@ -103,7 +107,7 @@ class ExecutionModule(nn.Module):
         self.fn_nms = nn.ModuleDict()
         for p in g.primitives:
             argc = len(p.tp.functionArguments())
-            self.fn_nms[p.name] = nn.ModuleList([NM(argc, cfg.model.H) for _ in range(argc)+1])
+            self.fn_nms[p.name] = nn.ModuleList([NM(argc, cfg.model.H) for _ in range(argc+1)])
 
         self.index_nm = NM(0, cfg.model.H)
         # TODO in the future to allow for >1 toplevel arg the above could be replaced with:
@@ -119,33 +123,32 @@ class ExecutionModule(nn.Module):
 
 
 
-    def encode_val(self,val):
+    def encode_exwise(self,exwise):
         """
-        This gets called by Examplewise.encode() on its .data field
-        list[len=num_exs] -> Tensor[num_exs,H]
-        uses self.encoder
+        This gets called by Examplewise.abstract() to encode
+        its .concrete field and produce a .abstract field
         """
-        return self.encoder.encodeValue(val)
-    def encode_ctx(self,ctx):
+        assert exwise.concrete is not None
+        return self.encoder.encodeValue(exwise.concrete)
+    def encode_known_ctx(self,exwise_list):
         """
-        Called to generate the input that a hole network will take.
-            (maybe an index network too if you make it take the ctx)
+        Takes a list of Examplewise objects, abstracts them all, 
+        cats on ctx_start and ctx_end vectors, and runs them thru
+        the extractor's ctx_encoder GRU.
 
-        [Asn] where Asn.val is Examplewise -> Tensor[num_exs,H]
-            notice the num_exs bit bc the ctx should look diff for each example
-        uses self.encoder
+        Note that this doesnt handle the case where there are Nones
+        in the Examplewise list, hence "known" in the name.
+
+        This has the same behavior as inputFeatures from the old days if you pass
+        in all the inputs to the task as exwise_list
         """
-        raise NotImplementedError
-        for asn in ctx:
-            if asn is None:
-                raise NotImplementedError
-        vectors = [asn.val.encode() for asn in ctx]
+        assert all(exwise is not None for exwise in exwise_list)
 
         lex = self.encoder.lexicon_embedder
+        start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
+        end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
 
-        start = lex(lex.ctx_start).expand(1,self.num_exs,-1)
-        end = lex(lex.ctx_end).expand(1,self.num_exs,-1)
-        ctx = torch.cat([start] + [vec.unsqueeze(0) for vec in vectors] + [end])
+        ctx = torch.cat([start] + [exwise.abstract.unsqueeze(0) for exwise in exwise_list] + [end])
         _, res = self.encoder.ctx_encoder(ctx)
         res = res.sum(0) # sum bidir
         return res
@@ -171,17 +174,17 @@ class Examplewise:
         if torch.is_tensor(data):
             assert data.dim() == 2
             self._abstract = data
-            self.num_exs = data.shape[0]
+            assert data.shape[0] == sing.num_exs
         else:
             assert isinstance(data,(list,tuple))
             self.concrete = data
-            self.num_exs = len(data)
-            check_in_range(self.data,sing.em.cfg.data.test.V) # may raise InvalidSketchError
+            assert len(data) == sing.num_exs
+            self._check_in_range()
 
     @property
     def abstract(self):
         if self._abstract is None:
-            self._abstract = sing.em.encode_val(self.concrete)
+            self._abstract = sing.em.encode_exwise(self)
         return self._abstract
 
     def as_concrete_fn(self,*args):
@@ -195,11 +198,59 @@ class Examplewise:
 
         fn = self.concrete[0]
 
+        def uncurry(fn,args):
+            """
+            if youd normally call the fn like fn(a)(b)(c)
+            you can call it like uncurry(fn,[a,b,c])
+            """
+            if len(args) == 0:
+                return fn()
+            res = None
+            for arg in args:
+                if res is not None:
+                    res = res(arg)
+                else:
+                    res = fn(arg)
+            return res
+
         results = []
-        for ex in range(self.num_exs):
-            results.append(fn(*[arg.concrete[ex] for arg in args])) # makes sense bc fn() takes len(args) arguments
+        for ex in range(sing.num_exs):
+            results.append(uncurry(fn,[arg.concrete[ex] for arg in args])) # makes sense bc fn() takes len(args) arguments
         return Examplewise(results)
 
+    def _check_in_range(self):
+        """
+        check if an int, [int], or [[int]] has all values within the range [-V,V]
+        Raises an InvalidSketchError if this is not the case
+        """
+        if self.concrete is None:
+            return
+        V = sing.cfg.data.V
+        assert V == sing.cfg.data.train.V == sing.cfg.data.test.V
+
+        for val in self.concrete:
+            if isinstance(val,(int,np.integer)):
+                if val > V or val < -V:
+                    raise InvalidSketchError(f"integer outside a list had value {val}")
+                return
+            elif isinstance(val,(list,tuple)):
+                if len(val) == 0:
+                    return
+                assert isinstance(val[0],(int,np.integer))
+                maxx = max(val)
+                minn = min(val)
+                if maxx > V or minn < -V:
+                    raise InvalidSketchError(f"min={minn} max={maxx}")
+                return
+            elif callable(val):
+                return # callables are always fine
+            else:
+                raise NotImplementedError(f"Unrecognized value: {val}")
+    def __repr__(self):
+        if self.concrete is not None:
+            return repr(self.concrete)
+        assert self._abstract is not None
+        return repr(self.abstract) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
 
 
 class PNode:
@@ -225,7 +276,7 @@ class PNode:
         node.evaluate(output_node=None)
 
     """
-    def __init__(self, p: Program, parent:PNode, ctx:list, from_task=None) -> None:
+    def __init__(self, p: Program, parent, ctx:list, from_task=None) -> None:
         super().__init__()
 
         if from_task is not None:
@@ -245,10 +296,11 @@ class PNode:
         self.ctx = ctx
         self.isPrimitive = self.isIndex = self.isHole = self.isAbstraction = self.isApplication = self.isOutput = False
         self.hasHoles = p.hasHoles
+        self.in_HOF_lambda = (None in ctx)
 
         if from_task is not None:
             # OUTPUT
-            self.tree = PNode(p, parent=self)
+            self.tree = PNode(p, parent=self, ctx=ctx)
             self.isOutput = True
         elif p.isPrimitive:
             # PRIM
@@ -270,7 +322,7 @@ class PNode:
 
             # now if this arg is one of our inputs we grab that input, otherwise we just return None
             # (so for non toplevel lambdas this is always None)
-            exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) >= which_toplevel_arg else None
+            exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
 
             # push it onto the ctx stack
             self.body = PNode(p.body, parent=self, ctx=[exwise]+ctx)
@@ -284,10 +336,10 @@ class PNode:
             self.isAbstraction = True
         elif p.isApplication:
             # FN APPLICATION
-            f,xs = p.applicationParse()
+            fn,xs = p.applicationParse()
             self.xs = [PNode(x,parent=self, ctx=ctx) for x in xs]
-            self.f = PNode(f, parent=self, ctx=ctx) # an abstraction or a primitive
-            if self.f.isAbstraction:
+            self.fn = PNode(fn, parent=self, ctx=ctx) # an abstraction or a primitive
+            if self.fn.isAbstraction:
                 # this never happens, but if we wanted to cover $0 $1 etc properly for
                 # it we could do so easily: just modify the (mutable) 
                 # self.f.ctx[0].val = xs[0]
@@ -298,7 +350,13 @@ class PNode:
         else:
             assert False
     
-    def propagate(self,towards:PNode):
+    def __repr__(self):
+        return repr(self.p)
+    def upward_only_embedding(self):
+        assert self.isOutput
+        return self.propagate(None)
+    @sing.track.track_concrete_ratio
+    def propagate(self,towards):
         """
         returns :: Examplewise
 
@@ -329,7 +387,7 @@ class PNode:
         #     # then just evaluate it concretely
         #     raise NotImplementedError
         elif self.isPrimitive:
-            return Examplewise([self.value for _ in range(self.task.num_exs)])
+            return Examplewise([self.value for _ in range(sing.num_exs)])
 
         elif self.isIndex:
             # if the index is bound to something return that
@@ -339,10 +397,15 @@ class PNode:
                 # this branch is taken for all toplevel args
                 return exwise
             # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
-            return Examplewise(sing.em.lambda_index_nms[self.i]().expand(self.task.num_exs,-1))
+            assert self.in_HOF_lambda
+            return Examplewise(sing.em.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
 
         elif self.isHole:
-            ctx = sing.em.encode_ctx(self.ctx) # TODO. Note we want a [num_exs,H] vector out
+            if self.in_HOF_lambda:
+                # contextless hole as in BAS
+                return Examplewise(sing.em.lambda_hole_nms[self.tp.show(True)]().expand(sing.num_exs,-1))
+            # not in lambda
+            ctx = sing.em.encode_known_ctx(self.ctx)
             return  Examplewise(sing.em.hole_nms[self.tp.show(True)](ctx))
 
         elif self.isAbstraction:
@@ -364,15 +427,15 @@ class PNode:
 
             assert self.fn.isPrimitive, "Limitation, was there in old abstract repl too, can improve upon when it matters"
             evaluated_args = [node.propagate(self) for node in possible_args if node is not towards]
-            if towards is self.parent and all(arg.concrete is not None for arg in evaluated_args) and self.allow_concrete_eval:
+            if towards is self.parent and all(arg.concrete is not None for arg in evaluated_args) and sing.cfg.model.allow_concrete_eval:
                 ## CONCRETE EVAL
                 # calls evaluate() on self.fn which should return a concrete callable primitive
                 # wrapped in an Examplewise then we just use Examplewise.as_concrete_function
                 # to apply it to other examplewise arguments
-                return self.fn.evaluate().as_concrete_fn(*evaluated_args)
+                return self.fn.propagate(self).as_concrete_fn(*evaluated_args)
             ## ABSTRACT EVAL
             nm = sing.em.fn_nms[self.fn.name][propagation_direction]
-            return nm(*[arg.abstract for arg in evaluated_args])
+            return Examplewise(nm(*[arg.abstract for arg in evaluated_args]))
 
         else:
             raise TypeError
@@ -408,6 +471,9 @@ class PNode:
             node = node.body
             i += 1
         return node,i
+
+
+        
 
 
 

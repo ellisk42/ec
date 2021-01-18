@@ -50,6 +50,7 @@ import dreamcoder.matt.cmd as cmd
 import dreamcoder.matt.plot as plot
 import dreamcoder.matt.state as state
 import dreamcoder.matt.test as test
+import dreamcoder.matt.sing as sing
 from dreamcoder.matt.state import which
 
 def window_avg(window):
@@ -132,7 +133,7 @@ def train_model(
                     vloss = vhead.valueLossFromFrontier(f, g)
                     ploss = phead.policyLossFromFrontier(f, g)
                     elapsed = time.time() - start
-                    print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {f.p}')
+                    print(f'loss {ploss.item():.2f} in {elapsed:.3f}s (concrete: {sing.track.concrete_ratio():.3f}) on {f.p}')
                 except InvalidSketchError:
                     print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
                     continue

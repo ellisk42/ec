@@ -1,4 +1,4 @@
-from dreamcoder.ptree import ExecutionModule
+from dreamcoder.em import ExecutionModule
 from dreamcoder.matt.util import *
 from collections import defaultdict
 import pathlib
@@ -8,6 +8,7 @@ import shutil
 import sys,os
 import glob
 import signal
+import dreamcoder.matt.sing as sing
 
 import hydra
 from hydra import utils
@@ -42,7 +43,7 @@ from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deep
 from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
 from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead, DeepcoderListPolicyHead
 from dreamcoder.Astar import Astar
-from likelihoodModel import AllOrNothingLikelihoodModel
+# from likelihoodModel import AllOrNothingLikelihoodModel
 from torch.utils.tensorboard import SummaryWriter
 import mlb
 import time
@@ -89,9 +90,17 @@ class State:
             mode='test'
             )
 
+        if cfg.data.train.expressive_lambdas:
+            assert cfg.data.test.expressive_lambdas
+            prims = deepcoderPrimitivesPlusPlus()
+        else:
+            prims = deepcoderPrimitives()
+
+        sing.cfg = cfg
+        sing.num_exs = cfg.data.train.N
         g = Grammar.uniform(prims, g_lambdas = taskloader.g_lambdas)
         extractor = ExtractorGenerator(cfg=cfg, maximumLength = max([taskloader.L_big,testloader.L_big])+2)
-        em = ExecutionModule(cfg,g,extractor,1)
+        sing.em = ExecutionModule(cfg,g,extractor(0),1)
 
         #taskloader.check()
         test_frontiers = testloader.getTasks()
@@ -103,11 +112,6 @@ class State:
         test_frontiers = test_frontiers[num_valid:]
         print(f'Split into {len(test_frontiers)} testing tasks and {len(validation_frontiers)} validation tasks')
 
-        if cfg.data.train.expressive_lambdas:
-            assert cfg.data.test.expressive_lambdas
-            prims = deepcoderPrimitivesPlusPlus()
-        else:
-            prims = deepcoderPrimitives()
 
         
 
@@ -119,7 +123,7 @@ class State:
                 'repl': ListREPLPolicyHead,
                 'dc': DeepcoderListPolicyHead,
                 'rb': get_robustfill,
-            }[cfg.model.type](cfg=cfg, em=em, g=g)
+            }[cfg.model.type](cfg=cfg, g=g)
         else:
             phead = BasePolicyHead(cfg)
         if cfg.model.value:
@@ -130,7 +134,7 @@ class State:
                 vhead = {
                     'rnn': SimpleRNNValueHead,
                     'repl': ListREPLValueHead,
-                }[cfg.model.type](cfg=cfg, em=em, g=g)
+                }[cfg.model.type](cfg=cfg, g=g)
         else:
             vhead = SampleDummyValueHead()
 
@@ -141,6 +145,7 @@ class State:
 
         if cfg.cuda:
             heads = [h.cuda() for h in heads]
+            sing.em.cuda()
 
         # TEMP
         # prog = Program.parse('(lambda (MAP (lambda (+ 1 $0)) $0))')
@@ -150,8 +155,11 @@ class State:
         #     phead.policyLossFromFrontier(f,g)
         #     print(f"ran on {f._fullProg}")
         #     print()
+        sing.vhead = vhead
+        sing.phead = phead
+        sing.heads = [vhead,phead]
 
-        params = itertools.chain.from_iterable([head.parameters() for head in heads])
+        params = itertools.chain.from_iterable([head.parameters() for head in heads] + [sing.em.parameters()])
         optimizer = torch.optim.Adam(params, lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
         vhead = InvalidIntermediatesValueHead(cfg)
@@ -247,7 +255,7 @@ class State:
         self.name = name
 
         # shut down tensorboard since it was using the old name
-        if hasattr(self,w) and self.w is not Poisoned:
+        if hasattr(self,'w') and self.w is not Poisoned:
             self.w.flush()
             self.w.close()
             del self.w

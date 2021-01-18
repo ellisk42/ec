@@ -24,6 +24,7 @@ from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 #from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError,check_in_range,evaluate_ctxs,ctxs_of_examples, strip_lambdas, has_index
 from dreamcoder.domains.list.makeDeepcoderData import *
+from dreamcoder.em import PNode,PTask
 
 
 class computeValueError(Exception):
@@ -810,7 +811,7 @@ class LambdaCtx:
         return self._holes[tp]
 class ListREPLValueHead(BaseValueHead):
 
-    def __init__(self, g, em, cfg):
+    def __init__(self, g, cfg):
         super().__init__()
         H = cfg.model.H
         ordering = cfg.model.ordering
@@ -818,12 +819,10 @@ class ListREPLValueHead(BaseValueHead):
 
         self.cfg = cfg
         self.ordering = ordering
-        self.featureExtractor = em.extractor
         self.allow_concrete_eval = allow_concrete_eval
         self.H = H
         self.validator_vhead = InvalidIntermediatesValueHead(cfg)
         #self.outputDimensionality = H
-        assert self.H == em.extractor.H
 
         # populate fnModules
         # self.fnModules = nn.ModuleDict()
@@ -851,7 +850,7 @@ class ListREPLValueHead(BaseValueHead):
 
 
         self._distance = nn.Sequential(
-                nn.Linear(extractor.outputDimensionality + H, H),
+                nn.Linear(H*2, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
@@ -859,7 +858,7 @@ class ListREPLValueHead(BaseValueHead):
         self.concrete_count = 0 # CAREFUL dont make this a task->int dict or itll leak and make the save files gigabytes large
         self._curr_task_concrete_count = None
 
-    def rep(self,sk,task,ctxs=None, in_lambda=False, lambda_ctx=None):
+    def old_rep(self,sk,task,ctxs=None, in_lambda=False, lambda_ctx=None):
         """
         ctxs :: a list of tuples. The outer list iterates over examples, and the
             inner tuple is a context where the 0th thing is the value of $0 etc.
@@ -1015,14 +1014,18 @@ class ListREPLValueHead(BaseValueHead):
         """
         assert isinstance(sks,(list,tuple))
 
-        output_feats = self.featureExtractor.outputFeatures(task)
+        output_feats = PTask(task).output_features()
         output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
         if self.cfg.debug.zero_output_feats:
             output_feats = torch.zeros_like(output_feats)
 
         self.concrete_count = 0
         self._curr_task_concrete_count = task
-        sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
+
+        output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]
+        sk_reps = torch.stack([pnode.upward_only_embedding().abstract for pnode in output_pnodes]) # [num_sketches,num_exs,H]
+        #sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
+
         total_size = sum([sk.size() for sk in sks])
         concrete_ratio = self.concrete_count/total_size
         self.concrete_count = 0
