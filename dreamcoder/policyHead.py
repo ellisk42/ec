@@ -205,7 +205,9 @@ class NeuralPolicyHead(nn.Module):
             md1 = self._computeDist([trace], [zipper], frontier.task, g)
             print("ayy")
             maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
-            print("fuck")
+        if loss.item() > 300:
+            print("MASSIVE LOSS, breakpointing")
+            breakpoint()
         return loss
 
     def _computeDist(): raise NotImplementedError
