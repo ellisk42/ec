@@ -107,6 +107,8 @@
                 "data.expressive_lambdas=True",
                 "loop.search_valid_num_tasks=2",
                 "device=cpu",
+                "model=repl",
+                "model.allow_concrete_eval=False",
                 // "cuda=True",
                 //"loop.search_valid_every=null",
                  //"loop.search_valid_every=null",

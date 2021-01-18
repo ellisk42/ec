@@ -152,7 +152,7 @@ class SampleDummyValueHead(BaseValueHead):
 
 class SimpleRNNValueHead(BaseValueHead):
 
-    def __init__(self, g, extractor, cfg):
+    def __init__(self, g, cfg):
         super().__init__()
         cuda = cfg.cuda
         H = cfg.model.H
@@ -176,12 +176,11 @@ class SimpleRNNValueHead(BaseValueHead):
         self.outputDimensionality = H
 
         self._distance = nn.Sequential(
-                nn.Linear(extractor.outputDimensionality + H, H),
+                nn.Linear(H*2, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
 
-        self.featureExtractor = extractor
 
     def _encodeSketches(self, sketches):
         #don't use spec, just there for the API

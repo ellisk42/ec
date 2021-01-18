@@ -67,6 +67,7 @@ from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 from dreamcoder.em import PNode,PTask
+import dreamcoder.matt.sing as sing
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
@@ -153,12 +154,13 @@ class NeuralPolicyHead(nn.Module):
         else:
             fullProg = entry.program._fullProg
 
-        p = PNode(fullProg,parent=None,ctx=[],from_task=frontier.task)
-        # make sure concrete part of propagate() works
-        assert p.upward_only_embedding().concrete == p.task.outputs.concrete
-        # make sure execute_single() works
-        #assert p.execute_single([]) == p.task.outputs.concrete
-        assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
+        if not isinstance(self,RNNPolicyHead) and sing.cfg.model.allow_concrete_eval:
+            p = PNode(fullProg,parent=None,ctx=[],from_task=frontier.task)
+            # make sure concrete part of propagate() works
+            assert p.upward_only_embedding().concrete == p.task.outputs.concrete
+            # make sure execute_single() works
+            #assert p.execute_single([]) == p.task.outputs.concrete
+            assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
 
 
         mlb.log(f'program: {fullProg}')
@@ -297,9 +299,8 @@ class DeepcoderListPolicyHead(NeuralPolicyHead):
 
 
 class RNNPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, em, cfg, maxVar=15):
+    def __init__(self, g, cfg, maxVar=15):
         super().__init__() #should have featureExtractor?
-        extractor = em.encoder
 
         cuda = cfg.cuda
         H = cfg.model.H
@@ -308,10 +309,8 @@ class RNNPolicyHead(NeuralPolicyHead):
 
         self.cfg = cfg
         self.use_cuda = cuda
-        self.em = em
-        self.featureExtractor = extractor
         self.H = H
-        self.vhead = SimpleRNNValueHead(g=g, extractor=extractor, cfg=cfg) #hack
+        self.vhead = SimpleRNNValueHead(g=g, cfg=cfg) #hack
         self.encodeTargetHole = encodeTargetHole
         self.ordering = ordering
 
@@ -328,7 +327,7 @@ class RNNPolicyHead(NeuralPolicyHead):
             self.productionToIndex[Index(v)] = i
             i += 1
 
-        inshape = extractor.H*2 + H if extractor.digitwise else extractor.H+H
+        inshape = H*3
         self.output = nn.Sequential(
                 nn.Linear(inshape, H),
                 nn.ReLU(),
@@ -346,21 +345,24 @@ class RNNPolicyHead(NeuralPolicyHead):
         return self.output[0].weight.device
 
     def _computeDist(self, sketches, zippers, task, g):
+        ptask = PTask(task)
         #need raw dist, and then which are valid and which is correct ... 
         if self.encodeTargetHole:
             assert False
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
             # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
         sketchEncodings = self.vhead._encodeSketches(sketches) # [5,64]
-        if self.featureExtractor.digitwise:
+        if sing.cfg.model.extractor.digitwise:
             # input feats
-            in_feats = self.featureExtractor.inputFeatures(task)
+            #in_feats = self.featureExtractor.inputFeatures(task)
+            in_feats = ptask.input_features()
             in_feats = in_feats.mean(0) # mean over examples
             if self.cfg.debug.zero_input_feats:
                 in_feats = torch.zeros_like(in_feats)
 
             # output feats
-            out_feats = self.featureExtractor.outputFeatures(task)
+            #out_feats = self.featureExtractor.outputFeatures(task)
+            out_feats = ptask.output_features()
             out_feats = out_feats.mean(0) # mean over examples
             if self.cfg.debug.zero_output_feats:
                 out_feats = torch.zeros_like(out_feats)
@@ -368,6 +370,7 @@ class RNNPolicyHead(NeuralPolicyHead):
             # combine them
             features = torch.cat((in_feats,out_feats),dim=0) # shape [H*2]
         else:
+            assert False
             features = self.featureExtractor.featuresOfTask(task) 
         x = features.expand(len(sketches), -1)
         features = torch.cat([sketchEncodings, x ], dim=1)
