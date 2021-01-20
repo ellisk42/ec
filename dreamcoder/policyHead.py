@@ -358,6 +358,8 @@ class RNNPolicyHead(NeuralPolicyHead):
             # input feats
             #in_feats = self.featureExtractor.inputFeatures(task)
             in_feats = ptask.input_features()
+            other = sing.em.encoder.old_inputFeatures(task)
+            assert in_feats.isclose(other).all()
             in_feats = in_feats.mean(0) # mean over examples
             if self.cfg.debug.zero_input_feats:
                 in_feats = torch.zeros_like(in_feats)
@@ -365,6 +367,8 @@ class RNNPolicyHead(NeuralPolicyHead):
             # output feats
             #out_feats = self.featureExtractor.outputFeatures(task)
             out_feats = ptask.output_features()
+            other = sing.em.encoder.old_outputFeatures(task)
+            assert out_feats.isclose(other).all()
             out_feats = out_feats.mean(0) # mean over examples
             if self.cfg.debug.zero_output_feats:
                 out_feats = torch.zeros_like(out_feats)

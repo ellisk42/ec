@@ -4,7 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
+
         {
             "name": "Test List REPL",
             "type": "python",
@@ -108,8 +108,8 @@
                 "data.expressive_lambdas=True",
                 "loop.search_valid_num_tasks=2",
                 "device=cpu",
-                "model=repl",
-                "model.allow_concrete_eval=False",
+                "model=rnn",
+                // "model.allow_concrete_eval=False",
                 // "cuda=True",
                 //"loop.search_valid_every=null",
                  //"loop.search_valid_every=null",
