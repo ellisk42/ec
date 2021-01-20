@@ -11,6 +11,7 @@ vhead = None
 phead = None
 heads = None
 num_exs = None
+to_optimize = None
 
 import functools
 class StatTrack():
@@ -33,5 +34,12 @@ class StatTrack():
               self.total_ct += node.size()
             return res
         return _propagate
+
+
+import torch.nn as nn
+class ToOptimize(nn.Module):
+  def __init__(self,modules:list):
+    super().__init__()
+    self.modules = nn.ModuleList(modules)
 
 track = StatTrack()

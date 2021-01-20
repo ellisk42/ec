@@ -50,6 +50,7 @@ import dreamcoder.matt.cmd as cmd
 import dreamcoder.matt.plot as plot
 import dreamcoder.matt.state as state
 import dreamcoder.matt.train as train
+import dreamcoder.matt.sing as sing
 
 def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
     """
@@ -78,6 +79,7 @@ def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
             model_results.append(robustfill_search(astar.owner.policyHead, test_tasks, timeout))
             continue
 
+        sing.to_optimize.eval()
         astar.owner.policyHead.eval()
         astar.owner.valueHead.eval()
         #name = f"{astar.owner.policyHead.__class__.__name__}_&&_{astar.owner.valueHead.__class__.__name__}"

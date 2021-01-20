@@ -123,9 +123,8 @@ def train_model(
                 mlb.purple(f'Exiting because reached maximum step for the above run (step: {j}, max: {cfg.loop.max_steps})')
                 return
             
-            for head in heads:
-                head.train()
-                head.zero_grad()
+            sing.to_optimize.train()
+            sing.to_optimize.zero_grad()
             if not isinstance(phead, SyntaxCheckingRobustFill):
                 # train the model
                 try:
@@ -195,8 +194,7 @@ def train_model(
             # validation loss
             if cfg.loop.valid_every is not None and j % cfg.loop.valid_every == 0 and not isinstance(phead,SyntaxCheckingRobustFill):
                 # get valid loss
-                for head in heads:
-                    head.eval()
+                sing.to_optimize.eval()
                 with torch.no_grad():
                     vloss = ploss = 0
                     for f in validation_frontiers:

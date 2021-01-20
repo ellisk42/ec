@@ -142,10 +142,10 @@ class State:
             vhead = phead.vhead.validator_vhead
         heads = [vhead,phead]
 
+        sing.to_optimize = sing.ToOptimize([vhead,phead,sing.em])
 
         if cfg.cuda:
-            heads = [h.cuda() for h in heads]
-            sing.em.cuda()
+            sing.to_optimize.cuda()
 
         # TEMP
         # prog = Program.parse('(lambda (MAP (lambda (+ 1 $0)) $0))')
@@ -159,8 +159,7 @@ class State:
         sing.phead = phead
         sing.heads = [vhead,phead]
 
-        params = itertools.chain.from_iterable([head.parameters() for head in heads] + [sing.em.parameters()])
-        optimizer = torch.optim.Adam(params, lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
+        optimizer = torch.optim.Adam(sing.to_optimize.parameters(), lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
         vhead = InvalidIntermediatesValueHead(cfg)
         astar = make_solver(cfg.data.test.solver,vhead,phead,cfg.data.train.max_depth)
