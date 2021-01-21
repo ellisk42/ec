@@ -10,9 +10,11 @@ python icml_clevr_experiments.py
     --experiment_prefix clevr
     --experiment_classes all
     --output_all_commands_at_once
+    --generate_resume_command_for_log
 
 Available experiments: 
     no_language_baseline_bootstrap  
+    no_joint_generative_baseline_bootstrap
     no_induced_language_no_compression_baseline_bootstrap
     full_language_generative_bootstrap 
     full_language_mutual_exclusivity_bootstrap
@@ -46,6 +48,7 @@ DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION = 5
 # Tags for experiment classes.
 EXPERIMENTS_REGISTRY = dict()
 EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP = 'no_language_baseline_bootstrap'
+EXPERIMENT_TAG_NO_JOINT_GENERATIVE_BASELINE_BOOTSTRAP = 'no_joint_generative_baseline_bootstrap'
 EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP = 'no_induced_language_no_compression_baseline_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP = 'full_language_generative_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_MUTUAL_EXCLUSIVITY_BOOTSTRAP = 'full_language_mutual_exclusivity_bootstrap'
@@ -329,8 +332,8 @@ def get_input_or_default(input_string, default_value):
     else:
         user_input_value = input(f"{input_string} (Default: {default_value})")
         value_to_return = user_input_value or default_value
-    if user_input_value is not None:
-        USER_INPUT_DEFAULT_PARAMETERS[input_string] = user_input_value
+    if user_input_value:
+        USER_INPUT_DEFAULT_PARAMETERS[input_string] = value_to_return
     return value_to_return
     
 def get_interactive_experiment_parameters():
@@ -356,7 +359,7 @@ def get_shared_experiment_parameters():
     # Add any global parameters.
     global_parameters_command = " ".join([f"--{global_param} {global_param_value} " for (global_param, global_param_value) in GLOBAL_EXPERIMENTS_ARGUMENTS.items()])
     
-    return f"--biasOptimal --contextual --no-cuda --skip_first_test --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
+    return f"--biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
 
 def get_shared_full_language_experiment_parameters(primitives_string):
     """Gets experiment parameters that are shared across all the full language experiments. Takes a string indicating which primitives to use.
@@ -399,6 +402,13 @@ def build_experiment_no_induced_language_no_compression_baseline_bootstrap_primi
     """
     def experiment_parameters_fn():
         return  " --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform  --no-consolidation "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_no_joint_generative_bootstrap_primitives(basename, args):
+    """ Builds a baseline experiment that only trains directly on the language annotations, but with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
 def build_experiment_full_language_generative_bootstrap_primitives(basename, args):
@@ -446,6 +456,7 @@ def register_all_experiments():
     """
     print("Registering experiments for CLEVR...")
     EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_LANGUAGE_BASELINE_BOOTSTRAP] = build_experiment_baseline_bootstrap_primitives # Baseline experiment.
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_JOINT_GENERATIVE_BASELINE_BOOTSTRAP] = build_experiment_no_joint_generative_bootstrap_primitives # No Helmholtz baseline.
     EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP] = build_experiment_no_induced_language_no_compression_baseline_bootstrap_primitives # DeepCoder style
     
     EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP] = build_experiment_full_language_generative_bootstrap_primitives # Full language with generative model.

@@ -544,6 +544,12 @@ def ecIterator(grammar, tasks,
     
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
+        # Clean up -- at each iteration, remove Helmholtz from the task language dictionary.
+        for key_name in list(result.taskLanguage.keys()):
+            if "Hemlholtz" in key_name:
+                result.taskLanguage.pop(key_name)
+        print(f"After removing Helmholtz frontiers, task language length is back to {len(result.taskLanguage)} tasks.")
+        
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
             result.recognitionTaskMetrics = {}
