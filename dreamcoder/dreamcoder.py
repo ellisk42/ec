@@ -546,7 +546,7 @@ def ecIterator(grammar, tasks,
     for j in range(resume or 0, iterations):
         # Clean up -- at each iteration, remove Helmholtz from the task language dictionary.
         for key_name in list(result.taskLanguage.keys()):
-            if "Hemlholtz" in key_name:
+            if "Helmholtz" in key_name:
                 result.taskLanguage.pop(key_name)
         print(f"After removing Helmholtz frontiers, task language length is back to {len(result.taskLanguage)} tasks.")
         
