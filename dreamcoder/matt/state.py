@@ -8,7 +8,7 @@ import shutil
 import sys,os
 import glob
 import signal
-import dreamcoder.matt.sing as sing
+from dreamcoder.matt.sing import sing,ToOptimize
 
 import hydra
 from hydra import utils
@@ -96,6 +96,7 @@ class State:
         else:
             prims = deepcoderPrimitives()
 
+        self.sing = sing
         sing.cfg = cfg
         sing.num_exs = cfg.data.train.N
         g = Grammar.uniform(prims, g_lambdas = taskloader.g_lambdas)
@@ -142,7 +143,7 @@ class State:
             vhead = phead.vhead.validator_vhead
         heads = [vhead,phead]
 
-        sing.to_optimize = sing.ToOptimize([vhead,phead,sing.em])
+        sing.to_optimize = ToOptimize([vhead,phead,sing.em])
 
         if cfg.cuda:
             sing.to_optimize.cuda()
@@ -238,6 +239,9 @@ class State:
                 continue # dont recurse on self
             if hasattr(v,'post_load'):
                 v.post_load()
+        # update the singleton with the loaded values, then point self.sing to the singleton
+        sing.from_sing(self.sing)
+        self.sing = sing
     def init_tensorboard(self):
         print("intializing tensorboard")
         self.w = SummaryWriter(

@@ -5,15 +5,24 @@
 
 Nothing in this file is initialized because we want it to be set manually by whatever loading or init code gets run.
 """
-cfg = None
-em = None
-vhead = None
-phead = None
-heads = None
-num_exs = None
-to_optimize = None
-
+import torch.nn as nn
 import functools
+
+class Sing:
+  def __init__(self) -> None:
+    self.cfg = None
+    self.em = None
+    self.vhead = None
+    self.phead = None
+    self.heads = None
+    self.num_exs = None
+    self.to_optimize = None
+    self.track = StatTrack()
+  def from_sing(self,s):
+      for k,v in vars(s).items():
+          setattr(self,k,v)
+
+
 class StatTrack():
     def __init__(self) -> None:
         super().__init__()
@@ -35,11 +44,9 @@ class StatTrack():
             return res
         return _propagate
 
-
-import torch.nn as nn
 class ToOptimize(nn.Module):
   def __init__(self,modules:list):
     super().__init__()
     self.modules = nn.ModuleList(modules)
 
-track = StatTrack()
+sing = Sing() # this is the global Sing instance. Import with `from dreamcoder.matt.sing import sing`

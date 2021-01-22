@@ -55,6 +55,6 @@ expressive_lambdas: True
 lambda_depth: 3
 allow_complex_requests: False
 max_depth: 12
-max_length: 12
+max_length: 40
 #num_mutated_tasks: 3
 #print_data: False

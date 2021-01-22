@@ -11,7 +11,7 @@ import mlb
 import numpy as np
 from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
-import dreamcoder.matt.sing as sing
+from dreamcoder.matt.sing import sing
 
 
 # class Asn:

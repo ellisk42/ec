@@ -67,7 +67,7 @@ from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 from dreamcoder.em import PNode,PTask
-import dreamcoder.matt.sing as sing
+from dreamcoder.matt.sing import sing
 
 class BasePolicyHead(nn.Module):
     #this is the single step type

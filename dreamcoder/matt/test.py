@@ -50,7 +50,7 @@ import dreamcoder.matt.cmd as cmd
 import dreamcoder.matt.plot as plot
 import dreamcoder.matt.state as state
 import dreamcoder.matt.train as train
-import dreamcoder.matt.sing as sing
+from dreamcoder.matt.sing import sing
 
 def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
     """

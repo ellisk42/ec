@@ -50,7 +50,7 @@ import dreamcoder.matt.cmd as cmd
 import dreamcoder.matt.plot as plot
 import dreamcoder.matt.state as state
 import dreamcoder.matt.test as test
-import dreamcoder.matt.sing as sing
+from dreamcoder.matt.sing import sing
 from dreamcoder.matt.state import which
 
 def window_avg(window):
