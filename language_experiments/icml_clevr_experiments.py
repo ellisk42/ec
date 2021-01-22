@@ -5,7 +5,7 @@ This generates the command-line output necessary to launch experiments on cloud 
 
 Example usage:
 python icml_clevr_experiments.py 
-    --cloud_platform om
+    --cloud_platform supercloud
     --number_random_replications
     --experiment_prefix clevr
     --experiment_classes all
@@ -20,6 +20,12 @@ Available experiments:
     full_language_mutual_exclusivity_bootstrap
     full_language_language_compression_bootstrap
     full_language_both_add_ons_bootstrap
+    
+    full_language_synth_train_human_test 
+    full_language_human_train_human_test
+    
+    best_dsl_no_language_pure_enumeration
+    best_dsl_full_language_pure_enumeration_and_neural_search
 All experiments must be manually added to an experiment registry in register_all_experiment. The procedure for adding in an experiment is: add a human readable string tag; add a 'build_experiment' function that constructs the experiment-specific parameters, and then add that to the registry.
 """
 GENERATE_ALL_FLAG = 'all' # Generate all experiment tasks.
@@ -30,13 +36,17 @@ DEFAULT_PYTHON_MAIN_COMMAND = f"python bin/clevr.py "
 # Default parameters for running on OpenMind
 OM_FLAG = 'om'
 OM_SCP_COMMAND = "zyzzyva@openmind7.mit.edu" # Specific to Catherine Wong
-DEFAULT_OM_CPUS_PER_TASK = 24
-DEFAULT_OM_TIME_PER_TASK = 10000
+DEFAULT_SLURM_CPUS_PER_TASK = 24
+DEFAULT_SLURM_TIME_PER_TASK = 10000
+
+# Default parameters for running on Supercloud
+SUPERCLOUD_FLAG = 'supercloud'
+SUPERCLOUD_SCP_COMMAND = "zyzzyva@txe1-login.mit.edu" # Specific to Catherine Wong
 
 # Default parameters for each experiment.
 DEFAULT_TASK_BATCH_SIZE = 40
 DEFAULT_RECOGNITION_STEPS = 10000
-DEFAULT_TEST_EVERY = 3
+DEFAULT_TEST_EVERY = 1
 DEFAULT_ITERATIONS = 10
 DEFAULT_ENUMERATION_TIMEOUT = 2400
 DEFAULT_MEM_PER_ENUMERATION_THREAD = 5000000000 # 5 GB
@@ -44,6 +54,8 @@ DEFAULT_BOOTSTRAP_PRIMITIVES_STRING = 'clevr_bootstrap clevr_map_transform' # Pr
 DEFAULT_PSEUDOALIGNMENTS_WEIGHT = 0.05
 DEFAULT_LANGUAGE_COMPRESSION_WEIGHT = 0.05
 DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION = 5 
+
+DEFAULT_CLEVR_HUMAN_LANGUAGE_DATASET_DIR = f'data/{DEFAULT_CLEVR_DOMAIN_NAME_PREFIX}/language_human'
 
 # Tags for experiment classes.
 EXPERIMENTS_REGISTRY = dict()
@@ -54,8 +66,13 @@ EXPERIMENT_TAG_FULL_LANGUAGE_GENERATIVE_BOOTSTRAP = 'full_language_generative_bo
 EXPERIMENT_TAG_FULL_LANGUAGE_MUTUAL_EXCLUSIVITY_BOOTSTRAP = 'full_language_mutual_exclusivity_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_LANGUAGE_COMPRESSION_BOOTSTRAP = 'full_language_language_compression_bootstrap'
 EXPERIMENT_TAG_FULL_LANGUAGE_BOTH_ADD_ONS_BOOTSTRAP = 'full_language_both_add_ons_bootstrap'
-# Global registry for aguments.
 EXPERIMENT_TAG_NO_INDUCED_LANGUAGE_NO_COMPRESION_BASELINE_BOOTSTRAP = 'no_induced_language_no_compression_baseline_bootstrap'
+
+EXPERIMENT_TAG_FULL_LANGUAGE_SYNTH_TRAIN_HUMAN_TEST = 'full_language_synth_train_human_test_bootstrap'
+EXPERIMENT_TAG_FULL_LANGUAGE_HUMAN_TRAIN_HUMAN_TEST = 'full_language_human_train_human_test_bootstrap'
+
+EXPERIMENT_TAG_BEST_DSL_NO_LANGUAGE_PURE_ENUMERATION = 'best_dsl_no_language_pure_enumeration_bootstrap'
+EXPERIMENT_TAG_BEST_DSL_FULL_LANGUAGE_PURE_ENUMERATION_AND_NEURAL_SEARCH = 'best_dsl_full_language_pure_enumeration_and_neural_search_bootstrap'
 
 GLOBAL_EXPERIMENTS_ARGUMENTS = dict() # Tracks globally set arguments.
 USER_INPUT_DEFAULT_PARAMETERS = dict() # Tracks the latest user input parameter so we can offer it as a default.
@@ -72,6 +89,7 @@ parser.add_argument('--cloud_platform',
                     help='Which cloud platform you are attempting to generate commands for.')
 parser.add_argument('--number_random_replications',
                     default=1,
+                    type=int,
                     help='The total number of replications to run for a given experiment type.')
 parser.add_argument('--experiment_prefix',
                     default=DEFAULT_CLEVR_DOMAIN_NAME_PREFIX,
@@ -122,10 +140,15 @@ def get_cached_log_if_exists(remote_logfile_path, args):
 
 def get_remote_logfile_via_scp(remote_logfile_path, args):
     """SCPs the remote logfile and returns the filepath to a cached local logfile."""
+    logfile_basename = os.path.basename(remote_logfile_path)
+    local_logfile_path = os.path.join(args.experiment_log_directory, logfile_basename)
     if args.cloud_platform == OM_FLAG:
-        logfile_basename = os.path.basename(remote_logfile_path)
-        local_logfile_path = os.path.join(args.experiment_log_directory, logfile_basename)
         scp_command = f"scp {OM_SCP_COMMAND}:{remote_logfile_path} {local_logfile_path}"
+        print(f"Logfile not found locally, SCPing from: {scp_command }")
+        subprocess.check_output(scp_command, shell=True)
+        return local_logfile_path
+    elif args.cloud_platform == SUPERCLOUD_FLAG:
+        scp_command = f"scp {SUPERCLOUD_SCP_COMMAND}:{remote_logfile_path} {local_logfile_path}"
         print(f"Logfile not found locally, SCPing from: {scp_command }")
         subprocess.check_output(scp_command, shell=True)
         return local_logfile_path
@@ -155,7 +178,7 @@ def extract_checkpoint_from_logfile(local_logfile_path):
             print("Did not find a matching checkpoint. Exiting")
             sys.exit(0)
         checkpoint_to_resume = checkpoints_to_resume[0]
-    print(f"Found checkpoint {checkpoint_to_resume} to resume.")
+    print(f"Found checkpoint {checkpoint_to_resume} to resume")
     return checkpoint_to_resume
 
 def generate_timestamped_record_for_csv_logs(args, experiment_name, all_final_commands, experiment_information_dict):
@@ -201,6 +224,11 @@ def get_logfile_path_and_scp_command(args, full_command):
         full_logfile_path = logfile_path.replace('..', '/om2/user/zyzzyva')
         scp_command = f"scp {OM_SCP_COMMAND}:{full_logfile_path} {logfile_path} "
         return full_logfile_path, scp_command
+    elif args.cloud_platform == SUPERCLOUD_FLAG:
+        logfile_path = full_command.split('--output=')[1].split(" ")[0]
+        full_logfile_path = logfile_path.replace('..', '/home/gridsan/zyzzyva/mit')
+        scp_command = f"scp {SUPERCLOUD_SCP_COMMAND}:{full_logfile_path} {logfile_path} "
+        return full_logfile_path, scp_command
     else:
         print(f"Unknown cloud platform: {args.cloud_platform}")
         sys.exit(0)
@@ -226,7 +254,7 @@ def output_launch_commands_and_log_lines(cloud_launcher_command, experiment_comm
             
 def build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx, resume_command):
     """Builds the final launch command from a given experimental command and its cloud launcher."""
-    if args.cloud_platform == OM_FLAG:
+    if args.cloud_platform == OM_FLAG or args.cloud_platform == SUPERCLOUD_FLAG:
         # This builds the output file name, which is of the form {experiment_name}_replication_idx.
         formatted_launch_command = cloud_launcher_command.format(experiment_name, replication_idx, experiment_name, replication_idx)
         return formatted_launch_command + replication_command + resume_command + " &"
@@ -239,21 +267,35 @@ def build_cloud_launcher_command(args):
     """
     if args.cloud_platform == OM_FLAG:
         return build_om_launcher_command(args)
+    elif args.cloud_platform == SUPERCLOUD_FLAG:
+        return build_supercloud_launcher_command(args)
     else:
         print(f"Unknown cloud platform: {args.cloud_platform}")
         sys.exit(0)
-     
+
+def build_default_slurm_command(args):
+    """Builds a launcher command for clusters that use SLURM as their batch job system."""
+    print("Running on a slurm machine (OM or Supercloud). Please input the following parameters:")
+    number_cpus_per_task = get_input_or_default("Number of CPUS per task?", DEFAULT_SLURM_CPUS_PER_TASK)
+    # This requires limitation on the program side, so we set it in the global dictionary.
+    GLOBAL_EXPERIMENTS_ARGUMENTS[NUM_CPUS_TAG] = number_cpus_per_task
+    slurm_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem=MaxMemPerNode --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_SLURM_TIME_PER_TASK) + ":00 "
+    print("\n")
+    return slurm_base_command
+    
 def build_om_launcher_command(args):
     """Builds the launcher command for running on OpenMind. 
     Returns a string command that can be run """
-    print("Running on OpenMind. Please input the following parameters:")
-    number_cpus_per_task = get_input_or_default("Number of CPUS per task?", DEFAULT_OM_CPUS_PER_TASK)
-    # This requires limitation on the program side, so we set it in the global dictionary.
-    GLOBAL_EXPERIMENTS_ARGUMENTS[NUM_CPUS_TAG] = number_cpus_per_task
-    
-    om_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem=MaxMemPerNode --gres=gpu --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_OM_TIME_PER_TASK) + ":00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+    om_base_command = build_default_slurm_command(args) + " --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
     print("\n")
     return om_base_command
+
+def build_supercloud_launcher_command(args):
+    """Builds the launcher command for running on OpenMind. 
+    Returns a string command that can be run """
+    supercloud_base_command = build_default_slurm_command(args) + " singularity exec -B /om2  --nv ../dev-container.img "
+    print("\n")
+    return supercloud_base_command
 
 def build_experiment_commands(args, experiment_to_resume_checkpoint):
     """Given a set of experiment tags to run, builds the appropriate commands from the registry, including their replications.
@@ -280,8 +322,9 @@ def build_experiment_commands(args, experiment_to_resume_checkpoint):
             sys.exit(0)
         if experiment_class in experiment_to_resume_checkpoint:
             print("Generating a resume command.")
+
         experiment_command_builder_fn = EXPERIMENTS_REGISTRY[experiment_class]
-        experiment_name, experiment_information_dict = experiment_command_builder_fn(experiment_class, args)
+        experiment_name, experiment_information_dict = experiment_command_builder_fn(experiment_class, args, experiment_to_resume_checkpoint)
         experiment_name = add_resume_commands(experiment_class, experiment_name, experiment_information_dict, experiment_to_resume_checkpoint)
         experiment_commands_dict[experiment_name] = experiment_information_dict
     return experiment_commands_dict
@@ -310,9 +353,9 @@ def build_replication_commands(experiment_command, args):
     """Takes a basic experiment class command and builds a set of replication commands for it.
     This prompts the user if we want to use a sentence_ordered curriculum instead.
      Returns : [array of experiment_replication_commands]"""
-    use_sentence_ordered_curriculum = get_input_or_default("Use a sentence length curriculum? ", True)
+    use_sentence_ordered_curriculum = get_input_or_default("Use a sentence length curriculum? ", "yes")
     
-    if use_sentence_ordered_curriculum:
+    if use_sentence_ordered_curriculum == "yes":
         return [
             experiment_command + f' --taskReranker sentence_length --seed {replication_idx} '
             for replication_idx in range(1, args.number_random_replications + 1)
@@ -390,39 +433,37 @@ def build_experiment_command_information(basename, args, experiment_parameters_f
     }
     return experiment_name, experiment_information_dict
 
-def build_experiment_baseline_bootstrap_primitives(basename, args):
+def build_experiment_baseline_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """Builds the baseline experiments: these run DreamCoder without any language in the loop. Uses bootstrap primitives.
     """
     def experiment_parameters_fn():
         return  " --recognition_0 examples --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
-def build_experiment_no_induced_language_no_compression_baseline_bootstrap_primitives(basename, args):
+def build_experiment_no_induced_language_no_compression_baseline_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """Builds a baseline experiment that only trains directly on the language annotations, with no compression.
     """
     def experiment_parameters_fn():
         return  " --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform  --no-consolidation "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
-def build_experiment_no_joint_generative_bootstrap_primitives(basename, args):
+def build_experiment_no_joint_generative_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """ Builds a baseline experiment that only trains directly on the language annotations, but with compression.
     """
     def experiment_parameters_fn():
         return  " --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
-def build_experiment_full_language_generative_bootstrap_primitives(basename, args):
+def build_experiment_full_language_generative_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """Builds the basic full language experiment: this uses language, but not any pseudoalignments or language-guided compression. Uses bootstrap primitives.
     Returns: 
         full_experiment_name, [array of experiment replication commands]
     """
-    print(f"Building an experiment for class: {basename}.")
-    
     def experiment_parameters_fn():      
         return get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + "--lc_score 0 "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
-def build_experiment_full_language_mutual_exclusivity_bootstrap_primitives(basename, args):
+def build_experiment_full_language_mutual_exclusivity_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """Builds the full language experiment with the 'mutual exclusivity' prior added on top. Uses bootstrap primitives.
     """
     def experiment_parameters_fn():
@@ -431,7 +472,7 @@ def build_experiment_full_language_mutual_exclusivity_bootstrap_primitives(basen
         return get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f"--lc_score 0 --smt_pseudoalignments {pseudoalignments_weight} "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
-def build_experiment_full_language_language_compression_bootstrap_primitives(basename, args):
+def build_experiment_full_language_language_compression_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """Builds the full language experiment with language-guided compression added on top. Uses bootstrap primitives.
     """
     def experiment_parameters_fn():
@@ -440,7 +481,7 @@ def build_experiment_full_language_language_compression_bootstrap_primitives(bas
         return  get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f"--lc_score {language_compression_score} --max_compression {DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION} "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
-def build_experiment_full_language_both_add_ons_bootstrap_primitives(basename, args):
+def build_experiment_full_language_both_add_ons_bootstrap_primitives(basename, args, experiment_to_resume_checkpoint):
     """Builds the full language experiment with both mutual exclusivity and language-guided compression added on top. Uses bootstrap primitives.
     """
     def experiment_parameters_fn():
@@ -450,6 +491,53 @@ def build_experiment_full_language_both_add_ons_bootstrap_primitives(basename, a
         return  get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f" --smt_pseudoalignments {pseudoalignments_weight} --lc_score {language_compression_score} --max_compression {DEFAULT_LANGUAGE_COMPRESSION_MAX_COMPRESSION} "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
+
+def build_experiment_full_language_human_train_human_test_bootstrap(basename, args, experiment_to_resume_checkpoint):
+    """Builds an experiment that trains and tests the full language model on the human data. This runs the best model so far, which is the baseline full language model. 
+    """
+    def experiment_parameters_fn():      
+        language_dataset_dir = get_input_or_default("Human language dataset directory?", DEFAULT_CLEVR_HUMAN_LANGUAGE_DATASET_DIR)
+        return get_shared_full_language_experiment_parameters(primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + f"--lc_score 0 --languageDatasetDir {language_dataset_dir}  "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def get_test_only_experiment_shared_parameters_with_checkpoint(basename, args, experiment_to_resume_checkpoint, primitives_string):
+    """Experiments that are test only, requiring a pre-trained checkpoint."""
+    print("Running an experiment that will only run tests using a pre-trained checkpoint.\n")
+    assert len(experiment_to_resume_checkpoint) == 1
+    original_experiment_basename = list(experiment_to_resume_checkpoint.keys())[0]
+    print(f"Resuming a checkpoint from {original_experiment_basename} for test-only: {basename}")
+    
+    checkpoint_to_resume = experiment_to_resume_checkpoint.pop(original_experiment_basename)
+    experiment_to_resume_checkpoint[basename] = checkpoint_to_resume
+    starting_iteration = int(get_iteration_from_resume_checkpoint(checkpoint_to_resume))
+    print("When prompted for iterations now, you should type in the NUMBER OF ITERATIONS + 1 of the checkpoint. You will be prompted again later, but the default will be set properly.")
+    number_of_iterations = get_input_or_default("Number of iterations?", starting_iteration + 1)
+    
+    return f"--recognition_0 examples --Helmholtz 0.5 --primitives {primitives_string}  --synchronous_grammar  --no-dsl --no-consolidation --test_dsl_only "
+
+def build_experiment_full_language_synth_train_human_test_bootstrap(basename, args, experiment_to_resume_checkpoint):
+    """Builds an experiment that tests on a human language dataset. This requires a checkpoint.
+    """
+    def experiment_parameters_fn():      
+        test_only_parameters = get_test_only_experiment_shared_parameters_with_checkpoint(basename, args, experiment_to_resume_checkpoint, primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING)
+        # We actually do want to test with a DSL.
+        language_dataset_dir = get_input_or_default("Human language dataset directory?", DEFAULT_CLEVR_HUMAN_LANGUAGE_DATASET_DIR)
+        test_only_parameters = test_only_parameters.replace("--test_dsl_only", "--skip_first_test")
+        return test_only_parameters + f"--languageDatasetDir {language_dataset_dir}  + --test_only_after_recognition  "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_best_dsl_no_language_pure_enumeration_bootstrap(basename, args, experiment_to_resume_checkpoint):
+    """Builds an experiment that tests the best DSL learned without language on pure enumeration."""
+    def experiment_parameters_fn():      
+        return get_test_only_experiment_shared_parameters_with_checkpoint(basename, args, experiment_to_resume_checkpoint, primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING)
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+def build_experiment_best_dsl_full_language_pure_enumeration_and_neural_search_bootstrap(basename, args, experiment_to_resume_checkpoint):
+    """Builds an experiment that tests the best DSL learned with language on pure enumeration."""
+    def experiment_parameters_fn():      
+        return get_test_only_experiment_shared_parameters_with_checkpoint(basename, args, experiment_to_resume_checkpoint, primitives_string=DEFAULT_BOOTSTRAP_PRIMITIVES_STRING) + " --test_only_after_recognition "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn) 
+    
 def register_all_experiments():
     """Adds functions for a given experiment type to a global registry.
     Mutates: EXPERIMENTS_REGISTRY
@@ -465,6 +553,12 @@ def register_all_experiments():
     
     EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_BOTH_ADD_ONS_BOOTSTRAP] = build_experiment_full_language_both_add_ons_bootstrap_primitives #ME + Language compression
     
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_SYNTH_TRAIN_HUMAN_TEST] = build_experiment_full_language_synth_train_human_test_bootstrap
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_FULL_LANGUAGE_HUMAN_TRAIN_HUMAN_TEST] = build_experiment_full_language_human_train_human_test_bootstrap
+
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_BEST_DSL_NO_LANGUAGE_PURE_ENUMERATION] = build_experiment_best_dsl_no_language_pure_enumeration_bootstrap
+    EXPERIMENTS_REGISTRY[EXPERIMENT_TAG_BEST_DSL_FULL_LANGUAGE_PURE_ENUMERATION_AND_NEURAL_SEARCH] = build_experiment_best_dsl_full_language_pure_enumeration_and_neural_search_bootstrap
+
     print(f"Registered a total of {len(EXPERIMENTS_REGISTRY)} experiments:")
     for experiment_name in EXPERIMENTS_REGISTRY:
         print(f"\t{experiment_name}")
