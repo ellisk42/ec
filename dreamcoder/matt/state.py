@@ -9,6 +9,7 @@ import sys,os
 import glob
 import signal
 from dreamcoder.matt.sing import sing,ToOptimize
+from dreamcoder.matt.util import Saveable
 
 import hydra
 from hydra import utils
@@ -59,23 +60,23 @@ from dreamcoder.matt.syntax_robustfill import get_robustfill
 
 class Poisoned: pass
 
-class State:
-    def __init__(self):
-        self.no_pickle = []
-        self.cfg = None
+class State(Saveable):
     # these @properties are kinda important. Putting them in __init sometimes gives weird behavior after loading
-    @property
-    def state(self):
-        return self
-    @property
-    def self(self):
-        return self
-    @property
+    # @property
+    # def state(self):
+    #     raise NotImplementedError # should we really have this property??
+    #     return self
+    # @property
+    # def self(self):
+    #     raise NotImplementedError # should we really have this property??
+    #     return self
     def as_kwargs(self):
-        kwargs = {'state': self.state}
-        kwargs.update(self.__dict__)
-        return kwargs
-    def new(self,cfg):
+        # kwargs = {'state': self.state}
+        # kwargs.update(self.__dict__)
+        return {**self.__dict__, 'state':self}
+    def __init__(self):
+        assert sing.cfg is not None
+        cfg = sing.cfg
         self.cwd = os.getcwd()
         self.name = cfg.name
         if cfg.prefix is not None:
@@ -209,8 +210,7 @@ class State:
         path = f'saves/{name}'
         print(f"saving state to {path}...")
 
-        with self.saveable():
-            torch.save(self, f'{path}.tmp')
+        torch.save(self, f'{path}.tmp')
 
         print('critical step, do not interrupt...')
         shutil.move(f'{path}.tmp',f'{path}')

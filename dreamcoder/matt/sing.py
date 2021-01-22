@@ -7,8 +7,11 @@ Nothing in this file is initialized because we want it to be set manually by wha
 """
 import torch.nn as nn
 import functools
+from torch.utils.tensorboard import SummaryWriter
+from dreamcoder.matt.util import Saveable
 
-class Sing:
+class Sing(Saveable):
+  no_save = ('w',)
   def __init__(self) -> None:
     self.cfg = None
     self.em = None
@@ -18,9 +21,19 @@ class Sing:
     self.num_exs = None
     self.to_optimize = None
     self.track = StatTrack()
-  def from_sing(self,s):
-      for k,v in vars(s).items():
-          setattr(self,k,v)
+    self.w = None # tensorboard writer
+  @property
+  def name(self):
+    if self.cfg.prefix is not None:
+      return self.cfg.prefix + '.' + self.cfg.name
+    return self.cfg.name
+  def post_load(self):
+    self.set_tensorboard(self.name)
+  def set_tensorboard(self,log_dir):
+    self.w = SummaryWriter(
+        log_dir=self.name,
+        max_queue=1,
+    )
 
 
 class StatTrack():

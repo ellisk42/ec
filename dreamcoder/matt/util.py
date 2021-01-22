@@ -83,3 +83,43 @@ def filter_paths(paths, predicate):
         raise NotImplementedError
 
     return results
+
+
+
+
+class Saveable:
+  """
+  Things you can do:
+    * define a class variable no_save = ('hey','there') if you want self.hey and self.there to not be pickled
+    * define a method `post_load(self) -> None` which will be called by setstate after unpickling. Feel free to call it yourself in __init as well if you want it during __init too.
+  Extras:
+    * a repr() implementation is written for you
+    * __getitem and __setitem are defined for you so you can do self.k instead of self.__dict__['k']. Note that it errors if you try to overwrite an @property
+    * .update(dict) is defined for you and does bulk setattr
+
+  """
+  no_save = ()
+  def __getstate__(self):
+    return {k:v for k,v in self.__dict__.items() if k not in self.no_save}
+  def __setstate__(self,state):
+    self.__dict__.update(state)
+    self.post_load()
+  def post_load(self):
+	  pass
+  def __getitem__(self,key):
+      return getattr(self,key)
+  def __setitem__(self,key,val):
+    if hasattr(self,key) and isinstance(getattr(type(self),key), property):
+      raise ValueError
+    return setattr(self,key,val)
+  def __repr__(self):
+      body = []
+      for k,v in self.__dict__.items():
+          body.append(f'{k}: {repr(v)}')
+      body = '\n\t'.join(body)
+      return f"{self.__class__.__name__}(\n\t{body}\n)"
+  def update(self,dict):
+      for k,v in dict.items():
+          if hasattr(type(self), k) and isinstance(getattr(type(self),k), property):
+              continue # dont overwrite properties (throws error)
+          self[k] = v
