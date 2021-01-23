@@ -1,0 +1,9 @@
+# @package _group_
+type: smc
+no_resample: True
+initial_particles: 8
+max_particles: 64
+max_length: 40
+max_depth: 12
+critic_coeff: 1
+exp_growth_factor: 2

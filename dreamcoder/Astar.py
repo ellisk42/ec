@@ -33,26 +33,20 @@ class InferenceTimeout(Exception):
 
 class Astar(Solver):
 
-    def __init__(self, owner, _=None,
-                 maximumLength=20,
-                 #initialParticles=8, exponentialGrowthFactor=2,
-                 criticCoefficient=1.,
-                 maxDepth=16,
-                 holeProb=0.2,
-                 reportNodeExpansions=True,
-                 max_particles=None, # not used for astar
-                 no_resample=None, # not used for astar
+    def __init__(self,
+                 phead,
+                 vhead,
+                 solver_cfg,
                  ): 
 
-        #which type of reporting: full programs or sketches:
-        self.reportNodeExpansions = reportNodeExpansions 
-        self.maximumLength = maximumLength
-        #self.initialParticles = initialParticles
-        #self.exponentialGrowthFactor = exponentialGrowthFactor
-        self.criticCoefficient = criticCoefficient
-        self.owner = owner
-        self.maxDepth = maxDepth
-        self.holeProb = holeProb
+        self.reportNodeExpansions = True
+
+        self.phead = phead
+        self.vhead = vhead
+
+        self.critic_coeff = solver_cfg.critic_coeff
+        self.max_depth = solver_cfg.max_depth
+
 
     def _getNextNodes(self, task, node, g, request):
         totalCost, policyCost, sketch, zippers = node
@@ -67,9 +61,9 @@ class Astar(Solver):
             raise ValueError
         for zipper in zippers:
             try:
-                for stepCost, newZippers, newSketch in self.owner.policyHead.enumSingleStep(task, g, sketch, request, 
+                for stepCost, newZippers, newSketch in self.phead.enumSingleStep(task, g, sketch, request, 
                                                                     holeZipper=zipper,
-                                                                    maximumDepth=self.maxDepth):
+                                                                    maximumDepth=self.max_depth):
                     yield policyCost + stepCost, newZippers, newSketch
             except AssertionError:
                 raise
@@ -80,14 +74,11 @@ class Astar(Solver):
                               #verbose=False,
                               timeout=None,
                               elapsedTime=0.,
-                              CPUs=1,
-                              testing=False, #unused
-                              evaluationTimeout=None, 
                               starting_nodes=None,
                               maximumFrontiers=None): #IDK what this is...
         
-        assert hasattr(self.owner.policyHead,'ordering')
-        self.ordering = self.owner.policyHead.ordering
+        assert hasattr(self.phead,'ordering')
+        self.ordering = self.phead.ordering
 
             
         sys.setrecursionlimit(5000)
@@ -171,7 +162,7 @@ class Astar(Solver):
                                                         totalNumberOfPrograms)
                         else: continue
 
-                    valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
+                    valueCost = self.vhead.computeValue(neighbor, task) #TODO 
                     totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
                     #print("neighbor:", neighbor)
                     #print("policyCost", policyCost)

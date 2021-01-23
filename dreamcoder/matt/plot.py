@@ -1,89 +1,62 @@
 from dreamcoder.matt.util import *
 from collections import defaultdict
 import pathlib
-import contextlib
-import multiprocessing as mp
-import shutil
-import sys,os
-import glob
-import signal
-from torch.utils.tensorboard import SummaryWriter
 
-import hydra
-from hydra import utils
-from omegaconf import DictConfig,OmegaConf,open_dict
-import omegaconf
-from datetime import datetime
-from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-import dreamcoder
-import dreamcoder.domains
-import dreamcoder.domains.list
-import dreamcoder.domains.list.makeDeepcoderData
-from dreamcoder.domains.list.makeDeepcoderData import *
-from datetime import datetime
-
-import argparse
-from dreamcoder.grammar import *
-from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-from dreamcoder.domains.list.listPrimitives import *
-from dreamcoder.program import Program
-from dreamcoder.valueHead import *
-from dreamcoder.zipper import *
-from dreamcoder.SMC import SearchResult
-
-from dreamcoder.domains.tower.towerPrimitives import *
-import itertools
 import torch
 import numpy as np
 import random
 
-from dreamcoder.domains.list.main import ListFeatureExtractor
-from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
-from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
-from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
-from dreamcoder.Astar import Astar
-from likelihoodModel import AllOrNothingLikelihoodModel
-from torch.utils.tensorboard import SummaryWriter
 import mlb
-import time
-# import dreamcoder.matt.cmd as cmd
-# import dreamcoder.matt.state as state
-# import dreamcoder.matt.test as test
-# import dreamcoder.matt.train as train
 import dreamcoder.matt.fix as fix
 import matplotlib.pyplot as plot
 
+from dreamcoder.matt.sing import sing
+
+from copy import deepcopy
+
+class SearchTry:
+  def __init__(self, time, nodes_expanded, soln):
+    self.hit = soln is not None
+    self.soln = soln
+    self.time = time
+    self.nodes_expanded = nodes_expanded
+
+
 class ModelResult:
     def __init__(self,
-                 prefix,
-                 name,
-                 cfg, # of the policy
-                 search_results,
-                 search_failures,
+                 search_tries,
                  timeout,
                  ):
-        self.name = name
-        self.prefix = prefix
-        self.cfg = cfg # the config used to make the policyhead that this was run on
-        self.search_results = search_results
-        self.search_failures = search_failures
-        self.timeout = timeout # the one used in .infer()
-
-        self.num_tests = len(search_failures) + len(search_results)
+        self.cfg = deepcopy(sing.cfg) # so we know exactly what produced this
+        self.timeout=timeout
+        self.search_tries = search_tries
+        self.hits = [t for t in search_tries if t.hit]
+        self.fails = [t for t in search_tries if not t.hit]
+        self.num_tests = len(self.search_tries)
         assert self.num_tests > 0
 
-        self.earliest_failure = min([evals for evals in search_failures],default=-1)
-        if self.earliest_failure == -1:
-            # this max will never fail since clearly search_failures is empty so search_results is not empty
-            self.earliest_failure = max([r.evaluations for r in search_results])
+        # if you crop at this point youll show the full graph, or actually even more
+        self.full_xlim_evals = max([t.nodes_expanded for t in self.search_tries])
+        self.full_xlim_time  = max([t.time for t in self.search_tries])
 
+        if len(self.fails) > 0:
+            # if you stop the x axis at this point you wont miss out on anything
+            self.cropped_xlim_evals = min([t.nodes_expanded for t in self.fails])
+            self.cropped_xlim_time  = min([t.time for t in self.fails])
+        else:
+            # show entire line, hide nothing!
+            self.cropped_xlim_evals = max([t.nodes_expanded for t in self.hits])
+            self.cropped_xlim_time  = max([t.time for t in self.hits])
+    def accuracy(self):
+        return len(self.hits) / self.num_tests * 100
     def fraction_hit(self, predicate):
-        valid = [r for r in self.search_results if predicate(r)]
-        return len(valid)/self.num_tests*100
+        # returns % of total (hit + fail) of searchtries that are hits and ALSO satisfy predicate(searchtry)
+        return len([t for t in self.hits if predicate(t)]) / self.num_tests * 100
     def print_dist(self):
         dist = defaultdict(int)
-        for result in self.search_results:
-            t,d,astar = get_depth(result.program)
+        for t in self.hits:
+            raise NotImplementedError # impl get_depth for pnodes
+            t,d,astar = get_depth(t.soln)
             dist[(t,d)] += 1
         print(f"{self.prefix}.{self.name} distribution of {len(self.search_results)} solutions:")
         for k,v in dist.items():
@@ -157,7 +130,7 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
     plot.title(title)
     plot.xlabel('Time (s)')
     plot.ylabel('Percent Solved')
-    x_max = max([m.timeout for m in model_results])
+    x_max = max([m.full_xlim_time for m in model_results])
     plot.ylim(bottom=0., top=100.)
     plot.xlim(left=0., right=x_max)
     for m in model_results:
@@ -184,7 +157,7 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
     plot.title(title, fontsize=14)
     plot.xlabel('Number of partial programs considered', fontsize=14)
     plot.ylabel('Percent correct', fontsize=14)
-    x_max = max([m.earliest_failure for m in model_results])
+    x_max = max([m.full_xlim_evals for m in model_results])
     if xlim is not None:
         x_max = min((x_max,xlim))
         print(f'applied xlim to get new xmax of {x_max}')
@@ -229,7 +202,7 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
         plot.savefig(path)
         mlb.yellow(f"toplevel: saved plot to {path}")
         # cropped version
-        right = min([m.earliest_failure for m in model_results]) 
+        right = min([m.cropped_xlim_evals for m in model_results]) 
         if xlim is not None:
             right = min((x_max,xlim))
             print(f'applied xlim to get new xmax of {right}')

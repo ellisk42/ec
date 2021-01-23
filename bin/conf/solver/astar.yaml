@@ -1,0 +1,4 @@
+# @package _group_
+type: astar
+critic_coeff: 1
+max_depth: 12

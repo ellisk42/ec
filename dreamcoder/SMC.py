@@ -47,31 +47,24 @@ TODO:
 """
 
 class SMC(Solver):
-    def __init__(self, owner, _=None,
-                 maximumLength=12,
-                 initialParticles=8, exponentialGrowthFactor=2,
-                 criticCoefficient=1.,
-                 maxDepth=12,
-                no_resample=False,
-                max_particles=64,
-                 holeProb=0.2):
-        self.maximumLength = maximumLength
-        self.initialParticles = initialParticles
-        self.exponentialGrowthFactor = exponentialGrowthFactor
-        self.criticCoefficient = criticCoefficient
-        self.owner = owner
-        self.maxDepth = maxDepth
-        self.holeProb = holeProb
-        self.no_resample = no_resample
-        self.max_particles = max_particles
+    def __init__(self,
+                 phead,
+                 vhead,
+                 solver_cfg
+                ):
+
+        self.exp_growth_factor = solver_cfg.exp_growth_factor
+        self.critic_coeff = solver_cfg.critic_coeff
+        self.no_resample = solver_cfg.no_resample
+        self.max_particles = solver_cfg.max_particles
+        self.max_length = solver_cfg.max_length
+        self.max_depth = solver_cfg.max_depth
+        self.initial_particles = solver_cfg.initial_particles
 
     def infer(self, g, tasks, likelihoodModel, _=None,
                               #verbose=False,
                               timeout=None,
                               elapsedTime=0.,
-                              CPUs=1,
-                              testing=False, #unused
-                              evaluationTimeout=None,
                               # lowerBound=0.,
                               # upperBound=100.,
                               # budgetIncrement=1.0, 
@@ -155,7 +148,7 @@ class SMC(Solver):
             from dreamcoder.domains.list.makeDeepcoderData import get_depth
 
             broke=True
-            for generation in range(self.maximumLength):
+            for generation in range(self.max_length):
                 if time.time() - starting > timeout: break
                 
                 sampleFrequency = {} # map from (trajectory, finished) to frequency
@@ -173,7 +166,7 @@ class SMC(Solver):
                                 #mlb.purple(f"T{t}d{d}s{s}")
                             newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
                                                     request, holeZippers=p.zippers,
-                                                    maximumDepth=self.maxDepth)
+                                                    maximumDepth=self.max_depth)
                             totalNumberOfPrograms += 1
                             #print(f"{p.frequency=}")
                             #print(f"{len(population)=}")

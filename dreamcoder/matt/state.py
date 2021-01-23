@@ -161,7 +161,6 @@ class State(Saveable):
         sing.phead = phead
         sing.heads = [vhead,phead]
 
-        optimizer = torch.optim.Adam(sing.to_optimize.parameters(), lr=cfg.optim.lr, eps=1e-3, amsgrad=True)
 
         vhead = InvalidIntermediatesValueHead(cfg)
         astar = make_solver(cfg.data.test.solver,vhead,phead,cfg.data.train.max_depth)

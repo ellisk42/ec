@@ -4,6 +4,7 @@ defaults:
   - loop: curr
   - optim: curr
   - model: repl
+  - solver: astar
 
 prefix: null
 name: tb
@@ -36,10 +37,8 @@ plot: # for mode=plot
   xlim: null
 
 test: # for mode=test
-  from_fn: null # deepcoder | josh | lucas
   from_file: null
-  no_resample: True
-  max_particles: 64
+  from_fn: null # deepcoder | josh | lucas
   to_file: null
   model_result_path: null
   timeout: 30

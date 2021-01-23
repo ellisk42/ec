@@ -1,50 +1,6 @@
 # @package _group_
 
-train:
-  num_templates: null
-  repeat: True
-  buf_size: 1000
-  threaded: False
-  freeze: False
-  T: ${data.T}
-  N: ${data.N}
-  L: ${data.L}
-  L_min: ${data.L_min}
-  L_max: ${data.L_max}
-  V: ${data.V}
-  num_mutated_tasks: 1
-  expressive_lambdas: ${data.expressive_lambdas}
-  lambda_depth: ${data.lambda_depth}
-  max_depth: ${data.max_depth}
-  allow_complex_requests: ${data.allow_complex_requests}
-  premade_templates: null
-  max_length: ${data.max_length}
-  print_data: False
-  t4: False
-test:
-  num_templates: 100
-  repeat: False
-  buf_size: ${data.test.num_templates}
-  threaded: False # do NOT set to true
-  valid_frac: .8
-  solver: astar # astar | smc
-  T: ${data.T}
-  N: ${data.N}
-  L: ${data.L}
-  L_min: ${data.L_min}
-  L_max: ${data.L_max}
-  V: ${data.V}
-  num_mutated_tasks: 1
-  expressive_lambdas: ${data.expressive_lambdas}
-  lambda_depth: ${data.lambda_depth}
-  max_depth: ${data.max_depth}
-  max_length: ${data.max_length}
-  allow_complex_requests: ${data.allow_complex_requests}
-  premade_templates: null
-  print_data: True
-  t4: False
-
-# things that generally want to changed together or not changed much
+# data generation
 T: 2
 N : 5
 L: 10
@@ -56,5 +12,15 @@ lambda_depth: 3
 allow_complex_requests: False
 max_depth: 12
 max_length: 40
-#num_mutated_tasks: 3
-#print_data: False
+
+# data loading
+num_templates: null
+repeat: True
+buf_size: 1000
+threaded: False
+freeze: False
+num_mutated_tasks: 1
+premade_templates: null
+print_data: False
+t4: False
+num_valid: 80
