@@ -1,236 +1,193 @@
-from dreamcoder.matt.syntax_robustfill import SyntaxCheckingRobustFill, train_step
 from dreamcoder.matt.util import *
-from collections import defaultdict
-import pathlib
-import contextlib
-import multiprocessing as mp
-import shutil
-import sys,os
-import glob
-import signal
-
-import hydra
-from hydra import utils
-from omegaconf import DictConfig,OmegaConf,open_dict
-import omegaconf
-from datetime import datetime
-from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-import dreamcoder
-import dreamcoder.domains
-import dreamcoder.domains.list
-import dreamcoder.domains.list.makeDeepcoderData
-from dreamcoder.domains.list.makeDeepcoderData import *
-from datetime import datetime
-
-import argparse
-from dreamcoder.grammar import *
-from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-from dreamcoder.domains.list.listPrimitives import *
-from dreamcoder.program import Program
-from dreamcoder.valueHead import *
-from dreamcoder.zipper import *
-from dreamcoder.SMC import SearchResult
-
-from dreamcoder.domains.tower.towerPrimitives import *
-import itertools
-import torch
-import numpy as np
-import random
-
-from dreamcoder.domains.list.main import ListFeatureExtractor
-from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
-from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead
-from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead
-from dreamcoder.Astar import Astar
-from likelihoodModel import AllOrNothingLikelihoodModel
-from torch.utils.tensorboard import SummaryWriter
-import mlb
-import time
-import dreamcoder.matt.cmd as cmd
-import dreamcoder.matt.plot as plot
-import dreamcoder.matt.state as state
-import dreamcoder.matt.test as test
 from dreamcoder.matt.sing import sing
-from dreamcoder.matt.state import which
+from fastcore.basics import null,ifnone
+from tqdm import tqdm
+from time import time
+import inspect
+import numpy as np
 
-def window_avg(window):
-    window = list(filter(lambda x: x is not None, window))
-    return sum(window)/len(window)
+def loop_check(locs):
+    """
+    Q: isnt this inconvenient overkill?
+    A: Nothing is overkill if it gets rid of bugs that could mess up
+        the validity of results :)
+    """
+    fail=False
+    for k in locs:
+        if k not in ('s','t'):
+            yellow(f"warning: can't trust local variable {k} in training loop. To indicate that you wont be reusing it between loop steps and dont want to save it, add it to `t`")
+            fail=True
+    if fail:
+        raise ValueError("please resolve local variable warnings by using `s` and `t`")
+class FireEvery:
+    def __init__(self, j):
+        self.j = j
+        if self.j is not None and j % sing.cfg.loop.j_multiplier != 0:
+            if not sing.cfg.loop.round_j:
+                raise ValueError("j_multiplier is misaligned with a loop value. Quick fix with loop.round_j=True")
+            # make j a multiple of j_multiplier. Round upwards.
+            self.j = sing.cfg.loop.j_multiplier * ((self.j // sing.cfg.j_multiplier) + 1)
+    def check(self):
+        return self.j is not None and sing.train_state.j % self.j == 0
 
-def train_model(
-    state,
-    cfg,
-    taskloader,
-    vhead,
-    phead,
-    heads,
-    w,
-    g,
-    optimizer,
-    astar,
-    test_frontiers,
-    validation_frontiers,
-    loss_window,
-    vlosses,
-    plosses,
-    frontiers=None,
-    best_validation_loss=np.inf,
-    plosses_since_print=None,
-    vlosses_since_print=None,
-    j=0,
-    **kwargs,
-        ):
-    print(f"j:{j}")
-    if hasattr(phead,'featureExtractor'):
-        phead.featureExtractor.run_tests()
+class RunningValue:
+    def __init__(self):
+        self.reset()
+    def add(self,x):
+        self.vals.append(float(x))
+    def count(self):
+        return len(self.vals)
+    def avg(self):
+        if self.count() == 0:
+            return 0
+        return sum(self.vals)/len(self.vals)
+    def reset(self):
+        self.vals = []
+        self.tstart = time()
+    def elapsed(self):
+        return time() - self.tstart
+    def rate(self):
+        return self.count() / self.elapsed()
 
-    if frontiers is None:
-        frontiers = []
-    time_since_print = None
-    running = []
+class TrainState:
+    def __init__(s):
+        s.j = 0
+        s.best_valid_loss = np.inf
 
-    while True:
-        print(f"{len(frontiers)=}")
-        if len(frontiers) == 0:
+        s.print_every = FireEvery(sing.cfg.print_every)
+        s.valid_every = FireEvery(sing.cfg.valid_every)
+        s.search_valid_every = FireEvery(sing.cfg.search_valid_every)
+        s.save_every = FireEvery(sing.cfg.save_every)
+
+        s.running_loss = RunningValue()
+
+        if sing.cfg.loop.j_multiplier > sing.cfg.data.buf_size:
+            raise ValueError
+
+
+class Temps(): pass
+
+def main():
+    s = sing.train_state
+
+    sing.model.run_tests()
+
+    """
+    This is somewhat opinionated, but we want these models to be as portable
+    as possible to other frameworks
+    therefore I won't actually call .zero_grad .train .eval and with torch.no_grad
+    myself but I'll require that it's done in the body of model.train_step and
+    model.valid_step.
+    """
+    with contextlib.suppress(OSError):
+        if '.zero_grad()' not in inspect.getsource(sing.model.train_step):
+            raise ValueError
+        if '.train()' not in inspect.getsource(sing.model.train_step):
+            raise ValueError
+    with contextlib.suppress(OSError):
+        if '.eval()' not in inspect.getsource(sing.model.valid_step):
+            raise ValueError
+        if '.no_grad()' not in inspect.getsource(sing.model.valid_step):
+            raise ValueError
+
+    print(f"Resuming Training at step j={s.j}")
+
+    for s.j in tqdm(range(
+                          s.j, # start
+                          ifnone(sing.cfg.loop.max_steps,int(1e10)), # stop
+                          sing.cfg.j_multiplier) # step
+                          ):
+        t = Temps()
+
+        # get another batch if needed
+        if len(s.frontiers) < s.j_multiplier:
             mlb.red("reloading frontiers")
-            frontiers = taskloader.getTasks()
-            assert len(frontiers) > 0
-        while len(frontiers) > 0: # work thru batch of `batch_size` examples
-            f = frontiers.pop(0)
-            force_save = False
-            force_search = False
+            s.frontiers += sing.taskloader.getTasks()
+            assert len(s.frontiers) > 0
 
-            if isinstance(phead, SyntaxCheckingRobustFill):
-                fs = [f]
-                for _ in range(32):
-                    if cfg.loop.save_every is not None and j % cfg.loop.save_every == 0:
-                        force_save = True
-                    if cfg.loop.search_valid_every is not None and j % cfg.loop.search_valid_every == 0:
-                        force_search = True
-                    if len(frontiers) == 0:
-                        break
-                    if cfg.loop.max_steps and j >= cfg.loop.max_steps:
-                        break
-                    fs.append(frontiers.pop(0))
-                    j += 1
+        # pull out the frontiers to train on with this step
+        t.fs = [s.frontiers.pop(0) for _ in range(s.j_multiplier)]
 
-            if cfg.data.train.freeze:
-                assert not isinstance(phead, SyntaxCheckingRobustFill)
-                frontiers.append(f) # put back at the end
+        # put back frontiers into cyclic buffer if data.freeze is true
+        if sing.cfg.data.train.freeze:
+            s.frontiers.extend(fs) # put back at the end
+        
+        """ 
+        Here's what model.train_step should roughly look like:
+        model.train_step( whatever data ):
+            self.zero_grad()
+            loss = call the model on the data
+            loss.backward()
+            self.optim.step()
+            return loss
+        """
 
-            # abort if reached end
-            if cfg.loop.max_steps and j > cfg.loop.max_steps:
-                mlb.purple(f'Exiting because reached maximum step for the above run (step: {j}, max: {cfg.loop.max_steps})')
-                return
-            
-            sing.to_optimize.train()
-            sing.to_optimize.zero_grad()
-            if not isinstance(phead, SyntaxCheckingRobustFill):
-                # train the model
-                try:
-                    start = time.time()
-                    vloss = vhead.valueLossFromFrontier(f, g)
-                    ploss = phead.policyLossFromFrontier(f, g)
-                    elapsed = time.time() - start
-                    print(f'loss {ploss.item():.2f} in {elapsed:.3f}s (concrete: {sing.track.concrete_ratio():.3f}) on {f.p}')
-                except InvalidSketchError:
-                    print(f"Ignoring training program {f._fullProg} because of out of range intermediate computation")
-                    continue
-                loss = vloss + ploss
-                loss.backward()
-            else:
-                # robustfill
-                start = time.time()
-                vloss = torch.tensor(0).float()
-                score, syntax_score = train_step(fs,phead)
-                print(f"score: {score}")
-                #print(f"syntax score: {syntax_score}")
-                running.append((score*len(fs),len(fs)))
-                print(f"avg: {sum(list(zip(*running))[0])/sum(list(zip(*running))[1])}")
-                ploss = torch.tensor(score+syntax_score).float()
-                elapsed = time.time() - start
-                print(f'loss {ploss.item():.2f} in {elapsed:.4f}s on {[f.p for f in fs]}')
-                # NO loss.backward() bc we assume vhead is not a trainable head and phead is handled by optimiser_step
+        t.start = time()
+        t.loss, t.to_print = sing.model.train_step(fs)
+        t.elapsed = time() - _start
+        print(f'Loss {t.loss:.2f} in {t.elapsed:.3f}s on {[f.p for f in t.fs]}')
+        if t.to_print is not None: print(t.to_print)
 
-            # for printing later
-            if cfg.loop.print_every is not None: # dont gather these if we'll never empty it by printing
-                #plosses[j % loss_window] = ploss.item()
-                plosses.append(ploss.item())
-                #vlosses[j % loss_window] = vloss.item()
-                vlosses.append(vloss.item())
-            optimizer.step()
+        s.running_loss.add(t.loss)
 
-            mlb.freezer('pause')
+        mlb.freezer('pause')
+        if mlb.predicate('return'):
+            return
+        if mlb.predicate('which'):
+            sing.which()
+        if mlb.predicate('cfg'):
+            sing.yaml()
+        if mlb.predicate('rename'):
+            raise NotImplementedError
+            name = input('Enter new name:')
+            state.rename(name)
+            # VERY important to do this:
+            w = state.w
+            name = state.name
 
-            if mlb.predicate('return'):
-                return
-            if mlb.predicate('which'):
-                which(cfg)
-            if mlb.predicate('cfg'):
-                print(yaml(cfg))
-            if mlb.predicate('rename'):
-                name = input('Enter new name:')
-                state.rename(name)
-                # VERY important to do this:
-                w = state.w
-                name = state.name
+        # printing and logging
+        if s.print_every.check():
+            print(f"[{s.j}] {s.running_loss.rate():.2g} steps/sec {sing.cls_name} {s.running_loss.avg()}")
+            sing.tb_scalar('TrainLoss',s.running_loss.avg())
+            s.running_loss.reset()
 
-            # printing and logging
-            if j % cfg.loop.print_every == 0 or isinstance(phead,SyntaxCheckingRobustFill):
-                rate = len(plosses)/(time.time()-time_since_print) if time_since_print is not None else None
-                if rate is None: rate = 0
-                time_str = f" ({rate:.2f} steps/sec)"
-                vloss_avg = sum(vlosses) / max([len(vlosses),1])
-                ploss_avg = sum(plosses) / max([len(plosses),1])
-                for head,loss in zip([vhead,phead],[vloss_avg,ploss_avg]): # important that the right things zip together (both lists ordered same way)
-                    print(f"[{j}]{time_str} {head.__class__.__name__} {loss}")
-                    w.add_scalar('TrainLoss/'+head.__class__.__name__, loss, j)
-                print()
-                w.flush()
-                vlosses = []
-                plosses = []
-                time_since_print = time.time()
+            sing.model.print_every()
 
-            # validation loss
-            if cfg.loop.valid_every is not None and j % cfg.loop.valid_every == 0 and not isinstance(phead,SyntaxCheckingRobustFill):
-                # get valid loss
-                sing.to_optimize.eval()
-                with torch.no_grad():
-                    vloss = ploss = 0
-                    for f in validation_frontiers:
-                        vloss += vhead.valueLossFromFrontier(f, g)
-                        ploss += phead.policyLossFromFrontier(f, g)
-                        if ploss.item() == np.inf:
-                            breakpoint()
-                    vloss /= len(validation_frontiers)
-                    ploss /= len(validation_frontiers)
-                # print valid loss
-                for head, loss in zip([vhead,phead],[vloss,ploss]):
-                    mlb.blue(f"Validation Loss [{j}] {head.__class__.__name__} {loss.item()}")
-                    w.add_scalar('ValidationLoss/'+head.__class__.__name__, loss.item(), j)
-                # save model if new record for lowest validation loss
-                val_loss = (vloss+ploss).item()
-                if val_loss < best_validation_loss:
-                    best_validation_loss = val_loss
-                    state.save(locals(),'best_validation')
-                    mlb.green('new lowest validation loss!')
-                    w.add_scalar('ValidationLossBest/'+head.__class__.__name__, loss, j)
 
-            # search on validation set
-            if force_search or (cfg.loop.search_valid_every is not None and j % cfg.loop.search_valid_every == 0):
-                model_results = test.test_models([astar],
-                                            validation_frontiers[: cfg.loop.search_valid_num_tasks],
-                                            g,
-                                            timeout=cfg.loop.search_valid_timeout,
-                                            verbose=True)
-                accuracy = len(model_results[0].search_results) / len(validation_frontiers[:cfg.loop.search_valid_num_tasks]) * 100
-                w.add_scalar('ValidationAccuracy/'+head.__class__.__name__, accuracy, j)
-                plot.plot_model_results(model_results, file='validation', w=w, j=j, tb_name=f'ValdiationAccuracy')
+        """ 
+        Here's what model.valid_step should roughly look like:
+        model.valid_step( whatever data ):
+            self.eval()
+            loss = call the model on the data
+            loss.backward()
+            self.optim.step()
+            return loss
+        """
 
-            # if mlb.predicate('test'): # NOT REALLY USED
-            #     model_results = test_models([astar], test_tasks, g, timeout=cfg.loop.search_valid_timeout, verbose=True)
-            #     plot_model_results(model_results, file='test', salt=j)
+        # validation loss
+        if s.valid_every.check():
+            t.valid_loss, t.to_print = sing.model.valid_step(s.valid_frontiers)
+            sing.tb_scalar('ValidationLoss',_valid_loss)
+            blue(f"[{s.j}] {sing.cls_name} {t.valid_loss}")
+            if t.to_print is not None: print(t.to_print)
 
-            j += 1 # increment before saving so we resume on the next iteration
-            if force_save or (cfg.loop.save_every is not None and (j-1) % cfg.loop.save_every == 0): # the j-1 is important for not accidentally repeating a step
-                state.save(locals(),f'autosave.{j}')
+            # save model if new record for lowest validation loss
+            if t.valid_loss < s.best_valid_loss:
+                s.best_valid_loss = t.valid_loss
+                sing.save('best_validation')
+                green('new lowest validation loss!')
+                sing.tb_scalar('ValidationLossBest', t.valid_loss)
+
+        # search on validation set
+        if s.search_valid_every.check():
+            t.model_result = sing.model.search(s.valid_frontiers,
+                                              timeout=sing.cfg.loop.search_valid_timeout,
+                                              verbose=True)
+            sing.tb_scalar('ValidationAccuracy', t.model_result.accuracy())
+            raise NotImplementedError #TODO fig out how we wanna to these plots
+            sing.tb_plot(t.model_result, file='validation', tb_name=f'ValdiationAccuracy')
+
+        if s.save_every.check():
+            loop_check(locals())
+            sing.save(f'autosave.{s.j}')
+

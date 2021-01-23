@@ -22,7 +22,6 @@ from dreamcoder.matt.sing import sing
 #     def is_set(self):
 #         return self.val is None
 
-
 class PTask:
     """
     My version of the Task.
