@@ -1,119 +1,85 @@
+from dreamcoder.matt.util import *
+unthread()
 try:
     import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.matt.syntax_robustfill import SyntaxCheckingRobustFill
-import os
-#os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
-#os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
-#os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
-#os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
-#os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
-from collections import defaultdict
-import pathlib
-import contextlib
-import multiprocessing as mp
-import shutil
+from dreamcoder.matt import plot,test,train,fix,profile,command
+from dreamcoder.matt.state import TrainState
+from dreamcoder.matt.sing import sing
+
 import sys,os
-import glob
-import signal
-
-import hydra
-from hydra import utils
-from omegaconf import DictConfig,OmegaConf,open_dict
-import omegaconf
-from datetime import datetime
-from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-import dreamcoder
-import dreamcoder.domains
-import dreamcoder.domains.list
-import dreamcoder.domains.list.makeDeepcoderData
-from dreamcoder.domains.list.makeDeepcoderData import *
-from datetime import datetime
-
-import argparse
-from dreamcoder.grammar import *
-from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-from dreamcoder.domains.list.listPrimitives import *
-from dreamcoder.program import Program
-from dreamcoder.valueHead import *
-from dreamcoder.zipper import *
-from dreamcoder.SMC import SearchResult
-
-from dreamcoder.domains.tower.towerPrimitives import *
-import itertools
-import torch
 import numpy as np
-import random
-
-from dreamcoder.domains.list.main import ListFeatureExtractor
-from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
-from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, BaseValueHead, SampleDummyValueHead, InvalidIntermediatesValueHead
-from dreamcoder.policyHead import RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, NeuralPolicyHead, DeepcoderListPolicyHead
-from dreamcoder.Astar import Astar
-from likelihoodModel import AllOrNothingLikelihoodModel
-from torch.utils.tensorboard import SummaryWriter
-import mlb
-import time
-
-
-
-import dreamcoder.matt.cmd as cmd
-import dreamcoder.matt.plot as plot
-from dreamcoder.matt.state import State
-import dreamcoder.matt.test as test
-import dreamcoder.matt.train as train
-import dreamcoder.matt.fix as fix
-from dreamcoder.matt.util import *
-
-# IMPORTANT to fix loading from pickles these imports need to be here
-from dreamcoder.domains.list.main import ExtractorGenerator
-from dreamcoder.matt.state import Poisoned
-from dreamcoder.matt.plot import ModelResult
-
-torch.set_num_threads(1) # or else it gets unnecessarily crazy
+import torch
 
 
 # doesnt actually do anything i think
-def tmux_closed():
-    sys.exit(1)
-signal.signal(signal.SIGHUP,tmux_closed)
-
-def cleanup():
-    path = utils.to_absolute_path('outputs')
-    files = os.listdir(path)
-    pass # TODO continue
+# def tmux_closed():
+#     sys.exit(1)
+# signal.signal(signal.SIGHUP,tmux_closed)
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
-    if cfg.debug.verbose:
-        mlb.set_verbose()
-
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
-    cleanup()
     print()
 
-
-    if cfg.print and cfg.load is None:
-        which(cfg)
-        print("cfg.print was specified, exiting")
-        return
-
-    def on_crash():
+    def print_cwd():
         print(os.getcwd())
-        # if hasattr(state,'taskloader') and hasattr(state.taskloader, 'lock'):
-        #     print("acquiring lock...")
-        #     state.taskloader.lock.acquire() # force the other thread to block
-        #     #state.taskloader.p.kill()
-        #     state.taskloader.lock.release()
-        #     print("done")
-    #def on_ctrlc():
-        #on_crash()
-        #print('exiting')
-        #sys.exit(1)
          
-    with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=on_crash, crash=on_crash):
+    with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=print_cwd, crash=print_cwd):
+
+        sing.from_cfg(cfg) # initialize the singleton
+
+        # PRINT
+        if cfg.print:
+            which(sing.cfg) # as expected: loaded cfg if cfg.load, else new cfg
+            print("cfg.print was specified, exiting")
+
+        # PLOT
+        elif cfg.mode == 'plot':
+            plot.main()
+
+        # TESTGEN
+        elif cfg.mode == 'testgen':
+            testgen.main()
+
+        # TEST
+        elif cfg.mode == 'test':
+            sing.from_cfg(cfg)
+            mlb.yellow("===START TEST===")
+            test.main()
+        
+        # CMD
+        elif cfg.mode == 'cmd':
+            command.main()
+
+        # TRAIN
+        elif cfg.mode == 'resume':
+            mlb.yellow("===RESUME TRAIN===")
+            print("Entering training loop...")
+            train.main()
+
+        # PROFILE
+        elif cfg.mode == 'profile':
+            profile.main()
+
+        # INSPECT
+        elif cfg.mode == 'inspect':
+            print("=== Inspecting State ===")
+            s = sing.train_state
+            sing.which()
+            breakpoint()
+            raise Exception("Take a look around via `sing` and `s` (train state)!")
+
+        else:
+            mlb.die(f"Mode not recognized: {cfg.mode}")
+        mlb.yellow("===END===")
+
+
+
+
+
 
         # PLOT
         if cfg.mode == 'plot':

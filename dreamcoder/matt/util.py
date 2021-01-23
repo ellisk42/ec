@@ -1,34 +1,69 @@
+
+import sys,os
+import mlb
+
 import hydra
-from hydra.utils import to_absolute_path
 from omegaconf import DictConfig,OmegaConf,open_dict
 from datetime import datetime
-import os
 import pathlib
+from pathlib import Path
+from torch.utils.tensorboard import SummaryWriter
+import contextlib
 
-def ec_path(p):
-    return pathlib.Path(to_absolute_path(p))
-def outputs_path(p):
-    return ec_path('outputs') / p
+
+def which(cfg):
+    print(yaml(cfg))
+    print(getcwd())
+    regex = getcwd().parent.name + '%2F' + getcwd().name
+    print(f'http://localhost:6696/#scalars&regexInput={regex}')
+    print("curr time:",timestamp())
+
+def getcwd():
+    return Path(os.getcwd())
+
+def yaml(cfg):
+    return OmegaConf.to_yaml(cfg)
+
+def timestamp():
+    return datetime.now()
+
+## PATHS
+
 def toplevel_path(p):
-    return outputs_path('_toplevel') / p
-def printable_local_path(p):
+    """
+    In:  plots/x.png
+    Out: /scratch/mlbowers/proj/example_project/plots/x.png
+    """
+    return Path(hydra.utils.to_absolute_path(p))
+
+def outputs_path(p):
+    """
+    In:  plots/x.png
+    Out: /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/plots/x.png
+    """
+    return toplevel_path('outputs') / p
+
+def outputs_relpath(p):
     """
     In:  plots/x.png
     Out: 12-31-20/12-23-23/plots/x.png
     """
-    return hide_path_prefix(pathlib.Path(os.getcwd())) / p
-def yaml(cfg):
-    return OmegaConf.to_yaml(cfg)
-def timestamp():
-    return datetime.now()
-def which(cfg=None):
-    print(yaml(cfg))
-    print(os.getcwd())
-    regex = os.path.basename(os.path.dirname(os.getcwd())) + '%2F' + os.path.basename(os.getcwd())
-    print(f'http://localhost:6696/#scalars&regexInput={regex}')
-    print("curr time:",timestamp())
+    return outputs_path(p).relative_to(outputs_path(''))
 
-def outputs_regex(*rs, sort=True):
+def get_datetime_path(p):
+    """
+    Path -> Path
+    In:  .../2020-09-14/23-31-49/t3_reverse.no_ablations_first
+    Out: .../2020-09-14/23-31-49
+    Harmless on shorter paths
+    """
+    idx = p.parts.index('outputs')+3 # points one beyond TIME dir
+    return pathlib.Path(*p.parts[:idx]) # only .../DATE/TIME dir
+
+def get_datetime_paths(paths):
+    return [get_datetime_path(p) for p in paths]
+
+def outputs_regex(*rs):
     """
     The union of one or more regexes over the outputs/ directory.
     Returns a list of results (pathlib.Path objects)
@@ -44,30 +79,8 @@ def outputs_regex(*rs, sort=True):
         except ValueError as e:
             print(e)
             return []
-    if sort:
-        return sorted(res)
-    return res
+    return sorted(res)
 
-def hide_path_prefix(p):
-    """
-    remove everything in path before the `outputs` dir (inclusive) eg:
-    In:  /scratch/mlbowers/proj/ec/outputs/2020-09-17/15-22-30
-    Out: 2020-09-17/15-22-30
-    """
-    idx = p.parts.index('outputs')+1 # points to DATE dir
-    return pathlib.Path(*p.parts[idx:])
-
-def get_datetime_path(p):
-    """
-    Path -> Path
-    In:  .../2020-09-14/23-31-49/t3_reverse.no_ablations_first
-    Out: .../2020-09-14/23-31-49
-    Harmless on shorter paths
-    """
-    idx = p.parts.index('outputs')+3 # points one beyond TIME dir
-    return pathlib.Path(*p.parts[:idx]) # only .../DATE/TIME dir
-def get_datetime_paths(paths):
-    return [get_datetime_path(p) for p in paths]
 
 def filter_paths(paths, predicate):
     return [p for p in paths if predicate(p)]
@@ -84,13 +97,38 @@ def filter_paths(paths, predicate):
 
     return results
 
+def unthread():
+    """
+    disables parallelization
+    """
+    import os
+    if 'numpy' in sys.modules:
+        mlb.yellow("warning: unthread() might not work properly if done after importing numpy")
+    
+    os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
+    os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
+    os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
+    os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
+    os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
+    import torch
+    torch.set_num_threads(1)
 
+def deterministic(seed):
+    import torch
+    import numpy as np
+    import random
+    torch.manual_seed(seed)
+    # warning: these may slow down your model
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    random.seed(seed)
 
-
+class NoPickle: pass
 class Saveable:
   """
   Things you can do:
-    * define a class variable no_save = ('hey','there') if you want self.hey and self.there to not be pickled
+    * define a class variable no_save = ('hey','there') if you want self.hey and self.there to not be pickled (itll be replaced with the sentinel NoPickle)
     * define a method `post_load(self) -> None` which will be called by setstate after unpickling. Feel free to call it yourself in __init as well if you want it during __init too.
   Extras:
     * a repr() implementation is written for you
@@ -98,9 +136,9 @@ class Saveable:
     * .update(dict) is defined for you and does bulk setattr
 
   """
-  no_save = ()
+  no_save = () # tuple so it's not mutably shared among instances
   def __getstate__(self):
-    return {k:v for k,v in self.__dict__.items() if k not in self.no_save}
+    return {k:(v if k not in self.no_save else NoPickle) for k,v in self.__dict__.items()}
   def __setstate__(self,state):
     self.__dict__.update(state)
     self.post_load()
@@ -110,7 +148,7 @@ class Saveable:
       return getattr(self,key)
   def __setitem__(self,key,val):
     if hasattr(self,key) and isinstance(getattr(type(self),key), property):
-      raise ValueError
+      raise ValueError("Trying to overwrite an @property")
     return setattr(self,key,val)
   def __repr__(self):
       body = []
@@ -120,6 +158,4 @@ class Saveable:
       return f"{self.__class__.__name__}(\n\t{body}\n)"
   def update(self,dict):
       for k,v in dict.items():
-          if hasattr(type(self), k) and isinstance(getattr(type(self),k), property):
-              continue # dont overwrite properties (throws error)
           self[k] = v
