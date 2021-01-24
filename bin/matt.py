@@ -9,6 +9,8 @@ from dreamcoder.matt import plot,test,train,fix,profile,command
 from dreamcoder.matt.state import TrainState
 from dreamcoder.matt.sing import sing
 
+from mlb.mail import email_me,text_me
+
 import sys,os
 import numpy as np
 import torch
@@ -24,7 +26,14 @@ def hydra_main(cfg):
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     print()
 
-    def print_cwd():
+    with open_dict(cfg):
+        cfg.argv = ' '.join(sys.argv)
+
+    def crash():
+        print(os.getcwd())
+        if hasattr(sing,'cfg') and sing.cfg.notify_crash: # use sing.cfg not local cfg
+            email_me('crash', ' '.join(sys.argv))
+    def ctrlc():
         print(os.getcwd())
          
     with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=print_cwd, crash=print_cwd):
@@ -75,6 +84,8 @@ def hydra_main(cfg):
         else:
             mlb.die(f"Mode not recognized: {cfg.mode}")
         mlb.yellow("===END===")
+
+        mlb.mail.
 
 
 

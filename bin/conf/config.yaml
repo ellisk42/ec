@@ -13,6 +13,10 @@ device: cpu
 seed: 100 # null means random
 print: False # just print the cfg and exit
 kill_by: null # not used internally for anything, just by the `job` manager
+commit: null # optional current git commit
+
+notify_crash: null # null | email | text
+notify_done: null  # null | email | text
 
 debug:
   verbose: False

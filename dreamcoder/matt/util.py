@@ -19,6 +19,8 @@ def which(cfg):
     print(getcwd())
     regex = getcwd().parent.name + '%2F' + getcwd().name
     print(f'http://localhost:6696/#scalars&regexInput={regex}')
+    print(f'commit: {cfg.commit}')
+    print(f'argv: {cfg.argv}')
     print("curr time:",timestamp())
 
 def getcwd():

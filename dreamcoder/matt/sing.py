@@ -34,6 +34,7 @@ class Sing(Saveable):
           raise ValueError("can't do mode=test without a file to load from")
 
         self.cfg = cfg
+        self.argv = 
         from dreamcoder.matt.train import TrainState
         self.train_state = TrainState(cfg)
         self.cwd = getcwd()
@@ -103,9 +104,30 @@ class Sing(Saveable):
     )
     print("initialized writer for", self.name)
   def which(self):
-    return which(self.cfg)
+    which(self.cfg)
   def yaml(self):
     return yaml(self.cfg)
+  def tb_scalar(self, plot_name, val, j=None):
+    """
+    Best way to write a scalar to tensorboard.
+     * feed in `step=` to override it otherwise it'll use `sing.s.j`
+     * include a '/' in the plot_name like 'Validation/MyModel' to override
+      * the default behavior where it assumes you want 'Validation' to mean
+      * 'Validation/{cls_name(sing.model)}'
+    """
+
+    if '/' not in plot_name:
+      plot_name = f'{plot_name}/{cls_name(sing.model)}'
+
+    if j is None:
+      j = sing.s.j
+    
+    self.w.add_scalar(plot_name, val, j)
+    self.w.flush()
+    
+    
+
+
 
 class Stats:
   """
