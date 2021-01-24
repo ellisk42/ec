@@ -1,3 +1,4 @@
+from dreamcoder.em import Val
 from dreamcoder.matt.util import *
 unthread()
 try:
@@ -14,6 +15,7 @@ from mlb.mail import email_me,text_me
 import sys,os
 import numpy as np
 import torch
+import git
 
 
 # doesnt actually do anything i think
@@ -28,6 +30,11 @@ def hydra_main(cfg):
 
     with open_dict(cfg):
         cfg.argv = ' '.join(sys.argv)
+        repo = git.Repo(toplevel_path())
+        if repo.is_dirty() and not cfg.dirty:
+            raise ValueError("repo is dirty. please add/commit. Or run with `dirty=True`")
+        cfg.commit = repo.head.commit.hexsha
+        del repo
 
     def crash():
         print(os.getcwd())
