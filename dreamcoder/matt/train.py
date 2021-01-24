@@ -27,7 +27,7 @@ class FireEvery:
             if not sing.cfg.loop.round_j:
                 raise ValueError("j_multiplier is misaligned with a loop value. Quick fix with loop.round_j=True")
             # make j a multiple of j_multiplier. Round upwards.
-            self.j = sing.cfg.loop.j_multiplier * ((self.j // sing.cfg.j_multiplier) + 1)
+            self.j = sing.cfg.loop.j_multiplier * ((self.j // sing.cfg.loop.j_multiplier) + 1)
     def check(self):
         return self.j is not None and sing.train_state.j % self.j == 0
 
@@ -35,15 +35,16 @@ class TrainState:
     def __init__(s,cfg):
         s.j = 0
         s.best_valid_loss = np.inf
+        s.frontiers = []
 
-        s.print_every = FireEvery(cfg.print_every)
-        s.valid_every = FireEvery(cfg.valid_every)
-        s.search_valid_every = FireEvery(cfg.search_valid_every)
-        s.save_every = FireEvery(cfg.save_every)
+        s.print_every = FireEvery(cfg.loop.print_every)
+        s.valid_every = FireEvery(cfg.loop.valid_every)
+        s.search_valid_every = FireEvery(cfg.loop.search_valid_every)
+        s.save_every = FireEvery(cfg.loop.save_every)
 
         s.running_loss = RunningFloat()
 
-        if cfg.loop.j_multiplier > cfg.data.buf_size:
+        if cfg.loop.j_multiplier > cfg.loader.buf_size:
             raise ValueError
             
         assert not hasattr(s,'cfg'), "Dont store the cfg, please only access it thru sing.cfg as it might change"
@@ -80,7 +81,7 @@ def main():
 
     with torch.no_grad():
         sing.full_debug = True
-        sing.model.run_tests(s.valid_frontiers)
+        sing.model.run_tests(sing.taskloader.valid_tasks())
         sing.full_debug = False
 
     print(f"Resuming Training at step j={s.j}")
@@ -88,21 +89,21 @@ def main():
     for s.j in tqdm(range(
                           s.j, # start
                           ifnone(sing.cfg.loop.max_steps,int(1e10)), # stop
-                          sing.cfg.j_multiplier) # step
+                          sing.cfg.loop.j_multiplier) # step
                           ):
         t = Temps()
 
         # get another batch if needed
-        if len(s.frontiers) < s.j_multiplier:
+        if len(s.frontiers) < sing.cfg.loop.j_multiplier:
             mlb.red("reloading frontiers")
-            s.frontiers += sing.taskloader.getTasks()
+            s.frontiers += sing.taskloader.train_tasks()
             assert len(s.frontiers) > 0
 
         # pull out the frontiers to train on with this step
-        t.fs = [s.frontiers.pop(0) for _ in range(s.j_multiplier)]
+        t.fs = [s.frontiers.pop(0) for _ in range(sing.cfg.loop.j_multiplier)]
 
         # put back frontiers into cyclic buffer if data.freeze is true
-        if sing.cfg.data.train.freeze:
+        if sing.cfg.loader.freeze:
             s.frontiers.extend(t.fs) # put back at the end
         
         """ 
@@ -152,7 +153,7 @@ def main():
 
         # validation loss
         if s.valid_every.check():
-            t.valid_loss, t.to_print = sing.model.valid_step(s.valid_frontiers)
+            t.valid_loss, t.to_print = sing.model.valid_step(sing.taskloader.valid_tasks())
             sing.tb_scalar('ValidationLoss',t.valid_loss)
             blue(f"[{s.j}] {sing.cls_name} {t.valid_loss}")
             if t.to_print is not None: print(t.to_print)
@@ -166,7 +167,7 @@ def main():
 
         # search on validation set
         if s.search_valid_every.check():
-            t.model_result = sing.model.search(s.valid_frontiers,
+            t.model_result = sing.model.search(sing.taskloader.valid_tasks(),
                                               timeout=sing.cfg.loop.search_valid_timeout,
                                               verbose=True)
             sing.tb_scalar('ValidationAccuracy', t.model_result.accuracy())

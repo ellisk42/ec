@@ -1,56 +1,5 @@
-from dreamcoder.matt.syntax_robustfill import SyntaxCheckingRobustFill, robustfill_search
-from dreamcoder.matt.util import *
-from collections import defaultdict
 import pathlib
-import contextlib
-import multiprocessing as mp
-import shutil
-import sys,os
-import glob
-import signal
-
-import hydra
-from hydra import utils
-from omegaconf import DictConfig,OmegaConf,open_dict
-import omegaconf
-from datetime import datetime
-from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-import dreamcoder
-import dreamcoder.domains
-import dreamcoder.domains.list
-import dreamcoder.domains.list.makeDeepcoderData
-from dreamcoder.domains.list.makeDeepcoderData import *
-from datetime import datetime
-
-import argparse
-from dreamcoder.grammar import *
-from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-from dreamcoder.domains.list.listPrimitives import *
-from dreamcoder.program import Program
-from dreamcoder.valueHead import *
-from dreamcoder.zipper import *
-from dreamcoder.SMC import SearchResult
-
-from dreamcoder.domains.tower.towerPrimitives import *
-import itertools
-import torch
-import numpy as np
-import random
-
-from dreamcoder.domains.list.main import ListFeatureExtractor
-from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives,deepcoderPrimitivesPlusPlus
-from dreamcoder.valueHead import SimpleRNNValueHead, ListREPLValueHead, ValueHead, SampleDummyValueHead
-from dreamcoder.policyHead import DeepcoderListPolicyHead, RNNPolicyHead,BasePolicyHead,ListREPLPolicyHead, PolicyHead
-from dreamcoder.Astar import Astar
-from likelihoodModel import AllOrNothingLikelihoodModel
-from torch.utils.tensorboard import SummaryWriter
-import mlb
-import time
-import dreamcoder.matt.cmd as cmd
-import dreamcoder.matt.plot as plot
-import dreamcoder.matt.state as state
-import dreamcoder.matt.train as train
-from dreamcoder.matt.sing import sing
+from dreamcoder.matt.util import *
 
 def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
     """
@@ -131,7 +80,7 @@ def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
 class Tests:
     def __init__(self):
         self.tests = {}
-        self.tests_dir = pathlib.Path(utils.to_absolute_path('list_tests/'))
+        self.tests_dir = testgen_path()
     def test(self,fn):
         self.tests[fn.__name__] = fn
 tests = Tests()

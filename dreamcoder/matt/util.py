@@ -11,7 +11,6 @@ from torch.utils.tensorboard import SummaryWriter
 import contextlib
 from time import time
 from tqdm import tqdm
-from dreamcoder.matt.sing import sing
 
 
 ################
@@ -20,8 +19,10 @@ from dreamcoder.matt.sing import sing
 
 # overrides the global print
 def print(*args,**kwargs):
-    tqdm.write(*args,**kwargs)
+    s = ''.join(args)
+    tqdm.write(s,**kwargs)
 def print_if(s,cond):
+    from dreamcoder.matt.sing import sing
     if sing.cfg.printif[cond]:
         print(s)
 # redefined color prints to use the local print()
@@ -45,19 +46,17 @@ def cls_name(v):
     return v.__class__.__name__
 
 def which(cfg, no_yaml=False):
-    regex = getcwd().parent.name + '%2F' + getcwd().name
+    regex = cwd_path().parent.name + '%2F' + cwd_path().name
     return f'''
 {"" if no_yaml else yaml(cfg)}
-cwd: {getcwd()}
+cwd: {cwd_path()}
 tensorboard: http://localhost:6696/#scalars&regexInput={regex}
 commit: {cfg.commit}
 dirty: {cfg.dirty}
 argv: {cfg.argv}
+start time: {cfg.start_time}
 curr time: {timestamp()}
     '''.strip()
-
-def getcwd():
-    return Path(os.getcwd())
 
 def yaml(cfg):
     return OmegaConf.to_yaml(cfg)
@@ -69,57 +68,60 @@ def timestamp():
 # * PATHS * #
 #############
 
+"""
+Please read these points if you want to know how to make a certain path.
+- the reason all these path things are functions is because chdir can change them. Or at least all the cwd ones
+- everything (including cwd_path()) is absolute paths, see relative paths guide below if you want otherwise
+- relative paths guide:
+    if you want: /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/x.png -> x.png
+        * then do: p.relative_to(cwd_path())
+    if you want: /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/x.png -> 12-31-20/12-23-23/x.png
+        * then do: p.relative_to(outputs_path())
+- If you want .../DATE/TIME path just use cwd_path()
+    - if you want DATE/TIME without that relpath bit just do cwd_path().relative_to(outputs_path())
+
+"""
+
 def toplevel_path():
     """
-    /scratch/mlbowers/proj/example_project/
+    Same as the overall git repo path.
+    /scratch/mlbowers/proj/ec/
     """
     return Path(hydra.utils.to_absolute_path(''))
 
-def outputs_path(p):
+def outputs_path():
     """
-    Out: /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23
+    The path to the 'outputs' directory
+    Out: /scratch/mlbowers/proj/ec/outputs
     """
-    return toplevel_path() / 'outputs/'
+    return toplevel_path() / 'outputs'
+
+def testgen_path():
+    """
+    Where tests get read from and written to by mode=testgen
+    /scratch/mlbowers/proj/ec/testgen
+    """
+    return toplevel_path() / 'testgen'
+
+def cwd_path():
+    """
+    Out: /scratch/mlbowers/proj/ec/output/12-31-20/12-23-23
+    """
+    return Path(os.getcwd())
 
 def saves_path():
     """
+    the saves folder
     /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/saves
     """
-    return toplevel_path() / 'saves'
+    return cwd_path() / 'saves'
 
-def toplevel_path(p):
+def plots_path():
     """
-    In:  plots/x.png
-    Out: /scratch/mlbowers/proj/example_project/plots/x.png
+    the plots folder
+    /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/plots
     """
-    return Path(hydra.utils.to_absolute_path(p))
-
-def outputs_path(p):
-    """
-    In:  plots/x.png
-    Out: /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/plots/x.png
-    """
-    return toplevel_path('outputs') / p
-
-def outputs_relpath(p):
-    """
-    In:  plots/x.png
-    Out: 12-31-20/12-23-23/plots/x.png
-    """
-    return outputs_path(p).relative_to(outputs_path(''))
-
-def get_datetime_path(p):
-    """
-    Path -> Path
-    In:  .../2020-09-14/23-31-49/t3_reverse.no_ablations_first
-    Out: .../2020-09-14/23-31-49
-    Harmless on shorter paths
-    """
-    idx = p.parts.index('outputs')+3 # points one beyond TIME dir
-    return pathlib.Path(*p.parts[:idx]) # only .../DATE/TIME dir
-
-def get_datetime_paths(paths):
-    return [get_datetime_path(p) for p in paths]
+    return cwd_path() / 'plots'
 
 def outputs_regex(*rs):
     """
@@ -133,7 +135,7 @@ def outputs_regex(*rs):
             continue # use "*" instead for this case please. I want to filter out '' bc its easy to accidentally include it in a generated list of regexes
         try:
             r = f'**/*{r}'
-            res.extend(list(outputs_path('').glob(r)))
+            res.extend(list(outputs_path().glob(r)))
         except ValueError as e:
             print(e)
             return []

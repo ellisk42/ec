@@ -5,6 +5,7 @@ from dreamcoder.matt.sing import sing
 
 class Taskloader:
   def __init__(self, train=False, test=False, valid=False) -> None:
+    assert train or test or valid
     self.train = train
     self.test = test
     self.valid = valid
@@ -57,15 +58,18 @@ class DeepcoderTaskloader(Taskloader):
     self.trainloader = self.valid_frontiers = self.testloader = None
 
     if train:
-      self.trainloader = DeepcoderTaskloaderInner(mode='train')
+      self.trainloader = _inner = DeepcoderTaskloaderInner(mode='train')
     if valid:
       self._valid_tasks = DeepcoderTaskloaderInner(mode='test').getTasks(sing.cfg.loader.max_valid)
     if test:
-      self.testloader = DeepcoderTaskloaderInner(mode='test')
+      self.testloader = _inner = DeepcoderTaskloaderInner(mode='test')
 
-    prims = deepcoderPrimitivesPlusPlus() if sing.cfg.data.expressive_lambdas else deepcoderPrimitives()
-    self.g_lambdas = self.inner.g_lambdas
-    self.g = Grammar.uniform(prims, g_lambdas = taskloader.g_lambdas)
+    _prims = deepcoderPrimitivesPlusPlus() if sing.cfg.data.expressive_lambdas else deepcoderPrimitives()
+    self.g_lambdas = _inner.g_lambdas
+    self.g = Grammar.uniform(_prims, g_lambdas = self.g_lambdas)
+
+    self.L_big = _inner.L_big
+
     sing.num_exs = sing.cfg.data.N
 
     self._check_this_obj()

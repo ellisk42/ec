@@ -165,8 +165,7 @@ class SMC(Solver):
                                 #mlb.purple(f"[{totalNumberOfPrograms}] node: {p.trajectory}")
                                 #mlb.purple(f"T{t}d{d}s{s}")
                             newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
-                                                    request, holeZippers=p.zippers,
-                                                    maximumDepth=self.max_depth)
+                                                    request, p.zippers, self.max_depth)
                             totalNumberOfPrograms += 1
                             #print(f"{p.frequency=}")
                             #print(f"{len(population)=}")

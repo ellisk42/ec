@@ -7,7 +7,6 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 from dreamcoder.matt import plot,test,train,fix,profile,command
-from dreamcoder.matt.state import TrainState
 from dreamcoder.matt.sing import sing
 
 from mlb.mail import email_me,text_me
@@ -30,6 +29,7 @@ def hydra_main(cfg):
     print()
 
     with open_dict(cfg):
+        cfg.start_time = str(timestamp())
         cfg.argv = ' '.join(sys.argv)
         repo = git.Repo(toplevel_path())
         if repo.is_dirty() and not cfg.dirty:
@@ -42,6 +42,13 @@ def hydra_main(cfg):
         if hasattr(sing,'cfg') and sing.cfg.notify_crash: # use sing.cfg not local cfg
             exc = ''.join(traceback.format_exception(e.__class__, e, e.__traceback__))
             email_me('crash', f'{sing.which()}\n\n\n{exc}')
+            if sing.cfg.notify_crash == 'email':
+                email_me('[run done]', f'{sing.which()}')
+            elif sing.cfg.notify_crash == 'text':
+                text_me( f'[crash]\n{sing.which(no_yaml=True)}')
+                email_me('[crash]', f'{sing.which()}\n\n\n{exc}')
+
+
     def ctrlc():
         print(sing.which(no_yaml=True))
          
@@ -94,12 +101,14 @@ def hydra_main(cfg):
             mlb.die(f"Mode not recognized: {cfg.mode}")
         mlb.yellow("===END===")
 
-        mlb.mail.
+        if sing.cfg.notify_done == 'email':
+            email_me('[run done]', f'{sing.which()}')
+        elif sing.cfg.notify_done == 'text':
+            text_me( f'[run done]\n{sing.which(no_yaml=True)}')
+            email_me('[run done]', f'{sing.which()}')
 
 
-
-
-
+        raise NotImplementedError # do something with the rest of this
 
         # PLOT
         if cfg.mode == 'plot':

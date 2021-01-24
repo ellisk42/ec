@@ -142,76 +142,33 @@ class ValueHead(nn.Module):
 
 class UniformValueHead(ValueHead):
     def __init__(self):
-        super(ValueHead, self).__init__()
-        self.cuda = torch.cuda.is_available()
+        super().__init__()
     def computeValue(self, sketch, task):
         return 0.
     def valueLossFromFrontier(self, frontier, g):
-        return torch.tensor([0.]).to(sing.device)
+        return torch.tensor([0.], device=sing.device)
 
 class RNNValueHead(ValueHead):
 
-    def __init__(self, g, cfg):
+    def __init__(self):
         super().__init__()
-        cuda = cfg.cuda
-        H = cfg.model.H
-        encodeTargetHole = cfg.model.encodeTargetHole
-        self.validator_vhead = InvalidIntermediatesValueHead(cfg)
-            
-        #specEncoder can be None, meaning you dont use the spec at all to encode objects
-        self.use_cuda = cuda
+        sing.model.em.include_encoder()
+        sing.model.em.include_program_rnn()
+        self.H = H = sing.cfg.model.H
 
-        extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(15)] 
 
-        if encodeTargetHole: extras.append("<TargetHOLE>")
-
-        self.lexicon = [str(p) for p in g.primitives] + extras
-        self.embedding = nn.Embedding(len(self.lexicon), H)
-
-        self.wordToIndex = {w: j for j,w in enumerate(self.lexicon) }
-
-        self.model = nn.GRU(H,H,1)
-        self.H = H
-        self.outputDimensionality = H
-
-        self._distance = nn.Sequential(
+        self.output = nn.Sequential(
                 nn.Linear(H*2, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
 
 
-    def _encodeSketches(self, sketches):
-        #don't use spec, just there for the API
-        assert type(sketches) == list
-        #idk if obj is a list of objs... presuably it ususaly is 
-        tokens_list = [ stringify(str(sketch)) for sketch in sketches]
-        symbolSequence_list = [[self.wordToIndex[t] for t in tokens] for tokens in tokens_list]
-        inputSequences = [torch.tensor(ss) for ss in symbolSequence_list] #this is impossible
-        device = self.embedding.weight.device # may be cpu!
-        inputSequences = [s.to(device) for s in inputSequences]
-        inputSequences = [self.embedding(ss) for ss in inputSequences]
-        # import pdb; pdb.set_trace()
-        idxs, inputSequence = zip(*sorted(enumerate(inputSequences), key=lambda x: -len(x[1])  ) )
-        try:
-            packed_inputSequence = torch.nn.utils.rnn.pack_sequence(inputSequence)
-        except ValueError:
-            print("padding issues, not in correct order")
-            import pdb; pdb.set_trace()
-
-        _,h = self.model(packed_inputSequence) #dims
-        unperm_idx, _ = zip(*sorted(enumerate(idxs), key = lambda x: x[1]))
-        h = h[:, unperm_idx, :]
-        h = h.squeeze(0)
-        #o = o.squeeze(1)
-        objectEncodings = h
-        return objectEncodings
-
     def computeValue(self, sketch, task):
         taskFeatures = self.featureExtractor.featuresOfTask(task).unsqueeze(0) #memoize this plz
-        sketchEncoding = self._encodeSketches([sketch])
+        sketchEncoding = sing.em.program_rnn.encode_sketches([sketch])
         
-        return self._distance(torch.cat([sketchEncoding, taskFeatures], dim=1)).squeeze(1).data.item()
+        return self.output(torch.cat([sketchEncoding, taskFeatures], dim=1)).squeeze(1).data.item()
 
     def valueLossFromFrontier(self, frontier, g):
         """
@@ -685,20 +642,17 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 
 
 class InvalidIntermediatesValueHead(ValueHead):
-    def __init__(self, cfg):
+    def __init__(self):
         super().__init__()
-        self.ret = torch.tensor([0.]).to(cfg.device)
-        self.cfg = cfg
     def valueLossFromFrontier(self, f, g):
-        return self.ret
+        return torch.tensor([0.], device=sing.device)
     def computeValue(self, sketch, task):
         try:
-            concrete_rep(sketch,task,None,False,self.cfg.data.test.V)
-            #concrete_rep(sketch,task,None,False)
+            raise NotImplementedError
+            # concrete_rep(sketch,task,None,False,self.cfg.data.test.V)
         except InvalidSketchError as e:
             print(f"caught an invalid sketch {e}")
             return 100000000000
-            #return 0
         return 0
 
 
@@ -809,52 +763,19 @@ class LambdaCtx:
         return self._holes[tp]
 class ListREPLValueHead(ValueHead):
 
-    def __init__(self, g, cfg):
+    def __init__(self):
+        sing.model.em.include_encoder()
+        sing.model.em.include_nms()
         super().__init__()
-        H = cfg.model.H
-        ordering = cfg.model.ordering
-        allow_concrete_eval = cfg.model.allow_concrete_eval
-
-        self.cfg = cfg
-        self.ordering = ordering
-        self.allow_concrete_eval = allow_concrete_eval
-        self.H = H
-        self.validator_vhead = InvalidIntermediatesValueHead(cfg)
-        #self.outputDimensionality = H
-
-        # populate fnModules
-        # self.fnModules = nn.ModuleDict()
-        # for p in g.primitives:
-        #     assert p.isPrimitive
-        #     argc = len(p.tp.functionArguments())
-        #     self.fnModules[p.name] = NM(argc, H)
-
-        # populate holeModules
-        # self.holeModules = nn.ModuleDict()
-        # for tp in [tlist(tint), tint]: # these ones can be functions of the input (e.g. tint as a result of Access())
-        #     self.holeModules[tp.show(True)] = NM(1, H)
-        # for tp in [int_to_int, int_to_bool, int_to_int_to_int]: # these holes are always lambdas and never functions of the argument
-        #     self.holeModules[tp.show(True)] = NM(0, H)
-
+        self.ordering = sing.cfg.model.ordering
+        self.H = H = sing.cfg.model.H
         self.compareModule = NM(2, H)
-        # self.indexModule = NM(0, H)
-        # nargs = 1 if self.cfg.model.ctxful_lambdas else 0
-        # self.lambdaIndexModules = nn.ModuleList([NM(nargs,H) for _ in range(2)])
-
-        # self.lambdaHoleModules = nn.ModuleDict()
-        # for tp in [tint,tbool]:
-        #     self.lambdaHoleModules[tp.show(True)] = NM(nargs, H) # TODO <- 1
-
-
-
-        self._distance = nn.Sequential(
+        self.output = nn.Sequential(
                 nn.Linear(H*2, H),
                 nn.ReLU(),
                 nn.Linear(H, 1),
                 nn.Softplus())
 
-        self.concrete_count = 0 # CAREFUL dont make this a task->int dict or itll leak and make the save files gigabytes large
-        self._curr_task_concrete_count = None
 
     def old_rep(self,sk,task,ctxs=None, in_lambda=False, lambda_ctx=None):
         """
@@ -1001,60 +922,10 @@ class ListREPLValueHead(ValueHead):
         return self.fnModules[fn.name](*reps)
 
     def computeValue(self, sketch, task):
-        compared = self._compare([sketch], task, reduce='max')
-        distance = self._distance(compared).squeeze(1)
-        return distance
+        compared = sing.model.em.sk_task_pnode_compare([sketch], task, reduce='max')
+        value = self.output(compared).squeeze(1)
+        return value
     
-    def _compare(self,sks, task, reduce='max'):
-        """
-        encodes tasks and sketches, cats them, runs them through compareModule
-        applies `reduce` over the examples dimension (None means no reduction)
-        """
-        assert isinstance(sks,(list,tuple))
-
-        output_feats = PTask(task).output_features()
-        output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
-        if self.cfg.debug.zero_output_feats:
-            output_feats = torch.zeros_like(output_feats)
-
-        self.concrete_count = 0
-        self._curr_task_concrete_count = task
-
-        output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]
-        sk_reps = torch.stack([pnode.upward_only_embedding().abstract for pnode in output_pnodes]) # [num_sketches,num_exs,H]
-        #sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
-
-        total_size = sum([sk.size() for sk in sks])
-        concrete_ratio = self.concrete_count/total_size
-        self.concrete_count = 0
-        self._curr_task_concrete_count = None
-        #print(f"concrete ratio: {concrete_ratio:.3f}")
-        #for sk in sks:
-        #    print(f'\t{sk}')
-
-        if self.cfg.debug.zero_sk:
-            sk_reps = torch.zeros_like(sk_reps)
-
-        compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
-
-        compared = self.compareModule(compare_input) # [num_sketches,num_exs,H]
-
-        if self.cfg.debug.channel and not self.cfg.debug.zero_output_feats:
-            # check for mixing between sketches
-            x = torch.autograd.grad(
-                outputs=compared[0].sum(),
-                inputs=[output_feats])[0]
-            assert x[0].sum() != 0
-            assert x[1:].sum() == 0
-            print(x)
-
-        if reduce == 'max':
-            compared = compared.max(1).values
-        elif reduce == 'mean':
-            compared = compared.mean(1).values
-        else:
-            assert reduce is None
-        return compared
 
     def valueLossFromFrontier(self, frontier, g):
         """
@@ -1080,7 +951,7 @@ class ListREPLValueHead(ValueHead):
         nNeg = len(negTrace)
         nTot = nPos + nNeg
 
-        compared = self._compare(posTrace+negTrace, frontier.task, reduce='max')
+        compared = sing.em.model.compare(posTrace+negTrace, frontier.task, reduce='max')
         distance = self._distance(compared).squeeze(1)
 
         targets = torch.tensor([1.0]*nPos + [0.0]*nNeg)

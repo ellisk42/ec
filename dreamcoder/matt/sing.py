@@ -10,7 +10,6 @@ import torch.nn as nn
 import torch
 import functools
 from torch.utils.tensorboard import SummaryWriter
-from dreamcoder import model,loader
 import shutil
 
 class Sing(Saveable):
@@ -35,9 +34,16 @@ class Sing(Saveable):
           raise ValueError("can't do mode=test without a file to load from")
 
         self.cfg = cfg
+
+        """
+        - sing.py gets used by everyone, so for simplicity we make sing do the imports within its own functions
+        - for the record, we consider util.py to be used even more so it has to import sing within its own functions
+        """
         from dreamcoder.matt.train import TrainState
+        from dreamcoder import model,loader
+
         self.train_state = TrainState(cfg)
-        self.cwd = getcwd()
+        self.cwd = cwd_path()
         self.name = f'{cfg.job_name}.{cfg.run_name}'
         self.device = torch.device(cfg.device)
         self.stats = Stats()

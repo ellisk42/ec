@@ -178,14 +178,13 @@ class Lexicon(nn.Embedding):
         idxs_list = idxs_of_toks(tok_list)
         idxs
     """
-    def __init__(self, lexicon, cfg, *args, **kwargs):
-        cuda = cfg.cuda
-        H = cfg.model.H
+    def __init__(self, lexicon, *args, **kwargs):
+        H = sing.cfg.model.H
         self.lexicon = lexicon.union({'<UNK>','<PAD>'})
         self.lexicon = list(self.lexicon) # to make the ordering fixed
-        self.idx_of_tok = {tok:torch.tensor(idx,dtype=torch.long).to(cfg.device) for idx,tok in enumerate(self.lexicon)}
+        self.idx_of_tok = {tok:torch.tensor(idx,dtype=torch.long).to(sing.device) for idx,tok in enumerate(self.lexicon)}
         self.H = H
-        self.use_cuda = cuda
+        self.use_cuda = (sing.cfg.device != 'cpu')
 
         # shortcuts
         self.pad = self.idx_of_tok['<PAD>']
@@ -254,17 +253,17 @@ class Lexicon(nn.Embedding):
         # return embeddings
 
 
+from dreamcoder.matt.sing import sing
 
 class ListFeatureExtractor(RecurrentFeatureExtractor):
     special = None
-    def __init__(self, maximumLength, cfg):
-        c = cfg.model.extractor
+    def __init__(self, maximumLength):
+        c = sing.cfg.model.em
         modular = c.modular
         bidir_ctx = c.bidir_ctx
         bidir_int = c.bidir_int
         digitwise = c.digitwise
-        cuda = cfg.cuda
-        H = cfg.model.H
+        H = sing.cfg.model.H
 
         self.lexicon = {"LIST_START", "LIST_END", "INT_START", "INT_END", 'CTX_START', 'CTX_END', "?", "<True>", "<False>"}
         # some more needed for robustfill:
@@ -290,7 +289,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         super().__init__(
             lexicon=list(self.lexicon),
             tasks=[],
-            cuda=cuda,
+            cuda=(sing.cfg.device != 'cpu'),
             H=H,
             bidirectional=True)
 
@@ -302,7 +301,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
             self.ctx_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_ctx)
         if self.digitwise:
             self.int_encoder = nn.GRU(input_size=H, hidden_size=H, num_layers=1, bidirectional=bidir_int)
-            self.lexicon_embedder = Lexicon(self.lexicon, cfg=cfg)
+            self.lexicon_embedder = Lexicon(self.lexicon)
     @property # must be a property so that it gets updated when we get map_locationed somewhere else
     def device(self):
         return self.list_encoder.all_weights[0][0].device

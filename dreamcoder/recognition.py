@@ -19,7 +19,7 @@ import numpy as np
 import json
 
 from dreamcoder.domains.tower.motifs import * #ugh, hack
-from dreamcoder.policyHead import BasePolicyHead
+from dreamcoder.policyHead import PolicyHead
 
 
 def variable(x, volatile=False, cuda=False):
@@ -1114,7 +1114,7 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                if self.useValue and not isinstance(self.policyHead, BasePolicyHead):
+                if self.useValue and not isinstance(self.policyHead, PolicyHead):
                     loss, classificationLoss = torch.tensor(0), torch.tensor(0)
                 else:
                     loss, classificationLoss = \
@@ -1153,7 +1153,7 @@ class RecognitionModel(nn.Module):
                 else:
                     #ttt = time.time()
                     try:
-                        if self.useValue and not isinstance(self.policyHead, BasePolicyHead):
+                        if self.useValue and not isinstance(self.policyHead, PolicyHead):
                             t = time.time()
                             (valueHeadLoss + policyHeadLoss).backward()
                             backTimes.append(time.time() - t)

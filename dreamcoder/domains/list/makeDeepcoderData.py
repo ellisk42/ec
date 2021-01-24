@@ -602,13 +602,13 @@ class FakeFrontier:
 
 from dreamcoder.matt.sing import sing
 
+def dcfg():
+    return sing.cfg.data
+
 class DeepcoderTaskloaderInner:
     def __init__(self,mode):
-        cfg = sing.cfg
-
+        cfg = dcfg()
         self.mode = mode
-        self.parent_cfg = cfg # in case it's useful
-        cfg = self.cfg # bc we're more likely to use it in the rest of __init__
 
         if cfg.L is None:
             assert cfg.L_min is not None and cfg.L_max is not None
@@ -620,21 +620,21 @@ class DeepcoderTaskloaderInner:
             self.L_big = self.L
         
         self.premade_templates = None
-        if self.cfg.premade_templates is not None:
-            self.premade_templates = torch.load(utils.to_absolute_path('list_tests/'+self.cfg.premade_templates))
+        if dcfg().premade_templates is not None:
+            self.premade_templates = torch.load(utils.to_absolute_path('list_tests/'+dcfg().premade_templates))
             #self.premade_templates = itertools.cycle(self.premade_templates)
             self.premade_i = 0
             mlb.purple(f'using templates for {self.mode}')
 
 
-        self.threaded = cfg.threaded
+        self.threaded = sing.cfg.loader.threaded
         assert not self.threaded, "We're not allowing threading for now"
         
-        if cfg.t4:
-            self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt')
-        else:
-            self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
-        self.allowed_requests = [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)] if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
+        # if cfg.t4:
+        #     self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T4_A2_V512_L10_train_perm.txt')
+        # else:
+        self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
+        self.allowed_requests = [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)] if dcfg().allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
 
         self.buf = []
         self.templates_seen = 0 # number of tasks seen (pre mutation)
@@ -645,22 +645,22 @@ class DeepcoderTaskloaderInner:
             self.file_start = self.offset_in_file
         
         # make a lambda grammar to sample lambdas from
-        self.g_lambdas = Grammar.uniform(get_lambdas(), max_hole_depth= self.cfg.lambda_depth)
+        self.g_lambdas = Grammar.uniform(get_lambdas(), max_hole_depth= cfg.lambda_depth)
 
     def reloadBuffer(self):
         """
         Refills the buffer.
-            If `self.cfg.repeat=True` -> will loop back to start of file at EOF (and will keep filling buffer). Otherwise EOFError will be raised.
-            `self.cfg.num_mutated_tasks` gives the number of mutations of each template that will be given in a row.
+            If `cfg.repeat=True` -> will loop back to start of file at EOF (and will keep filling buffer). Otherwise EOFError will be raised.
+            `dcfg().num_mutated_tasks` gives the number of mutations of each template that will be given in a row.
         How much the buffer will be filled:
-            It'll be filled up to `self.cfg.buf_size`
+            It'll be filled up to `sing.cfg.loader.buf_size`
         """
         with open(self.file,'r') as f:
             f.seek(self.offset_in_file) # pick up where we left off
             while True: # loops until `queue.Full` gets raised by the .put() line (or buf.full() happens)
                 try:
-                    if len(self.buf) >= self.cfg.buf_size:
-                        assert len(self.buf) == self.cfg.buf_size, "bug in code"
+                    if len(self.buf) >= sing.cfg.loader.buf_size:
+                        assert len(self.buf) == sing.cfg.loader.buf_size, "bug in code"
                         return
                     
                     # note we can't use next(f) as this disables f.tell(), so we do f.readline()
@@ -668,7 +668,7 @@ class DeepcoderTaskloaderInner:
 
                     # EOF
                     if line == '': # readline never errors out, it returns empty string on EOF (as opposed to when it encounters a normal empty line in which case in returns '\n')
-                        if self.cfg.repeat:
+                        if sing.cfg.loader.repeat:
                             f.seek(self.file_start) # repeat
                             continue
                         else:
@@ -676,8 +676,8 @@ class DeepcoderTaskloaderInner:
                     line = line.rstrip()
 
                     # get program and task
-                    # purposefully self.L not self.cfg.L
-                    program,tasks = task_of_line(line,N=self.cfg.N,L=self.L,V=self.cfg.V, num_tasks=self.cfg.num_mutated_tasks)
+                    # purposefully self.L not dcfg().L
+                    program,tasks = task_of_line(line,N=dcfg().N,L=self.L,V=dcfg().V, num_tasks=dcfg().num_mutated_tasks)
                     if program is None:
                         continue
                     if hasattr(self,'premade_templates') and self.premade_templates is not None:
@@ -692,14 +692,14 @@ class DeepcoderTaskloaderInner:
                     if all([ex[0] == task.examples[0][0] for ex in task.examples]):
                         continue # for some reason this happens sometimes (all inputs are the same)
                     try:
-                        check_in_range(task.examples,self.cfg.V)
+                        check_in_range(task.examples,dcfg().V)
                     except InvalidSketchError:
                         continue
 
                     self.templates_seen += 1 # number of templates seen
 
                     # deepcoder++ conversion
-                    if self.cfg.expressive_lambdas:
+                    if dcfg().expressive_lambdas:
                         frontiers = self.convert_to_deepcoder_plus_plus(ff,tasks)
                         if frontiers is None:
                             continue
@@ -717,13 +717,13 @@ class DeepcoderTaskloaderInner:
                             self.premade_i += 1
                             if self.premade_i >= len(self.premade_templates):
                                 self.premade_i = 0
-                        if len(self.buf) == self.cfg.buf_size:
+                        if len(self.buf) == sing.cfg.loader.buf_size:
                             return
                         #print(f"buf {self.mode}:",self.buf.qsize())
                     
                     # if we've seen the first `cfg.num_templates` programs in the file (pre-mutation)
                     # then loop back to the start of the file
-                    if self.cfg.num_templates is not None and self.templates_seen == self.cfg.num_templates:
+                    if sing.cfg.loader.max_tasks is not None and self.templates_seen == dcfg().num_templates:
                         f.seek(self.file_start)
                 finally:
                     self.offset_in_file = f.tell()
@@ -736,11 +736,11 @@ class DeepcoderTaskloaderInner:
 
     def getTasks(self, n=None):
         """
-        if n is None: reload buf and return `self.cfg.buf_size` tasks
+        if n is None: reload buf and return `sing.cfg.loader.buf_size` tasks
         else: return n tasks (even if n>buf_size)
         Note that it may return fewer tasks if repeat=False and we hit EOF
         """
-        # If n is none, return `self.cfg.buf_size` items
+        # If n is none, return `sing.cfg.loader.buf_size` items
         if n is None:
             #with cm:
             with contextlib.suppress(EOFError):
@@ -792,7 +792,7 @@ class DeepcoderTaskloaderInner:
         res = []
 
         num_generated = 0
-        assert self.cfg.num_mutated_tasks == 1, "just bc the failure stuff i guess"
+        assert dcfg().num_mutated_tasks == 1, "just bc the failure stuff i guess"
         failures = -1
         while True:
             failures += 1
@@ -820,7 +820,7 @@ class DeepcoderTaskloaderInner:
                 #outputs = valueHead.ListREPLValueHead.rep(fake_vhead, sampled, task, None)
                 stripped,num_lambdas = strip_lambdas(sampled)
                 assert len(ctxs[0]) == num_lambdas, "Mismatch between num args passed in and num lambda abstractions"
-                outputs = evaluate_ctxs(stripped,ctxs,self.cfg.V)
+                outputs = evaluate_ctxs(stripped,ctxs,dcfg().V)
             except InvalidSketchError:
                 #print(f"rejecting {sampled} bc out of range values or zero division")
                 continue # e.g. division by zero during concrete eval
@@ -841,14 +841,14 @@ class DeepcoderTaskloaderInner:
             new_task = Task(str(sampled), task.request, new_examples)
             res.append(FakeFrontier(sampled,new_task,scaffold=get_scaffold(program_plus_plus)))
             #mlb.green(f"accepting {sampled}")
-            if self.cfg.print_data:
+            if dcfg().print_data:
                 print(f"accepting {sampled}")
                 for ex in new_task.examples:
                     print(f"\t{ex[0][0]} -> {ex[1]}")
             num_generated += 1
-            if num_generated >= self.cfg.num_mutated_tasks:
+            if num_generated >= dcfg().num_mutated_tasks:
                 break
-        assert len(res) == self.cfg.num_mutated_tasks
+        assert len(res) == dcfg().num_mutated_tasks
         return res
 
 

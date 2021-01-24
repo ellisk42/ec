@@ -18,11 +18,10 @@ class MBAS(nn.Module):
     sing.stats.fn_called_concretely = 0
     sing.stats.fn_called_abstractly = 0
 
-    self.em = ExecutionModel()
 
     self.vhead = {
       'repl': valueHead.ListREPLValueHead,
-      'rnn': valueHead.SimpleRNNValueHead,
+      'rnn': valueHead.RNNValueHead,
       'check_invalid': valueHead.InvalidIntermediatesValueHead,
       'uniform': valueHead.UniformValueHead,
     }[sing.cfg.model.vhead]()
@@ -33,6 +32,8 @@ class MBAS(nn.Module):
       'uniform': policyHead.UniformPolicyHead,
     }[sing.cfg.model.phead]()
 
+    self.em = ExecutionModel()
+
     self.running_vloss = RunningFloat()
     self.running_ploss = RunningFloat()
 
@@ -40,8 +41,8 @@ class MBAS(nn.Module):
 
   def run_tests(self,fs):
     # fs are the validation frontiers for the record
-    self.em.extractor.run_tests()
-    raise NotImplementedError # run some more tests!
+    self.em.encoder.run_tests()
+    # TODO run more tests here!
 
   def train_step(self,fs):
     assert len(fs) == 1
@@ -49,8 +50,8 @@ class MBAS(nn.Module):
     self.train()
     self.zero_grad()
 
-    vloss = self.vhead.valueLossFromFrontier(f, self.g)
-    ploss = self.phead.policyLossFromFrontier(f, self.g)
+    vloss = self.vhead.valueLossFromFrontier(f, sing.g)
+    ploss = self.phead.policyLossFromFrontier(f, sing.g)
 
     self.running_vloss.add(vloss)
     self.running_ploss.add(ploss)
@@ -80,8 +81,8 @@ class MBAS(nn.Module):
       running_vloss = RunningFloat()
       running_ploss = RunningFloat()
       for f in fs:
-        vloss = self.vhead.valueLossFromFrontier(f, self.g)
-        ploss = self.phead.policyLossFromFrontier(f, self.g)
+        vloss = self.vhead.valueLossFromFrontier(f, sing.g)
+        ploss = self.phead.policyLossFromFrontier(f, sing.g)
         running_vloss.add(vloss)
         running_ploss.add(ploss)
         running_loss.add(vloss+ploss)
@@ -108,7 +109,7 @@ class MBAS(nn.Module):
     solver = {
       'astar': Astar,
       'smc': SMC,
-    }[self.cfg.solver.type](self.phead, self.vhead, sing.cfg.solver)
+    }[self.cfg.solver.type](self.phead, self.vhead, sing.cfg.solver.type)
 
     starting_nodes = None # related to cfg.test.scaffold
 
@@ -118,7 +119,7 @@ class MBAS(nn.Module):
     with torch.no_grad():
       for i,f in enumerate(fs):
         fs, times, num_progs, solns = solver.infer(
-          self.g,
+          sing.g,
           [f],
           likelihood_model,
           timeout=timeout,
@@ -147,3 +148,7 @@ class MBAS(nn.Module):
     model_result = plot.ModelResult(prefix=prefix,name=name, cfg=astar.owner.policyHead.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout)
 
     
+class Deepcoder(nn.Module):
+  pass # todo
+class Robustfill(nn.Module):
+  pass # todo

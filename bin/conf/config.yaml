@@ -1,9 +1,11 @@
 # @package _global_
 defaults:
-  - data: curr
+  - data: deepcoder
+  - loader: curr
   - loop: curr
   - optim: curr
   - model: mbas
+  - solver: astar # not used by model=rb
 
 job_name: anon_job # used to be called `prefix`
 run_name: anon_run # used to be called `name`

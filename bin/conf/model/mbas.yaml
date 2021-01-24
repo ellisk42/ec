@@ -5,7 +5,6 @@ ordering: last
 H: 64
 vhead: check_invalid # repl | rnn | check_invalid | uniform
 phead: repl # repl | rnn | uniform
-solver: astar # astar | smc
 em:
   modular: True
   digitwise: True
@@ -14,3 +13,7 @@ em:
   ctxful_lambdas: False
   encode_index_as: constant # inputs | constant
   allow_concrete_eval: True
+
+
+
+

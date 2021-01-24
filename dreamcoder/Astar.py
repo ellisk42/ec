@@ -61,9 +61,7 @@ class Astar(Solver):
             raise ValueError
         for zipper in zippers:
             try:
-                for stepCost, newZippers, newSketch in self.phead.enumSingleStep(task, g, sketch, request, 
-                                                                    holeZipper=zipper,
-                                                                    maximumDepth=self.max_depth):
+                for stepCost, newZippers, newSketch in self.phead.enumSingleStep(task, g, sketch, request, zipper, self.max_depth):
                     yield policyCost + stepCost, newZippers, newSketch
             except AssertionError:
                 raise

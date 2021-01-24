@@ -57,7 +57,7 @@ from torch import nn
 
 import mlb
 from dreamcoder.zipper import sampleSingleStep, enumSingleStep
-from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead, ListREPLValueHead
+from dreamcoder.valueHead import RNNValueHead, binary_cross_entropy, TowerREPLValueHead, ListREPLValueHead
 from dreamcoder.program import Index, Program
 from dreamcoder.zipper import *
 from dreamcoder.utilities import count_parameters
@@ -144,7 +144,7 @@ class PolicyHead(nn.Module):
                                                         onlyPos=True, returnNextNode=True,
                                                         ordering=self.ordering)
         for zipper in holesToExpand:
-            assert self.cfg.data.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
+            assert sing.cfg.solver.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
         mlb.log('pos traces:')
         #print("traces:")
         for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
@@ -230,27 +230,16 @@ class PolicyHead(nn.Module):
     def device(self):
         raise NotImplementedError
 class UniformPolicyHead(PolicyHead):
-    #this is the single step type
-    def __init__(self, cfg):
-        super(BasePolicyHead, self).__init__() #should have featureExtractor?
-        self.use_cuda = torch.cuda.is_available()
-        self.cfg = cfg
-        self.ordering = cfg.model.ordering
+    def __init__(self):
+        super().__init__()
 
-    def sampleSingleStep(self, task, g, sk,
-                        request, holeZippers=None,
-                        maximumDepth=4):
+    def sampleSingleStep(self, task, g, sk, request, holeZippers, maximumDepth):
         return sampleSingleStep(g, sk, request, holeZippers=holeZippers, maximumDepth=maximumDepth)
 
     def policyLossFromFrontier(self, frontier, g):
-        if self.use_cuda:
-            return torch.tensor([0.]).cuda()
-        else: 
-            return torch.tensor([0.])
+        return torch.tensor([0.],device=sing.device)
 
-    def enumSingleStep(self, task, g, sk, request, 
-                        holeZipper=None,
-                        maximumDepth=4):
+    def enumSingleStep(self, task, g, sk, request, holeZipper, maximumDepth):
         try:
             yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
         except NoCandidates:
@@ -301,25 +290,21 @@ class DeepcoderListPolicyHead(PolicyHead):
 
 
 class RNNPolicyHead(PolicyHead):
-    def __init__(self, g, cfg, maxVar=15):
+    def __init__(self):
         super().__init__() #should have featureExtractor?
 
-        cuda = cfg.cuda
-        H = cfg.model.H
-        encodeTargetHole = cfg.model.encodeTargetHole
-        ordering = cfg.model.ordering
+        sing.model.em.include_encoder()
+        sing.model.em.include_program_rnn()
 
-        self.cfg = cfg
-        self.use_cuda = cuda
-        self.H = H
-        self.vhead = SimpleRNNValueHead(g=g, cfg=cfg) #hack
-        self.encodeTargetHole = encodeTargetHole
-        self.ordering = ordering
+        maxVar = 15
+
+        self.H = H = sing.cfg.model.H
+        self.ordering = sing.cfg.model.ordering
 
         self.indexToProduction = {}
         self.productionToIndex = {}
         i = 0
-        for _, _, expr in g.productions:
+        for _, _, expr in sing.g.productions:
             self.indexToProduction[i] = expr
             self.productionToIndex[expr] = i
             i += 1
@@ -340,26 +325,18 @@ class RNNPolicyHead(PolicyHead):
 
         self.lossFn = nn.NLLLoss(reduction='sum')
 
-
         print("num of params in rnn policy model", count_parameters(self))
-    @property
-    def device(self):
-        return self.output[0].weight.device
 
-    def _computeDist(self, sketches, zippers, task, g):
+    def distribution(self, sketches, zippers, task, g):
         ptask = PTask(task)
         #need raw dist, and then which are valid and which is correct ... 
-        if self.encodeTargetHole:
-            assert False
-            sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
-            # one hole becomes a <TargetHOLE>. Sortof looks like its the rightmost hole in the leftmost group of continugous holes?
-        sketchEncodings = self.vhead._encodeSketches(sketches) # [5,64]
+        sketchEncodings = sing.em.program_rnn.encode_sketches(sketches) # [5,64]
         if sing.cfg.model.extractor.digitwise:
             # input feats
             #in_feats = self.featureExtractor.inputFeatures(task)
             in_feats = ptask.input_features()
-            other = sing.em.encoder.old_inputFeatures(task)
-            assert in_feats.isclose(other).all()
+            # other = sing.em.encoder.old_inputFeatures(task)
+            # assert in_feats.isclose(other).all()
             in_feats = in_feats.mean(0) # mean over examples
             if self.cfg.debug.zero_input_feats:
                 in_feats = torch.zeros_like(in_feats)
@@ -367,8 +344,8 @@ class RNNPolicyHead(PolicyHead):
             # output feats
             #out_feats = self.featureExtractor.outputFeatures(task)
             out_feats = ptask.output_features()
-            other = sing.em.encoder.old_outputFeatures(task)
-            assert out_feats.isclose(other).all()
+            # other = sing.em.encoder.old_outputFeatures(task)
+            # assert out_feats.isclose(other).all()
             out_feats = out_feats.mean(0) # mean over examples
             if self.cfg.debug.zero_output_feats:
                 out_feats = torch.zeros_like(out_feats)
@@ -386,26 +363,19 @@ class RNNPolicyHead(PolicyHead):
         return dist
 
 class ListREPLPolicyHead(PolicyHead):
-    def __init__(self, g, cfg, maxVar=10):
-        super().__init__() #should have featureExtractor?
+    def __init__(self):
+        super().__init__()
+        sing.model.em.include_encoder()
+        sing.model.em.include_nms()
+        maxVar = 10
 
-        H = cfg.model.H
-        cuda = cfg.cuda
-        encodeTargetHole = cfg.model.encodeTargetHole
-        ordering = cfg.model.ordering
+        self.H = H = sing.cfg.model.H
+        self.ordering = sing.cfg.model.ordering
         
-        self.cfg = cfg
-
-        self.use_cuda = cuda
-        self.H = H
-        self.vhead = ListREPLValueHead(g=g, cfg=cfg)
-        self.encodeTargetHole = encodeTargetHole
-        self.ordering = ordering
-
         self.indexToProduction = {}
         self.productionToIndex = {}
         i = 0
-        for _, _, expr in g.productions:
+        for _, _, expr in sing.g.productions:
             self.indexToProduction[i] = expr
             self.productionToIndex[expr] = i
             i += 1
@@ -425,100 +395,14 @@ class ListREPLPolicyHead(PolicyHead):
 
         self.lossFn = nn.NLLLoss(reduction='sum')
 
-
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
-
-    @property
-    def device(self):
-        return self.output[0].weight.device
-
-    def _computeDist(self, sketches, zippers, task, g):
-        if self.encodeTargetHole:
-            assert False
-            sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
-        compared = self.vhead._compare(sketches,task,reduce='max') # [num_sks,H]
-        # if self.cfg.model.give_hole:
-        #     for sk,zipper in zip(sketches,zippers):
-        #         for attr in zipper.path:
-        #         hole = sk
-        #             hole = getattr(hole,attr)
-        #         print(f"this shd look like a hole: {hole}")
-
-
-
+    def distribution(self, sketches, zippers, task, g):
+        compared = sing.model.em.sk_task_pnode_compare(sketches,task,reduce='max') # [num_sks,H]
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
         return dist # [num_sks,49]
-
-# class REPLPolicyHead(NeuralPolicyHead):
-#     """
-#     does not specify the target hole at all here
-#     """
-#     def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
-#         super(REPLPolicyHead, self).__init__() #should have featureExtractor?
-#         assert not encodeTargetHole
-#         self.canonicalOrdering = canonicalOrdering
-#         self.use_cuda = torch.cuda.is_available()
-#         self.featureExtractor = featureExtractor
-#         self.H = H
-#         self.REPLHead = TowerREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
-
-#         self.indexToProduction = {}
-#         self.productionToIndex = {}
-#         i = 0
-#         for _, _, expr in g.productions:
-#             self.indexToProduction[i] = expr
-#             self.productionToIndex[expr] = i
-#             i += 1
-
-#         for v in range(maxVar):
-#             self.indexToProduction[i] = Index(v)
-#             self.productionToIndex[Index(v)] = i
-#             i += 1
-
-#         self.output = nn.Sequential(
-#                 nn.Linear(featureExtractor.outputDimensionality + H, H),
-#                 nn.ReLU(),
-#                 nn.Linear(H, H),
-#                 nn.ReLU(),
-#                 nn.Linear(H, len(self.productionToIndex) ),
-#                 nn.LogSoftmax(dim=1))
-
-#         self.lossFn = nn.NLLLoss(reduction='sum')
-#         if self.use_cuda: self.cuda()
-
-#     def cuda(self, device=None):
-#         self.use_cuda = True
-#         self.REPLHead.use_cuda = True
-#         self.featureExtractor.use_cuda = True
-#         self.featureExtractor.CUDA = True
-#         super(REPLPolicyHead, self).cuda(device=device)
-
-#     def cpu(self):
-#         self.use_cuda = False
-#         self.REPLHead.use_cuda = False
-#         self.featureExtractor.use_cuda = False
-#         self.featureExtractor.CUDA = False
-#         super(REPLPolicyHead, self).cpu()
-
-#     def _computeDist(self, sketches, zippers, task, g):
-#         #need raw dist, and then which are valid and which is correct ... 
-#         features = self.featureExtractor.featuresOfTask(task)
-#         if features is None: return None, None
-#         features = features.unsqueeze(0)
-        
-#         sketchEncodings = [self.REPLHead._computeSketchRepresentation(sk.betaNormalForm()) for sk in sketches]
-#         sketchEncodings = torch.stack(sketchEncodings, dim=0)
-#         features = self.featureExtractor.featuresOfTask(task)
-#         features = features.unsqueeze(0)
-#         x = features.expand(len(sketches), -1)
-#         features = torch.cat([sketchEncodings, x ], dim=1)
-#         dist = self.output(features)
-#         mask = self._buildMask(sketches, zippers, task, g)
-#         dist = dist + mask
-#         return dist
 
 class DenseLayer(nn.Module):
     def __init__(self, input_size, output_size):
