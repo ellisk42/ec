@@ -103,7 +103,7 @@ def main():
 
         # put back frontiers into cyclic buffer if data.freeze is true
         if sing.cfg.data.train.freeze:
-            s.frontiers.extend(fs) # put back at the end
+            s.frontiers.extend(t.fs) # put back at the end
         
         """ 
         Here's what model.train_step should roughly look like:
@@ -116,8 +116,8 @@ def main():
         """
 
         t.start = time()
-        t.loss, t.to_print = sing.model.train_step(fs)
-        t.elapsed = time() - _start
+        t.loss, t.to_print = sing.model.train_step(t.fs)
+        t.elapsed = time() - t.start
         print(f'Loss {t.loss:.2f} in {t.elapsed:.3f}s on {[f.p for f in t.fs]}')
         if t.to_print is not None: print(t.to_print)
 
@@ -153,7 +153,7 @@ def main():
         # validation loss
         if s.valid_every.check():
             t.valid_loss, t.to_print = sing.model.valid_step(s.valid_frontiers)
-            sing.tb_scalar('ValidationLoss',_valid_loss)
+            sing.tb_scalar('ValidationLoss',t.valid_loss)
             blue(f"[{s.j}] {sing.cls_name} {t.valid_loss}")
             if t.to_print is not None: print(t.to_print)
 

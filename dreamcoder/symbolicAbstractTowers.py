@@ -85,9 +85,9 @@ def taskViolatesAbstractState(task, absWorld):
         return True
     return False
 
-class SymbolicAbstractTowers(BaseValueHead):
+class SymbolicAbstractTowers(ValueHead):
     def __init__(self):
-        super(BaseValueHead, self).__init__()
+        super(ValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available()
     def computeValue(self, sketch, task):
 

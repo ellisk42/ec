@@ -6,6 +6,8 @@ from dreamcoder.SMC import SMC
 from dreamcoder.Astar import Astar
 from dreamcoder.em import ExecutionModel
 from dreamcoder import valueHead,policyHead
+from dreamcoder.matt import plot
+from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 
 class MBAS(nn.Module):
   def __init__(self):
@@ -125,22 +127,22 @@ class MBAS(nn.Module):
         solns = solns[f]
         times = times[f]
         if len(solns) == 0:
-          search_tries.append(SearchTry(timeout,num_progs,None))
+          search_tries.append(plot.SearchTry(timeout,num_progs,None))
           if verbose:
             red(f"[{i+1}/{len(fs)}] failed to solve {f.name} (searched {num_progs} programs)")
         else:
           assert len(solns) == len(times) == 1
           [soln] = solns
           [time] = times
-          search_tries.append(SearchTry(time,num_progs,soln))
+          search_tries.append(plot.SearchTry(time,num_progs,soln))
           if verbose:
               green(f"[{i+1}/{len(fs)}] solved {f.name} in {time:.2f}s (searched {num_progs} programs)")
               raise NotImplementedError # reimplement get_depth t,d,s
               t,d,s = get_depth(solns[0].program)
               print(f"\t-> [T{t}d{d}s{s}] {soln.program}")
     
+    raise NotImplementedError
     if verbose:
-      raise 
       blue(f'solved {len(search_tries)}/{len(fs)} tasks ({len(search_results)/len(test_tasks)*100:.1f}%)\n')
     model_result = plot.ModelResult(prefix=prefix,name=name, cfg=astar.owner.policyHead.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout)
 

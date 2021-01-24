@@ -11,6 +11,7 @@ import torch
 import functools
 from torch.utils.tensorboard import SummaryWriter
 from dreamcoder import model,loader
+import shutil
 
 class Sing(Saveable):
   no_save = ('w',)
@@ -34,7 +35,6 @@ class Sing(Saveable):
           raise ValueError("can't do mode=test without a file to load from")
 
         self.cfg = cfg
-        self.argv = 
         from dreamcoder.matt.train import TrainState
         self.train_state = TrainState(cfg)
         self.cwd = getcwd()

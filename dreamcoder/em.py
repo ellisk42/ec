@@ -10,6 +10,8 @@ import torch
 import mlb
 import numpy as np
 from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
+from dreamcoder.domains.list.main import ListFeatureExtractor
+
 
 from dreamcoder.matt.sing import sing
 
@@ -99,11 +101,11 @@ class ExecutionModel(nn.Module):
 
         # populate fnModules
         self.fn_nms = nn.ModuleDict()
-        for p in g.primitives:
+        for p in sing.g.primitives:
             argc = len(p.tp.functionArguments())
             self.fn_nms[p.name] = nn.ModuleList([NM(argc, H) for _ in range(argc+1)])
 
-        self.index_nm = NM(0, cfg.model.H)
+        self.index_nm = NM(0, H)
         # TODO in the future to allow for >1 toplevel arg the above could be replaced with:
         # self.index_nms = [NM(0,cfg.model.H) for _ in range(max_index+1)]
 
