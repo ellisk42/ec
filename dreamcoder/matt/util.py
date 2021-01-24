@@ -10,18 +10,51 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import contextlib
 from time import time
+from tqdm import tqdm
+from dreamcoder.matt.sing import sing
+
+
+################
+# * PRINTING * #
+################
+
+# overrides the global print
+def print(*args,**kwargs):
+    tqdm.write(*args,**kwargs)
+def print_if(s,cond):
+    if sing.cfg.printif[cond]:
+        print(s)
+# redefined color prints to use the local print()
+def green(s):
+    print(mlb.mk_green(s))
+def red(s):
+    print(mlb.mk_red(s))
+def purple(s):
+    print(mlb.mk_purple(s))
+def blue(s):
+    print(mlb.mk_blue(s))
+def cyan(s):
+    print(mlb.mk_cyan(s))
+def yellow(s):
+    print(mlb.mk_yellow(s))
+def gray(s):
+    print(mlb.mk_gray(s))
+
 
 def cls_name(v):
     return v.__class__.__name__
 
-def which(cfg):
-    print(yaml(cfg))
-    print(getcwd())
+def which(cfg, no_yaml=False):
     regex = getcwd().parent.name + '%2F' + getcwd().name
-    print(f'http://localhost:6696/#scalars&regexInput={regex}')
-    print(f'commit: {cfg.commit}')
-    print(f'argv: {cfg.argv}')
-    print("curr time:",timestamp())
+    return f'''
+{"" if no_yaml else yaml(cfg)}
+cwd: {getcwd()}
+tensorboard: http://localhost:6696/#scalars&regexInput={regex}
+commit: {cfg.commit}
+dirty: {cfg.dirty}
+argv: {cfg.argv}
+curr time: {timestamp()}
+    '''.strip()
 
 def getcwd():
     return Path(os.getcwd())
@@ -32,8 +65,9 @@ def yaml(cfg):
 def timestamp():
     return datetime.now()
 
-## PATHS
-
+#############
+# * PATHS * #
+#############
 
 def toplevel_path():
     """

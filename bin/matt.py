@@ -16,6 +16,7 @@ import sys,os
 import numpy as np
 import torch
 import git
+import traceback
 
 
 # doesnt actually do anything i think
@@ -36,20 +37,21 @@ def hydra_main(cfg):
         cfg.commit = repo.head.commit.hexsha
         del repo
 
-    def crash():
-        print(os.getcwd())
+    def crash(e):
+        print(sing.which(no_yaml=True))
         if hasattr(sing,'cfg') and sing.cfg.notify_crash: # use sing.cfg not local cfg
-            email_me('crash', ' '.join(sys.argv))
+            exc = ''.join(traceback.format_exception(e.__class__, e, e.__traceback__))
+            email_me('crash', f'{sing.which()}\n\n\n{exc}')
     def ctrlc():
-        print(os.getcwd())
+        print(sing.which(no_yaml=True))
          
-    with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=print_cwd, crash=print_cwd):
+    with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=ctrlc, crash=crash):
 
         sing.from_cfg(cfg) # initialize the singleton
 
         # PRINT
         if cfg.print:
-            which(sing.cfg) # as expected: loaded cfg if cfg.load, else new cfg
+            print(sing.which()) # as expected: loaded cfg if cfg.load, else new cfg
             print("cfg.print was specified, exiting")
 
         # PLOT
@@ -84,7 +86,7 @@ def hydra_main(cfg):
         elif cfg.mode == 'inspect':
             print("=== Inspecting State ===")
             s = sing.train_state
-            sing.which()
+            print(sing.which())
             breakpoint()
             raise Exception("Take a look around via `sing` and `s` (train state)!")
 
@@ -263,7 +265,7 @@ def hydra_main(cfg):
                     mlb.red(e)
                     pass
         print()
-        which(state.cfg)
+        print(which(state.cfg))
 
         for string in print_overrides: # just want this to print after the big wall of yaml
             mlb.purple(string)
@@ -279,7 +281,7 @@ def hydra_main(cfg):
                 random.seed(state.cfg.seed)
 
             if cfg.print:
-                which(state.cfg)
+                print(which(state.cfg))
                 print("cfg.print was specified, exiting")
                 return
             
@@ -362,7 +364,7 @@ def hydra_main(cfg):
             elif cfg.mode == 'inspect':
                 print()
                 print("=== Inspecting State ===")
-                which(state.cfg)
+                print(which(state.cfg))
                 #print(state)
                 breakpoint()
                 raise Exception("take a look around")
@@ -371,7 +373,7 @@ def hydra_main(cfg):
         # not really sure if this is needed
         #hydra.core.hydra_config.HydraConfig.set_config(cfg)
         mlb.yellow("===END===")
-        which(state.cfg)
+        print(which(state.cfg))
 
 if __name__ == '__main__':
     hydra_main()

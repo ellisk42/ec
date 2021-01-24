@@ -103,8 +103,8 @@ class Sing(Saveable):
         max_queue=1,
     )
     print("initialized writer for", self.name)
-  def which(self):
-    which(self.cfg)
+  def which(self, no_yaml=False):
+    return which(self.cfg,no_yaml)
   def yaml(self):
     return yaml(self.cfg)
   def tb_scalar(self, plot_name, val, j=None):

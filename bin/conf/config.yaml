@@ -19,6 +19,9 @@ argv: null # this will get set my matt.py
 commit: null # this will get set my matt.py
 kill_by: null # not used internally for anything, just by the `job` manager
 
+printif:
+  fake: False # print_if(s,'fake') will only fire if this is True
+
 
 notify_crash: null # null | email | text
 notify_done: null  # null | email | text
