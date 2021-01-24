@@ -39,6 +39,7 @@ class Sing(Saveable):
         self.cwd = getcwd()
         self.name = f'{cfg.job_name}.{cfg.run_name}'
         self.device = torch.device(cfg.device)
+        self.stats = Stats()
 
         self.taskloader = {
           'deepcoder':loader.DeepcoderTaskloader
@@ -106,32 +107,19 @@ class Sing(Saveable):
   def yaml(self):
     return yaml(self.cfg)
 
+class Stats:
+  """
+  This is what `sing.stats` is.
+  Used for stuff like tracking amount of concrete evaluation that happens
+  or whatever else a model might want. model.__init__ should modify `sing.stats`
+  for example `sing.stats.concrete_count=0` then other places in the codebase
+  can increment that value.
+  """
+  def print_stats(self):
+    print("Stats:")
+    for k,v in self.__dict__:
+      print(f'\t{k}: {v}')
 
-class StatTrack():
-    def __init__(self) -> None:
-        super().__init__()
-        self.total_ct = 0
-        self.abstract_ct = 0
-    def concrete_ratio(self):
-        if self.total_ct == 0:
-            return -1 # untracked or no data yet
-        return 1-(self.abstract_ct / self.total_ct)
-    def track_concrete_ratio(self,propagate):
-        @functools.wraps(propagate)
-        def _propagate(node,*args,**kwargs):
-            res = propagate(node,*args,**kwargs)
-            if not node.isOutput and not node.isAbstraction: # bc these dont count towards size() either
-              if res._abstract is not None:
-                self.abstract_ct += 1
-            if node.isOutput:
-              self.total_ct += node.size()
-            return res
-        return _propagate
-
-class ToOptimize(nn.Module):
-  def __init__(self,modules:list):
-    super().__init__()
-    self.modules = nn.ModuleList(modules)
 
 # note we must never overwrite this Sing. We should never do `matt.sing.sing = ...` 
 # because then it would only overwrite the local version and the version imported by other modules

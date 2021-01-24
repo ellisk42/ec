@@ -11,6 +11,11 @@ class MBAS(nn.Module):
   def __init__(self):
     super().__init__()
 
+    sing.stats.call_encode_known_ctx = 0
+    sing.stats.call_encode_exwise = 0
+    sing.stats.fn_called_concretely = 0
+    sing.stats.fn_called_abstractly = 0
+
     self.em = ExecutionModel()
 
     self.vhead = {
@@ -63,6 +68,8 @@ class MBAS(nn.Module):
 
     self.running_ploss.reset()
     self.running_vloss.reset()
+
+    sing.stats.print_stats()
 
   def valid_step(self,fs):
     self.eval()
@@ -138,7 +145,3 @@ class MBAS(nn.Module):
     model_result = plot.ModelResult(prefix=prefix,name=name, cfg=astar.owner.policyHead.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout)
 
     
-
-
-
-

@@ -123,6 +123,7 @@ class ExecutionModel(nn.Module):
         its .concrete field and produce a .abstract field
         """
         assert exwise.concrete is not None
+        sing.stats.call_encode_exwise += 1
         return self.encoder.encodeValue(exwise.concrete)
     def encode_known_ctx(self,exwise_list):
         """
@@ -136,6 +137,7 @@ class ExecutionModel(nn.Module):
         This has the same behavior as inputFeatures from the old days if you pass
         in all the inputs to the task as exwise_list
         """
+        sing.stats.call_encode_known_ctx += 1
         assert all(exwise is not None for exwise in exwise_list)
 
         lex = self.encoder.lexicon_embedder
@@ -349,7 +351,6 @@ class PNode:
     def upward_only_embedding(self):
         assert self.isOutput
         return self.propagate(None)
-    @sing.track.track_concrete_ratio
     def propagate(self,towards):
         """
         returns :: Examplewise
@@ -373,13 +374,6 @@ class PNode:
                 # propagate upwards: evaluate the whole tree
                 return self.tree.propagate(self)
 
-        # if towards is self.parent and not self.hasHoles and self.allow_concrete_eval and not self.has_unset_index():
-        #     # if parent wants our output
-        #     # and we have no holes
-        #     # and concrete eval is turned on
-        #     # and all variables in the context are set
-        #     # then just evaluate it concretely
-        #     raise NotImplementedError
         elif self.isPrimitive:
             return Examplewise([self.value for _ in range(sing.num_exs)])
 
@@ -434,8 +428,10 @@ class PNode:
                 # calls evaluate() on self.fn which should return a concrete callable primitive
                 # wrapped in an Examplewise then we just use Examplewise.as_concrete_function
                 # to apply it to other examplewise arguments
+                sing.stats.fn_called_concretely += 1
                 return self.fn.propagate(self).as_concrete_fn(*evaluated_args)
             ## ABSTRACT EVAL
+            sing.stats.fn_called_abstractly += 1
             nm = sing.em.fn_nms[self.fn.name][propagation_direction]
             return Examplewise(nm(*[arg.abstract for arg in evaluated_args]))
 
