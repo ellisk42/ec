@@ -600,14 +600,11 @@ class FakeFrontier:
     def sample(self):
         return self
 
+from dreamcoder.matt.sing import sing
+
 class DeepcoderTaskloaderInner:
     def __init__(self,mode):
         cfg = sing.cfg
-        if mode == 'train':
-            self.cfg = cfg.data.train
-        elif mode == 'test':
-            self.cfg = cfg.data.test
-
 
         self.mode = mode
         self.parent_cfg = cfg # in case it's useful
@@ -659,29 +656,24 @@ class DeepcoderTaskloaderInner:
             It'll be filled up to `self.cfg.buf_size`
         """
         with open(self.file,'r') as f:
-            #cm = lock if lock is not None else contextlib.nullcontext()
-            #with cm:
             f.seek(self.offset_in_file) # pick up where we left off
             while True: # loops until `queue.Full` gets raised by the .put() line (or buf.full() happens)
                 try:
-                    # if lock is not None:
-                    #     lock.acquire()
-                    #if self.buf.full():
-                    #    break
                     if len(self.buf) >= self.cfg.buf_size:
                         assert len(self.buf) == self.cfg.buf_size, "bug in code"
                         return
                     
                     # note we can't use next(f) as this disables f.tell(), so we do f.readline()
-                    line = f.readline().rstrip()
+                    line = f.readline() # do NOT call .strip() on this until after the EOF check below!
 
                     # EOF
-                    if line == '': # readline never errors out, it returns empty string on EOF
+                    if line == '': # readline never errors out, it returns empty string on EOF (as opposed to when it encounters a normal empty line in which case in returns '\n')
                         if self.cfg.repeat:
                             f.seek(self.file_start) # repeat
                             continue
                         else:
                             raise EOFError
+                    line = line.rstrip()
 
                     # get program and task
                     # purposefully self.L not self.cfg.L
@@ -735,10 +727,6 @@ class DeepcoderTaskloaderInner:
                         f.seek(self.file_start)
                 finally:
                     self.offset_in_file = f.tell()
-                    #assert len(self.buf) == self.buf_len
-                    #time.sleep(.1) # fixes a weird BrokenPipeError from https://stackoverflow.com/questions/36359528/broken-pipe-error-with-multiprocessing-queue
-                    #if lock is not None:
-                    #    lock.release()
 
     def getTask(self):
         ret = self.getTasks(n=1)
@@ -746,29 +734,14 @@ class DeepcoderTaskloaderInner:
             raise ValueError("Out of tasks, can't getTask()")
         return ret
 
-        # #self.check()
-        # #if not self.cfg.threaded and self.buf.empty():
-        # if len(self.buf) == 0:
-        #     self.reloadBuffer() # may raise EOFError
-        #     assert len(self.buf) == self.buf_size
-        # return buf.pop()
-        # # while True:
-        # #     try:
-        # #         return self.buf.get() # may block
-        # #     except queue.Empty:
-        # #         print("buf is empty...")
-        # #         time.sleep(.5)
-        # #         self.check()
-
     def getTasks(self, n=None):
         """
         if n is None: reload buf and return `self.cfg.buf_size` tasks
-        else: return n tasks
+        else: return n tasks (even if n>buf_size)
         Note that it may return fewer tasks if repeat=False and we hit EOF
         """
         # If n is none, return `self.cfg.buf_size` items
         if n is None:
-            #cm = contextlib.nullcontext() if ignore_eof else contextlib.suppress(EOFError)
             #with cm:
             with contextlib.suppress(EOFError):
                 self.reloadBuffer()
@@ -801,60 +774,6 @@ class DeepcoderTaskloaderInner:
                 mlb.yellow(f"warning: ran out of tasks and repeat=False, returning fewer tasks than requested")
                 print(f"yielding {len(ret)} tasks")
                 return ret
-        
-        
-
-        # print(f"serving {n} tasks")
-        # ret = self.buf[:n] # note that this will be a shallow clone of buf even if 
-
-        # self.check()
-        # if n is None:
-        #     if self.cfg.threaded:
-        #         n = self.buf.qsize()
-        #         while n == 0:
-        #             print("waiting on buffer to fill...")
-        #             time.sleep(.5)
-        #             self.check()
-        #             n = self.buf.qsize()
-        #     else:
-        #         if self.buf.qsize() == 0:
-        #             print(f"[main: {self.mode}] filling buffer")
-        #             self.reloadBuffer()
-        #             print(f"[main: {self.mode}] buffer filled")
-        #         n = self.buf.qsize()
-        # ret = []
-        # for i in range(n):
-        #     try:
-        #         ret.append(self.getTask())
-        #     except EOFError: # Hit end of file and self.repeat=False
-        #         if ignore_eof:
-        #             return ret
-        #         raise
-        # return ret
-
-    # def launch_worker(self):
-    #     assert False, "we're not doing threading for now"
-    #     print("launching worker")
-    #     p = mp.Process(target=self._worker, daemon=True)
-    #     p.start()
-    #     self.p = p
-    #     print("launched")
-
-    # def _worker(self):
-    #     assert False, "we're not doing threading for now"
-    #     def set_exc():
-    #         self.exception.value = 1
-    #     with mlb.debug(crash=set_exc, ctrlc=set_exc):
-    #         lock = self.lock
-    #         assert lock is not None
-    #         while True:
-    #             if not self.buf.full():
-    #                 mlb.gray(f"[worker: {self.mode}] reloading buf")
-    #                 self.reloadBuffer(lock=lock)
-    #                 mlb.gray(f"[worker: {self.mode}] reloaded buf")
-    #             #else:
-    #                 #print(f"buf {self.mode} seems full, not reloading")
-    #             time.sleep(1) # alternatively could just have reloadBuffer *never* exit
     def convert_to_deepcoder_plus_plus(self, f, tasks):
         program = f.p
 
@@ -906,15 +825,10 @@ class DeepcoderTaskloaderInner:
                 #print(f"rejecting {sampled} bc out of range values or zero division")
                 continue # e.g. division by zero during concrete eval
 
-
             # check if its a constant function (output same for any input)
             if all([output == outputs[0] for output in outputs[1:]]):
                 #print(f"rejecting {sampled} bc output is constant")
                 continue # rejection sample
-
-            # check for really large or small numbers
-            # if max([max(output) for output in outputs]) > 99 or min([min(output) for output in outputs]) < -99:
-            #     continue # rejection sample
 
             # if its a [int] -> [int] function, check if its the identity
             if task.request == arrow(tlist(tint),tlist(tint)):
@@ -922,9 +836,6 @@ class DeepcoderTaskloaderInner:
                 if all([ex[0][0] == output for ex,output in zip(task.examples,outputs)]):
                     #print(f"rejecting {sampled} bc it's the identity function")
                     continue # rejection sample
-
-            #assert self.cfg.max_depth > get_depth(sampled)[2], "You want to increase your max_depth so this program will actually be searchable"
-            
 
             new_examples = [(ex[0],output) for ex,output in zip(task.examples,outputs)]
             new_task = Task(str(sampled), task.request, new_examples)
