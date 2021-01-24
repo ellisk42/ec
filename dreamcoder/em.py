@@ -81,32 +81,27 @@ class NM(nn.Module):
         args = torch.cat(args,dim=1) # cat along example dimension. Harmless if only one thing in args anyways
         return self.params(args)
 
-class ExecutionModule(nn.Module):
-    def __init__(self, cfg, g, encoder, max_index) -> None:
-        """
-        g: Grammar
-        encoder: feature extractor
-
-        """
+class ExecutionModel(nn.Module):
+    def __init__(self) -> None:
         super().__init__()
-        self.cfg = cfg
-        # encoder
-        self.encoder = encoder # very important so the params are in the optimizer
+        self.encoder = ListFeatureExtractor(maximumLength=sing.cfg.data.L_big)
+
+        H = sing.cfg.model.H
 
         # hole NMs
         possible_hole_tps = [tint,tbool,tlist(tint)]
-        if not cfg.data.train.expressive_lambdas:
+        if not sing.cfg.data.train.expressive_lambdas:
             possible_hole_tps += [int_to_int, int_to_bool, int_to_int_to_int]
         self.hole_nms = nn.ModuleDict()
         for tp in possible_hole_tps:
-            self.hole_nms[tp.show(True)] = NM(1, cfg.model.H)
+            self.hole_nms[tp.show(True)] = NM(1, H)
 
 
         # populate fnModules
         self.fn_nms = nn.ModuleDict()
         for p in g.primitives:
             argc = len(p.tp.functionArguments())
-            self.fn_nms[p.name] = nn.ModuleList([NM(argc, cfg.model.H) for _ in range(argc+1)])
+            self.fn_nms[p.name] = nn.ModuleList([NM(argc, H) for _ in range(argc+1)])
 
         self.index_nm = NM(0, cfg.model.H)
         # TODO in the future to allow for >1 toplevel arg the above could be replaced with:
@@ -115,10 +110,10 @@ class ExecutionModule(nn.Module):
         # TODO this is kept the same as the BAS paper however is totally worth experimenting with in the future
         # (we'd like to improve how lambdas get encoded)
         nargs = 1 if self.cfg.model.ctxful_lambdas else 0
-        self.lambda_index_nms = nn.ModuleList([NM(nargs,cfg.model.H) for _ in range(2)])
+        self.lambda_index_nms = nn.ModuleList([NM(nargs,H) for _ in range(2)])
         self.lambda_hole_nms = nn.ModuleDict()
         for tp in [tint,tbool]:
-            self.lambda_hole_nms[tp.show(True)] = NM(nargs, cfg.model.H)
+            self.lambda_hole_nms[tp.show(True)] = NM(nargs, H)
 
 
 

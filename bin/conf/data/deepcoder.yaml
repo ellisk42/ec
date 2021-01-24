@@ -1,6 +1,6 @@
 # @package _group_
+type: deepcoder
 
-# data generation
 T: 2
 N : 5
 L: 10
@@ -12,15 +12,8 @@ lambda_depth: 3
 allow_complex_requests: False
 max_depth: 12
 max_length: 40
-
-# data loading
-num_templates: null
-repeat: True
-buf_size: 1000
-threaded: False
-freeze: False
 num_mutated_tasks: 1
 premade_templates: null
 print_data: False
-t4: False
-num_valid: 80
+
+

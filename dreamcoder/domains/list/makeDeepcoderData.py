@@ -600,12 +600,15 @@ class FakeFrontier:
     def sample(self):
         return self
 
-class DeepcoderTaskloader:
-    def __init__(self, cfg, mode):
+class DeepcoderTaskloaderInner:
+    def __init__(self,mode):
+        cfg = sing.cfg
         if mode == 'train':
             self.cfg = cfg.data.train
         elif mode == 'test':
             self.cfg = cfg.data.test
+
+
         self.mode = mode
         self.parent_cfg = cfg # in case it's useful
         cfg = self.cfg # bc we're more likely to use it in the rest of __init__
@@ -626,11 +629,6 @@ class DeepcoderTaskloader:
             self.premade_i = 0
             mlb.purple(f'using templates for {self.mode}')
 
-        # if cfg.repeat is False:
-        #     if cfg.expressive_lambdas:
-        #         cfg.buf_len = max([cfg.buf_len,cfg.num_templates*cfg.num_mutated_tasks])
-        #     else:
-        #         cfg.buf_len = max([cfg.buf_len,cfg.num_templates])
 
         self.threaded = cfg.threaded
         assert not self.threaded, "We're not allowing threading for now"
@@ -641,12 +639,8 @@ class DeepcoderTaskloader:
             self.file = utils.to_absolute_path(f'dreamcoder/domains/list/DeepCoder_data/T{cfg.T}_A2_V512_L10_{mode}_perm.txt')
         self.allowed_requests = [arrow(tlist(tint),tlist(tint)), arrow(tlist(tint),tint)] if self.cfg.allow_complex_requests else [arrow(tlist(tint),tlist(tint))]
 
-        #self.buf = queue.Queue(self.cfg.buf_size) # turns out Queues also cant be pickled:(
         self.buf = []
-        #self.lock = None
-        #self.exception = 0
         self.templates_seen = 0 # number of tasks seen (pre mutation)
-        #self.p = None
 
         with open(self.file,'r') as f:
             f.readline() # skip first line of file
@@ -655,35 +649,6 @@ class DeepcoderTaskloader:
         
         # make a lambda grammar to sample lambdas from
         self.g_lambdas = Grammar.uniform(get_lambdas(), max_hole_depth= self.cfg.lambda_depth)
-        #self.post_load()
-    # @contextlib.contextmanager
-    # def saveable(self):
-    #     if self.lock is not None:
-    #         print("locking...")
-    #         self.lock.acquire() # so the worker doesnt get confused
-    #         print("acquired lock")
-    #     l,q,v,e,p = self.lock, self.buf, self.offset_in_file, self.exception, self.p
-    #     self.lock, self.buf, self.offset_in_file, self.exception,p = None, None, v.value, e.value, None
-    #     try:
-    #         yield None
-    #     finally:
-    #         self.lock,self.buf,self.offset_in_file,self.exception, self.p = l,q,v,e, p
-    #         if self.lock is not None:
-    #             self.lock.release()
-    #             print("lock released")
-    # def check(self):
-    #     if self.exception.value == 1:
-    #         raise Exception("Worker thread died")
-    # def post_load(self):
-    #     if self.lock is not None:
-    #         return # ignore redundant loads
-    #     self.offset_in_file = mp.Value('i',self.offset_in_file)
-    #     self.exception = mp.Value('i',self.exception)
-    #     self.lock = mp.Lock()
-    #     self.buf = mp.Queue(self.cfg.buf_size) # buffer of frontiers
-    #     if self.cfg.threaded:
-    #         self.launch_worker()
-    #     self.check()
 
     def reloadBuffer(self):
         """

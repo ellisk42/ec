@@ -4,6 +4,7 @@ from fastcore.basics import null,ifnone
 from tqdm import tqdm
 from time import time
 import inspect
+import torch
 import numpy as np
 
 def loop_check(locs):
@@ -30,39 +31,22 @@ class FireEvery:
     def check(self):
         return self.j is not None and sing.train_state.j % self.j == 0
 
-class RunningValue:
-    def __init__(self):
-        self.reset()
-    def add(self,x):
-        self.vals.append(float(x))
-    def count(self):
-        return len(self.vals)
-    def avg(self):
-        if self.count() == 0:
-            return 0
-        return sum(self.vals)/len(self.vals)
-    def reset(self):
-        self.vals = []
-        self.tstart = time()
-    def elapsed(self):
-        return time() - self.tstart
-    def rate(self):
-        return self.count() / self.elapsed()
-
 class TrainState:
-    def __init__(s):
+    def __init__(s,cfg):
         s.j = 0
         s.best_valid_loss = np.inf
 
-        s.print_every = FireEvery(sing.cfg.print_every)
-        s.valid_every = FireEvery(sing.cfg.valid_every)
-        s.search_valid_every = FireEvery(sing.cfg.search_valid_every)
-        s.save_every = FireEvery(sing.cfg.save_every)
+        s.print_every = FireEvery(cfg.print_every)
+        s.valid_every = FireEvery(cfg.valid_every)
+        s.search_valid_every = FireEvery(cfg.search_valid_every)
+        s.save_every = FireEvery(cfg.save_every)
 
-        s.running_loss = RunningValue()
+        s.running_loss = RunningFloat()
 
-        if sing.cfg.loop.j_multiplier > sing.cfg.data.buf_size:
+        if cfg.loop.j_multiplier > cfg.data.buf_size:
             raise ValueError
+            
+        assert not hasattr(s,'cfg'), "Dont store the cfg, please only access it thru sing.cfg as it might change"
 
 
 class Temps(): pass
@@ -70,7 +54,6 @@ class Temps(): pass
 def main():
     s = sing.train_state
 
-    sing.model.run_tests()
 
     """
     This is somewhat opinionated, but we want these models to be as portable
@@ -89,6 +72,16 @@ def main():
             raise ValueError
         if '.no_grad()' not in inspect.getsource(sing.model.valid_step):
             raise ValueError
+    with contextlib.suppress(OSError):
+        if '.eval()' not in inspect.getsource(sing.model.search):
+            raise ValueError
+        if '.no_grad()' not in inspect.getsource(sing.model.search):
+            raise ValueError
+
+    with torch.no_grad():
+        sing.full_debug = True
+        sing.model.run_tests(s.valid_frontiers)
+        sing.full_debug = False
 
     print(f"Resuming Training at step j={s.j}")
 
@@ -137,13 +130,6 @@ def main():
             sing.which()
         if mlb.predicate('cfg'):
             sing.yaml()
-        if mlb.predicate('rename'):
-            raise NotImplementedError
-            name = input('Enter new name:')
-            state.rename(name)
-            # VERY important to do this:
-            w = state.w
-            name = state.name
 
         # printing and logging
         if s.print_every.check():

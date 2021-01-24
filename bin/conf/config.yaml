@@ -3,15 +3,13 @@ defaults:
   - data: curr
   - loop: curr
   - optim: curr
-  - model: repl
-  - solver: astar
+  - model: mbas
 
-prefix: null
-name: tb
+job_name: anon_job # used to be called `prefix`
+run_name: anon_run # used to be called `name`
 load: null
-mode: resume
-device: 6
-cuda: True
+mode: train
+device: cpu
 seed: 100 # null means random
 print: False # just print the cfg and exit
 kill_by: null # not used internally for anything, just by the `job` manager

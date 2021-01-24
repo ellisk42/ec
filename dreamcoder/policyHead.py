@@ -69,36 +69,10 @@ from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 from dreamcoder.em import PNode,PTask
 from dreamcoder.matt.sing import sing
 
-class BasePolicyHead(nn.Module):
-    #this is the single step type
-    def __init__(self, cfg):
-        super(BasePolicyHead, self).__init__() #should have featureExtractor?
-        self.use_cuda = torch.cuda.is_available()
-        self.cfg = cfg
-        self.ordering = cfg.model.ordering
 
-    def sampleSingleStep(self, task, g, sk,
-                        request, holeZippers=None,
-                        maximumDepth=4):
-        return sampleSingleStep(g, sk, request, holeZippers=holeZippers, maximumDepth=maximumDepth)
-
-    def policyLossFromFrontier(self, frontier, g):
-        if self.use_cuda:
-            return torch.tensor([0.]).cuda()
-        else: 
-            return torch.tensor([0.])
-
-    def enumSingleStep(self, task, g, sk, request, 
-                        holeZipper=None,
-                        maximumDepth=4):
-        try:
-            yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
-        except NoCandidates:
-            return
-
-class NeuralPolicyHead(nn.Module):
+class PolicyHead(nn.Module):
     def __init__(self):
-        super(NeuralPolicyHead, self).__init__()
+        super(PolicyHead, self).__init__()
 
     def sampleSingleStep(self, task, g, sk,
                         request, holeZippers=None,
@@ -255,8 +229,34 @@ class NeuralPolicyHead(nn.Module):
     @property
     def device(self):
         raise NotImplementedError
+class UniformPolicyHead(PolicyHead):
+    #this is the single step type
+    def __init__(self, cfg):
+        super(BasePolicyHead, self).__init__() #should have featureExtractor?
+        self.use_cuda = torch.cuda.is_available()
+        self.cfg = cfg
+        self.ordering = cfg.model.ordering
 
-class DeepcoderListPolicyHead(NeuralPolicyHead):
+    def sampleSingleStep(self, task, g, sk,
+                        request, holeZippers=None,
+                        maximumDepth=4):
+        return sampleSingleStep(g, sk, request, holeZippers=holeZippers, maximumDepth=maximumDepth)
+
+    def policyLossFromFrontier(self, frontier, g):
+        if self.use_cuda:
+            return torch.tensor([0.]).cuda()
+        else: 
+            return torch.tensor([0.])
+
+    def enumSingleStep(self, task, g, sk, request, 
+                        holeZipper=None,
+                        maximumDepth=4):
+        try:
+            yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
+        except NoCandidates:
+            return
+
+class DeepcoderListPolicyHead(PolicyHead):
     def __init__(self, g, em, cfg):
         super().__init__()
         extractor = em.encoder
@@ -300,7 +300,7 @@ class DeepcoderListPolicyHead(NeuralPolicyHead):
 
 
 
-class RNNPolicyHead(NeuralPolicyHead):
+class RNNPolicyHead(PolicyHead):
     def __init__(self, g, cfg, maxVar=15):
         super().__init__() #should have featureExtractor?
 
@@ -385,7 +385,7 @@ class RNNPolicyHead(NeuralPolicyHead):
         dist = dist + mask
         return dist
 
-class ListREPLPolicyHead(NeuralPolicyHead):
+class ListREPLPolicyHead(PolicyHead):
     def __init__(self, g, cfg, maxVar=10):
         super().__init__() #should have featureExtractor?
 
@@ -566,7 +566,7 @@ class SimpleNM(nn.Module):
             inp = args[0]
             return self.params(inp)
 
-class RBREPLPolicyHead(NeuralPolicyHead):
+class RBREPLPolicyHead(PolicyHead):
     """
     does not specify the target hole at all here
     """

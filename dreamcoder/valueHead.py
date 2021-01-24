@@ -26,6 +26,8 @@ from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool,
 from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.em import PNode,PTask
 
+from dreamcoder.matt.sing import sing
+
 
 class computeValueError(Exception):
     pass
@@ -130,27 +132,24 @@ class SemiOracleValueHead(nn.Module):
             return torch.tensor([0.])
 
 
-class BaseValueHead(nn.Module):
+class ValueHead(nn.Module):
     def __init__(self):
-        super(BaseValueHead, self).__init__()
+        super(ValueHead, self).__init__()
     def computeValue(self, sketch, task):
         assert False, "not implemented"
     def valueLossFromFrontier(self, frontier, g):
         assert False, "not implemented"
 
-class SampleDummyValueHead(BaseValueHead):
+class UniformValueHead(ValueHead):
     def __init__(self):
-        super(BaseValueHead, self).__init__()
-        self.use_cuda = torch.cuda.is_available()
+        super(ValueHead, self).__init__()
+        self.cuda = torch.cuda.is_available()
     def computeValue(self, sketch, task):
         return 0.
     def valueLossFromFrontier(self, frontier, g):
-        if self.use_cuda:
-            return torch.tensor([0.]).cuda()
-        else: 
-            return torch.tensor([0.])
+        return torch.tensor([0.]).to(sing.device)
 
-class SimpleRNNValueHead(BaseValueHead):
+class RNNValueHead(ValueHead):
 
     def __init__(self, g, cfg):
         super().__init__()
@@ -278,7 +277,7 @@ class NMN(nn.Module):
             return out
 
 
-class AbstractREPLValueHead(BaseValueHead):
+class AbstractREPLValueHead(ValueHead):
 
     def __init__(self, g, featureExtractor, H=512): #should be 512 or something
                 #specEncoder can be None, meaning you dont use the spec at all to encode objects
@@ -685,7 +684,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         return distance #Or something ...
 
 
-class InvalidIntermediatesValueHead(BaseValueHead):
+class InvalidIntermediatesValueHead(ValueHead):
     def __init__(self, cfg):
         super().__init__()
         self.ret = torch.tensor([0.]).to(cfg.device)
@@ -705,9 +704,9 @@ class InvalidIntermediatesValueHead(BaseValueHead):
 
 
 
-class RBPrefixValueHead(BaseValueHead):
+class RBPrefixValueHead(ValueHead):
     def __init__(self):
-        super(BaseValueHead, self).__init__()
+        super(ValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available()
     def valueLossFromFrontier(self, frontier, g):
         if self.use_cuda:
@@ -808,7 +807,7 @@ class LambdaCtx:
         if tp not in self._holes:
             self._holes[tp] = self.vhead.lambdaHoleModules[tp](self._ctx)
         return self._holes[tp]
-class ListREPLValueHead(BaseValueHead):
+class ListREPLValueHead(ValueHead):
 
     def __init__(self, g, cfg):
         super().__init__()

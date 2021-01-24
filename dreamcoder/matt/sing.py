@@ -5,35 +5,88 @@
 
 Nothing in this file is initialized because we want it to be set manually by whatever loading or init code gets run.
 """
+from dreamcoder.matt.util import *
 import torch.nn as nn
+import torch
 import functools
 from torch.utils.tensorboard import SummaryWriter
-from dreamcoder.matt.util import Saveable
+from dreamcoder import model,loader
 
 class Sing(Saveable):
   no_save = ('w',)
   def __init__(self) -> None:
-    self.cfg = None
-    self.em = None
-    self.vhead = None
-    self.phead = None
-    self.heads = None
-    self.num_exs = None
-    self.to_optimize = None
-    self.track = StatTrack()
-    self.w = None # tensorboard writer
-  @property
-  def name(self):
-    if self.cfg.prefix is not None:
-      return self.cfg.prefix + '.' + self.cfg.name
-    return self.cfg.name
+    pass
+  def from_cfg(self, cfg):
+    # note that this MUST modify sing inplace, it cant be a staticmethod
+    # bc otherwise when other modules do `from matt.sing import sing` theyll
+    # get a different copy if we ever reassign what sing.sing is. So it must be inplace.
+    # (i tested this).
+
+    # make new train_state and initialize everything
+    if cfg.mode in ('train','profile') and not cfg.load:
+      self.cfg = cfg
+      from dreamcoder.matt.train import TrainState
+      self.train_state = TrainState(cfg)
+      self.cwd = getcwd()
+      self.name = f'{cfg.job_name}.{cfg.run_name}'
+
+      self.taskloader = {
+        'deepcoder':loader.DeepcoderTaskloader
+      }[self.cfg.data.type]()
+
+      self.g = self.taskloader.grammar()
+      self.device = torch.device(cfg.device)
+
+      self.model = {
+        'mbas': model.MBAS,
+        'dc': model.Deepcoder, # todo
+        'rb': model.Robustfill, # todo
+      }[cfg.model.type]()
+
+      if cfg.device != 'cpu':
+        self.model.to(self.device)
+
+      self.set_tensorboard(self.name)
+
+    # load full Sing from file
+    if cfg.mode in ('train','test','inspect','profile') and cfg.load:
+      overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
+      device = torch.device(cfg.device) if 'device' in overrides else None
+      # in these cases cfg.load points to a Sing file
+
+      path = sing_path_from_regex(cfg.load)
+      _sing = torch.load(path,map_location=device) # `None` means stay on original device
+      self.clone_from(_sing) # will even copy over stuff like SummaryWriter object so no need for post_load()
+      del _sing
+      if device is not None:
+        self.device = device # override sings device indicator used in various places
+      self.apply_overrides(overrides,cfg)
+      print(f"chdir to {self.cwd}")
+      os.chdir(self.cwd)
+      self.set_tensorboard(self.name)
+
+
+   
+  def save(self, name):
+      path = saves_path() / f'{name}.sing'
+      print(f"saving Sing to {path}...")
+      torch.save(self, f'{path}.tmp')
+      shutil.move(f'{path}.tmp',path)
+      print("done")
   def post_load(self):
-    self.set_tensorboard(self.name)
+    """
+    we should not set_tensorboard() here otherwise when we torch.load
+    a diff sing itll try to init a tensorboard in our location before
+    we've chdired into a better place
+    """
+    pass
   def set_tensorboard(self,log_dir):
+    print("intializing tensorboard")
     self.w = SummaryWriter(
         log_dir=self.name,
         max_queue=1,
     )
+    print("initialized writer for", self.name)
 
 
 class StatTrack():
@@ -62,4 +115,7 @@ class ToOptimize(nn.Module):
     super().__init__()
     self.modules = nn.ModuleList(modules)
 
-sing = Sing() # this is the global Sing instance. Import with `from dreamcoder.matt.sing import sing`
+# note we must never overwrite this Sing. We should never do `matt.sing.sing = ...` 
+# because then it would only overwrite the local version and the version imported by other modules
+# would stay as the old verison. I tested this.
+sing = Sing()

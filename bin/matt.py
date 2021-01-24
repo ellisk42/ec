@@ -55,7 +55,7 @@ def hydra_main(cfg):
             command.main()
 
         # TRAIN
-        elif cfg.mode == 'resume':
+        elif cfg.mode == 'train':
             mlb.yellow("===RESUME TRAIN===")
             print("Entering training loop...")
             train.main()

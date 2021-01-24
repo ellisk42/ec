@@ -9,7 +9,10 @@ import pathlib
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import contextlib
+from time import time
 
+def cls_name(v):
+    return v.__class__.__name__
 
 def which(cfg):
     print(yaml(cfg))
@@ -28,6 +31,25 @@ def timestamp():
     return datetime.now()
 
 ## PATHS
+
+
+def toplevel_path():
+    """
+    /scratch/mlbowers/proj/example_project/
+    """
+    return Path(hydra.utils.to_absolute_path(''))
+
+def outputs_path(p):
+    """
+    Out: /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23
+    """
+    return toplevel_path() / 'outputs/'
+
+def saves_path():
+    """
+    /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/saves
+    """
+    return toplevel_path() / 'saves'
 
 def toplevel_path(p):
     """
@@ -159,3 +181,25 @@ class Saveable:
   def update(self,dict):
       for k,v in dict.items():
           self[k] = v
+  def clone_from(self,other):
+      for k,v in other.__dict__.items():
+          self[k] = v
+
+class RunningFloat:
+    def __init__(self):
+        self.reset()
+    def add(self,x):
+        self.vals.append(float(x))
+    def count(self):
+        return len(self.vals)
+    def avg(self):
+        if self.count() == 0:
+            return 0
+        return sum(self.vals)/len(self.vals)
+    def reset(self):
+        self.vals = []
+        self.tstart = time()
+    def elapsed(self):
+        return time() - self.tstart
+    def rate(self):
+        return self.count() / self.elapsed()

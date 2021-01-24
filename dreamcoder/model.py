@@ -1,21 +1,40 @@
+from dreamcoder.matt.util import *
 import torch
 from torch import nn
 from dreamcoder.matt.sing import sing
 from dreamcoder.SMC import SMC
 from dreamcoder.Astar import Astar
+from dreamcoder.em import ExecutionModel
+from dreamcoder import valueHead,policyHead
 
 class MBAS(nn.Module):
-  def __init__(self,vhead,phead,em,g):
+  def __init__(self):
     super().__init__()
-    self.vhead = vhead
-    self.phead = phead
-    self.em = em
-    self.g = g
 
-    self.running_vloss = RunningLoss()
-    self.running_ploss = RunningLoss()
+    self.em = ExecutionModel()
+
+    self.vhead = {
+      'repl': valueHead.ListREPLValueHead,
+      'rnn': valueHead.SimpleRNNValueHead,
+      'check_invalid': valueHead.InvalidIntermediatesValueHead,
+      'uniform': valueHead.UniformValueHead,
+    }[sing.cfg.model.vhead]()
+
+    self.phead = {
+      'repl': policyHead.ListREPLPolicyHead,
+      'rnn': policyHead.RNNPolicyHead,
+      'uniform': policyHead.UniformPolicyHead,
+    }[sing.cfg.model.phead]()
+
+    self.running_vloss = RunningFloat()
+    self.running_ploss = RunningFloat()
 
     self.optim = torch.optim.Adam(self.parameters(), lr=sing.cfg.optim.lr, eps=1e-3, amsgrad=True)
+
+  def run_tests(self,fs):
+    # fs are the validation frontiers for the record
+    self.em.extractor.run_tests()
+    raise NotImplementedError # run some more tests!
 
   def train_step(self,fs):
     assert len(fs) == 1
@@ -39,8 +58,8 @@ class MBAS(nn.Module):
     sing.tb_scalar('PolicyLoss', self.running_ploss.avg())
     sing.tb_scalar('ValueLoss', self.running_ploss.avg())
 
-    print(f'\tValueLoss {sing.vhead.cls_name} {self.running_vloss.avg()}')
-    print(f'\tPolicyLoss {sing.phead.cls_name} {self.running_ploss.avg()}')
+    print(f'\tValueLoss {cls_name(sing.vhead)} {self.running_vloss.avg()}')
+    print(f'\tPolicyLoss {cls_name(sing.phead)} {self.running_ploss.avg()}')
 
     self.running_ploss.reset()
     self.running_vloss.reset()
@@ -48,9 +67,9 @@ class MBAS(nn.Module):
   def valid_step(self,fs):
     self.eval()
     with torch.no_grad():
-      running_loss = RunningValue()
-      running_vloss = RunningValue()
-      running_ploss = RunningValue()
+      running_loss = RunningFloat()
+      running_vloss = RunningFloat()
+      running_ploss = RunningFloat()
       for f in fs:
         vloss = self.vhead.valueLossFromFrontier(f, self.g)
         ploss = self.phead.policyLossFromFrontier(f, self.g)
@@ -61,7 +80,7 @@ class MBAS(nn.Module):
     sing.tb_scalar('ValidPolicyLoss', self.running_ploss.avg())
     sing.tb_scalar('ValidValueLoss', self.running_vloss.avg())
 
-    to_print = f'\tValidValueLoss {sing.vhead.cls_name} {self.running_vloss.avg()}\n\tValidPolicyLoss {sing.phead.cls_name} {self.running_ploss.avg()}'
+    to_print = f'\tValidValueLoss {cls_name(sing.vhead)} {self.running_vloss.avg()}\n\tValidPolicyLoss {cls_name(sing.phead)} {self.running_ploss.avg()}'
 
     return running_loss.avg(), to_print
 
