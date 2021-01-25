@@ -1,27 +1,13 @@
 
 from dreamcoder.program import Program
-from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 from dreamcoder.task import Task
-from dreamcoder.type import tlist,tbool,tint
 from torch import nn
-from typing import Union,List
-import functools
 import torch
-import mlb
 import numpy as np
 from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
-
 from dreamcoder.matt.sing import sing
-
-
-# class Asn:
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self.val = None
-#     @property
-#     def is_set(self):
-#         return self.val is None
+from dreamcoder.matt.util import *
 
 class PTask:
     """
@@ -53,210 +39,7 @@ class PTask:
     def output_features(self):
         return self.outputs.abstract
     def input_features(self):
-        return sing.em.encode_known_ctx(self.inputs)
-    def reset_encodings(self):
-        self.outputs._neural = None
-        for input in self.inputs:
-            input._neural = None
-
-class Val:
-    def __init__(self,val) -> None:
-        super().__init__()
-        self.val = val
-
-# TODO I duplicated this from valuehead.py so delete that other copy
-class NM(nn.Module):
-    def __init__(self, nArgs, H=512):
-        super().__init__()
-        self.nArgs = nArgs
-        if nArgs > 0:
-            self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
-        else:
-            self.params = nn.Parameter(torch.randn(1, H))
-        
-    def forward(self, *args):
-        if self.nArgs == 0:
-            assert len(args) == 0
-            return self.params
-
-        args = torch.cat(args,dim=1) # cat along example dimension. Harmless if only one thing in args anyways
-        return self.params(args)
-
-
-
-class ValueEncoder(nn.Module):
-    def encode_exwise(self,exwise):
-        pass
-    def encode_known_ctx(self,exwise_list):
-        pass
-
-class NMSemantics(nn.Module):
-    pass
-
-class RNNSemantics(nn.Module):
-    pass
-
-class ExecutionModel(nn.Module):
-    def __init__(self) -> None:
-        self.includes = set()
-        super().__init__()
-    def include_encoder(self):
-        if 'encoder' in self.includes:
-            return
-        self.includes.add('encoder')
-        assert not hasattr(sing.model,'optim') or sing.model.optim is None, "Calling an include_*() after filling your optimizer with params will leave out these new params"
-        from dreamcoder.domains.list.main import ListFeatureExtractor
-        self.encoder = ListFeatureExtractor(maximumLength=sing.taskloader.L_big)
-    def include_program_rnn(self):
-        if 'program_rnn' in self.includes:
-            return
-        self.includes.add('program_rnn')
-        assert not hasattr(sing.model,'optim') or sing.model.optim is None, "Calling an include_*() after filling your optimizer with params will leave out these new params"
-        self.program_rnn = ProgramRNN()
-    def include_nms(self):
-        if 'nms' in self.includes:
-            return
-        self.includes.add('nms')
-        assert not hasattr(sing.model,'optim') or sing.model.optim is None, "Calling an include_*() after filling your optimizer with params will leave out these new params"
-
-        H = sing.cfg.model.H
-        # hole NMs
-        possible_hole_tps = [tint,tbool,tlist(tint)]
-        if not sing.cfg.data.expressive_lambdas:
-            possible_hole_tps += [int_to_int, int_to_bool, int_to_int_to_int]
-        self.hole_nms = nn.ModuleDict()
-        for tp in possible_hole_tps:
-            self.hole_nms[tp.show(True)] = NM(1, H)
-
-        # populate fnModules
-        self.fn_nms = nn.ModuleDict()
-        for p in sing.g.primitives:
-            argc = len(p.tp.functionArguments())
-            self.fn_nms[p.name] = nn.ModuleList([NM(argc, H) for _ in range(argc+1)])
-
-        self.index_nm = NM(0, H)
-        # TODO in the future to allow for >1 toplevel arg the above could be replaced with:
-        # self.index_nms = [NM(0,cfg.model.H) for _ in range(max_index+1)]
-
-        # TODO this is kept the same as the BAS paper however is totally worth experimenting with in the future
-        # (we'd like to improve how lambdas get encoded)
-        nargs = 1 if sing.cfg.model.em.ctxful_lambdas else 0
-        self.lambda_index_nms = nn.ModuleList([NM(nargs,H) for _ in range(2)])
-        self.lambda_hole_nms = nn.ModuleDict()
-        for tp in [tint,tbool]:
-            self.lambda_hole_nms[tp.show(True)] = NM(nargs, H)
-
-    def encode_exwise(self,exwise):
-        """
-        This gets called by Examplewise.abstract() to encode
-        its .concrete field and produce a .abstract field
-        """
-        assert exwise.concrete is not None
-        sing.stats.call_encode_exwise += 1
-        return self.encoder.encodeValue(exwise.concrete)
-
-    def encode_known_ctx(self,exwise_list):
-        """
-        Takes a list of Examplewise objects, abstracts them all, 
-        cats on ctx_start and ctx_end vectors, and runs them thru
-        the extractor's ctx_encoder GRU.
-
-        Note that this doesnt handle the case where there are Nones
-        in the Examplewise list, hence "known" in the name.
-
-        This has the same behavior as inputFeatures from the old days if you pass
-        in all the inputs to the task as exwise_list
-        """
-        sing.stats.call_encode_known_ctx += 1
-        assert all(exwise is not None for exwise in exwise_list)
-
-        lex = self.encoder.lexicon_embedder
-        start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
-        end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
-
-        ctx = torch.cat([start] + [exwise.abstract.unsqueeze(0) for exwise in exwise_list] + [end])
-        _, res = self.encoder.ctx_encoder(ctx)
-        res = res.sum(0) # sum bidir
-        return res
-
-    def sk_task_pnode_compare(self, sks, task, reduce='max'):
-        """
-        encodes tasks and sketches, cats them, runs them through compareModule
-        applies `reduce` over the examples dimension (None means no reduction)
-        """
-        assert isinstance(sks,(list,tuple))
-
-        output_feats = PTask(task).output_features()
-        output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
-        if self.cfg.debug.zero_output_feats:
-            output_feats = torch.zeros_like(output_feats)
-
-        output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]
-        sk_reps = torch.stack([pnode.upward_only_embedding().abstract for pnode in output_pnodes]) # [num_sketches,num_exs,H]
-        #sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
-
-
-        if self.cfg.debug.zero_sk:
-            sk_reps = torch.zeros_like(sk_reps)
-
-        compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
-
-        compared = self.compareModule(compare_input) # [num_sketches,num_exs,H]
-
-        if self.cfg.debug.channel and not self.cfg.debug.zero_output_feats:
-            # check for mixing between sketches
-            x = torch.autograd.grad(
-                outputs=compared[0].sum(),
-                inputs=[output_feats])[0]
-            assert x[0].sum() != 0
-            assert x[1:].sum() == 0
-            print(x)
-
-        if reduce == 'max':
-            compared = compared.max(1).values
-        elif reduce == 'mean':
-            compared = compared.mean(1).values
-        else:
-            assert reduce is None
-        return compared
-
-
-
-class ProgramRNN(nn.Module):
-    def __init__(self):
-        H = self.H = sing.cfg.model.H
-        extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(15)] 
-        self.lexicon = [str(p) for p in sing.g.primitives] + extras
-        self.embedding = nn.Embedding(len(self.lexicon), H)
-        self.wordToIndex = {w: j for j,w in enumerate(self.lexicon) }
-        self.model = nn.GRU(H,H,1)
-    def encode_sketches(self, sketches):
-        #don't use spec, just there for the API
-        assert type(sketches) == list
-        #idk if obj is a list of objs... presuably it ususaly is 
-        from dreamcoder.valueHead import stringify
-        tokens_list = [ stringify(str(sketch)) for sketch in sketches]
-        symbolSequence_list = [[self.wordToIndex[t] for t in tokens] for tokens in tokens_list]
-        inputSequences = [torch.tensor(ss,device=sing.device) for ss in symbolSequence_list] #this is impossible
-        inputSequences = [self.embedding(ss) for ss in inputSequences]
-        # import pdb; pdb.set_trace()
-        idxs, inputSequence = zip(*sorted(enumerate(inputSequences), key=lambda x: -len(x[1])  ) )
-        try:
-            packed_inputSequence = torch.nn.utils.rnn.pack_sequence(inputSequence)
-        except ValueError:
-            print("padding issues, not in correct order")
-            import pdb; pdb.set_trace()
-
-        _,h = self.model(packed_inputSequence) #dims
-        unperm_idx, _ = zip(*sorted(enumerate(idxs), key = lambda x: x[1]))
-        h = h[:, unperm_idx, :]
-        h = h.squeeze(0)
-        #o = o.squeeze(1)
-        objectEncodings = h
-        return objectEncodings
-    
-
-
+        return sing.model.abstraction_fn.encode_known_ctx(self.inputs)
 
 class Examplewise:
     """
@@ -287,7 +70,7 @@ class Examplewise:
     @property
     def abstract(self):
         if self._abstract is None:
-            self._abstract = sing.em.encode_exwise(self)
+            self._abstract = sing.model.abstraction_fn.encode_exwise(self)
         return self._abstract
 
     def as_concrete_fn(self,*args):
@@ -341,20 +124,6 @@ class Examplewise:
         return repr(self.abstract) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
 
 
-def uncurry(fn,args):
-    """
-    if youd normally call the fn like fn(a)(b)(c)
-    you can call it like uncurry(fn,[a,b,c])
-    """
-    if len(args) == 0:
-        return fn()
-    res = None
-    for arg in args:
-        if res is not None:
-            res = res(arg)
-        else:
-            res = fn(arg)
-    return res
 class PNode:
     """
 
@@ -492,15 +261,15 @@ class PNode:
                 return exwise
             # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
             assert self.in_HOF_lambda
-            return Examplewise(sing.em.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
+            return Examplewise(sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
 
         elif self.isHole:
             if self.in_HOF_lambda:
                 # contextless hole as in BAS
-                return Examplewise(sing.em.lambda_hole_nms[self.tp.show(True)]().expand(sing.num_exs,-1))
+                return Examplewise(sing.model.abstract_transformers.lambda_hole_nms[self.tp.show(True)]().expand(sing.num_exs,-1))
             # not in lambda
-            ctx = sing.em.encode_known_ctx(self.ctx)
-            return  Examplewise(sing.em.hole_nms[self.tp.show(True)](ctx))
+            ctx = sing.model.abstraction_fn.encode_known_ctx(self.ctx)
+            return  Examplewise(sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx))
 
         elif self.isAbstraction:
             # in terms of evaluation, abstractions do nothing but pass along data
@@ -538,7 +307,7 @@ class PNode:
                 return self.fn.propagate(self).as_concrete_fn(*evaluated_args)
             ## ABSTRACT EVAL
             sing.stats.fn_called_abstractly += 1
-            nm = sing.em.fn_nms[self.fn.name][propagation_direction]
+            nm = sing.model.abstract_transformers.fn_nms[self.fn.name][propagation_direction]
             return Examplewise(nm(*[arg.abstract for arg in evaluated_args]))
 
         else:
@@ -625,20 +394,3 @@ class PNode:
     #         node = node.body
     #         i += 1
     #     return node,i
-
-
-        
-
-
-
-def range_check(fn):
-    """
-    decorator that checks the output of a function and raises an InvalidSketchError
-    if the function ever outputs a value outside of the expected range
-    """
-    @functools.wraps(fn)
-    def wrapped(self,*args, **kwargs):
-        assert isinstance(self,PNode)
-        res = fn(self,*args, **kwargs)
-        return res
-    return wrapped

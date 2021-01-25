@@ -258,7 +258,7 @@ from dreamcoder.matt.sing import sing
 class ListFeatureExtractor(RecurrentFeatureExtractor):
     special = None
     def __init__(self, maximumLength):
-        c = sing.cfg.model.em
+        c = sing.cfg.model.abstraction_fn
         modular = c.modular
         bidir_ctx = c.bidir_ctx
         bidir_int = c.bidir_int
@@ -538,7 +538,7 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
                 # undo the flattening
                 pad_till = max(ints_per_ex)+2 # +2 for LIST_START and LIST_END
                 # make our examplewise tensor with padding already inserted as zeros
-                exs_tensor = torch.zeros(len(exs),pad_till,self.H, device=self.device) # [num_exs,longest_list_len,H]
+                exs_tensor = torch.zeros(len(exs),pad_till,self.H, device=sing.device) # [num_exs,longest_list_len,H]
                 #exs_tensor = exs_tensor.to(self.device)
                 j = 0
                 # add LIST_START

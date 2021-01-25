@@ -1,4 +1,3 @@
-from dreamcoder.em import Val
 from dreamcoder.matt.util import *
 unthread()
 try:
@@ -6,7 +5,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.matt import plot,test,train,fix,profile,command
+from dreamcoder.matt import plot,test,train,fix,profile,command,testgen
 from dreamcoder.matt.sing import sing
 
 from mlb.mail import email_me,text_me
@@ -26,7 +25,6 @@ import traceback
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
-    print()
 
     with open_dict(cfg):
         cfg.start_time = str(timestamp())

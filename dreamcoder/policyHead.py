@@ -66,7 +66,7 @@ from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
-from dreamcoder.em import PNode,PTask
+from dreamcoder.pnode import PNode,PTask
 from dreamcoder.matt.sing import sing
 
 
@@ -155,11 +155,11 @@ class PolicyHead(nn.Module):
             #print(f'\t\thole={hole}')
             #print(f'\t\ttarget={target}')
 
-        maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
+        maskedDist = self.distribution(posTraces, holesToExpand, frontier.task, g)
         
         # maskedDist :: [5,49]
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
-        targets = torch.tensor(targets, device=self.device)# :: [5]
+        targets = torch.tensor(targets, device=sing.device)# :: [5]
         loss = self.lossFn(maskedDist, targets)
         if loss.item() == np.inf:
             mlb.red("ISSUE FOUND, you seem to be masking out the right answer")
@@ -224,11 +224,8 @@ class PolicyHead(nn.Module):
             masks.append(mask)
         mask = torch.tensor(masks)
         mask = torch.log(mask)
-        mask = mask.to(self.device)
+        mask = mask.to(sing.device)
         return mask
-    @property
-    def device(self):
-        raise NotImplementedError
 class UniformPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__()
@@ -292,10 +289,6 @@ class DeepcoderListPolicyHead(PolicyHead):
 class RNNPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__() #should have featureExtractor?
-
-        sing.model.em.include_encoder()
-        sing.model.em.include_program_rnn()
-
         maxVar = 15
 
         self.H = H = sing.cfg.model.H
@@ -330,15 +323,15 @@ class RNNPolicyHead(PolicyHead):
     def distribution(self, sketches, zippers, task, g):
         ptask = PTask(task)
         #need raw dist, and then which are valid and which is correct ... 
-        sketchEncodings = sing.em.program_rnn.encode_sketches(sketches) # [5,64]
-        if sing.cfg.model.extractor.digitwise:
+        sketchEncodings = sing.model.program_rnn.encode_sketches(sketches) # [5,64]
+        if sing.cfg.model.abstraction_fn.digitwise:
             # input feats
             #in_feats = self.featureExtractor.inputFeatures(task)
             in_feats = ptask.input_features()
             # other = sing.em.encoder.old_inputFeatures(task)
             # assert in_feats.isclose(other).all()
             in_feats = in_feats.mean(0) # mean over examples
-            if self.cfg.debug.zero_input_feats:
+            if sing.cfg.debug.zero_input_feats:
                 in_feats = torch.zeros_like(in_feats)
 
             # output feats
@@ -347,7 +340,7 @@ class RNNPolicyHead(PolicyHead):
             # other = sing.em.encoder.old_outputFeatures(task)
             # assert out_feats.isclose(other).all()
             out_feats = out_feats.mean(0) # mean over examples
-            if self.cfg.debug.zero_output_feats:
+            if sing.cfg.debug.zero_output_feats:
                 out_feats = torch.zeros_like(out_feats)
             
             # combine them
@@ -365,8 +358,6 @@ class RNNPolicyHead(PolicyHead):
 class ListREPLPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__()
-        sing.model.em.include_encoder()
-        sing.model.em.include_nms()
         maxVar = 10
 
         self.H = H = sing.cfg.model.H
@@ -398,7 +389,7 @@ class ListREPLPolicyHead(PolicyHead):
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
     def distribution(self, sketches, zippers, task, g):
-        compared = sing.model.em.sk_task_pnode_compare(sketches,task,reduce='max') # [num_sks,H]
+        compared = sing.model.abstract_comparer(sketches,task,reduce='max') # [num_sks,H]
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask

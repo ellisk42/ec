@@ -3,15 +3,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence
 from dreamcoder.program import Hole,Program
 from dreamcoder.grammar import *
 from dreamcoder.zipper import *
 from dreamcoder.utilities import RunWithTimeout
-from collections import defaultdict
 import random
-import time
 import mlb
 from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
 from dreamcoder.domains.tower.tower_common import renderPlan
@@ -22,9 +18,7 @@ import types
 from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
-#from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError,check_in_range,evaluate_ctxs,ctxs_of_examples, strip_lambdas, has_index
 from dreamcoder.domains.list.makeDeepcoderData import *
-from dreamcoder.em import PNode,PTask
 
 from dreamcoder.matt.sing import sing
 

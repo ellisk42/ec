@@ -5,11 +5,12 @@ ordering: last
 H: 64
 vhead: check_invalid # repl | rnn | check_invalid | uniform
 phead: repl # repl | rnn | uniform
-em:
+abstraction_fn: # AbstractionFn class
   modular: True
   digitwise: True
   bidir_ctx: True
   bidir_int: True 
+pnode: # anything to do with pnodes, neural execution, blended execution, etc
   ctxful_lambdas: False
   encode_index_as: constant # inputs | constant
   allow_concrete_eval: True

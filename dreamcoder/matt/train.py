@@ -118,6 +118,7 @@ def main():
 
         t.start = time()
         t.loss, t.to_print = sing.model.train_step(t.fs)
+        t.loss = float(t.loss)
         t.elapsed = time() - t.start
         print(f'Loss {t.loss:.2f} in {t.elapsed:.3f}s on {[f.p for f in t.fs]}')
         if t.to_print is not None: print(t.to_print)
@@ -134,7 +135,7 @@ def main():
 
         # printing and logging
         if s.print_every.check():
-            print(f"[{s.j}] {s.running_loss.rate():.2g} steps/sec {sing.cls_name} {s.running_loss.avg()}")
+            print(f"[{s.j}] {s.running_loss.rate():.2g} steps/sec {cls_name(sing.model)} {s.running_loss.avg()}")
             sing.tb_scalar('TrainLoss',s.running_loss.avg())
             s.running_loss.reset()
 
@@ -155,7 +156,7 @@ def main():
         if s.valid_every.check():
             t.valid_loss, t.to_print = sing.model.valid_step(sing.taskloader.valid_tasks())
             sing.tb_scalar('ValidationLoss',t.valid_loss)
-            blue(f"[{s.j}] {sing.cls_name} {t.valid_loss}")
+            blue(f"[{s.j}] {cls_name(sing.model)} {t.valid_loss}")
             if t.to_print is not None: print(t.to_print)
 
             # save model if new record for lowest validation loss

@@ -40,7 +40,7 @@ class Sing(Saveable):
         - for the record, we consider util.py to be used even more so it has to import sing within its own functions
         """
         from dreamcoder.matt.train import TrainState
-        from dreamcoder import model,loader
+        from dreamcoder import models,loader
 
         self.train_state = TrainState(cfg)
         self.cwd = cwd_path()
@@ -55,9 +55,9 @@ class Sing(Saveable):
         self.g = self.taskloader.g
 
         self.model = {
-          'mbas': model.MBAS,
-          'dc': model.Deepcoder, # todo
-          'rb': model.Robustfill, # todo
+          'mbas': models.MBAS,
+          'dc': models.Deepcoder, # todo
+          'rb': models.Robustfill, # todo
         }[cfg.model.type]()
 
         self.model.to(self.device)
@@ -126,7 +126,7 @@ class Sing(Saveable):
       plot_name = f'{plot_name}/{cls_name(sing.model)}'
 
     if j is None:
-      j = sing.s.j
+      j = sing.train_state.j
     
     self.w.add_scalar(plot_name, val, j)
     self.w.flush()
@@ -145,7 +145,7 @@ class Stats:
   """
   def print_stats(self):
     print("Stats:")
-    for k,v in self.__dict__:
+    for k,v in self.__dict__.items():
       print(f'\t{k}: {v}')
 
 

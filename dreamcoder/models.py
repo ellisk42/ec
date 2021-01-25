@@ -4,9 +4,9 @@ from torch import nn
 from dreamcoder.matt.sing import sing
 from dreamcoder.SMC import SMC
 from dreamcoder.Astar import Astar
-from dreamcoder.em import ExecutionModel
 from dreamcoder import valueHead,policyHead
 from dreamcoder.matt import plot
+from dreamcoder import aux_models
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 
 class MBAS(nn.Module):
@@ -17,7 +17,37 @@ class MBAS(nn.Module):
     sing.stats.call_encode_exwise = 0
     sing.stats.fn_called_concretely = 0
     sing.stats.fn_called_abstractly = 0
+    self.running_vloss = RunningFloat()
+    self.running_ploss = RunningFloat()
 
+
+    # add all submodules required by vhead and phead
+    submodules = set()
+
+    submodules |= {
+      'repl': {aux_models.AbstractionFn, aux_models.AbstractTransformers, aux_models.AbstractComparer},
+      'rnn': {aux_models.AbstractionFn, aux_models.ProgramRNN},
+      'check_invalid': set(),
+      'uniform': set(),
+    }[sing.cfg.model.vhead]
+
+    submodules |= {
+      'repl': {aux_models.AbstractionFn, aux_models.AbstractTransformers, aux_models.AbstractComparer},
+      'rnn': {aux_models.AbstractionFn, aux_models.ProgramRNN},
+      'uniform': set(),
+    }[sing.cfg.model.phead]
+
+    for mod in submodules:
+      # initialize submodules and assign as attributes to self
+      name = {
+        aux_models.AbstractionFn: 'abstraction_fn',
+        aux_models.AbstractTransformers: 'abstract_transformers',
+        aux_models.AbstractComparer: 'abstract_comparer',
+        aux_models.ProgramRNN: 'program_rnn',
+      }[mod]
+      setattr(self,name,mod())
+
+    # vhead and phead init
 
     self.vhead = {
       'repl': valueHead.ListREPLValueHead,
@@ -32,16 +62,12 @@ class MBAS(nn.Module):
       'uniform': policyHead.UniformPolicyHead,
     }[sing.cfg.model.phead]()
 
-    self.em = ExecutionModel()
-
-    self.running_vloss = RunningFloat()
-    self.running_ploss = RunningFloat()
-
+    # init the optimizer
     self.optim = torch.optim.Adam(self.parameters(), lr=sing.cfg.optim.lr, eps=1e-3, amsgrad=True)
 
   def run_tests(self,fs):
     # fs are the validation frontiers for the record
-    self.em.encoder.run_tests()
+    self.abstraction_fn.encoder.run_tests()
     # TODO run more tests here!
 
   def train_step(self,fs):
@@ -59,15 +85,14 @@ class MBAS(nn.Module):
     loss = vloss + ploss
     loss.backward()
     self.optim.step()
-    to_print = f'\tconcrete: {sing.track.concrete_ratio():.3f})'
-    return loss, to_print
+    return loss, None
 
   def print_every(self):
     sing.tb_scalar('PolicyLoss', self.running_ploss.avg())
     sing.tb_scalar('ValueLoss', self.running_ploss.avg())
 
-    print(f'\tValueLoss {cls_name(sing.vhead)} {self.running_vloss.avg()}')
-    print(f'\tPolicyLoss {cls_name(sing.phead)} {self.running_ploss.avg()}')
+    print(f'\tValueLoss {cls_name(self.vhead)} {self.running_vloss.avg()}')
+    print(f'\tPolicyLoss {cls_name(self.phead)} {self.running_ploss.avg()}')
 
     self.running_ploss.reset()
     self.running_vloss.reset()
@@ -90,7 +115,7 @@ class MBAS(nn.Module):
     sing.tb_scalar('ValidPolicyLoss', self.running_ploss.avg())
     sing.tb_scalar('ValidValueLoss', self.running_vloss.avg())
 
-    to_print = f'\tValidValueLoss {cls_name(sing.vhead)} {self.running_vloss.avg()}\n\tValidPolicyLoss {cls_name(sing.phead)} {self.running_ploss.avg()}'
+    to_print = f'\tValidValueLoss {cls_name(self.vhead)} {self.running_vloss.avg()}\n\tValidPolicyLoss {cls_name(self.phead)} {self.running_ploss.avg()}'
 
     return running_loss.avg(), to_print
 

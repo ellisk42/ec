@@ -241,3 +241,18 @@ class RunningFloat:
         return time() - self.tstart
     def rate(self):
         return self.count() / self.elapsed()
+
+def uncurry(fn,args):
+    """
+    if youd normally call the fn like fn(a)(b)(c)
+    you can call it like uncurry(fn,[a,b,c])
+    """
+    if len(args) == 0:
+        return fn()
+    res = None
+    for arg in args:
+        if res is not None:
+            res = res(arg)
+        else:
+            res = fn(arg)
+    return res
