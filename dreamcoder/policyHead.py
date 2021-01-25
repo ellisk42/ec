@@ -106,7 +106,7 @@ class PolicyHead(nn.Module):
                         maximumDepth=4):
 
         try:
-            dist = self._computeDist([sk], [holeZipper], task, g)
+            dist = self.distribution([sk], [holeZipper], task, g)
         except InvalidSketchError as e:
             mlb.red(f"enumSingleStep Valuehead should have caught this: {e}")
             return # pretend there are no expansions off of it

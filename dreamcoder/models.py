@@ -134,7 +134,7 @@ class MBAS(nn.Module):
     solver = {
       'astar': Astar,
       'smc': SMC,
-    }[self.cfg.solver.type](self.phead, self.vhead, sing.cfg.solver.type)
+    }[sing.cfg.solver.type](self.phead, self.vhead, sing.cfg.solver)
 
     starting_nodes = None # related to cfg.test.scaffold
 
@@ -143,26 +143,26 @@ class MBAS(nn.Module):
     self.eval()
     with torch.no_grad():
       for i,f in enumerate(fs):
-        fs, times, num_progs, solns = solver.infer(
+        t = f.t
+        _fs, times, num_progs, solns = solver.infer(
           sing.g,
-          [f],
+          [t],
           likelihood_model,
           timeout=timeout,
           starting_nodes=starting_nodes
         )
-        solns = solns[f]
-        times = times[f]
+        solns = solns[t]
+        time = times[t]
         if len(solns) == 0:
           search_tries.append(plot.SearchTry(timeout,num_progs,None))
           if verbose:
-            red(f"[{i+1}/{len(fs)}] failed to solve {f.name} (searched {num_progs} programs)")
+            red(f"[{i+1}/{len(fs)}] failed to solve {t.name} (searched {num_progs} programs)")
         else:
-          assert len(solns) == len(times) == 1
+          assert len(solns) == 1
           [soln] = solns
-          [time] = times
           search_tries.append(plot.SearchTry(time,num_progs,soln))
           if verbose:
-              green(f"[{i+1}/{len(fs)}] solved {f.name} in {time:.2f}s (searched {num_progs} programs)")
+              green(f"[{i+1}/{len(fs)}] solved {t.name} in {time:.2f}s (searched {num_progs} programs)")
               raise NotImplementedError # reimplement get_depth t,d,s
               t,d,s = get_depth(solns[0].program)
               print(f"\t-> [T{t}d{d}s{s}] {soln.program}")

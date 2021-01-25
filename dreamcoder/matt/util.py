@@ -82,6 +82,11 @@ Please read these points if you want to know how to make a certain path.
 
 """
 
+def init_paths():
+    assert cwd_path() != toplevel_path(), "must be called when already within an experiment folder"
+    saves_path().mkdir()
+    plots_path().mkdir()
+
 def toplevel_path():
     """
     Same as the overall git repo path.

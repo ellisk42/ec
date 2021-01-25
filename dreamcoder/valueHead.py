@@ -19,6 +19,7 @@ from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 from dreamcoder.domains.list.makeDeepcoderData import *
+from dreamcoder.pnode import PNode,PTask
 
 from dreamcoder.matt.sing import sing
 
@@ -640,10 +641,10 @@ class InvalidIntermediatesValueHead(ValueHead):
         super().__init__()
     def valueLossFromFrontier(self, f, g):
         return torch.tensor([0.], device=sing.device)
-    def computeValue(self, sketch, task):
+    def value(self, sketch, task):
         try:
-            raise NotImplementedError
-            # concrete_rep(sketch,task,None,False,self.cfg.data.test.V)
+            p = PNode(sketch,parent=None,ctx=[],from_task=task)
+            p.propagate(None,concrete_only=True)
         except InvalidSketchError as e:
             print(f"caught an invalid sketch {e}")
             return 100000000000

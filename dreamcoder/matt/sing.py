@@ -44,6 +44,7 @@ class Sing(Saveable):
 
         self.train_state = TrainState(cfg)
         self.cwd = cwd_path()
+        init_paths()
         self.name = f'{cfg.job_name}.{cfg.run_name}'
         self.device = torch.device(cfg.device)
         self.stats = Stats()

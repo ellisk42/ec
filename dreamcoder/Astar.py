@@ -73,7 +73,7 @@ class Astar(Solver):
                               timeout=None,
                               elapsedTime=0.,
                               starting_nodes=None,
-                              maximumFrontiers=None): #IDK what this is...
+                              maximumFrontiers=2): #IDK what this is...
         
         assert hasattr(self.phead,'ordering')
         self.ordering = self.phead.ordering
@@ -91,7 +91,7 @@ class Astar(Solver):
         # if not all(task == tasks[0] for task in tasks):
         #     print("WARNING, tasks are not all the same")
         task = tasks[0]
-        self.maximumFrontiers = [maximumFrontiers[t] for t in tasks]
+        self.maximumFrontiers = [2]
         # store all of the hits in a priority queue
         self.fullPrograms = set()
         hits = [PQ() for _ in tasks]
@@ -160,8 +160,8 @@ class Astar(Solver):
                                                         totalNumberOfPrograms)
                         else: continue
 
-                    valueCost = self.vhead.computeValue(neighbor, task) #TODO 
-                    totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
+                    valueCost = self.vhead.value(neighbor, task) #TODO 
+                    totalCost = policyCost - self.critic_coeff * valueCost #TODO normalize and scale
                     #print("neighbor:", neighbor)
                     #print("policyCost", policyCost)
                     #print("valueCost", valueCost)

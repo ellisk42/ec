@@ -226,7 +226,7 @@ class PNode:
     def upward_only_embedding(self):
         assert self.isOutput
         return self.propagate(None)
-    def propagate(self,towards):
+    def propagate(self,towards, concrete_only=False):
         """
         returns :: Examplewise
 
@@ -236,8 +236,15 @@ class PNode:
         Note the towards field can be safely ignored by all leaves of the tree since theyre always propagated
         towards their parent
 
-        Prim -> do concrete eval
-        Index -> 
+        With concrete_only turned on this doesnt call any neural networks it just returns None
+        in those cases. So if your program has holes then evaluating it will definitely
+        return None. Why is this useful? It's good for the InvalidIntermediatesValueHead
+        where you want to pull out all the concrete portions of trees and evaluate them so
+        that you construct Examplewises (which automatically throw InvalidSketch errors at
+        invalid values). I implemented that in here instead of as a traversal bc
+        it's fairly straightforward and it guarantees that itll follow propagation semantics
+        precisely
+        
 
 
         """
@@ -247,7 +254,7 @@ class PNode:
                 return self.task.outputs
             else:
                 # propagate upwards: evaluate the whole tree
-                return self.tree.propagate(self)
+                return self.tree.propagate(self,concrete_only=concrete_only)
 
         elif self.isPrimitive:
             return Examplewise([self.value for _ in range(sing.num_exs)])
@@ -261,9 +268,11 @@ class PNode:
                 return exwise
             # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
             assert self.in_HOF_lambda
+            if concrete_only: return None
             return Examplewise(sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
 
         elif self.isHole:
+            if concrete_only: return None
             if self.in_HOF_lambda:
                 # contextless hole as in BAS
                 return Examplewise(sing.model.abstract_transformers.lambda_hole_nms[self.tp.show(True)]().expand(sing.num_exs,-1))
@@ -282,9 +291,9 @@ class PNode:
                     if not self.parent.hasHoles:
                         fn = self.execute_single([])
                         return Examplewise([fn for _ in range(sing.num_exs)])
-                return self.body.propagate(self)
+                return self.body.propagate(self,concrete_only=concrete_only)
             elif towards is self.body: # evaluate self.parent
-                return self.parent.propagate(self)
+                return self.parent.propagate(self,concrete_only=concrete_only)
             else:
                 raise ValueError
 
@@ -297,15 +306,19 @@ class PNode:
             # propagation_direction == 1 is when the output is arg0, ==2 is when output is arg1, etc
 
             assert self.fn.isPrimitive, "Limitation, was there in old abstract repl too, can improve upon when it matters"
-            evaluated_args = [node.propagate(self) for node in possible_args if node is not towards]
-            if towards is self.parent and all(arg.concrete is not None for arg in evaluated_args) and sing.cfg.model.allow_concrete_eval:
+            evaluated_args = [node.propagate(self,concrete_only=concrete_only) for node in possible_args if node is not towards]
+
+            if concrete_only and None in evaluated_args: return None # one of our chilren was abstract
+
+            if towards is self.parent and all(arg.concrete is not None for arg in evaluated_args) and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
                 ## CONCRETE EVAL
                 # calls evaluate() on self.fn which should return a concrete callable primitive
                 # wrapped in an Examplewise then we just use Examplewise.as_concrete_function
                 # to apply it to other examplewise arguments
-                sing.stats.fn_called_concretely += 1
-                return self.fn.propagate(self).as_concrete_fn(*evaluated_args)
+                if not concrete_only: sing.stats.fn_called_concretely += 1
+                return self.fn.propagate(self, concrete_only=concrete_only).as_concrete_fn(*evaluated_args)
             ## ABSTRACT EVAL
+            assert not concrete_only # the earlier check would have caught this
             sing.stats.fn_called_abstractly += 1
             nm = sing.model.abstract_transformers.fn_nms[self.fn.name][propagation_direction]
             return Examplewise(nm(*[arg.abstract for arg in evaluated_args]))
@@ -368,6 +381,10 @@ class PNode:
             self.fn.traverse(fn)
             for x in self.xs:
                 x.traverse(fn)
+        elif self.isIndex or self.isHole or self.isPrimitive:
+            pass
+        else:
+            raise TypeError
     def size(self):
         sz = 0
         def _size(node):
