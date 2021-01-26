@@ -87,6 +87,18 @@ def init_paths():
     saves_path().mkdir()
     plots_path().mkdir()
 
+def get_unique_path(orig_path):
+    """
+    Takes a path like foo/bar/baz.xyz and returns a path like foo/bar/baz.xyz.2
+    or however much naming is needed to avoid conflict.
+    """
+    p = Path(orig_path) # in case its not
+    i=0
+    while p.exists():
+        p = pathlib.Path(f'{orig_path}.{i}')
+        i += 1
+    return p
+
 def toplevel_path():
     """
     Same as the overall git repo path.
@@ -120,6 +132,13 @@ def saves_path():
     /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/saves
     """
     return cwd_path() / 'saves'
+
+def model_results_path():
+    """
+    the saves folder
+    /scratch/mlbowers/proj/example_project/outputs/12-31-20/12-23-23/model_results
+    """
+    return cwd_path() / 'model_results'
 
 def plots_path():
     """

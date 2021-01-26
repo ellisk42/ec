@@ -163,15 +163,14 @@ class MBAS(nn.Module):
           search_tries.append(plot.SearchTry(time,num_progs,soln))
           if verbose:
               green(f"[{i+1}/{len(fs)}] solved {t.name} in {time:.2f}s (searched {num_progs} programs)")
-              raise NotImplementedError # reimplement get_depth t,d,s
-              t,d,s = get_depth(solns[0].program)
-              print(f"\t-> [T{t}d{d}s{s}] {soln.program}")
+              # t,d,s = get_depth(solns[0].program)
+              # print(f"\t-> [T{t}d{d}s{s}] {soln.program}")
+              print(f"\t-> {soln.program}")
     
-    raise NotImplementedError
     if verbose:
-      blue(f'solved {len(search_tries)}/{len(fs)} tasks ({len(search_results)/len(test_tasks)*100:.1f}%)\n')
-    model_result = plot.ModelResult(prefix=prefix,name=name, cfg=astar.owner.policyHead.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout)
-
+      blue(f'solved {len(search_tries)}/{len(fs)} tasks ({len(search_tries)/len(fs)*100:.1f}%)\n')
+    model_result = plot.ModelResult(search_tries,timeout)
+    return model_result
     
 class Deepcoder(nn.Module):
   pass # todo

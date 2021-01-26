@@ -172,7 +172,6 @@ def main():
                                               timeout=sing.cfg.loop.search_valid_timeout,
                                               verbose=True)
             sing.tb_scalar('ValidationAccuracy', t.model_result.accuracy())
-            raise NotImplementedError #TODO fig out how we wanna to these plots
             sing.tb_plot(t.model_result, file='validation', tb_name=f'ValdiationAccuracy')
 
         if s.save_every.check():
