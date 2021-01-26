@@ -395,7 +395,10 @@ class PNode:
             exwise = self.ctx[self.i]
             if exwise is not None:
                 # this branch is taken for all toplevel args
-                return exwise
+                if sing.cfg.model.allow_concrete_eval:
+                    return exwise
+                else:
+                    return Examplewise(sing.em.index_nm().expand(sing.num_exs,-1)) # to be same as BAS
             # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
             assert self.in_HOF_lambda
             return Examplewise(sing.em.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
