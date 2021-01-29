@@ -7,19 +7,20 @@ from dreamcoder.pnode import PNode,PTask,Examplewise
 
 # TODO I duplicated this from valuehead.py so delete that other copy
 class NM(nn.Module):
-    def __init__(self, nArgs, H=512):
+    def __init__(self, argc, H=None):
         super().__init__()
-        self.nArgs = nArgs
-        if nArgs > 0:
-            self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
+        if H is None:
+            H = sing.cfg.model.H
+        self.argc = argc
+        if argc > 0:
+            self.params = nn.Sequential(nn.Linear(argc*H, H), nn.ReLU())
         else:
             self.params = nn.Parameter(torch.randn(1, H))
         
     def forward(self, *args):
-        if self.nArgs == 0:
-            assert len(args) == 0
+        assert len(args) == self.argc
+        if self.argc == 0:
             return self.params
-
         args = torch.cat(args,dim=1) # cat along example dimension. Harmless if only one thing in args anyways
         return self.params(args)
 
@@ -105,28 +106,33 @@ class AbstractTransformers(nn.Module):
         possible_hole_tps += [int_to_int, int_to_bool, int_to_int_to_int]
     self.hole_nms = nn.ModuleDict()
     for tp in possible_hole_tps:
-        self.hole_nms[tp.show(True)] = NM(1, H)
+        self.hole_nms[tp.show(True)] = NM(1)
 
     # populate fnModules
     self.fn_nms = nn.ModuleDict()
     for p in sing.g.primitives:
         argc = len(p.tp.functionArguments())
-        self.fn_nms[p.name] = nn.ModuleList([NM(argc, H) for _ in range(argc+1)])
+        self.fn_nms[p.name] = nn.ModuleList([NM(argc) for _ in range(argc+1)])
 
-    self.index_nm = NM(0, H)
+    self.index_nm = NM(0)
     # TODO in the future to allow for >1 toplevel arg the above could be replaced with:
     # self.index_nms = [NM(0,cfg.model.H) for _ in range(max_index+1)]
 
     # TODO this is kept the same as the BAS paper however is totally worth experimenting with in the future
     # (we'd like to improve how lambdas get encoded)
-    nargs = 1 if sing.cfg.model.em.ctxful_lambdas else 0
-    self.lambda_index_nms = nn.ModuleList([NM(nargs,H) for _ in range(2)])
+    nargs = 1 if sing.cfg.model.pnode.ctxful_lambdas else 0
+    self.lambda_index_nms = nn.ModuleList([NM(nargs) for _ in range(2)])
     self.lambda_hole_nms = nn.ModuleDict()
     for tp in [tint,tbool]:
-        self.lambda_hole_nms[tp.show(True)] = NM(nargs, H)
+        self.lambda_hole_nms[tp.show(True)] = NM(nargs)
 
 class AbstractComparer(nn.Module):
-  def pnode_compare(self, sks, task):
+  def __init__(self):
+      super().__init__()
+      H = sing.cfg.model.H
+      self.compare_module = nn.Sequential(nn.Linear(H*2, H), nn.ReLU())
+
+  def forward(self, sks, task):
     """
     encodes tasks and sketches, cats them, runs them through compareModule
     applies `reduce` over the examples dimension (None means no reduction)
@@ -135,7 +141,7 @@ class AbstractComparer(nn.Module):
 
     output_feats = PTask(task).output_features()
     output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
-    if self.cfg.debug.zero_output_feats:
+    if sing.cfg.debug.zero_output_feats:
         output_feats = torch.zeros_like(output_feats)
 
     output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]
@@ -143,14 +149,14 @@ class AbstractComparer(nn.Module):
     #sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
 
 
-    if self.cfg.debug.zero_sk:
+    if sing.cfg.debug.zero_sk:
         sk_reps = torch.zeros_like(sk_reps)
 
     compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
 
-    compared = self.compareModule(compare_input) # [num_sketches,num_exs,H]
+    compared = self.compare_module(compare_input) # [num_sketches,num_exs,H]
 
-    if self.cfg.debug.channel and not self.cfg.debug.zero_output_feats:
+    if sing.cfg.debug.channel and not sing.cfg.debug.zero_output_feats:
         # check for mixing between sketches
         x = torch.autograd.grad(
             outputs=compared[0].sum(),
@@ -159,11 +165,4 @@ class AbstractComparer(nn.Module):
         assert x[1:].sum() == 0
         print(x)
 
-    assert False # TODO make the caller do the .max(1) or .mean(1)
-    if reduce == 'max':
-        compared = compared.max(1).values
-    elif reduce == 'mean':
-        compared = compared.mean(1).values
-    else:
-        assert reduce is None
     return compared

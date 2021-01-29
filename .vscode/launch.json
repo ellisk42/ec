@@ -103,6 +103,7 @@
                 "model=mbas",
                 "model.vhead=check_invalid",
                 "model.phead=repl",
+                "model.pnode.allow_concrete_eval=False",
 
                 "data.T=2",
                 "data.lambda_depth=3",

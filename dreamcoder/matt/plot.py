@@ -12,7 +12,6 @@ class SearchTry:
     self.soln = soln
     self.time = time
     self.nodes_expanded = nodes_expanded
-
 class ModelResult:
     def __init__(self,
                  search_tries,
@@ -73,7 +72,6 @@ def load_model_results(load):
         print(f"\t{m.cfg.job_name}.{m.cfg.run_name} from {p}")
 
     return model_results
-    
 
 def main():
 

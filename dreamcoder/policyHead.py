@@ -128,7 +128,7 @@ class PolicyHead(nn.Module):
         else:
             fullProg = entry.program._fullProg
 
-        if not isinstance(self,RNNPolicyHead) and sing.cfg.model.allow_concrete_eval:
+        if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
             p = PNode(fullProg,parent=None,ctx=[],from_task=frontier.task)
             # make sure concrete part of propagate() works
             assert p.upward_only_embedding().concrete == p.task.outputs.concrete
@@ -389,7 +389,8 @@ class ListREPLPolicyHead(PolicyHead):
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
     def distribution(self, sketches, zippers, task, g):
-        compared = sing.model.abstract_comparer(sketches,task,reduce='max') # [num_sks,H]
+        compared = sing.model.abstract_comparer(sketches,task)
+        compared = compared.max(1).values
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
