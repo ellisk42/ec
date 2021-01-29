@@ -8,9 +8,11 @@ Nothing in this file is initialized because we want it to be set manually by wha
 from dreamcoder.matt.util import *
 import torch.nn as nn
 import torch
+import traceback
 import functools
 from torch.utils.tensorboard import SummaryWriter
 import shutil
+from mlb.mail import email_me,text_me
 
 class Sing(Saveable):
   no_save = ('w',)
@@ -71,7 +73,18 @@ class Sing(Saveable):
         device = torch.device(cfg.device) if 'device' in overrided else None
         # in these cases cfg.load points to a Sing file
 
-        path = sing_path_from_regex(cfg.load)
+        paths = outputs_search(sing.cfg.load, ext='sing')
+        if len(paths) == 0:
+            red(f'Error: cfg.load={sing.cfg.load} doesnt match any files')
+            sys.exit(1)
+        if len(paths) > 1:
+            red(f'Error: cfg.load={sing.cfg.load} matches more than one file')
+            red(f'Matched files:')
+            for p in paths:
+                red(f'\t{p}')
+            sys.exit(1)
+        [path] = paths
+
         _sing = torch.load(path,map_location=device) # `None` means stay on original device
         self.clone_from(_sing) # will even copy over stuff like SummaryWriter object so no need for post_load()
         del _sing
@@ -91,7 +104,7 @@ class Sing(Saveable):
 
    
   def save(self, name):
-      path = saves_path() / f'{name}.sing'
+      path = with_ext(saves_path() / name, 'sing')
       print(f"saving Sing to {path}...")
       torch.save(self, f'{path}.tmp')
       shutil.move(f'{path}.tmp',path)

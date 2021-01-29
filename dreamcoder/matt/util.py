@@ -2,7 +2,9 @@
 import sys,os
 import mlb
 
+from collections import OrderedDict
 import hydra
+import itertools
 from omegaconf import DictConfig,OmegaConf,open_dict
 from datetime import datetime
 import pathlib
@@ -19,8 +21,11 @@ from tqdm import tqdm
 
 # overrides the global print
 def print(*args,**kwargs):
-    s = ''.join(args)
+    s = ''.join([str(arg) for arg in args])
     tqdm.write(s,**kwargs)
+def die(*args,**kwargs):
+    print(*args,**kwargs)
+    sys.exit(1)
 def print_if(s,cond):
     from dreamcoder.matt.sing import sing
     if sing.cfg.printif[cond]:
@@ -87,17 +92,50 @@ def init_paths():
     saves_path().mkdir()
     plots_path().mkdir()
 
+
+def with_ext(path,ext):
+    if not str(path).endswith(f'.{ext}'):
+        return Path(f'{path}.{ext}')
+    return path
+
+
 def get_unique_path(orig_path):
     """
-    Takes a path like foo/bar/baz.xyz and returns a path like foo/bar/baz.xyz.2
+    Takes a path like foo/bar/baz.xyz and returns a path like foo/bar/baz.old0.xyz
     or however much naming is needed to avoid conflict.
     """
     p = Path(orig_path) # in case its not
     i=0
     while p.exists():
-        p = pathlib.Path(f'{orig_path}.{i}')
+        if orig_path.suffix != '': # has file extension
+            p = pathlib.Path(f'{orig_path.stem}.old{i}.{orig_path.suffix}')
+        else:
+            p = pathlib.Path(f'{orig_path}.old{i}')
         i += 1
     return p
+
+
+def move_existing(path):
+    """
+    Does nothing if `path` doesnt exist.
+    If `path` does exist then rename it eg from foo/bar/baz.xyz to foo/bar/baz.old0.xyz
+
+    Mainly used in cases where we usually do want to overwrite the file but we want to keep the old one around just in case
+    """
+    if path.exists(): # super rare honestly bc `job` includes timestamps in names
+        safe_name = get_unique_path(path)
+        path.rename(safe_name)
+        red(f"moved file: {path.relative_to(outputs_path())} -> {safe_name.relative_to(outputs_path())}")
+        return True
+    return False
+
+
+def toplevel_plots_path():
+    """
+    Same as the overall git repo path.
+    /scratch/mlbowers/proj/ec/outputs/_toplevel
+    """
+    return outputs_path() / '_toplevel'
 
 def toplevel_path():
     """
@@ -147,23 +185,26 @@ def plots_path():
     """
     return cwd_path() / 'plots'
 
-def outputs_regex(*rs):
+def outputs_search(regexes, sort=True, ext=None):
     """
-    The union of one or more regexes over the outputs/ directory.
-    Returns a list of results (pathlib.Path objects)
+    The union of one or more regexes treated like `outputs/**/*{regex}`
+        * regexes :: str | [str]
+        * duplicates are removed
+        * note theres no '*' built into the end of the regex so you should add one yourself if you want one
+        * sorts results unless sort=False
+
+    Returns a list of Paths
     """
-    res = []
-    for r in rs:
-        r = r.strip()
-        if r == '':
-            continue # use "*" instead for this case please. I want to filter out '' bc its easy to accidentally include it in a generated list of regexes
-        try:
-            r = f'**/*{r}'
-            res.extend(list(outputs_path().glob(r)))
-        except ValueError as e:
-            print(e)
-            return []
-    return sorted(res)
+    if isinstance(regexes,str):
+        regexes = [regexes]
+
+    # glob all the paths, dedup using OrderedDict.fromkeys() (like set() but preserves order)
+    paths = list(OrderedDict.fromkeys(itertools.chain.from_iterable([list(outputs_path().glob(f'**/*{regex}')) for regex in regexes])))
+    if sort:
+        paths = sorted(paths)
+    if ext:
+        paths = [p for p in paths if p.suffix == ext]
+    return paths
 
 
 def filter_paths(paths, predicate):

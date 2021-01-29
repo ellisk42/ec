@@ -1,6 +1,8 @@
 from dreamcoder.matt.util import *
 from collections import defaultdict
 import pathlib
+import datetime
+
 
 import torch
 import numpy as np
@@ -8,7 +10,7 @@ import random
 
 import mlb
 import dreamcoder.matt.fix as fix
-import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 
 from dreamcoder.matt.sing import sing
 
@@ -20,7 +22,6 @@ class SearchTry:
     self.soln = soln
     self.time = time
     self.nodes_expanded = nodes_expanded
-
 
 class ModelResult:
     def __init__(self,
@@ -36,22 +37,23 @@ class ModelResult:
         assert self.num_tests > 0
 
         # if you crop at this point youll show the full graph, or actually even more
-        self.full_xlim_evals = max([t.nodes_expanded for t in self.search_tries])
-        self.full_xlim_time  = max([t.time for t in self.search_tries])
+        self.full_x_max_evals = max([t.nodes_expanded for t in self.search_tries])
+        self.full_x_max_time  = max([t.time for t in self.search_tries])
 
-        if len(self.fails) > 0:
-            # if you stop the x axis at this point you wont miss out on anything
-            self.cropped_xlim_evals = min([t.nodes_expanded for t in self.fails])
-            self.cropped_xlim_time  = min([t.time for t in self.fails])
+        if len(self.fails) == 0:
+            # rare case where it never fails so the cropped graph is same as the full graph
+            self.cropped_x_max_evals = self.full_x_max_evals
+            self.cropped_x_max_time  = self.full_x_max_time
         else:
-            # show entire line, hide nothing!
-            self.cropped_xlim_evals = max([t.nodes_expanded for t in self.hits])
-            self.cropped_xlim_time  = max([t.time for t in self.hits])
+            # if you crop the x axis to this point it will be fair. If you go beyond this point
+            # then there will have been a SearchTry that failed after fewer nodes than this so
+            # it'll be a bit misleading
+            self.cropped_x_max_evals = min([t.nodes_expanded for t in self.fails])
+            self.cropped_x_max_time  = min([t.time for t in self.fails])
     def accuracy(self):
         return len(self.hits) / self.num_tests * 100
-    def fraction_hit(self, predicate):
-        # returns % of total (hit + fail) of searchtries that are hits and ALSO satisfy predicate(searchtry)
-        return len([t for t in self.hits if predicate(t)]) / self.num_tests * 100
+    def percent(self, predicate):
+        return len([t for t in self.search_tries if predicate(t)]) / self.num_tests * 100
     def print_dist(self):
         dist = defaultdict(int)
         for t in self.hits:
@@ -61,6 +63,12 @@ class ModelResult:
         print(f"{self.prefix}.{self.name} distribution of {len(self.search_results)} solutions:")
         for k,v in dist.items():
             print(f"T{k[0]}d{k[1]}: {v}")
+    def save(self, file):
+        # if our target file already exists, move it. We never wanna accidentally overwrite this file
+        path = with_ext(model_results_path() / file, 'res')
+        move_existing(path)
+        torch.save(self,path)
+        print(f"saved model result to {path.relative_to(outputs_path())}")
 
 
 
@@ -68,10 +76,6 @@ class ModelResult:
 def handle_elsewhere():
     if toplevel:
         assert w is None
-        w = SummaryWriter(
-            log_dir=toplevel_path(''),
-            max_queue=10,
-        )
 
     if salt is not None and salt != '':
         salt = f'_{salt}'
@@ -124,17 +128,6 @@ def handle_elsewhere():
             w.add_figure(tb_name,fig,j)
             print(f"Added cropped figure to tensorboard: {tb_name}")
 
-    if save_model_results:
-        if model_result_path is not None:
-            # if our target file already exists, move it.
-            res_file = model_results_path() / model_result_path
-            safe_name = get_unique_path(res_file)
-            res_file.rename(safe_name)
-            mlb.red(f"moved old model result: {res_file.relative_to(outputs_path())} -> {safe_name.relative_to(outputs_path())}")
-        else:
-            res_file = model_results_path() / f"{file}{j_str}{salt}"
-        print(f"saving model_results used in plotting to {res_file.relative_to(outputs_path())}")
-        torch.save(model_results,res_file)
 
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {evals_file.relative_to(outputs_path())}")
@@ -160,8 +153,6 @@ def plot_model_results(
     tb_name=None, # cfg.plot.tb_name
     xlim=None): # cfg.plot.xlim
 
-    if isinstance(model_results, ModelResult):
-        model_results = [model_results]
 
     if legend is not None:
         assert len(legend) == len(model_results)
@@ -169,42 +160,120 @@ def plot_model_results(
     print(f'Plotting {len(model_results)} model results')
 
 
+def load_model_results(load):
+    """
+    load :: str | [str]
+        * will filter anything thats not '.res' out
+        * will maintain the ordering of the list of load regexes in case you're relying on that eg in order to make it align with a plot legend
+    """
+    paths = outputs_search(load, sort=False, ext='res')
+    model_results = [torch.load(p) for p in paths]
+    return model_results
+    
 
-def evals_plot():
+def main():
+
+    plot = sing.cfg.plot
+
+    model_results = load_model_results(sing.cfg.load)
+
+    if plot.file is None:
+        plot.file = f'{sing.cfg.start_time_filename}.{plot.filetype}'
+    if plot.title is None:
+        plot.title = plot.file
+    
+    fig = evals_plot(
+        model_results,
+        title=plot.title,
+        cropped=plot.cropped,
+        legend=plot.legend,
+        font_size=plot.font_size,
+        linewidth=plot.linewidth,
+        )
+    
+    # Do any modifications to the plot
+
+    [ax] = fig.axes
+    lines = ax.get_lines()
+    colors = {
+        'blended':'C0',
+        'neural':'C1',
+        'rnn':'C2',
+        'robustfill':'C4',
+        'deepcoder':'C5',
+    }
+    if plot.colors:
+        for line in lines:
+            label = line.get_label().lower().strip()
+            if label in colors:
+                line.set_color(colors[label])
+            if label == 'robustfill':
+                line.set_zorder(0)
+
+    if plot.xmax:
+        (xmin,xmax) = ax.get_xlim()
+        fig.xlim(left=xmin, right=plot.xmax)
+
+    # Add plot to tensorboard
+    w = SummaryWriter(log_dir=toplevel_plots_path())
+    w.add_figure(plot.file, fig)
+    w.flush()
+    w.close()
+    print(f"Added plot to tensorboard at http://localhost:6696/#images&tagFilter={plot.file}&regexInput=_toplevel")
+
+    # Save plot to file
+    path = toplevel_plots_path() / plot.file
+    fig.save_fig(path, dpi=200)
+    print(f"saved fig to {path.relative_to(toplevel_path())}")
+
+    # Save args used to generate plot to file
+    with open(f'{path}.argv','w') as f:
+        f.write(' '.join(sys.argv))
+    print(f"saved argv to {path.relative_to(toplevel_path())}.argv")
+
+    print(os.getcwd())
+
+def evals_plot(
+    model_results,
+    title,
+    cropped=False,
+    legend=None,
+    font_size=14,
+    linewidth=4
+        ):
+
+    """
+    Pass in `model_results :: ModelResult | [ModelResult]`
+
+    """
+
+    if isinstance(model_results, ModelResult):
+        model_results = [model_results]
+    if legend:
+        assert len(legend) == len(model_results)
 
     #############
     # * EVALS * #
     #############
 
-    font_size = 14
-
-    plot.figure(dpi=200)
-    plot.title(title, fontsize=font_size)
-    plot.xlabel('Number of partial programs considered', fontsize=font_size)
-    plot.ylabel('Percent correct', fontsize=font_size)
-    x_max = max([m.full_xlim_evals for m in model_results])
-    if xlim is not None:
-        x_max = min((x_max,xlim))
-        print(f'applied xlim to get new xmax of {x_max}')
-    plot.ylim(bottom=0., top=100.)
-    plot.xlim(left=0., right=x_max)
+    fig = plt.figure()
+    plt.title(title, fontsize=font_size)
+    plt.xlabel('Number of partial programs considered', fontsize=font_size)
+    plt.ylabel('Percent correct', fontsize=font_size)
+    x_max = min([m.cropped_x_max_evals for m in model_results]) if cropped else max([m.full_x_max_evals for m in model_results])
+    plt.ylim(bottom=0., top=100.)
+    plt.xlim(left=0., right=x_max)
     for i,m in enumerate(model_results):
         label = legend[i] if legend else f'{m.cfg.job_name}.{m.cfg.run_name}'
-        xs = list(range(m.earliest_failure))
-        line, = plot.plot(xs,
-                [m.fraction_hit(lambda r: r.evaluations <= x) for x in xs],
-                label=label,
-                linewidth=4)
-        if label == 'DeepCoder':
-            line.set_color('C5')
-        if label == 'RobustFill':
-            line.set_color('C4')
-            line.set_zorder(0)
-    plot.legend()
-
-
-
-    print(os.getcwd())
+        xs = list(range(m.earliest_failure)) # 0..earliest_failure
+        ys = [m.percent(lambda search_try: search_try.hit and search_try.nodes_expanded <= x) for x in xs]
+        plt.plot(
+            xs,
+            ys,
+            label=label,
+            linewidth=linewidth)
+    plt.legend()
+    return fig
 
 
 def time_plot():

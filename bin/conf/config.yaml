@@ -17,8 +17,10 @@ print: False # just print the cfg and exit
 
 dirty: False # set to True to skip errors due to dirty repo
 
-argv: null # this will get set my matt.py
-commit: null # this will get set my matt.py
+argv: null # this will get set by matt.py
+commit: null # this will get set by matt.py
+start_time: null # this will get set by matt.py
+start_time_filename: null # this will get set by matt.py. It's a filename-safe version of start_time
 kill_by: null # not used internally for anything, just by the `job` manager
 
 printif:
@@ -38,21 +40,22 @@ debug:
   zero_sk: False # Take the result of rep(sk) and turn it to all zeros so _compare(all_zeros,outputFeatures) is run
 
 plot: # for mode=plot
-  file: ${plot.suffix}
-  title: ${plot.suffix}
-  suffix: null
-  tb_name: null
+  file: null # defaults to time string
+  title: null # defaults to time string
+  legend: null # a string like "['Blended Semantics (ours)', 'Neural Semantics', 'RNN']"
   cropped: True
-  legend: null
-  filetype: png
-  sort: True
-  xlim: null
+  font_size: 14
+  linewidth: 4
+  filetype: eps # only used if no `plot.file` is provided (otherwise we just use the extension on `plot.file`)
+  x_max: null # manually set the x axis to a certain maximum
 
-test: # for mode=test
-  from_file: null
+testgen: # for mode=test
   from_fn: null # deepcoder | josh | lucas
   to_file: null
-  model_result_path: null
+
+test:
+  from_file: null
+  out: null # output file. defaults to time str + job + run. `.res` will be added if not already present
   timeout: 30
   max_tasks: null
   validator_vhead: True

@@ -26,31 +26,49 @@ import traceback
 def hydra_main(cfg):
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
 
-    with open_dict(cfg):
-        cfg.start_time = str(timestamp())
-        cfg.argv = ' '.join(sys.argv)
-        repo = git.Repo(toplevel_path())
-        if repo.is_dirty() and not cfg.dirty:
-            raise ValueError("repo is dirty. please add/commit. Or run with `dirty=True`")
-        cfg.commit = repo.head.commit.hexsha
-        del repo
+    if isinstance(cfg.plot.legend,str):
+        cfg.plot.legend = eval(cfg.plot.legend)
+    if isinstance(cfg.load,str) and cfg.load.strip().startswith('['):
+        cfg.load = eval(cfg.load)
 
-    def crash(e):
+    assert sing.cfg.notify_done in ('text','email',None)
+
+    cfg.start_time = str(timestamp())
+    cfg.start_time_filename = datetime.datetime.now().strftime(f'%m-%d.%H-%M-%S')
+    cfg.argv = ' '.join(sys.argv)
+    repo = git.Repo(toplevel_path())
+    if repo.is_dirty() and not cfg.dirty:
+        raise ValueError("repo is dirty. please add/commit. Or run with `dirty=True`")
+    cfg.commit = repo.head.commit.hexsha
+    del repo
+
+    def notify_done():
+        email_subj = f'[{sing.cfg.mode} done from {sing.cfg.start_time}]'
+        email_body = f'{sing.which()}'
+        text_body = f'[{sing.cfg.mode} done from {sing.cfg.start_time}]\n{sing.which(no_yaml=True)}'
+        if sing.cfg.notify_done == 'email':
+            email_me(email_subj,email_body)
+        elif sing.cfg.notify_done == 'text':
+            text_me(text_body)
+            email_me(email_subj,email_body)
+
+    def notify_crash(e:Exception):
         print(sing.which(no_yaml=True))
-        if hasattr(sing,'cfg') and sing.cfg.notify_crash: # use sing.cfg not local cfg
-            exc = ''.join(traceback.format_exception(e.__class__, e, e.__traceback__))
-            email_me('crash', f'{sing.which()}\n\n\n{exc}')
-            if sing.cfg.notify_crash == 'email':
-                email_me('[run done]', f'{sing.which()}')
-            elif sing.cfg.notify_crash == 'text':
-                text_me( f'[crash]\n{sing.which(no_yaml=True)}')
-                email_me('[crash]', f'{sing.which()}\n\n\n{exc}')
+        full_exc = ''.join(traceback.format_exception(e.__class__, e, e.__traceback__))
+        email_subj = f'[{sing.cfg.mode} crash from {sing.cfg.start_time}]'
+        email_body = f'{e}\n\n{sing.which()}\n\n{full_exc}'
+        text_body = f'[{sing.cfg.mode} crash from {sing.cfg.start_time}]\n{e}\n{sing.which(no_yaml=True)}'
+        if sing.cfg.notify_crash == 'email':
+            email_me(email_subj,email_body)
+        elif sing.cfg.notify_crash == 'text':
+            text_me(text_body)
+            email_me(email_subj,email_body)
 
 
     def ctrlc():
         print(sing.which(no_yaml=True))
          
-    with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=ctrlc, crash=crash):
+    with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=ctrlc, crash=notify_crash):
 
         sing.from_cfg(cfg) # initialize the singleton
 
@@ -58,34 +76,44 @@ def hydra_main(cfg):
         if cfg.print:
             print(sing.which()) # as expected: loaded cfg if cfg.load, else new cfg
             print("cfg.print was specified, exiting")
+            return
 
         # PLOT
         elif cfg.mode == 'plot':
             plot.main()
+            return
 
         # TESTGEN
         elif cfg.mode == 'testgen':
             testgen.main()
+            return
 
         # TEST
         elif cfg.mode == 'test':
-            sing.from_cfg(cfg)
             mlb.yellow("===START TEST===")
             test.main()
-        
+            notify_done()
+            mlb.yellow("===TEST DONE===")
+            return
+
         # CMD
         elif cfg.mode == 'cmd':
             command.main()
+            return
 
         # TRAIN
         elif cfg.mode == 'train':
             mlb.yellow("===RESUME TRAIN===")
             print("Entering training loop...")
             train.main()
+            notify_done()
+            mlb.yellow("===TRAINING DONE===")
+            return
 
         # PROFILE
         elif cfg.mode == 'profile':
             profile.main()
+            return
 
         # INSPECT
         elif cfg.mode == 'inspect':
@@ -97,16 +125,9 @@ def hydra_main(cfg):
 
         else:
             mlb.die(f"Mode not recognized: {cfg.mode}")
-        mlb.yellow("===END===")
-
-        if sing.cfg.notify_done == 'email':
-            email_me('[run done]', f'{sing.which()}')
-        elif sing.cfg.notify_done == 'text':
-            text_me( f'[run done]\n{sing.which(no_yaml=True)}')
-            email_me('[run done]', f'{sing.which()}')
 
 
-        raise NotImplementedError # do something with the rest of this
+        return
 
         # PLOT
         if cfg.mode == 'plot':
