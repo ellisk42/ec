@@ -130,7 +130,24 @@ class Sing(Saveable):
   def tb_scalar(self, plot_name, val, j=None):
     """
     Best way to write a scalar to tensorboard.
-     * feed in `step=` to override it otherwise it'll use `sing.s.j`
+     * feed in `j=` to override it otherwise it'll use `sing.s.j`
+     * include a '/' in the plot_name like 'Validation/MyModel' to override
+      * the default behavior where it assumes you want 'Validation' to mean
+      * 'Validation/{cls_name(sing.model)}'
+    """
+
+    if '/' not in plot_name:
+      plot_name = f'{plot_name}/{cls_name(sing.model)}'
+
+    if j is None:
+      j = sing.train_state.j
+    
+    self.w.add_scalar(plot_name, val, j)
+    self.w.flush()
+  def tb_plot(self, plot_name, fig, j=None):
+    """
+    Best way to write a plot to tensorboard.
+     * feed in `j=` to override it otherwise it'll use `sing.s.j`
      * include a '/' in the plot_name like 'Validation/MyModel' to override
       * the default behavior where it assumes you want 'Validation' to mean
       * 'Validation/{cls_name(sing.model)}'

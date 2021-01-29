@@ -1,5 +1,6 @@
 from dreamcoder.matt.util import *
 from dreamcoder.matt.sing import sing
+from dreamcoder.matt.plot import evals_plot
 from fastcore.basics import null,ifnone
 from tqdm import tqdm
 from time import time
@@ -16,10 +17,10 @@ def loop_check(locs):
     fail=False
     for k in locs:
         if k not in ('s','t'):
-            yellow(f"warning: can't trust local variable {k} in training loop. To indicate that you wont be reusing it between loop steps and dont want to save it, add it to `t`")
+            yellow(f"warning: can't trust local variable `{k}` in training loop")
             fail=True
     if fail:
-        raise ValueError("please resolve local variable warnings by using `s` and `t`")
+        raise ValueError("please resolve local variable warnings above by using `s` and `t`")
 class FireEvery:
     def __init__(self, j):
         self.j = j
@@ -172,9 +173,16 @@ def main():
                                               timeout=sing.cfg.loop.search_valid_timeout,
                                               verbose=True)
             sing.tb_scalar('ValidationAccuracy', t.model_result.accuracy())
-            sing.tb_plot(t.model_result, file='validation', tb_name=f'ValdiationAccuracy')
+            t.fig = evals_plot(
+                t.model_result,
+                title='Validation Accuracy',
+                cropped=False,
+                )
+            t.fig.set_dpi(100)
+            t.fig.savefig(plots_path() / f'valid_{s.j:07}.png') # :07 left-pads with zeros to 7 digits long
+            sing.w.add_figure('Validation Accuracy',t.fig)
 
         if s.save_every.check():
             loop_check(locals())
-            sing.save(f'autosave.{s.j}')
+            sing.save(f'autosave_{s.j:07}.sing')
 

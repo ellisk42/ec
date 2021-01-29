@@ -13,8 +13,7 @@ def main():
         test.out = f'{sing.cfg.time_start_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}.res'
     
     if test.from_file is None:
-        die('missing argument test.from_file')
-        sys.exit(1)
+        die('Error: missing argument test.from_file')
     
     # load tests
     path = with_ext(testgen_path() / test.from_file, 'tgen')
@@ -23,7 +22,6 @@ def main():
     tgen = torch.load(path)
     
     model_result = sing.model.search(tgen.fs, test.timeout, verbose=True)
-
     model_result.save(test.out)
 
 

@@ -52,8 +52,9 @@ def cls_name(v):
 
 def which(cfg, no_yaml=False):
     regex = cwd_path().parent.name + '%2F' + cwd_path().name
+    yaml_str = "" if no_yaml else yaml(cfg) + "\n\n"
     return f'''
-{"" if no_yaml else yaml(cfg)}
+{yaml_str}
 cwd: {cwd_path()}
 tensorboard: http://localhost:6696/#scalars&regexInput={regex}
 commit: {cfg.commit}
@@ -68,6 +69,8 @@ def yaml(cfg):
 
 def timestamp():
     return datetime.now()
+def timestamp_to_filename(dt):
+    return dt.strftime(f'%m-%d.%H-%M-%S')
 
 #############
 # * PATHS * #

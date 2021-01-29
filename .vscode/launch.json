@@ -102,7 +102,7 @@
 
                 "model=mbas",
                 "model.vhead=check_invalid",
-                "model.phead=rnn",
+                "model.phead=repl",
 
                 "data.T=2",
                 "data.lambda_depth=3",
@@ -114,7 +114,6 @@
                 "loop.print_every=20",
 
                 "device=cpu",
-                "test.model_result_path=boop",
                 "job_name=vscode",
                 "run_name=vscode",
                 "debug.mlb_debug=False",

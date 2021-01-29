@@ -31,10 +31,11 @@ def hydra_main(cfg):
     if isinstance(cfg.load,str) and cfg.load.strip().startswith('['):
         cfg.load = eval(cfg.load)
 
-    assert sing.cfg.notify_done in ('text','email',None)
+    assert cfg.notify_done in ('text','email',None)
 
-    cfg.start_time = str(timestamp())
-    cfg.start_time_filename = datetime.datetime.now().strftime(f'%m-%d.%H-%M-%S')
+    _time = timestamp()
+    cfg.start_time = str(_time)
+    cfg.start_time_filename = timestamp_to_filename(_time)
     cfg.argv = ' '.join(sys.argv)
     repo = git.Repo(toplevel_path())
     if repo.is_dirty() and not cfg.dirty:

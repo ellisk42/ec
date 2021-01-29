@@ -1,19 +1,9 @@
 from dreamcoder.matt.util import *
 from collections import defaultdict
-import pathlib
-import datetime
-
-
 import torch
 import numpy as np
-import random
-
-import mlb
-import dreamcoder.matt.fix as fix
 import matplotlib.pyplot as plt
-
 from dreamcoder.matt.sing import sing
-
 from copy import deepcopy
 
 class SearchTry:
@@ -70,96 +60,6 @@ class ModelResult:
         torch.save(self,path)
         print(f"saved model result to {path.relative_to(outputs_path())}")
 
-
-
-
-def handle_elsewhere():
-    if toplevel:
-        assert w is None
-
-    if salt is not None and salt != '':
-        salt = f'_{salt}'
-    else:
-        salt = ''
-    if j is not None:
-        j_str = f'@{j}'
-    else:
-        j_str = ''
-
-    if w is not None:
-        if j is None:
-            j=0
-        if tb_name is None:
-            tb_name = title
-
-
-    if not cropped:
-        fig = plot.gcf() # get current figure
-        w.add_figure(tb_name,fig,j)
-        print(f"Added figure to tensorboard: {tb_name}")
-
-    if toplevel:
-        w.flush()
-        w.close()
-
-
-    plot.savefig(time_file)
-    mlb.yellow(f"saved plot to {printable_local_path(time_file)}")
-    if toplevel:
-        path = toplevel_path(time_file)
-        plot.savefig(path)
-        mlb.yellow(f"toplevel: saved plot to {path}")
-
-    if toplevel:
-        path = toplevel_path(evals_file)
-        plot.savefig(path)
-        mlb.yellow(f"toplevel: saved plot to {path}")
-        # cropped version
-        right = min([m.cropped_xlim_evals for m in model_results]) 
-        if xlim is not None:
-            right = min((x_max,xlim))
-            print(f'applied xlim to get new xmax of {right}')
-        plot.xlim(left=0., right=right)
-        path = str(toplevel_path(evals_file)).replace(f'.{filetype}',f'_cropped.{filetype}')
-        plot.savefig(path)
-        mlb.yellow(f"toplevel: saved plot to {path}")
-        if cropped:
-            fig = plot.gcf() # get current figure
-            w.add_figure(tb_name,fig,j)
-            print(f"Added cropped figure to tensorboard: {tb_name}")
-
-
-    plot.savefig(evals_file)
-    mlb.yellow(f"saved plot to {evals_file.relative_to(outputs_path())}")
-
-    time_file = plots_path() / f"{file}_time.{filetype}"
-    evals_file = plots_path() / f"{file}_evals.{filetype}"
-
-
-
-def plot_model_results(
-    model_results,
-    file, # cfg.plot.file
-    toplevel=False, # mode=plot
-    legend=None, # cfg.plot.legend after preprocessing
-    cropped=False, # cfg.plot.cropped
-    model_result_path=None,
-    filetype='png', # cfg.plot.filetype
-    title=None, # cfg.plot.title else argv[2:]
-    salt=None,
-    save_model_results=True, # false if mode=plot
-    w=None,
-    j=None,
-    tb_name=None, # cfg.plot.tb_name
-    xlim=None): # cfg.plot.xlim
-
-
-    if legend is not None:
-        assert len(legend) == len(model_results)
-
-    print(f'Plotting {len(model_results)} model results')
-
-
 def load_model_results(load):
     """
     load :: str | [str]
@@ -168,6 +68,10 @@ def load_model_results(load):
     """
     paths = outputs_search(load, sort=False, ext='res')
     model_results = [torch.load(p) for p in paths]
+    print(f"Loaded {len(paths)} model results:")
+    for p,m in zip(paths,model_results):
+        print(f"\t{m.cfg.job_name}.{m.cfg.run_name} from {p}")
+
     return model_results
     
 
@@ -176,6 +80,7 @@ def main():
     plot = sing.cfg.plot
 
     model_results = load_model_results(sing.cfg.load)
+    print(f'Plotting {len(model_results)} model results')
 
     if plot.file is None:
         plot.file = f'{sing.cfg.start_time_filename}.{plot.filetype}'
@@ -223,7 +128,7 @@ def main():
 
     # Save plot to file
     path = toplevel_plots_path() / plot.file
-    fig.save_fig(path, dpi=200)
+    fig.savefig(path, dpi=200)
     print(f"saved fig to {path.relative_to(toplevel_path())}")
 
     # Save args used to generate plot to file
@@ -265,7 +170,7 @@ def evals_plot(
     plt.xlim(left=0., right=x_max)
     for i,m in enumerate(model_results):
         label = legend[i] if legend else f'{m.cfg.job_name}.{m.cfg.run_name}'
-        xs = list(range(m.earliest_failure)) # 0..earliest_failure
+        xs = list(range(m.cropped_x_max_evals)) # 0..earliest_failure
         ys = [m.percent(lambda search_try: search_try.hit and search_try.nodes_expanded <= x) for x in xs]
         plt.plot(
             xs,
@@ -277,6 +182,7 @@ def evals_plot(
 
 
 def time_plot():
+    raise NotImplementedError
 
     ############
     # * TIME * #
