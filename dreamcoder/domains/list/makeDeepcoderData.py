@@ -52,6 +52,7 @@ from dreamcoder.grammar import Grammar, NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderProductions, flatten_program
 from dreamcoder.program import Application, Hole, Primitive, Index, Abstraction, ParseFailure
 from dreamcoder.type import Context, arrow, tint, tlist, tbool, UnificationFailure
+from dreamcoder.matt.util import *
 
 def convert_dc_program_to_ec(dc_program, tp):
     source = dc_program.src
