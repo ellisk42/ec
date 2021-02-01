@@ -207,6 +207,8 @@ def plot_model_results(model_results, file, toplevel=False, legend=None, cropped
             print("fired")
             line.set_color('C4')
             line.set_zorder(0)
+        if label.lower().startswith('blended'):
+            line.set_zorder(10)
     plot.legend()
     plot.savefig(evals_file)
     mlb.yellow(f"saved plot to {printable_local_path(evals_file)}")
