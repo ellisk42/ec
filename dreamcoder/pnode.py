@@ -2,6 +2,7 @@
 from dreamcoder.program import Program
 from dreamcoder.task import Task
 from torch import nn
+import random
 import torch
 import numpy as np
 from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
@@ -365,34 +366,160 @@ class PNode:
             raise TypeError
 
 
-    def traverse(self,fn):
+    # def traverse(self,fn):
+    #     """
+    #     simple helper that just calls fn() on every PNode in the tree.
+    #     Doesn't return anything. If you want to return something have
+    #     your fn maintain some state (eg a class with __call__ or 
+    #     just a `nonlocal` variable closured in)
+    #     """
+    #     fn(self)
+    #     if self.isOutput:
+    #         self.tree.traverse(fn)
+    #     elif self.isAbstraction:
+    #         self.body.traverse(fn)
+    #     elif self.isApplication:
+    #         self.fn.traverse(fn)
+    #         for x in self.xs:
+    #             x.traverse(fn)
+    #     elif self.isIndex or self.isHole or self.isPrimitive:
+    #         pass
+    #     else:
+    #         raise TypeError
+    # def size(self):
+    #     sz = 0
+    #     def _size(node):
+    #         nonlocal sz
+    #         if not node.isAbstraction and not node.isOutput:
+    #             sz += 1
+    #     self.traverse(_size)
+    #     return sz
+
+    def size(self):
         """
-        simple helper that just calls fn() on every PNode in the tree.
-        Doesn't return anything. If you want to return something have
-        your fn maintain some state (eg a class with __call__ or 
-        just a `nonlocal` variable closured in)
+        gets size of tree below this node
         """
-        fn(self)
         if self.isOutput:
-            self.tree.traverse(fn)
-        if self.isAbstraction:
-            self.body.traverse(fn)
+            return self.tree.size() # no cost
+        elif self.isAbstraction:
+            return self.body.size() # no cost
         elif self.isApplication:
-            self.fn.traverse(fn)
-            for x in self.xs:
-                x.traverse(fn)
+            return self.fn.size() + sum(x.size() for x in self.xs) # sum of fn and arg sizes
         elif self.isIndex or self.isHole or self.isPrimitive:
-            pass
+            return 1 # base case
         else:
             raise TypeError
-    def size(self):
-        sz = 0
-        def _size(node):
-            nonlocal sz
-            if not node.isAbstraction and not node.isOutput:
-                sz += 1
-        self.traverse(_size)
-        return sz
+    def depth_of_node(self):
+        """
+        gets depth of this node below the output node
+        """
+        if self.isOutput:
+            return 0 # zero cost when it's the output node
+        elif self.isAbstraction:
+            return self.parent.depth_of_node() # no cost
+        elif self.isIndex or self.isHole or self.isPrimitive or self.isApplication:
+            return self.parent.depth_of_node() + 1 # parent depth + 1
+        else:
+            raise TypeError
+    def depth(self):
+        """
+        gets depth of tree below this node
+        """
+        if self.isOutput:
+            return self.tree.depth() # no cost
+        elif self.isAbstraction:
+            return self.body.depth() # no cost
+        elif self.isIndex or self.isHole or self.isPrimitive:
+            return 1 # base case
+        elif self.isApplication:
+            return max([x.depth() for x in (*self.xs,self.fn)]) # max among fn and args
+        else:
+            raise TypeError
+    def get_hole(self, ordering, tiebreaker='random'):
+        """
+        returns a single hole or None if there are no holes in the subtree
+        """
+        if not self.hasHoles:
+            return None
+        if self.isOutput:
+            return self.tree.get_hole(ordering)
+        elif self.isAbstraction:
+            return self.body.get_hole(ordering)
+        elif self.isIndex or self.isPrimitive:
+            return None # wont even be reached thanks to self.hasHoles check
+        elif self.isHole:
+            return self
+        elif self.isApplication:
+            holes = [self.fn.get_hole(ordering)] + [x.get_hole(ordering) for x in self.xs]
+            holes = [h for h in holes if h is not None]
+            if len(holes) == 0:
+                return None
+
+            options = {
+                'left': holes[0],
+                'right': holes[-1],
+                'random': random.choice(holes),
+            }
+
+            # common cases
+            if ordering in options:
+                return options[ordering]
+
+
+            # check for a depth based tie in which case use tiebreaker
+            depths = [h.depth_of_node for h in holes]
+            if all(depth==depths[0] for depth in depths):
+                return options[tiebreaker]
+
+            # normal depth based ones
+            if ordering == 'deep':
+                return max(holes, key=lambda h: h.depth_of_node())
+            if ordering == 'shallow':
+                return max(holes, key=lambda h: -h.depth_of_node())
+
+            raise ValueError(ordering)
+        else:
+            raise TypeError
+
+
+
+    # def follow_zipper(self, zipper):
+    #     next,*rest = zipper
+    #     if next == 'body':
+    #         pass
+    #     pass
+    # def get_zippers(self):
+    #     zippers = []
+    #     def _get_zippers(node):
+    #         nonlocal zippers
+    #         if node.isHole:
+
+    #     pass
+    # def parent_first(self,fn,acc):
+    #     """
+    #     simple helper that just calls fn() on every PNode in the tree.
+    #     Doesn't return anything. If you want to return something have
+    #     your fn maintain some state (eg a class with __call__ or 
+    #     just a `nonlocal` variable closured in)
+    #     """
+    #     acc = fn(self,acc)
+    #     if self.isOutput:
+    #         return self.tree.parent_first(fn,acc)
+    #     if self.isAbstraction:
+    #         self.body.recurse(fn)
+    #     elif self.isApplication:
+    #         self.fn.recurse(fn)
+    #         for x in self.xs:
+    #             x.recurse(fn)
+    #     elif self.isIndex or self.isHole or self.isPrimitive:
+    #         pass
+    #     else:
+    #         raise TypeError
+
+
+
+
+
     # def has_unset_index(self):
     #     found = False
     #     def finder(node):

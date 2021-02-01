@@ -11,6 +11,28 @@
             "request": "launch",
             "program": "bin/matt.py",
             "args":[
+
+                "model=mbas",
+                "model.vhead=check_invalid",
+                "model.phead=repl",
+                "model.pnode.allow_concrete_eval=True",
+
+                "data.T=2",
+                "data.lambda_depth=3",
+
+                "loader.buf_size=100",
+
+                "loop.search_valid_num_tasks=2",
+                "loop.save_every=100",
+                "loop.print_every=20",
+
+                "device=cpu",
+                "job_name=vscode",
+                "run_name=vscode",
+                "debug.mlb_debug=False",
+                "dirty=True",
+
+
                 //"data.expressive_lambdas=False",
                 //"data.lambda_depth=3",
                 //"data.T=1",
@@ -99,26 +121,6 @@
                 //"model=rnn"
                 //"model=rnn",
                 //"loop.valid_every=100",
-
-                "model=mbas",
-                "model.vhead=check_invalid",
-                "model.phead=repl",
-                "model.pnode.allow_concrete_eval=False",
-
-                "data.T=2",
-                "data.lambda_depth=3",
-
-                "loader.buf_size=100",
-
-                "loop.search_valid_num_tasks=2",
-                "loop.save_every=100",
-                "loop.print_every=20",
-
-                "device=cpu",
-                "job_name=vscode",
-                "run_name=vscode",
-                "debug.mlb_debug=False",
-                "dirty=True",
 
                 // "model=rb",
                 //"model.allow_concrete_eval=False",

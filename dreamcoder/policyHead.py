@@ -388,8 +388,12 @@ class ListREPLPolicyHead(PolicyHead):
 
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
-    def distribution(self, sketches, zippers, task, g):
-        compared = sing.model.abstract_comparer(sketches,task)
+    def distribution(self, sks, zippers, task, g):
+        compared = sing.model.abstract_comparer(sks,task)
+
+        output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]
+        sk_reps = torch.stack([pnode.upward_only_embedding().abstract for pnode in output_pnodes]) # [num_sketches,num_exs,H]
+
         compared = compared.max(1).values
         dist = self.output(compared)
         mask = self._buildMask(sketches, zippers, task, g)
