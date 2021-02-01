@@ -21,11 +21,11 @@ Available experiments:
     full_language_language_compression_bootstrap
     full_language_both_add_ons_bootstrap
     
-    full_language_synth_train_human_test 
-    full_language_human_train_human_test
+    full_language_synth_train_human_test_bootstrap 
+    full_language_human_train_human_test_bootstrap
     
-    best_dsl_no_language_pure_enumeration
-    best_dsl_full_language_pure_enumeration_and_neural_search
+    best_dsl_no_language_pure_enumeration_bootstrap
+    best_dsl_full_language_pure_enumeration_and_neural_search_bootstrap
 All experiments must be manually added to an experiment registry in register_all_experiment. The procedure for adding in an experiment is: add a human readable string tag; add a 'build_experiment' function that constructs the experiment-specific parameters, and then add that to the registry.
 """
 GENERATE_ALL_FLAG = 'all' # Generate all experiment tasks.
@@ -43,12 +43,33 @@ DEFAULT_SLURM_TIME_PER_TASK = 10000
 SUPERCLOUD_FLAG = 'supercloud'
 SUPERCLOUD_SCP_COMMAND = "zyzzyva@txe1-login.mit.edu" # Specific to Catherine Wong
 
+# Default parameters for running on Azure.
+AZ_SCP_COMMAND = "zyzzyva@MUST FILL IN"
+AZURE_FLAG = 'azure'
+AZURE_RESOURCE_GROUP = "resource-group"
+AZURE_LOCATION = "location"
+AZURE_IMAGE = "image"
+AZURE_DEFAULT_MACHINE_TYPE = "Standard_E48s_v3"
+AZURE_DEFAULT_RESOURCES_0 = { 
+    AZURE_RESOURCE_GROUP : "zyzzyva-clevr-0",
+    AZURE_LOCATION : "eastus",
+    AZURE_IMAGE : "myGallery/zyzzyva-clevr-0-base-image/0.0.1"
+}
+AZURE_DEFAULT_RESOURCES_1 = { 
+    AZURE_RESOURCE_GROUP : "zyzzyva-clevr-1",
+    AZURE_LOCATION : "eastus2",
+    AZURE_IMAGE : "myGallery/zyzzyva-clevr-1-base-image/0.0.1"
+}
+AZURE_RESOURCES = {
+    AZURE_DEFAULT_RESOURCES_0[AZURE_RESOURCE_GROUP] : AZURE_DEFAULT_RESOURCES_0,
+    AZURE_DEFAULT_RESOURCES_1[AZURE_RESOURCE_GROUP] : AZURE_DEFAULT_RESOURCES_1
+}
 # Default parameters for each experiment.
 DEFAULT_TASK_BATCH_SIZE = 40
 DEFAULT_RECOGNITION_STEPS = 10000
 DEFAULT_TEST_EVERY = 1
 DEFAULT_ITERATIONS = 10
-DEFAULT_ENUMERATION_TIMEOUT = 2400
+DEFAULT_ENUMERATION_TIMEOUT = 1000
 DEFAULT_MEM_PER_ENUMERATION_THREAD = 5000000000 # 5 GB
 DEFAULT_BOOTSTRAP_PRIMITIVES_STRING = 'clevr_bootstrap clevr_map_transform' # Primitives for the bootstrap primitives experiments.
 DEFAULT_PSEUDOALIGNMENTS_WEIGHT = 0.05
@@ -152,6 +173,12 @@ def get_remote_logfile_via_scp(remote_logfile_path, args):
         print(f"Logfile not found locally, SCPing from: {scp_command }")
         subprocess.check_output(scp_command, shell=True)
         return local_logfile_path
+    elif args.cloud_platform == AZURE_FLAG:
+        azure_location = input("What is the Azure SCP path?")
+        scp_command = f"scp {azure_location}:{remote_logfile_path} {local_logfile_path}"
+        print(f"Logfile not found locally, SCPing from: {scp_command }")
+        subprocess.check_output(scp_command, shell=True)
+        return local_logfile_path
     else:
         print(f"Unknown cloud platform for SCP: {args.cloud_platform}")
         sys.exit(0)
@@ -173,7 +200,7 @@ def extract_checkpoint_from_logfile(local_logfile_path):
     else:
         # Look for the checkpoint of that iteration.
         checkpoint_iteration_tag = f'_it={iteration_to_resume}_'
-        checkpoints_to_resume = [checkpoint for checkpoint in checkpoints if checkpoint_iteration_tag] 
+        checkpoints_to_resume = [checkpoint for checkpoint in checkpoints if checkpoint_iteration_tag in checkpoint] 
         if len(checkpoints_to_resume) != 1:
             print("Did not find a matching checkpoint. Exiting")
             sys.exit(0)
@@ -187,6 +214,8 @@ def generate_timestamped_record_for_csv_logs(args, experiment_name, all_final_co
     # Builds a list based on the current spreadsheet layout.
     csv_log_entries_for_experiment = []
     for replication_idx, replication_full_command in enumerate(all_final_commands):
+        if args.cloud_platform == AZURE_FLAG:
+            replication_full_command = replication_full_command.replace("\n", " COMMAND ")
         logfile_path, logfile_command = get_logfile_path_and_scp_command(args, replication_full_command)
         csv_log_entry = [ #The tags in each tuple are only for our own readability.
             ("completed_success_fail", ""),
@@ -229,6 +258,11 @@ def get_logfile_path_and_scp_command(args, full_command):
         full_logfile_path = logfile_path.replace('..', '/home/gridsan/zyzzyva/mit')
         scp_command = f"scp {SUPERCLOUD_SCP_COMMAND}:{full_logfile_path} {logfile_path} "
         return full_logfile_path, scp_command
+    elif args.cloud_platform == AZURE_FLAG:
+        logfile_path = full_command.split(" > ")[-1].split()[0]
+        full_logfile_path = logfile_path.replace('..', '~')
+        scp_command = f"scp {AZ_SCP_COMMAND}:{full_logfile_path} {logfile_path} "
+        return full_logfile_path, scp_command
     else:
         print(f"Unknown cloud platform: {args.cloud_platform}")
         sys.exit(0)
@@ -243,21 +277,30 @@ def output_launch_commands_and_log_lines(cloud_launcher_command, experiment_comm
         experiment_information_dict = experiment_commands[experiment_name]
         replication_commands = experiment_information_dict['replication_commands']
         resume_command = experiment_information_dict['resume_command']
+        is_random = len(replication_commands) > 1
         for replication_idx, replication_command in enumerate(replication_commands):
-            final_command = build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx, resume_command)
+            final_command = build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx, resume_command, is_random=is_random)
             all_final_commands.append(final_command)
             print(final_command)
-        print("\n")
+            print("\n")
         generate_timestamped_record_for_csv_logs(args, experiment_name, all_final_commands, experiment_information_dict)
         if not args.output_all_commands_at_once:
             input("....hit enter for next experiments\n")
             
-def build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx, resume_command):
+def build_final_command_from_launcher_and_experiment(cloud_launcher_command, experiment_name, replication_command, replication_idx, resume_command, is_random=False):
     """Builds the final launch command from a given experimental command and its cloud launcher."""
+    rand_tag = "_rand" if is_random else ""
     if args.cloud_platform == OM_FLAG or args.cloud_platform == SUPERCLOUD_FLAG:
         # This builds the output file name, which is of the form {experiment_name}_replication_idx.
-        formatted_launch_command = cloud_launcher_command.format(experiment_name, replication_idx, experiment_name, replication_idx)
-        return formatted_launch_command + replication_command + resume_command + " &"
+        formatted_launch_command = cloud_launcher_command.format(experiment_name, str(replication_idx)+rand_tag, experiment_name, str(replication_idx)+rand_tag, is_random)
+        return formatted_launch_command + replication_command + resume_command + "' &"
+    if args.cloud_platform == AZURE_FLAG:
+        job_name = experiment_name+ str(replication_idx)+rand_tag
+        job_name = job_name.replace("_", "-")
+        # Truncate for Azure
+        job_name = job_name[:30] + job_name[-30:]
+        formatted_launch_command = cloud_launcher_command.format(job_name) + replication_command + resume_command + f" > ../ec_language_logs/{experiment_name+ str(replication_idx)+rand_tag} 2>&1 &"
+        return formatted_launch_command
     else:
         print(f"Unknown cloud platform: {args.cloud_platform}")
         sys.exit(0)
@@ -269,6 +312,8 @@ def build_cloud_launcher_command(args):
         return build_om_launcher_command(args)
     elif args.cloud_platform == SUPERCLOUD_FLAG:
         return build_supercloud_launcher_command(args)
+    elif args.cloud_platform == AZURE_FLAG:
+        return build_azure_launcher_command(args)
     else:
         print(f"Unknown cloud platform: {args.cloud_platform}")
         sys.exit(0)
@@ -279,23 +324,36 @@ def build_default_slurm_command(args):
     number_cpus_per_task = get_input_or_default("Number of CPUS per task?", DEFAULT_SLURM_CPUS_PER_TASK)
     # This requires limitation on the program side, so we set it in the global dictionary.
     GLOBAL_EXPERIMENTS_ARGUMENTS[NUM_CPUS_TAG] = number_cpus_per_task
-    slurm_base_command = f"srun --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem=MaxMemPerNode --cpus-per-task "+str(number_cpus_per_task)+" --time="+ str(DEFAULT_SLURM_TIME_PER_TASK) + ":00 "
+    slurm_base_command = f"sbatch --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1 --mem=MaxMemPerNode --cpus-per-task "+str(number_cpus_per_task)
     print("\n")
     return slurm_base_command
     
 def build_om_launcher_command(args):
     """Builds the launcher command for running on OpenMind. 
     Returns a string command that can be run """
-    om_base_command = build_default_slurm_command(args) + " --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+    om_base_command = build_default_slurm_command(args) + " --time="+ str(DEFAULT_SLURM_TIME_PER_TASK) + ":00 " + " --qos=tenenbaum --partition=tenenbaum  --wrap='singularity exec -B /om2  --nv ../dev-container.img "
     print("\n")
     return om_base_command
 
 def build_supercloud_launcher_command(args):
     """Builds the launcher command for running on OpenMind. 
     Returns a string command that can be run """
-    supercloud_base_command = build_default_slurm_command(args) + " singularity exec -B /om2  --nv ../dev-container.img "
+    supercloud_base_command = build_default_slurm_command(args) + " --exclusive  --wrap='singularity exec ../dev-container.img  "
     print("\n")
     return supercloud_base_command
+
+def build_azure_launcher_command(args):
+    """Builds the launcher command for running on Azure. Azure requires an additional login and computer creation step."""
+    # First we will need to provision a machine.
+    azure_resource_data = get_input_or_default("Which Azure resource group do you want? ",  AZURE_DEFAULT_RESOURCES_0[AZURE_RESOURCE_GROUP])
+    azure_resource_data = AZURE_RESOURCES[azure_resource_data]
+    group = azure_resource_data[AZURE_RESOURCE_GROUP]
+    image = azure_resource_data[AZURE_IMAGE]
+    location = azure_resource_data[AZURE_LOCATION]
+    azure_machine = get_input_or_default("Azure machine type? ",  AZURE_DEFAULT_MACHINE_TYPE)
+    azure_launch_command = "az vm create --name az-{}" + f" --resource-group {group} --generate-ssh-keys --data-disk-sizes-gb 128 --image {image} --size {azure_machine} --location {location} \n\n singularity exec ../dev-container.img  "
+    return azure_launch_command
+    
 
 def build_experiment_commands(args, experiment_to_resume_checkpoint):
     """Given a set of experiment tags to run, builds the appropriate commands from the registry, including their replications.
@@ -389,10 +447,13 @@ def get_interactive_experiment_parameters():
     test_every = get_input_or_default("Test on every N iterations?", DEFAULT_TEST_EVERY)
     enumeration_timeout = get_input_or_default("Enumeration timeout per task? Same as testing timeout.", DEFAULT_ENUMERATION_TIMEOUT)
     recognition_steps = get_input_or_default("Total recognition steps? ", DEFAULT_RECOGNITION_STEPS)
+    rep_tag = get_input_or_default("Add any replication tag to avoid namespace collision? ", "")
     
     interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {enumeration_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --taskDatasets {task_datasets} --recognitionSteps {recognition_steps} "
     
     interactive_experiment_tag = f"et_{enumeration_timeout}_it_{number_of_iterations}_batch_{task_batch_size}"
+    if len(rep_tag) > 0:
+        interactive_experiment_tag += f"_{rep_tag}"
     return interactive_experiment_parameters, interactive_experiment_tag  
 
 def get_shared_experiment_parameters():
@@ -493,7 +554,7 @@ def build_experiment_full_language_both_add_ons_bootstrap_primitives(basename, a
 
 
 def build_experiment_full_language_human_train_human_test_bootstrap(basename, args, experiment_to_resume_checkpoint):
-    """Builds an experiment that trains and tests the full language model on the human data. This runs the best model so far, which is the baseline full language model. 
+    """Builds an experiment that trains and tests the full language model on the human data. This runs the best model so far, which we assume is the baseline full language model. 
     """
     def experiment_parameters_fn():      
         language_dataset_dir = get_input_or_default("Human language dataset directory?", DEFAULT_CLEVR_HUMAN_LANGUAGE_DATASET_DIR)
@@ -523,7 +584,7 @@ def build_experiment_full_language_synth_train_human_test_bootstrap(basename, ar
         # We actually do want to test with a DSL.
         language_dataset_dir = get_input_or_default("Human language dataset directory?", DEFAULT_CLEVR_HUMAN_LANGUAGE_DATASET_DIR)
         test_only_parameters = test_only_parameters.replace("--test_dsl_only", "--skip_first_test")
-        return test_only_parameters + f"--languageDatasetDir {language_dataset_dir}  + --test_only_after_recognition  "
+        return test_only_parameters + f"--languageDatasetDir {language_dataset_dir} --test_only_after_recognition  "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
 
 def build_experiment_best_dsl_no_language_pure_enumeration_bootstrap(basename, args, experiment_to_resume_checkpoint):
