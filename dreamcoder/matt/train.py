@@ -96,7 +96,7 @@ def main():
 
         # get another batch if needed
         if len(s.frontiers) < sing.cfg.loop.j_multiplier:
-            mlb.red("reloading frontiers")
+            red("reloading frontiers")
             s.frontiers += sing.taskloader.train_tasks()
             assert len(s.frontiers) > 0
 

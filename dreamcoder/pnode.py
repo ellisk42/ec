@@ -286,7 +286,7 @@ class PNode:
                 # this handles the case where our parent is an HOF who's about to do concrete application
                 # and we're the HOF so it needs us to return a python lambda that it can feed to its HOF
                 # primitive function. We use execute_single() to get that python lambda version of ourselves
-                if self.body.in_HOF_lambda and not self.hasHoles and sing.cfg.model.pnode.allow_concrete_eval:
+                if self.body.in_HOF_lambda and not self.hasHoles and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
                     assert self.parent.isApplication
                     if not self.parent.hasHoles:
                         fn = self.execute_single([])
