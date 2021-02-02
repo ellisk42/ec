@@ -1,4 +1,5 @@
 import os, json, random, copy
+import numpy as np
 from collections import defaultdict
 from dreamcoder.task import Task
 from dreamcoder.type import *
@@ -276,3 +277,62 @@ def buildClevrMockTask(train_task, test_attr_type=None, test_count=False, test_b
         t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
         t.serializeSpecialOutput = serialize_clevr_object 
     return t
+
+def loadAllOrderedCurricula(args):
+    """
+    Loads the task data for the CLEVR train and validation task datasets and converts them into typed Dreamcoder Task objects.
+    
+    Returns {
+        (curriculum name, datasplit) : [[training tasks for iteration i],],
+                                        [[testing tasks for iteration i],]
+        languageDataset: [array of string names for the task classes used that will be used to load the corresponding natural language.]
+    }               
+    """
+    question_classes_registry = buildCLEVRQuestionClassesRegistry(args)
+    all_scene_data = load_all_scenes(args)
+    curricula = load_all_curricula(args)
+    language_datasets = loadAllLanguageDatasets(args)
+    return curricula, language_datasets
+
+def load_all_curricula(args):
+    question_classes_registry = buildCLEVRQuestionClassesRegistry(args)
+    all_scene_data = load_all_scenes(args)
+    easy_categories = args["easy_curriculum_categories"]
+    hard_categories = args["hard_curriculum_categories"]
+    num_train_tasks_per_category = args["num_train_tasks_per_category"]
+    num_test_tasks_per_category = args["num_test_tasks_per_category"]
+    # First load all of the tasks to start.
+    category_to_train_val_tasks = dict()
+    for category in easy_categories + hard_categories:
+        tasks = buildCLEVRTasksForAllQuestionFiles(task_datasets=[category], question_classes_registry=question_classes_registry, all_scene_data=all_scene_data, is_curriculum=False)
+        random.Random(0).shuffle(tasks[TRAIN_SPLIT])
+        random.Random(0).shuffle(tasks[VAL_SPLIT])
+        category_to_train_val_tasks[category] = tasks
+    
+    # Now, start constructing the curricula
+    curricula = dict()
+    for datablock in range(args["num_data_blocks_per_category"] + 1):
+        for hard_category in hard_categories:
+            curriculum_categories = easy_categories + [hard_category]
+            curriculum_key = (tuple(curriculum_categories), datablock)
+            train_curriculum_tasks = []
+            test_curriculum_tasks = []
+            # Construct the curricula
+            for category_idx, category in enumerate(curriculum_categories):
+                all_train_tasks = category_to_train_val_tasks[category][TRAIN_SPLIT]
+                all_test_tasks = category_to_train_val_tasks[category][VAL_SPLIT]
+                
+                start_idx = datablock * num_train_tasks_per_category[category_idx]
+                end_idx = start_idx + num_train_tasks_per_category[category_idx]
+                category_train_tasks = np.take(all_train_tasks, range(start_idx, end_idx), mode='wrap')
+                
+                start_idx = datablock * num_test_tasks_per_category[category_idx]
+                end_idx = start_idx + num_test_tasks_per_category[category_idx]
+                category_test_tasks = np.take(all_test_tasks, range(start_idx, end_idx), mode='wrap')
+                train_curriculum_tasks.append(list(category_train_tasks))
+                test_curriculum_tasks.append(list(category_test_tasks))
+            assert len(train_curriculum_tasks) == len(curriculum_categories)
+            assert len(test_curriculum_tasks) == len(curriculum_categories)
+            curricula[curriculum_key] = (train_curriculum_tasks, test_curriculum_tasks)
+    return curricula
+        
