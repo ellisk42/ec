@@ -517,7 +517,7 @@ class PTrace:
         hole = self.pnode.get_hole(self.ordering,self.tiebreaking)
         if hole is None:
             return # stopiteration
-        yield hole
+        yield self.pnode, hole
 
 
 

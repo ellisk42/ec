@@ -117,49 +117,26 @@ class PolicyHead(nn.Module):
         except NoCandidates:
             return
 
-    def policyLossFromFrontier(self, frontier, g):
-        # Monte Carlo estimate: draw a sample from the frontier
-        entry = frontier.sample()
-        tp = frontier.task.request
-        mlb.log('entering policyLossFromFrontier')
-        
-        if isinstance(entry.program, Program):
-            fullProg = entry.program
-        else:
-            fullProg = entry.program._fullProg
+    def train_loss(self, p, task):
+
+        mask = self.build_mask([trace],[zipper],frontier.task,g)
 
         if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
-            p = PNode(fullProg,parent=None,ctx=[],from_task=frontier.task)
+            p = PNode(p,parent=None,ctx=[],from_task=task)
             # make sure concrete part of propagate() works
             assert p.upward_only_embedding().concrete == p.task.outputs.concrete
             # make sure execute_single() works
             #assert p.execute_single([]) == p.task.outputs.concrete
             assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
+        
+        p = PNode(p,parent=None,ctx=[],from_task=task)
 
+        ptrace = p.into_trace('right')
 
-        mlb.log(f'program: {fullProg}')
-        #print(f'program: {fullProg}')
-        mlb.log(f'request: {tp}')
-        posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, 
-                                                        onlyPos=True, returnNextNode=True,
-                                                        ordering=self.ordering)
-
-
-        p = PNode(fullProg, parent=None, ctx=[], from_task=frontier.task)
-        for hole in p.iter_inplace():
-            self.distribution(hole)
+        distributions = self.ptrace_distributions(ptrace)
         
         for zipper in holesToExpand:
             assert sing.cfg.solver.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
-        mlb.log('pos traces:')
-        #print("traces:")
-        for trace,hole,target in zip(posTraces,holesToExpand,targetNodes):
-            mlb.log(f'\t{trace}')
-            mlb.log(f'\t\thole={hole}')
-            mlb.log(f'\t\ttarget={target}')
-            #print(f'\t{trace}')
-            #print(f'\t\thole={hole}')
-            #print(f'\t\ttarget={target}')
 
         maskedDist = self.distribution(posTraces, holesToExpand, frontier.task, g)
         
@@ -209,19 +186,13 @@ class PolicyHead(nn.Module):
             return self._sketchNodeToIndex(f)            
         else: assert False, f"invalid node {node}"
 
-    def _buildMask(self, sketches, zippers, task, g):
+    def build_mask(self, hole):
+        g_use = sing.g.g_lambdas if hole.in_HOF_lambda else sing.g
+
+
         masks = []
         for zipper, sk in zip(zippers, sketches):
-
             # if this is a zipper into a lambda then use lambdas grammar
-            if len(zipper.env) > 1:
-                assert zipper.path[0] == 'body'
-                assert zipper.path[1] != 'body'
-                if g.g_lambdas is None: # backwards compatability. Careful it doesnt carry the max depth thru tho
-                    g.g_lambdas = Grammar.uniform(get_lambdas())
-                g_use = g.g_lambdas
-            else:
-                g_use = g
 
             mask = [0. for _ in range(len(self.productionToIndex))]
             candidates = returnCandidates(zipper, sk, task.request, g_use)
