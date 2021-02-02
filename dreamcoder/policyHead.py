@@ -143,6 +143,12 @@ class PolicyHead(nn.Module):
         posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, 
                                                         onlyPos=True, returnNextNode=True,
                                                         ordering=self.ordering)
+
+
+        p = PNode(fullProg, parent=None, ctx=[], from_task=frontier.task)
+        for hole in p.iter_inplace():
+            self.distribution(hole)
+        
         for zipper in holesToExpand:
             assert sing.cfg.solver.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
         mlb.log('pos traces:')

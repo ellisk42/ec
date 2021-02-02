@@ -2,6 +2,7 @@
 from dreamcoder.program import Program
 from dreamcoder.task import Task
 from torch import nn
+import enum
 import random
 import torch
 import numpy as np
@@ -148,12 +149,13 @@ class PNode:
         node.evaluate(output_node=None)
 
     """
+    
     def __init__(self, p: Program, parent, ctx:list, from_task=None) -> None:
         super().__init__()
 
         if from_task is not None:
             # create a full program from the top level task and program
-            # meaning this will be our isOutput node
+            # meaning this will be our ntype.output node
             assert parent is None
             assert p is not None
             assert isinstance(from_task,Task)
@@ -166,29 +168,28 @@ class PNode:
         self.parent = parent
         self.p = p
         self.ctx = ctx
-        self.isPrimitive = self.isIndex = self.isHole = self.isAbstraction = self.isApplication = self.isOutput = False
-        self.hasHoles = p.hasHoles
+        self.ntype = NType.from_program(p)
+        if from_task:
+            self.ntype = NType.OUTPUT
         self.in_HOF_lambda = (None in ctx)
+
+        self.tp = p.infer()
 
         if from_task is not None:
             # OUTPUT
             self.tree = PNode(p, parent=self, ctx=ctx)
-            self.isOutput = True
-        elif p.isPrimitive:
+        elif self.ntype.prim:
             # PRIM
             self.name = p.name
             self.value = p.value
-            self.isPrimitive = True
-        elif p.isIndex:
+        elif self.ntype.var:
             # IDX
             self.i = p.i
             assert self.i < len(self.ctx)
-            self.isIndex = True
-        elif p.isHole:
+        elif self.ntype.hole:
             # HOLE
-            self.tp = p.tp
-            self.isHole = True
-        elif p.isAbstraction:
+            assert p.tp == self.tp, "infer() isnt working as I expected"
+        elif self.ntype.abs:
             # LAMBDA
             which_toplevel_arg = len(ctx) # ie if we're just entering the first level of lambda this will be 0
 
@@ -200,39 +201,36 @@ class PNode:
             self.body = PNode(p.body, parent=self, ctx=[exwise]+ctx)
 
             # do some sanity checks
-            if self.parent.isOutput:
+            if self.parent.ntype.output:
                 inner_node,num_args = self.unwrap_abstractions()
                 assert self.task.argc == num_args, "task argc doesnt match number of toplevel abstraction"
                 assert all(exwise is not None for exwise in inner_node.ctx), "toplevel ctx was somehow not populated"
 
-            self.isAbstraction = True
-        elif p.isApplication:
+        elif self.ntype.app:
             # FN APPLICATION
             fn,xs = p.applicationParse()
             self.xs = [PNode(x,parent=self, ctx=ctx) for x in xs]
             self.fn = PNode(fn, parent=self, ctx=ctx) # an abstraction or a primitive
-            if self.fn.isAbstraction:
+            if self.fn.ntype.abs:
                 # this never happens, but if we wanted to cover $0 $1 etc properly for
                 # it we could do so easily: just modify the (mutable) 
                 # self.f.ctx[0].val = xs[0]
                 # self.f.ctx[1].val = xs[1]
                 # etc.
                 assert False 
-            self.isApplication = True
         else:
             assert False
     
     def __repr__(self):
         return repr(self.p)
     def upward_only_embedding(self):
-        assert self.isOutput
-        return self.propagate(None)
+        return self.propagate(self.parent)
     def propagate(self,towards, concrete_only=False):
         """
         returns :: Examplewise
 
         Evaluates this subtree relative to the PNode towards.
-        set towards=None and call this on the isOutput node if you want to eval the whole tree with BAS semantics
+        set towards=None and call this on the ntype.output node if you want to eval the whole tree with BAS semantics
 
         Note the towards field can be safely ignored by all leaves of the tree since theyre always propagated
         towards their parent
@@ -249,7 +247,7 @@ class PNode:
 
 
         """
-        if self.isOutput:
+        if self.ntype.output:
             if towards is not None:
                 # propagate downward
                 return self.task.outputs
@@ -257,10 +255,10 @@ class PNode:
                 # propagate upwards: evaluate the whole tree
                 return self.tree.propagate(self,concrete_only=concrete_only)
 
-        elif self.isPrimitive:
+        elif self.ntype.prim:
             return Examplewise([self.value for _ in range(sing.num_exs)])
 
-        elif self.isIndex:
+        elif self.ntype.var:
             # if the index is bound to something return that
             # otherwise return self.index_nm[self.i]()
             exwise = self.ctx[self.i]
@@ -272,7 +270,7 @@ class PNode:
             if concrete_only: return None
             return Examplewise(sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
 
-        elif self.isHole:
+        elif self.ntype.hole:
             if concrete_only: return None
             if self.in_HOF_lambda:
                 # contextless hole as in BAS
@@ -281,15 +279,15 @@ class PNode:
             ctx = sing.model.abstraction_fn.encode_known_ctx(self.ctx)
             return  Examplewise(sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx))
 
-        elif self.isAbstraction:
+        elif self.ntype.abs:
             # in terms of evaluation, abstractions do nothing but pass along data
             if towards is self.parent: # evaluate self.body
                 # this handles the case where our parent is an HOF who's about to do concrete application
                 # and we're the HOF so it needs us to return a python lambda that it can feed to its HOF
                 # primitive function. We use execute_single() to get that python lambda version of ourselves
-                if self.body.in_HOF_lambda and not self.hasHoles and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
-                    assert self.parent.isApplication
-                    if not self.parent.hasHoles:
+                if self.body.in_HOF_lambda and not self.has_holes and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
+                    assert self.parent.ntype.app
+                    if not self.parent.has_holes:
                         fn = self.execute_single([])
                         return Examplewise([fn for _ in range(sing.num_exs)])
                 return self.body.propagate(self,concrete_only=concrete_only)
@@ -298,7 +296,7 @@ class PNode:
             else:
                 raise ValueError
 
-        elif self.isApplication:
+        elif self.ntype.app:
             possible_args = [self.parent, *self.xs]
             mask =  [x is towards for x in possible_args]
             assert sum(mask) == 1
@@ -306,7 +304,7 @@ class PNode:
             # propagation_direction == 0 is how computation normally happens (output is upward)
             # propagation_direction == 1 is when the output is arg0, ==2 is when output is arg1, etc
 
-            assert self.fn.isPrimitive, "Limitation, was there in old abstract repl too, can improve upon when it matters"
+            assert self.fn.ntype.prim, "Limitation, was there in old abstract repl too, can improve upon when it matters"
             evaluated_args = [node.propagate(self,concrete_only=concrete_only) for node in possible_args if node is not towards]
 
             if concrete_only and None in evaluated_args: return None # one of our chilren was abstract
@@ -331,7 +329,7 @@ class PNode:
         if you call this on an abstraction youll get out a callable version of it. If you call
         this on something fully concrete youll get the actual value.
         
-        you can call this on isOutput and itll just return the result of calling it on 
+        you can call this on ntype.output and itll just return the result of calling it on 
         its child, so thats safe.
 
         It only goes upward, everything must be concrete, and it works over
@@ -342,70 +340,39 @@ class PNode:
         when Abstractions are encountered).
 
         """
-        if self.isOutput:
+        if self.ntype.output:
             assert ctx_single == [] # why would you ever pass in anything else at top level
             return self.tree.execute_single(ctx_single)
 
-        elif self.isPrimitive:
+        elif self.ntype.prim:
             return self.value
 
-        elif self.isIndex:
+        elif self.ntype.var:
             return ctx_single[self.i]
 
-        elif self.isHole:
+        elif self.ntype.hole:
             assert False
 
-        elif self.isAbstraction:
+        elif self.ntype.abs:
             return lambda x: self.body.execute_single([x] + ctx_single)
 
-        elif self.isApplication:
+        elif self.ntype.app:
             # execute self, execute args, apply self to args
             return uncurry(self.fn.execute_single(ctx_single), [x.execute_single(ctx_single) for x in self.xs])
 
         else:
             raise TypeError
-
-
-    # def traverse(self,fn):
-    #     """
-    #     simple helper that just calls fn() on every PNode in the tree.
-    #     Doesn't return anything. If you want to return something have
-    #     your fn maintain some state (eg a class with __call__ or 
-    #     just a `nonlocal` variable closured in)
-    #     """
-    #     fn(self)
-    #     if self.isOutput:
-    #         self.tree.traverse(fn)
-    #     elif self.isAbstraction:
-    #         self.body.traverse(fn)
-    #     elif self.isApplication:
-    #         self.fn.traverse(fn)
-    #         for x in self.xs:
-    #             x.traverse(fn)
-    #     elif self.isIndex or self.isHole or self.isPrimitive:
-    #         pass
-    #     else:
-    #         raise TypeError
-    # def size(self):
-    #     sz = 0
-    #     def _size(node):
-    #         nonlocal sz
-    #         if not node.isAbstraction and not node.isOutput:
-    #             sz += 1
-    #     self.traverse(_size)
-    #     return sz
-
     def size(self):
         """
         gets size of tree below this node
         """
-        if self.isOutput:
+        if self.ntype.output:
             return self.tree.size() # no cost
-        elif self.isAbstraction:
+        elif self.ntype.abs:
             return self.body.size() # no cost
-        elif self.isApplication:
+        elif self.ntype.app:
             return self.fn.size() + sum(x.size() for x in self.xs) # sum of fn and arg sizes
-        elif self.isIndex or self.isHole or self.isPrimitive:
+        elif self.ntype.var or self.ntype.hole or self.ntype.prim:
             return 1 # base case
         else:
             raise TypeError
@@ -413,25 +380,42 @@ class PNode:
         """
         gets depth of this node below the output node
         """
-        if self.isOutput:
+        if self.ntype.output:
             return 0 # zero cost when it's the output node
-        elif self.isAbstraction:
+        elif self.ntype.abs:
             return self.parent.depth_of_node() # no cost
-        elif self.isIndex or self.isHole or self.isPrimitive or self.isApplication:
+        elif self.ntype.var or self.ntype.hole or self.ntype.prim or self.ntype.app:
             return self.parent.depth_of_node() + 1 # parent depth + 1
+        else:
+            raise TypeError
+    @property
+    def has_holes(self):
+        """
+        check if we have any holes
+        """
+        if self.ntype.output:
+            return self.tree.has_holes
+        elif self.ntype.abs:
+            return self.body.has_holes
+        elif self.ntype.var or self.ntype.prim:
+            return False
+        elif self.ntype.hole:
+            return True
+        elif self.ntype.app:
+            return self.fn.has_holes or any(x.has_holes for x in self.xs)
         else:
             raise TypeError
     def depth(self):
         """
         gets depth of tree below this node
         """
-        if self.isOutput:
+        if self.ntype.output:
             return self.tree.depth() # no cost
-        elif self.isAbstraction:
+        elif self.ntype.abs:
             return self.body.depth() # no cost
-        elif self.isIndex or self.isHole or self.isPrimitive:
+        elif self.ntype.var or self.ntype.hole or self.ntype.prim:
             return 1 # base case
-        elif self.isApplication:
+        elif self.ntype.app:
             return max([x.depth() for x in (*self.xs,self.fn)]) # max among fn and args
         else:
             raise TypeError
@@ -439,17 +423,15 @@ class PNode:
         """
         returns a single hole or None if there are no holes in the subtree
         """
-        if not self.hasHoles:
-            return None
-        if self.isOutput:
+        if self.ntype.output:
             return self.tree.get_hole(ordering)
-        elif self.isAbstraction:
+        elif self.ntype.abs:
             return self.body.get_hole(ordering)
-        elif self.isIndex or self.isPrimitive:
-            return None # wont even be reached thanks to self.hasHoles check
-        elif self.isHole:
+        elif self.ntype.var or self.ntype.prim:
+            return None
+        elif self.ntype.hole:
             return self
-        elif self.isApplication:
+        elif self.ntype.app:
             holes = [self.fn.get_hole(ordering)] + [x.get_hole(ordering) for x in self.xs]
             holes = [h for h in holes if h is not None]
             if len(holes) == 0:
@@ -480,7 +462,114 @@ class PNode:
             raise ValueError(ordering)
         else:
             raise TypeError
+    def cache_friendly_clone(self):
+        raise NotImplementedError
+    def into_trace(self, ordering):
+        return ProgramTrace(self,ordering)
+    def children(self):
+        """
+        returns a list of any nodes below this one in the tree
+        """
+        if self.ntype.output:
+            return [self.tree]
+        elif self.ntype.abs:
+            return [self.body]
+        elif self.ntype.app:
+            return [self.fn,*self.xs]
+        elif self.ntype.var or self.ntype.hole or self.ntype.prim:
+            return []
+        else:
+            raise TypeError
 
+
+
+
+class PTrace:
+    def __init__(self, pnode, ordering, tiebreaking='random') -> None:
+        self.pnode = pnode
+        self.ordering = ordering
+        self.tiebreaking = tiebreaking
+        self.prev_hole = None
+        assert pnode.ntype.output
+        self.into_phantom_tree(self.pnode.tree) # leave the toplevel ntype.output node.
+
+    def into_phantom_tree(self,node):
+        """
+        turn whole tree into Holes but without destroying the old data
+        """
+        node._old_ntype = node.ntype
+        node.ntype = NType.HOLE
+        for c in node.children():
+            self.into_phantom_tree(c)
+    
+    def iter_inplace(self):
+        """
+        be very careful, this generator mutates the original pnode so dont ask for the next element
+        until youve already processed the previous one!!!!!!
+
+        We actually dont even return the pnode, just so you cant collect those values into a list
+        """
+        if self.prev_hole is not None:
+            # teacher-force the hole into the proper node
+            self.prev_hole.ntype = self.prev_hole._old_ntype
+            del self.prev_hole._old_ntype
+
+        hole = self.pnode.get_hole(self.ordering,self.tiebreaking)
+        if hole is None:
+            return # stopiteration
+        yield hole
+
+
+
+
+
+        
+class NType(enum.Enum):
+    # dont change the order or it changes loaded programs too
+    ABS = 0
+    APP = 1
+    VAR = 2
+    PRIM = 3
+    HOLE = 4
+    OUTPUT = 5
+    @staticmethod
+    def from_program(p):
+        if p.isAbstraction:
+            return NType.ABS
+        elif p.isApplication:
+            return NType.APP
+        elif p.isIndex:
+            return NType.VAR
+        elif p.isPrimitive:
+            return NType.PRIM
+        elif p.isHole:
+            return NType.HOLE
+        raise TypeError
+    @property
+    def abs(self):
+        return self == NType.ABS
+    @property
+    def app(self):
+        return self == NType.APP
+    @property
+    def var(self):
+        return self == NType.VAR
+    @property
+    def prim(self):
+        return self == NType.PRIM
+    @property
+    def hole(self):
+        return self == NType.HOLE
+    @property
+    def output(self):
+        return self == NType.OUTPUT
+
+
+# ABS = NType.ABS
+# APP = NType.APP
+# VAR = NType.VAR
+# HOLE = NType.HOLE
+# OUTPUT = NType.OUTPUT
 
 
     # def follow_zipper(self, zipper):
@@ -492,7 +581,7 @@ class PNode:
     #     zippers = []
     #     def _get_zippers(node):
     #         nonlocal zippers
-    #         if node.isHole:
+    #         if node.ntype.hole:
 
     #     pass
     # def parent_first(self,fn,acc):
@@ -503,15 +592,15 @@ class PNode:
     #     just a `nonlocal` variable closured in)
     #     """
     #     acc = fn(self,acc)
-    #     if self.isOutput:
+    #     if self.ntype.output:
     #         return self.tree.parent_first(fn,acc)
-    #     if self.isAbstraction:
+    #     if self.ntype.abs:
     #         self.body.recurse(fn)
-    #     elif self.isApplication:
+    #     elif self.ntype.app:
     #         self.fn.recurse(fn)
     #         for x in self.xs:
     #             x.recurse(fn)
-    #     elif self.isIndex or self.isHole or self.isPrimitive:
+    #     elif self.ntype.var or self.ntype.hole or self.ntype.prim:
     #         pass
     #     else:
     #         raise TypeError
@@ -524,7 +613,7 @@ class PNode:
     #     found = False
     #     def finder(node):
     #         nonlocal found
-    #         if node.isIndex and node.ctx[node.i].is_unset:
+    #         if node.ntype.var and node.ctx[node.i].is_unset:
     #             found = True
     #     self.traverse(finder)
     #     return found
@@ -534,7 +623,7 @@ class PNode:
     #     """
     #     node = self
     #     i = 0
-    #     while node.isAbstraction:
+    #     while node.ntype.abs:
     #         node = node.body
     #         i += 1
     #     return node,i
