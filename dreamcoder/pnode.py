@@ -1,5 +1,6 @@
 
-from dreamcoder.program import Program
+from collections import namedtuple
+from dreamcoder.program import Application, Hole, Primitive, Program
 from dreamcoder.task import Task
 from torch import nn
 import enum
@@ -126,6 +127,8 @@ class Examplewise:
         assert self._abstract is not None
         return repr(self.abstract) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
 
+Ctx = namedtuple('Ctx','tp exwise')
+Cache = namedtuple('Cache','towards exwise')
 
 class PNode:
     """
@@ -151,25 +154,85 @@ class PNode:
 
     """
     
-    def __init__(self, p: Program, parent, ctx:list, from_task=None) -> None:
+    def __init__(self, ntype, parent, ctx:list):
         super().__init__()
 
-        if from_task is not None:
-            # create a full program from the top level task and program
-            # meaning this will be our ntype.output node
-            assert parent is None
-            assert p is not None
-            assert isinstance(from_task,Task)
-            self.task = PTask(from_task)
+        self.cache = Cache(towards=self, exwise=None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
+        
+    def expand_to(self, prim):
+        """
+        prim = Primitive | Index
+
+        we just inplace modify ourselves
+        """
+        assert self.ntype.hole
+        assert self.tp == prim.tp
+        assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
+        
+        if prim.isIndex:
+            assert self.ctx[prim.i].tp == self.tp # the Ctx.tp is the same as our tp
+            self.i = prim.i
+            self.ntype = NType.VAR
+        elif prim.isPrimitive:
+            assert prim.tp.returns() == self.tp # in order to fill the hole in a valid way
+            if not prim.tp.isArrow():
+                # PRIM case
+                self.ntype = NType.PRIM
+                self.prim = prim
+                self.name = prim.name
+                self.value = prim.value
+            else:
+                # APP case
+                self.ntype = NType.APP
+                self.fn = self.build_hole(prim.tp.returns())
+                self.xs = [self.build_hole(arg_tp) for arg_tp in prim.tp.functionArguments()]
         else:
-            # continue building new nodes off an existing task/program
-            assert parent is not None
-            self.task = parent.task
+            raise TypeError
+        
+    def build_hole(self, tp):
+        """
+        Make a new hole with `self` as parent (and `ctx` calculated from `self`)
+        This also handles expanding into Abstractions if tp.isArrow()
+        """
+        if not tp.isArrow():
+            return PNode(NType.HOLE, parent=self, ctx=self.ctx)
+        # Introduce a lambda
+
+        which_toplevel_arg = len(self.ctx) # ie if we're just entering the first level of lambda this will be 0
+
+        # now if this arg is one of our inputs we grab that input, otherwise we just return None
+        # (so for non toplevel lambdas this is always None)
+        exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
+
+        arg_tp = self.tp.arguments[0] # the input arg to this arrow
+        res_tp = self.tp.arguments[1] # the return arg (which may be an arrow)
+
+        # push it onto the ctx stack
+        abs = PNode(NType.ABS, parent=self, ctx=(Ctx(arg_tp,exwise),*self.ctx))
+        # now make an inner hole (which may itself be an abstraction ofc)
+        inner_hole = abs.build_hole(res_tp)
+        abs.body = inner_hole
+        return abs # and return our abstraction
+
+
+
+        
+
+
+    @staticmethod
+    def from_task(p: Program, task:Task):
+        # create a full program from the top level task and program
+        # meaning this will be our ntype.output node
+        self.task = PTask(task)
+        pass
+    @staticmethod
+    def from_program(self, p: Program, parent, ctx:list):
 
         self.parent = parent
-        self.p = p
+        self.task = parent.task
+        self._p = p # we shouldnt count on this
         self.ctx = ctx
-        # self.tp_ctx = tp_ctx
+
         self.ntype = NType.from_program(p)
         if from_task:
             self.ntype = NType.OUTPUT
@@ -177,6 +240,7 @@ class PNode:
         self.in_HOF_lambda = len(ctx) > len(self.task.inputs)
 
         self.tp = p.infer()
+
 
         if from_task is not None:
             # OUTPUT
@@ -191,6 +255,7 @@ class PNode:
             self.i = p.i
             assert self.i < len(self.ctx)
         elif self.ntype.hole:
+            assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
             # HOLE
             assert p.tp == self.tp, "infer() isnt working as I expected"
         elif self.ntype.abs:
@@ -204,16 +269,14 @@ class PNode:
             assert self.tp.isArrow()
             arg_tp = self.tp.arguments[0] # the arg to this arrow
 
-            add_ctx = (arg_tp,exwise)
-
             # push it onto the ctx stack
-            self.body = PNode(p.body, parent=self, ctx=(add_ctx,*ctx))
+            self.body = PNode(p.body, parent=self, ctx=(Ctx(arg_tp,exwise),*ctx))
 
             # do some sanity checks
             if self.parent.ntype.output:
                 inner_node,num_args = self.unwrap_abstractions()
                 assert self.task.argc == num_args, "task argc doesnt match number of toplevel abstraction"
-                assert all(exwise is not None for exwise in inner_node.ctx), "toplevel ctx was somehow not populated"
+                assert all(ctx.exwise is not None for ctx in inner_node.ctx), "toplevel ctx was somehow not populated"
 
         elif self.ntype.app:
             # FN APPLICATION
@@ -498,7 +561,68 @@ class PNode:
             return Index(self.i)
         else:
             raise TypeError
+    # def fill_hole(self,prim):
+    #     """
+    #     fill hole with Primitive (or Index)
+    #     """
+    #     assert self.ntype.hole
+    #     assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
 
+    #     if prim.isPrimitive:
+    #         assert prim.tp.returns() == self.tp # in order to fill the hole in a valid way
+    #     elif prim.isIndex:
+    #         assert self.ctx[prim.i].tp == self.tp # the Ctx.tp is the same as our tp
+        
+
+    #     # Index and non-function Primitives are already `program.Program`s
+    #     # however we gotta do this `Application()` stuff and instantiate some new holes
+    #     # if we come across an arrow type
+    #     program = prim
+    #     if prim.isPrimitive and prim.tp.isArrow():
+    #         for arg_tp in prim.tp.functionArguments():
+    #             while arg_tp.isArrow(): # HOF
+    #                 arg_tp.
+
+    #             Application(program, Hole(tp=x)) # following grammar.py roughly
+        
+    #     # build the pnode
+    #     parent = self.parent
+    #     pnode = PNode(program, parent, self.ctx)
+    #     parent.replace(old=self, new=pnode)
+
+    # def change_child(self,old,new):
+    #     """
+    #     Swap out one child of ours for a new child
+    #     """
+    #     assert old.tp == new.tp
+    #     assert old.parent is self
+    #     assert new.parent is self
+    #     if self.ntype.hole or self.ntype.prim or self.ntype.var:
+    #         raise TypeError
+    #     elif self.ntype.output:
+    #         assert old is self.tree
+    #         self.tree = new
+    #     elif self.ntype.abs:
+    #         assert old is self.body
+    #         self.body = new
+    #     elif self.ntype.app:
+    #         if self.fn is old:
+    #             self.fn = new
+    #             return
+    #         else:
+    #             for i,x in enumerate(self.xs):
+    #                 if x is old:
+    #                     self.xs[i] = new
+    #                     return
+    #         assert False # none of the fn nor children were the old thing
+    #     else:
+    #         raise TypeError
+        
+        
+# def hole_of_type(tp):
+#     if tp.isArrow():
+#         for x in tp.functionArguments():
+#             Abstrac
 
 
 
