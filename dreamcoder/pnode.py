@@ -157,14 +157,32 @@ class PNode:
     def __init__(self, ntype, parent, ctx:list):
         super().__init__()
 
-        self.cache = Cache(towards=self, exwise=None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
-        
-    def expand_to(self, prim):
-        """
-        prim = Primitive | Index
+        if isinstance(parent,PTask):
+            self.task = parent
+            self.parent = self # root node. We dont use None as the parent bc we want towards=None to be reserved for our Cache emptiness
+        else:
+            self.task = parent.task
+            self.parent = parent
 
-        we just inplace modify ourselves
+        self.ntype = ntype
+        self.ctx = ctx
+
+        self.cache = Cache(towards=None, exwise=None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
+        
+    def expand_to(self, prim, cache='kill'):
         """
+        Call this on a hole to transform it inplace into something else.
+         - prim :: Primitive | Index
+         - If prim.tp.isArrow() this becomes an APP with the proper holes added for cildren
+         - You can never specify "make an Abstraction" because those get implicitly created by build_hole()
+            whenever a hole is an arrow type. Note that a hole being an arrow type is different from `prim`
+            being an arrow type. An arrow prim can fill a hole that has its return type, however if the arrow
+            prim futhermore has arguments that are arrows, those are where the abstractions will be created (HOFs).
+         - if `self` is an abstraction it'll get unwrapped to reveal the underlying hole as a convenience (simplifies
+            a lot of use cases and recursion cases).
+
+        """
+        self = self.unwrap_abstractions()
         assert self.ntype.hole
         assert self.tp == prim.tp
         assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
@@ -212,90 +230,101 @@ class PNode:
         # now make an inner hole (which may itself be an abstraction ofc)
         inner_hole = abs.build_hole(res_tp)
         abs.body = inner_hole
+
         return abs # and return our abstraction
 
 
 
+    @staticmethod
+    def from_ptask(ptask: PTask):
+        """
+        Create a tree shaped like:
+                PNode(OUTPUT)
+                     |
+                     |
+                 PNode(ABS)
+                     |
+                     |
+                 PNode(HOLE)
         
+        Or however many abstractions make sense for the given ptask
+        Returns the root of the tree (the output node)
+        """
+        root = PNode(NType.OUTPUT, parent=ptask, ctx=())
+        root.tree = root.build_hole(ptask.request)
 
+        # do some sanity checks
+        hole, num_abs = root.tree.unwrap_abstractions(count=True)
+        assert ptask.argc == num_abs, "task argc doesnt match number of toplevel abstraction"
+        assert all(ctx.exwise is not None for ctx in hole.ctx), "toplevel ctx was somehow not populated"
+        return root
 
     @staticmethod
-    def from_task(p: Program, task:Task):
+    def from_dreamcoder(p: Program, task:Task):
+        """
+        Given a dreamcoder Program and Task, make an equivalent PNode
+        and associated PTask. Returns the root (an output node).
+        """
         # create a full program from the top level task and program
         # meaning this will be our ntype.output node
-        self.task = PTask(task)
-        pass
-    @staticmethod
-    def from_program(self, p: Program, parent, ctx:list):
+        root = PNode.from_ptask(PTask(task))
+        root.tree.expand_from_dreamcoder(p)
+        return root
 
-        self.parent = parent
-        self.task = parent.task
-        self._p = p # we shouldnt count on this
-        self.ctx = ctx
+    def expand_from_dreamcoder(self, p: Program):
+        """
+        Like expand_to() except for replacing the hole with a subtree equivalent
+        to the given dreamcoder program. All abstractions in both `self` and `p`
+        will be unwrapped to get at the underlying holes so it's okay to pass in
+        abstractions (this simplifies recursion cases).
+        """
+        self = self.unwrap_abstractions()
+        assert self.ntype.hole
 
-        self.ntype = NType.from_program(p)
-        if from_task:
-            self.ntype = NType.OUTPUT
+        # unwrap abstractions
+        while p.isAbstraction:
+            p = p.body
 
-        self.in_HOF_lambda = len(ctx) > len(self.task.inputs)
+        assert p.infer() == self.tp
 
-        self.tp = p.infer()
-
-
-        if from_task is not None:
-            # OUTPUT
-            self.tree = PNode(p, parent=self, ctx=ctx)
-        elif self.ntype.prim:
-            # PRIM
-            self.name = p.name
-            self.value = p.value
-            self.prim = p # this is the exact object that shows up in the Grammar and such, theres only one copy of it
-        elif self.ntype.var:
-            # IDX
-            self.i = p.i
-            assert self.i < len(self.ctx)
-        elif self.ntype.hole:
-            assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
-            # HOLE
-            assert p.tp == self.tp, "infer() isnt working as I expected"
-        elif self.ntype.abs:
-            # LAMBDA
-            which_toplevel_arg = len(ctx) # ie if we're just entering the first level of lambda this will be 0
-
-            # now if this arg is one of our inputs we grab that input, otherwise we just return None
-            # (so for non toplevel lambdas this is always None)
-            exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
-
-            assert self.tp.isArrow()
-            arg_tp = self.tp.arguments[0] # the arg to this arrow
-
-            # push it onto the ctx stack
-            self.body = PNode(p.body, parent=self, ctx=(Ctx(arg_tp,exwise),*ctx))
-
-            # do some sanity checks
-            if self.parent.ntype.output:
-                inner_node,num_args = self.unwrap_abstractions()
-                assert self.task.argc == num_args, "task argc doesnt match number of toplevel abstraction"
-                assert all(ctx.exwise is not None for ctx in inner_node.ctx), "toplevel ctx was somehow not populated"
-
-        elif self.ntype.app:
-            # FN APPLICATION
-            fn,xs = p.applicationParse()
-            self.xs = [PNode(x,parent=self, ctx=ctx) for x in xs]
-            self.fn = PNode(fn, parent=self, ctx=ctx) # an abstraction or a primitive
-            if self.fn.ntype.abs:
-                # this never happens, but if we wanted to cover $0 $1 etc properly for
-                # it we could do so easily: just modify the (mutable) 
-                # self.f.ctx[0].val = xs[0]
-                # self.f.ctx[1].val = xs[1]
-                # etc.
-                assert False 
+        if p.isPrimitive or p.isIndex:
+            # p is a Primitive or Index
+            self.expand_to(p)
+        elif p.isHole:
+            pass # we already are a hole!
+        elif p.isAbstraction:
+            assert False # can't happen bc of the `while p.isAbstraction` unwrapping above
+        elif p.isApplication:
+            # application. We expand each hole we create (the f hole and the xs holes)
+            self.expand_to(p) # expand, creating holes
+            f, xs = p.applicationParse()
+            self.fn.expand_from_dreamcoder(f)
+            for x,x_ in zip(self.xs,xs):
+                x.expand_from_dreamcoder(x_)
         else:
-            assert False
+            raise TypeError
     
     def __repr__(self):
-        return repr(self.p)
-    def upward_only_embedding(self):
+        if self.ntype.abs:
+            return f'(lambda {self.body})'
+        elif self.ntype.app:
+            args = ' '.join(repr(arg) for arg in self.args)
+            return f'({self.fn} {args})'
+        elif self.ntype.prim:
+            return f'{self.name}'
+        elif self.ntype.var:
+            return f'${self.i}'
+        elif self.ntype.HOLE:
+            return f'HOLE({self.tp})'
+        else:
+            raise TypeError
+    @property
+    def in_HOF_lambda(self):
+        return len(self.ctx) > len(self.task.inputs)
+    def propagate_upward(self):
+        """
+        BAS-style upward-only propagation
+        """
         return self.propagate(self.parent)
     def propagate(self,towards, concrete_only=False):
         """
@@ -317,15 +346,15 @@ class PNode:
         precisely
         
 
-
         """
         if self.ntype.output:
-            if towards is not None:
-                # propagate downward
-                return self.task.outputs
-            else:
+            if towards is self:
                 # propagate upwards: evaluate the whole tree
                 return self.tree.propagate(self,concrete_only=concrete_only)
+            else:
+                assert towards is self.tree
+                # propagate downward
+                return self.task.outputs
 
         elif self.ntype.prim:
             return Examplewise([self.value for _ in range(sing.num_exs)])
@@ -333,9 +362,9 @@ class PNode:
         elif self.ntype.var:
             # if the index is bound to something return that
             # otherwise return self.index_nm[self.i]()
-            tp,exwise = self.ctx[self.i]
+            exwise = self.ctx[self.i].exwise
             if exwise is not None:
-                # this branch is taken for all toplevel args
+                # this branch is taken for all references to toplevel args
                 return exwise
             # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
             assert self.in_HOF_lambda
@@ -561,6 +590,19 @@ class PNode:
             return Index(self.i)
         else:
             raise TypeError
+    def unwrap_abstractions(self, count=False):
+        """
+        traverse down .body attributes until you get to the first non-abstraction PNode
+        """
+        assert self.ntype.abs
+        node = self
+        i = 0
+        while node.ntype.abs:
+            node = node.body
+            i += 1
+        if count:
+            return node,i
+        return node
     # def fill_hole(self,prim):
     #     """
     #     fill hole with Primitive (or Index)
@@ -774,13 +816,3 @@ class NType(enum.Enum):
     #             found = True
     #     self.traverse(finder)
     #     return found
-    # def unwrap_abstractions(self):
-    #     """
-    #     traverse down .body attributes until you get to the first non-abstraction PNode
-    #     """
-    #     node = self
-    #     i = 0
-    #     while node.ntype.abs:
-    #         node = node.body
-    #         i += 1
-    #     return node,i
