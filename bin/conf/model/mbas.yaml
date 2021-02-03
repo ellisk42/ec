@@ -1,7 +1,7 @@
 
 # @package _group_
 type: mbas
-ordering: last
+ordering: right
 H: 64
 max_var: 10
 vhead: check_invalid # repl | rnn | check_invalid | uniform

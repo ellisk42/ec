@@ -33,12 +33,13 @@ class ProgramRNN(nn.Module):
       self.embedding = nn.Embedding(len(self.lexicon), H)
       self.wordToIndex = {w: j for j,w in enumerate(self.lexicon) }
       self.model = nn.GRU(H,H,1)
-    def encode_sketches(self, sketches):
+    def encode_sketches(self, sketch_strs):
         #don't use spec, just there for the API
-        assert type(sketches) == list
+        # assert type(sketches) == list
         #idk if obj is a list of objs... presuably it ususaly is 
         from dreamcoder.valueHead import stringify
-        tokens_list = [ stringify(str(sketch)) for sketch in sketches]
+        # tokens_list = [ stringify(str(sketch)) for sketch in sketches]
+        tokens_list = [ stringify(sketch) for sketch in sketch_strs]
         symbolSequence_list = [[self.wordToIndex[t] for t in tokens] for tokens in tokens_list]
         inputSequences = [torch.tensor(ss,device=sing.device) for ss in symbolSequence_list] #this is impossible
         inputSequences = [self.embedding(ss) for ss in inputSequences]

@@ -94,13 +94,10 @@ class PolicyHead(nn.Module):
                         maximumDepth=4):
         hole = sk.get_hole(self.ordering)
         try:
-            dist = self.distribution(hole=hole,root=sk)
+            dist = self.masked_distribution(hole)
         except InvalidSketchError as e:
             red(f"sampleSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
-        mask = self.build_mask(hole)
-        dist += mask
-
         supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prim.items()}
 
         newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
@@ -111,12 +108,10 @@ class PolicyHead(nn.Module):
                         maximumDepth=4):
         hole = sk.get_hole(self.ordering)
         try:
-            dist = self.distribution(hole=hole,root=sk)
+            dist = self.masked_distribution(hole)
         except InvalidSketchError as e:
             red(f"enumSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
-        mask = self.build_mask(hole)
-        dist += mask
 
         supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prim.items()}
 
@@ -136,40 +131,36 @@ class PolicyHead(nn.Module):
             assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
         
         p = PNode(p,parent=None,ctx=[],from_task=task)
-        ptrace = PTrace(p, self, 'right')
 
-        distributions = self.ptrace_distributions(ptrace)
-        masks = torch.stack(ptrace.masks)
-        targets = torch.stack(ptrace.targets) # not onehots
+        ptrace = PTrace(p, self, self.ordering)
 
-        assert distributions.shape == masks.shape
-        guess = distributions + masks
+        processed_holes, masks, targets, strings = ptrace.process_holes(self.process_hole)
+        masks = torch.stack(masks) # [num_sks,Q]
+        targets = torch.stack(targets) # [num_sks,1] the non-onehot version
 
-        loss = self.lossFn(guess, targets)
+        dists = self.unmasked_distributions(processed_holes, task) # [num_sks,Q]
+        assert dists.shape == masks.shape
+
+        masked_dists = dists + masks
+
+        loss = self.lossFn(masked_dists, targets)
         
         if loss.item() == np.inf:
             mlb.red("ISSUE FOUND, you seem to be masking out the right answer")
             breakpoint()
             assert False
             # idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
-            # target = targets[idx]
-            # node = targetNodes[idx]
-            # zipper = holesToExpand[idx]
-            # trace = posTraces[idx]
-            # print(f"""
-            # {target=}
-            # {node=}
-            # {zipper=}
-            # {trace=}
-            # {idx=}
-            # """)
-            # maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
         return loss
+    
+    def masked_distribution(self, hole, task):
+        mask = self.build_mask(hole)
+        processed_hole = self.process_hole(hole)
+        dist = self.unmasked_distributions([processed_hole],task).unsqueeze(0)
+        return mask + dist
 
     def build_target(self, hole):
         target = self.prim_to_index[hole.get_prim()]
         return torch.tensor(target, device=sing.device) # not a onehot
-
 
     def build_mask(self, hole):
         g_use = sing.g.g_lambdas if hole.in_HOF_lambda else sing.g
@@ -275,7 +266,80 @@ class RNNPolicyHead(PolicyHead):
 
         print("num of params in rnn policy model", count_parameters(self))
 
-    def distribution(self, sketches, zippers, task, g):
+    # def encode_task(self,task):
+    #     # input feats
+    #     in_feats = task.input_features()
+    #     # other = sing.em.encoder.old_inputFeatures(task)
+    #     # assert in_feats.isclose(other).all()
+    #     in_feats = in_feats.mean(0) # mean over examples
+    #     if sing.cfg.debug.zero_input_feats:
+    #         in_feats = torch.zeros_like(in_feats)
+
+    #     # output feats
+    #     out_feats = task.output_features()
+    #     # other = sing.em.encoder.old_outputFeatures(task)
+    #     # assert out_feats.isclose(other).all()
+    #     out_feats = out_feats.mean(0) # mean over examples
+    #     if sing.cfg.debug.zero_output_feats:
+    #         out_feats = torch.zeros_like(out_feats)
+
+    #     features = torch.cat((in_feats,out_feats)).squeeze(0)
+    #     assert features.dim() == 1
+    #     return features
+
+    # def unmasked_distribution(self,hole):
+    #     task_feats = self.encode_task(hole.task)
+    #     sk_feats = sing.model.program_rnn.encode_sketches([str(hole.root())]).squeeze(0)
+    #     assert task_feats.dim() == sk_feats.dim() == 1
+    #     input = torch.cat((sk_feats,task_feats))
+    #     res = self.output(input)
+    #     assert res.dim() == 1
+    #     return res
+
+    # def ptrace_unmasked_distributions(self,ptrace):
+    #     sk_strs = [str(hole.root()) for hole in ptrace.iter_inplace()] # v important that str() gets called within this loop bc ptrace does inplace modifications
+    #     if len(sk_strs) > 1:
+    #         assert sk_strs[0] != sk_strs[1] # sanity check that we arent messing with the inplace operation and making everything the same by accident
+    #     task_feats = self.encode_task(ptrace.pnode.task).expand(len(sk_strs),-1)
+    #     sk_feats = sing.model.program_rnn.encode_sketches(sk_strs)
+    #     assert task_feats.dim() == sk_feats.dim() == 2
+    #     input = torch.cat((sk_feats,task_feats),dim=1) # [num_sks,H] `cat dim=1` [num_sks,H*2] -> [num_sks,H*3]
+    #     res = self.output(input)
+    #     assert res.dims() == 2
+    #     return res
+
+    def process_hole(self,hole):
+        return str(hole.root())
+
+    def unmasked_distributions(self, processed_holes, task):
+        num_sks = len(processed_holes)
+        if num_sks > 1:
+            assert processed_holes[0] != processed_holes[1] # sanity check that we arent messing with the inplace operation and making everything the same by accident
+
+        # sk features
+        sk_feats = sing.model.program_rnn.encode_sketches(processed_holes)
+
+        # input feats
+        in_feats = task.input_features().mean(0) # mean over exs
+        if sing.cfg.debug.zero_input_feats:
+            in_feats = torch.zeros_like(in_feats)
+
+        # output feats
+        out_feats = task.output_features().mean(0) # mean over exs
+        if sing.cfg.debug.zero_output_feats:
+            out_feats = torch.zeros_like(out_feats)
+        
+        task_feats = torch.cat((in_feats,out_feats)) # [H*2]
+        task_feats = task_feats.expand(num_sks, -1)
+
+        assert task_feats.dim() == sk_feats.dim() == 2
+
+        input = torch.cat((sk_feats,task_feats),dim=1) # [num_sks,H] `cat dim=1` [num_sks,H*2] -> [num_sks,H*3]
+        res = self.output(input)
+        return res
+
+    def old_distribution(self, sketches, zippers, task, g):
+        assert False
         ptask = PTask(task)
         #need raw dist, and then which are valid and which is correct ... 
         sketchEncodings = sing.model.program_rnn.encode_sketches(sketches) # [5,64]
@@ -327,7 +391,39 @@ class ListREPLPolicyHead(PolicyHead):
 
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
-    def distribution(self, sks, zippers, task, g):
+    def process_hole(self,hole):
+        if self.multidir:
+            # MBAS
+            return hole.propagate_to_hole()
+        # BAS
+        return hole.root().propagate_upward()
+
+    def unmasked_distributions(self, processed_holes, task):
+        num_sks = len(processed_holes)
+        # stack and possibly zero out sketches
+        sk_reps = torch.stack(processed_holes) # [num_sks,num_exs,H]
+        if sing.cfg.debug.zero_sk:
+            sk_reps = torch.zeros_like(sk_reps)
+
+        if self.multidir:
+            # MBAS
+            sk_reps = sk_reps.max(1) # max over examples to yield [num_sks,H]
+            return self.output(sk_reps)
+        else:
+            # BAS
+            output_feats = task.output_features().expand(num_sks,-1,-1) # [num_sks,num_exs,H]
+            if sing.cfg.debug.zero_output_feats:
+                output_feats = torch.zeros_like(output_feats)
+            
+            compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
+            compared = self.compare_module(compare_input) # [num_sketches,num_exs,H]
+            compared = compared.max(1) # max over examples to yield [num_sks,H]
+
+            return self.output(compared)
+
+
+    def old_distribution(self, sks, zippers, task, g):
+        assert False
         compared = sing.model.abstract_comparer(sks,task)
 
         output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]

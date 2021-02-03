@@ -1,5 +1,6 @@
 
 from collections import namedtuple
+import functools
 from dreamcoder.program import Application, Hole, Primitive, Program
 from dreamcoder.task import Task
 from torch import nn
@@ -12,6 +13,19 @@ from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 
 from dreamcoder.matt.sing import sing
 from dreamcoder.matt.util import *
+
+def cached_propagate(propagate):
+    @functools.wraps(propagate)
+    def _cached_propagate(self,towards,concrete_only=False):
+        if self.no_cache:
+            return propagate(self, towards, concrete_only=concrete_only)
+
+        if self.cache.towards is towards:
+            return self.cache.exwise
+
+        exwise = propagate(self, towards, concrete_only=concrete_only)
+        self.cache = Cache(towards,exwise)
+    return _cached_propagate
 
 class PTask:
     """
@@ -233,8 +247,6 @@ class PNode:
 
         return abs # and return our abstraction
 
-
-
     @staticmethod
     def from_ptask(ptask: PTask):
         """
@@ -269,6 +281,7 @@ class PNode:
         # meaning this will be our ntype.output node
         root = PNode.from_ptask(PTask(task))
         root.tree.expand_from_dreamcoder(p)
+        assert repr(root.tree) == repr(p), "these must be the same for the sake of the RNN which does str() of the pnode"
         return root
 
     def expand_from_dreamcoder(self, p: Program):
@@ -315,7 +328,7 @@ class PNode:
         elif self.ntype.var:
             return f'${self.i}'
         elif self.ntype.HOLE:
-            return f'HOLE({self.tp})'
+            return f'<HOLE>'
         else:
             raise TypeError
     @property
@@ -326,7 +339,15 @@ class PNode:
         BAS-style upward-only propagation
         """
         return self.propagate(self.parent)
-    def propagate(self,towards, concrete_only=False):
+    def propagate_to_hole(self):
+        """
+        MBAS-style propagation to hole
+        """
+        assert self.ntype.hole
+        return self.propagate(self)
+    
+    @cached_propagate
+    def propagate(self, towards, concrete_only=False):
         """
         returns :: Examplewise
 
@@ -347,6 +368,7 @@ class PNode:
         
 
         """
+
         if self.ntype.output:
             if towards is self:
                 # propagate upwards: evaluate the whole tree
@@ -372,6 +394,8 @@ class PNode:
             return Examplewise(sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
 
         elif self.ntype.hole:
+            if towards is self:
+                return self.parent.propagate(self, concrete_only=concrete_only)
             if concrete_only: return None
             if self.in_HOF_lambda:
                 # contextless hole as in BAS
@@ -525,15 +549,15 @@ class PNode:
         returns a single hole or None if there are no holes in the subtree
         """
         if self.ntype.output:
-            return self.tree.get_hole(ordering)
+            return self.tree.get_hole(ordering, tiebreaker=tiebreaker)
         elif self.ntype.abs:
-            return self.body.get_hole(ordering)
+            return self.body.get_hole(ordering, tiebreaker=tiebreaker)
         elif self.ntype.var or self.ntype.prim:
             return None
         elif self.ntype.hole:
             return self
         elif self.ntype.app:
-            holes = [self.fn.get_hole(ordering)] + [x.get_hole(ordering) for x in self.xs]
+            holes = [self.fn.get_hole(ordering, tiebreaker=tiebreaker)] + [x.get_hole(ordering,tiebreaker=tiebreaker) for x in self.xs]
             holes = [h for h in holes if h is not None]
             if len(holes) == 0:
                 return None
@@ -580,7 +604,8 @@ class PNode:
         else:
             raise TypeError
     def get_prim(self):
-        if self.ntype.output or self.ntype.abs or self.ntype.hole:
+        self = self.unwrap_abstractions()
+        if self.ntype.output or self.ntype.hole:
             raise TypeError
         elif self.ntype.app:
             return self.fn.get_prim()
@@ -588,6 +613,8 @@ class PNode:
             return self.prim
         elif self.ntype.var:
             return Index(self.i)
+        elif self.ntype.abs:
+            assert False, "not possible bc we unwrapped abstractions"
         else:
             raise TypeError
     def unwrap_abstractions(self, count=False):
@@ -603,85 +630,49 @@ class PNode:
         if count:
             return node,i
         return node
-    # def fill_hole(self,prim):
-    #     """
-    #     fill hole with Primitive (or Index)
-    #     """
-    #     assert self.ntype.hole
-    #     assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
+    def root(self):
+        """
+        get the root of the tree (an output node)
+        """
+        if self.parent is self:
+            return self
+        return self.parent.root()
+    def clear_cache(self, children=True):
+        raise NotImplementedError
+        """
+        clears the cache of us and our children (unless children=False)
+        """
+        self.cache = Cache(None,None)
+        if children:
+            for c in self.children():
+                c.clear_cache(children=True)
+    def pause_cache(self, children=True):
+        raise NotImplementedError
+        """
+        pauses the cache for us and our children (unless children=False)
+            - note that this makes the whole system ignore the cache and itll stay
+              in whatever state you left it (it will NOT clear the cache)
+        """
+        self.cache_paused = True
+        self.cache = Cache(None,None)
+        if children:
+            for c in self.children():
+                c.pause_cache(children=True)
 
-    #     if prim.isPrimitive:
-    #         assert prim.tp.returns() == self.tp # in order to fill the hole in a valid way
-    #     elif prim.isIndex:
-    #         assert self.ctx[prim.i].tp == self.tp # the Ctx.tp is the same as our tp
-        
-
-    #     # Index and non-function Primitives are already `program.Program`s
-    #     # however we gotta do this `Application()` stuff and instantiate some new holes
-    #     # if we come across an arrow type
-    #     program = prim
-    #     if prim.isPrimitive and prim.tp.isArrow():
-    #         for arg_tp in prim.tp.functionArguments():
-    #             while arg_tp.isArrow(): # HOF
-    #                 arg_tp.
-
-    #             Application(program, Hole(tp=x)) # following grammar.py roughly
-        
-    #     # build the pnode
-    #     parent = self.parent
-    #     pnode = PNode(program, parent, self.ctx)
-    #     parent.replace(old=self, new=pnode)
-
-    # def change_child(self,old,new):
-    #     """
-    #     Swap out one child of ours for a new child
-    #     """
-    #     assert old.tp == new.tp
-    #     assert old.parent is self
-    #     assert new.parent is self
-    #     if self.ntype.hole or self.ntype.prim or self.ntype.var:
-    #         raise TypeError
-    #     elif self.ntype.output:
-    #         assert old is self.tree
-    #         self.tree = new
-    #     elif self.ntype.abs:
-    #         assert old is self.body
-    #         self.body = new
-    #     elif self.ntype.app:
-    #         if self.fn is old:
-    #             self.fn = new
-    #             return
-    #         else:
-    #             for i,x in enumerate(self.xs):
-    #                 if x is old:
-    #                     self.xs[i] = new
-    #                     return
-    #         assert False # none of the fn nor children were the old thing
-    #     else:
-    #         raise TypeError
-        
-        
-# def hole_of_type(tp):
-#     if tp.isArrow():
-#         for x in tp.functionArguments():
-#             Abstrac
 
 
 
 class PTrace:
-    def __init__(self, pnode, phead, ordering, tiebreaking='random') -> None:
-        self.pnode = pnode
+    def __init__(self, root, phead, ordering, tiebreaking='random') -> None:
+        assert root.ntype.output
+        self.root = root
+        self.phead = phead
         self.ordering = ordering
         self.tiebreaking = tiebreaking
         self.prev_hole = None
-        self.phead = phead
 
-        self.masks = []
-        self.targets = []
-        self.strings = []
+        self.into_phantom_tree(root) # leave the toplevel ntype.output node.
 
-        assert pnode.ntype.output
-        self.into_phantom_tree(pnode) # leave the toplevel ntype.output node.
 
     def into_phantom_tree(self,node):
         """
@@ -695,6 +686,22 @@ class PTrace:
             node.ntype = NType.HOLE
         for c in node.children():
             self.into_phantom_tree(c)
+
+    def process_holes(self, process_hole):
+        processed_holes = []
+        masks = []
+        targets = []
+        strings = []
+        while True:
+            hole = self.root.get_hole(self.ordering,self.tiebreaking)
+            if hole is None:
+                break
+            masks.append(self.phead.build_mask(hole))
+            targets.append(self.phead.build_target(hole))
+            strings.append(str(self.pnode))
+            processed_holes.append(process_hole(hole))
+        return processed_holes, masks, targets, strings
+
     
     def iter_inplace(self):
         """
@@ -703,6 +710,7 @@ class PTrace:
 
         We actually dont even return the pnode, just so you cant collect those values into a list
         """
+        assert False, "deprecated for process_holes"
         if self.prev_hole is not None:
             # teacher-force the hole into the proper node
             self.prev_hole.ntype = self.prev_hole._old_ntype
@@ -716,7 +724,7 @@ class PTrace:
         self.targets.append(self.phead.build_target(hole))
         self.strings.append(str(self.pnode))
 
-        yield self.pnode, hole
+        yield hole
 
 
 
