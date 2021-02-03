@@ -14,6 +14,9 @@ from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 from dreamcoder.matt.sing import sing
 from dreamcoder.matt.util import *
 
+Ctx = namedtuple('Ctx','tp exwise')
+Cache = namedtuple('Cache','towards exwise')
+
 def cached_propagate(propagate):
     @functools.wraps(propagate)
     def _cached_propagate(self,towards,concrete_only=False):
@@ -141,8 +144,6 @@ class Examplewise:
         assert self._abstract is not None
         return repr(self.abstract) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
 
-Ctx = namedtuple('Ctx','tp exwise')
-Cache = namedtuple('Cache','towards exwise')
 
 class PNode:
     """
@@ -150,9 +151,6 @@ class PNode:
     PNodes basically look like the Tree structure you'd expect instead
     of the wildness of dreamcoder.program.Program where you have to do
     applicationParse() etc.
-
-    pnode.p gives you the Progrma used to generate this PNode which is
-    useful e.g. if you wanna concretely execute the whole subtree
 
     lambda abstractions are still used bc many things operating over
     PNodes will want to be aware that the Context is changing
@@ -183,7 +181,7 @@ class PNode:
 
         self.cache = Cache(towards=None, exwise=None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
         
-    def expand_to(self, prim, cache='kill'):
+    def expand_to(self, prim, clear_cache=None):
         """
         Call this on a hole to transform it inplace into something else.
          - prim :: Primitive | Index
@@ -194,6 +192,12 @@ class PNode:
             prim futhermore has arguments that are arrows, those are where the abstractions will be created (HOFs).
          - if `self` is an abstraction it'll get unwrapped to reveal the underlying hole as a convenience (simplifies
             a lot of use cases and recursion cases).
+
+        - use 'cache' to specify how the cache should behave. None means we dont clear the cache at all and
+            just let it accumulate. Some mode like 'single' 'tree' or 'parents' will do self.clear_cache(mode).
+        - the cache is very dangerous, but ofc by running in cache-verify mode where we test both the cache and noncache
+            behavior and ensure theyre always the same, we're okay
+
 
         """
         self = self.unwrap_abstractions()
@@ -591,7 +595,8 @@ class PNode:
         raise NotImplementedError
     def children(self):
         """
-        returns a list of any nodes below this one in the tree
+        returns a list of any nodes immediately below this one in the tree (empty list if leaf)
+        note that this doesnt recursively get everyone, just your immediate children.
         """
         if self.ntype.output:
             return [self.tree]
@@ -637,15 +642,28 @@ class PNode:
         if self.parent is self:
             return self
         return self.parent.root()
-    def clear_cache(self, children=True):
-        raise NotImplementedError
+    def clear_cache(self, mode):
         """
-        clears the cache of us and our children (unless children=False)
+        Clear your own cache and if the mode is...
+            - single: nobody, just your own
+            - parents: you, your parent, and all their parents to the root
+            - children: you, all your children, and all their children recursively
+            - tree: the whole tree from the .root() downward
         """
         self.cache = Cache(None,None)
-        if children:
+        if mode == 'single':
+            pass # nothing more to od
+        elif mode == 'parents':
+            if self.parent is not self: # ie not root
+                self.parent.clear_cache('parents')
+        elif mode == 'children':
             for c in self.children():
-                c.clear_cache(children=True)
+                c.clear_cache('children')
+        elif mode == 'tree':
+            self.root().clear_cache('children')
+        else:
+            raise ValueError
+
     def pause_cache(self, children=True):
         raise NotImplementedError
         """
@@ -658,9 +676,6 @@ class PNode:
         if children:
             for c in self.children():
                 c.pause_cache(children=True)
-
-
-
 
 class PTrace:
     def __init__(self, root, phead, ordering, tiebreaking='random') -> None:
@@ -702,34 +717,6 @@ class PTrace:
             processed_holes.append(process_hole(hole))
         return processed_holes, masks, targets, strings
 
-    
-    def iter_inplace(self):
-        """
-        be very careful, this generator mutates the original pnode so dont ask for the next element
-        until youve already processed the previous one!!!!!!
-
-        We actually dont even return the pnode, just so you cant collect those values into a list
-        """
-        assert False, "deprecated for process_holes"
-        if self.prev_hole is not None:
-            # teacher-force the hole into the proper node
-            self.prev_hole.ntype = self.prev_hole._old_ntype
-            del self.prev_hole._old_ntype
-
-        hole = self.pnode.get_hole(self.ordering,self.tiebreaking)
-        if hole is None:
-            return # stopiteration
-
-        self.masks.append(self.phead.build_mask(hole))
-        self.targets.append(self.phead.build_target(hole))
-        self.strings.append(str(self.pnode))
-
-        yield hole
-
-
-
-
-
         
 class NType(enum.Enum):
     # dont change the order or it changes loaded programs too
@@ -770,57 +757,3 @@ class NType(enum.Enum):
     @property
     def output(self):
         return self == NType.OUTPUT
-
-
-# ABS = NType.ABS
-# APP = NType.APP
-# VAR = NType.VAR
-# HOLE = NType.HOLE
-# OUTPUT = NType.OUTPUT
-
-
-    # def follow_zipper(self, zipper):
-    #     next,*rest = zipper
-    #     if next == 'body':
-    #         pass
-    #     pass
-    # def get_zippers(self):
-    #     zippers = []
-    #     def _get_zippers(node):
-    #         nonlocal zippers
-    #         if node.ntype.hole:
-
-    #     pass
-    # def parent_first(self,fn,acc):
-    #     """
-    #     simple helper that just calls fn() on every PNode in the tree.
-    #     Doesn't return anything. If you want to return something have
-    #     your fn maintain some state (eg a class with __call__ or 
-    #     just a `nonlocal` variable closured in)
-    #     """
-    #     acc = fn(self,acc)
-    #     if self.ntype.output:
-    #         return self.tree.parent_first(fn,acc)
-    #     if self.ntype.abs:
-    #         self.body.recurse(fn)
-    #     elif self.ntype.app:
-    #         self.fn.recurse(fn)
-    #         for x in self.xs:
-    #             x.recurse(fn)
-    #     elif self.ntype.var or self.ntype.hole or self.ntype.prim:
-    #         pass
-    #     else:
-    #         raise TypeError
-
-
-
-
-
-    # def has_unset_index(self):
-    #     found = False
-    #     def finder(node):
-    #         nonlocal found
-    #         if node.ntype.var and node.ctx[node.i].is_unset:
-    #             found = True
-    #     self.traverse(finder)
-    #     return found
