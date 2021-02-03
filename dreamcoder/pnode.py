@@ -334,11 +334,11 @@ class PNode:
     @property
     def in_HOF_lambda(self):
         return len(self.ctx) > len(self.task.inputs)
-    def propagate_upward(self):
+    def propagate_upward(self, concrete_only=False):
         """
         BAS-style upward-only propagation
         """
-        return self.propagate(self.parent)
+        return self.propagate(self.parent, concrete_only=concrete_only)
     def propagate_to_hole(self):
         """
         MBAS-style propagation to hole

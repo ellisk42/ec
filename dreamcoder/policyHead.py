@@ -131,7 +131,6 @@ class PolicyHead(nn.Module):
             assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
         
         p = PNode(p,parent=None,ctx=[],from_task=task)
-
         ptrace = PTrace(p, self, self.ordering)
 
         processed_holes, masks, targets, strings = ptrace.process_holes(self.process_hole)

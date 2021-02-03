@@ -132,8 +132,8 @@ class ValueHead(nn.Module):
         super(ValueHead, self).__init__()
     def computeValue(self, sketch, task):
         assert False, "not implemented"
-    def valueLossFromFrontier(self, frontier, g):
-        assert False, "not implemented"
+    def train_loss(self, p, task):
+        raise NotImplementedError
 
 class UniformValueHead(ValueHead):
     def __init__(self):
@@ -639,12 +639,12 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 class InvalidIntermediatesValueHead(ValueHead):
     def __init__(self):
         super().__init__()
-    def valueLossFromFrontier(self, f, g):
+    def train_loss(self, p, task):
         return torch.tensor([0.], device=sing.device)
     def value(self, sketch, task):
         try:
-            p = PNode(sketch,parent=None,ctx=[],from_task=task)
-            p.propagate(None,concrete_only=True)
+            p = PNode.from_dreamcoder(sketch,task)
+            p.propagate_upward(concrete_only=True)
         except InvalidSketchError as e:
             print(f"caught an invalid sketch {e}")
             return 100000000000
