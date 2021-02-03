@@ -66,37 +66,42 @@ from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
-from dreamcoder.pnode import PNode,PTask
+from dreamcoder.pnode import PNode,PTask,PTrace
 from dreamcoder.matt.sing import sing
 
 
 class PolicyHead(nn.Module):
     def __init__(self):
-        super(PolicyHead, self).__init__()
+        super().__init__()
+
+        self.H = H = sing.cfg.model.H
+        self.ordering = sing.cfg.model.ordering
+
+        self.index_to_prim = {}
+        self.prim_to_index = {}
+        i = 0
+        for p in sing.g.primitives:
+            self.index_to_prim[i] = p
+            self.prim_to_index[p] = i
+            i += 1
+        for v in range(sing.cfg.model.max_var):
+            self.index_to_prim[i] = Index(v)
+            self.prim_to_index[Index(v)] = i
+            i += 1
 
     def sampleSingleStep(self, task, g, sk,
                         request, holeZippers=None,
                         maximumDepth=4):
-
-        if self.ordering == 'first':
-            zipper = holeZippers[0]
-        elif self.ordering == 'last':
-            zipper = holeZippers[-1]
-        elif self.ordering == 'random':
-            zipper = random.choice(holeZippers)
-        else:
-            raise ValueError
+        hole = sk.get_hole(self.ordering)
         try:
-            dist = self._computeDist([sk], [zipper], task, g) #TODO
+            dist = self.distribution(hole=hole,root=sk)
         except InvalidSketchError as e:
-            mlb.red(f"sampleSingleStep Valuehead should have caught this: {e}")
+            red(f"sampleSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
-        dist = dist.squeeze(0)
-        supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
+        mask = self.build_mask(hole)
+        dist += mask
 
-        # for k, v in supplyDist.items():
-        #     print(v, k)
-        # print()
+        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prim.items()}
 
         newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
         return newSk, newZippers
@@ -104,22 +109,23 @@ class PolicyHead(nn.Module):
     def enumSingleStep(self, task, g, sk, request, 
                         holeZipper=None,
                         maximumDepth=4):
-
+        hole = sk.get_hole(self.ordering)
         try:
-            dist = self.distribution([sk], [holeZipper], task, g)
+            dist = self.distribution(hole=hole,root=sk)
         except InvalidSketchError as e:
-            mlb.red(f"enumSingleStep Valuehead should have caught this: {e}")
-            return # pretend there are no expansions off of it
-        dist = dist.squeeze(0)
-        supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
+            red(f"enumSingleStep Valuehead should have caught this: {e}")
+            raise NoCandidates
+        mask = self.build_mask(hole)
+        dist += mask
+
+        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prim.items()}
+
         try:
             yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
         except NoCandidates:
             return
 
     def train_loss(self, p, task):
-
-        mask = self.build_mask([trace],[zipper],frontier.task,g)
 
         if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
             p = PNode(p,parent=None,ctx=[],from_task=task)
@@ -130,71 +136,59 @@ class PolicyHead(nn.Module):
             assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
         
         p = PNode(p,parent=None,ctx=[],from_task=task)
-
-        ptrace = p.into_trace('right')
+        ptrace = PTrace(p, self, 'right')
 
         distributions = self.ptrace_distributions(ptrace)
-        
-        for zipper in holesToExpand:
-            assert sing.cfg.solver.max_depth > len([ t for t in zipper.path if t != 'body' ]), "Astar wont be able to search this deep"
+        masks = torch.stack(ptrace.masks)
+        targets = torch.stack(ptrace.targets) # not onehots
 
-        maskedDist = self.distribution(posTraces, holesToExpand, frontier.task, g)
+        assert distributions.shape == masks.shape
+        guess = distributions + masks
+
+        loss = self.lossFn(guess, targets)
         
-        # maskedDist :: [5,49]
-        targets = [self._sketchNodeToIndex(node) for node in targetNodes]
-        targets = torch.tensor(targets, device=sing.device)# :: [5]
-        loss = self.lossFn(maskedDist, targets)
         if loss.item() == np.inf:
             mlb.red("ISSUE FOUND, you seem to be masking out the right answer")
-            idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
-            target = targets[idx]
-            node = targetNodes[idx]
-            zipper = holesToExpand[idx]
-            trace = posTraces[idx]
-            print(f"""
-            {target=}
-            {node=}
-            {zipper=}
-            {trace=}
-            {idx=}
-            """)
-            mask = self._buildMask([trace],[zipper],frontier.task,g)
-            md1 = self._computeDist([trace], [zipper], frontier.task, g)
-            print("ayy")
-            maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
-        # if loss.item() > 300:
-        #     print("MASSIVE LOSS, breakpointing")
-        #     breakpoint()
+            breakpoint()
+            assert False
+            # idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
+            # target = targets[idx]
+            # node = targetNodes[idx]
+            # zipper = holesToExpand[idx]
+            # trace = posTraces[idx]
+            # print(f"""
+            # {target=}
+            # {node=}
+            # {zipper=}
+            # {trace=}
+            # {idx=}
+            # """)
+            # maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
         return loss
 
-    def _computeDist(): raise NotImplementedError
+    def build_target(self, hole):
+        target = self.prim_to_index[hole.get_prim()]
+        return torch.tensor(target, device=sing.device) # not a onehot
 
-    def _designateTargetHole(self, zipper, sk):
-        tmpHole = Hole() # loll silly workaround im sorry i dont know how to just visit a node
-        newSk,hole = NewExprPlacer(returnInnerObj=True).execute(sk, zipper.path, tmpHole) #TODO
-        specialHole = Hole(target=True,tp=hole.tp)
-        newSk = NewExprPlacer().execute(sk, zipper.path, specialHole) #TODO
-        return newSk
-
-    def _sketchNodeToIndex(self, node):
-        if node in self.productionToIndex:
-            return self.productionToIndex[node]
-        if node.isAbstraction:
-            return self._sketchNodeToIndex(node.body)
-        if node.isApplication:
-            f, xs = node.applicationParse()
-            return self._sketchNodeToIndex(f)            
-        else: assert False, f"invalid node {node}"
 
     def build_mask(self, hole):
         g_use = sing.g.g_lambdas if hole.in_HOF_lambda else sing.g
 
+        # tp.returns() is `self` if its a base type or the return type if its an arrow type
+        indices = [self.prim_to_index[p] for p in g_use.primitives if p.tp.returns() == hole.tp]
+        # we gotta include variables too
+        indices += [Index(i) for i,(tp,exwise) in enumerate(hole.ctx) if tp == hole.tp]
+
+        mask = torch.zeros(len(self.prim_to_index),device=sing.device)
+        mask[indices] = 1.
+        mask = mask.log()
+        return mask
 
         masks = []
         for zipper, sk in zip(zippers, sketches):
             # if this is a zipper into a lambda then use lambdas grammar
 
-            mask = [0. for _ in range(len(self.productionToIndex))]
+            mask = [0. for _ in range(len(self.prim_to_index))]
             candidates = returnCandidates(zipper, sk, task.request, g_use)
             for c in candidates:
                 mask[self._sketchNodeToIndex(c)] = 1. 
@@ -266,23 +260,7 @@ class DeepcoderListPolicyHead(PolicyHead):
 class RNNPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__() #should have featureExtractor?
-        maxVar = 15
-
-        self.H = H = sing.cfg.model.H
-        self.ordering = sing.cfg.model.ordering
-
-        self.indexToProduction = {}
-        self.productionToIndex = {}
-        i = 0
-        for _, _, expr in sing.g.productions:
-            self.indexToProduction[i] = expr
-            self.productionToIndex[expr] = i
-            i += 1
-
-        for v in range(maxVar):
-            self.indexToProduction[i] = Index(v)
-            self.productionToIndex[Index(v)] = i
-            i += 1
+        H = self.H
 
         inshape = H*3
         self.output = nn.Sequential(
@@ -290,7 +268,7 @@ class RNNPolicyHead(PolicyHead):
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
-                nn.Linear(H, len(self.productionToIndex) ),
+                nn.Linear(H, len(self.prim_to_index) ),
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
@@ -335,30 +313,14 @@ class RNNPolicyHead(PolicyHead):
 class ListREPLPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__()
-        maxVar = 10
-
-        self.H = H = sing.cfg.model.H
-        self.ordering = sing.cfg.model.ordering
-        
-        self.indexToProduction = {}
-        self.productionToIndex = {}
-        i = 0
-        for _, _, expr in sing.g.productions:
-            self.indexToProduction[i] = expr
-            self.productionToIndex[expr] = i
-            i += 1
-
-        for v in range(maxVar):
-            self.indexToProduction[i] = Index(v)
-            self.productionToIndex[Index(v)] = i
-            i += 1
+        H = self.H
 
         self.output = nn.Sequential(
                 nn.Linear(H, H),
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
-                nn.Linear(H, len(self.productionToIndex) ),
+                nn.Linear(H, len(self.prim_to_index) ),
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
@@ -436,17 +398,17 @@ class RBREPLPolicyHead(PolicyHead):
         self.H = H
         #self.REPLHead = RBREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
 
-        self.indexToProduction = {}
-        self.productionToIndex = {}
+        self.index_to_prim = {}
+        self.prim_to_index = {}
         i = 0
         for _, _, expr in g.productions:
-            self.indexToProduction[i] = expr
-            self.productionToIndex[expr] = i
+            self.index_to_prim[i] = expr
+            self.prim_to_index[expr] = i
             i += 1
 
         for v in range(maxVar):
-            self.indexToProduction[i] = Index(v)
-            self.productionToIndex[Index(v)] = i
+            self.index_to_prim[i] = Index(v)
+            self.prim_to_index[Index(v)] = i
             i += 1
 
         self.output = nn.Sequential(
@@ -454,7 +416,7 @@ class RBREPLPolicyHead(PolicyHead):
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
-                nn.Linear(H, len(self.productionToIndex) ),
+                nn.Linear(H, len(self.prim_to_index) ),
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')

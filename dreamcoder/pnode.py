@@ -4,6 +4,7 @@ from dreamcoder.task import Task
 from torch import nn
 import enum
 import random
+from dreamcoder.program import Index
 import torch
 import numpy as np
 from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
@@ -168,10 +169,12 @@ class PNode:
         self.parent = parent
         self.p = p
         self.ctx = ctx
+        # self.tp_ctx = tp_ctx
         self.ntype = NType.from_program(p)
         if from_task:
             self.ntype = NType.OUTPUT
-        self.in_HOF_lambda = (None in ctx)
+
+        self.in_HOF_lambda = len(ctx) > len(self.task.inputs)
 
         self.tp = p.infer()
 
@@ -182,6 +185,7 @@ class PNode:
             # PRIM
             self.name = p.name
             self.value = p.value
+            self.prim = p # this is the exact object that shows up in the Grammar and such, theres only one copy of it
         elif self.ntype.var:
             # IDX
             self.i = p.i
@@ -197,8 +201,13 @@ class PNode:
             # (so for non toplevel lambdas this is always None)
             exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
 
+            assert self.tp.isArrow()
+            arg_tp = self.tp.arguments[0] # the arg to this arrow
+
+            add_ctx = (arg_tp,exwise)
+
             # push it onto the ctx stack
-            self.body = PNode(p.body, parent=self, ctx=[exwise]+ctx)
+            self.body = PNode(p.body, parent=self, ctx=(add_ctx,*ctx))
 
             # do some sanity checks
             if self.parent.ntype.output:
@@ -261,7 +270,7 @@ class PNode:
         elif self.ntype.var:
             # if the index is bound to something return that
             # otherwise return self.index_nm[self.i]()
-            exwise = self.ctx[self.i]
+            tp,exwise = self.ctx[self.i]
             if exwise is not None:
                 # this branch is taken for all toplevel args
                 return exwise
@@ -464,8 +473,6 @@ class PNode:
             raise TypeError
     def cache_friendly_clone(self):
         raise NotImplementedError
-    def into_trace(self, ordering):
-        return ProgramTrace(self,ordering)
     def children(self):
         """
         returns a list of any nodes below this one in the tree
@@ -480,25 +487,46 @@ class PNode:
             return []
         else:
             raise TypeError
+    def get_prim(self):
+        if self.ntype.output or self.ntype.abs or self.ntype.hole:
+            raise TypeError
+        elif self.ntype.app:
+            return self.fn.get_prim()
+        if self.ntype.prim:
+            return self.prim
+        elif self.ntype.var:
+            return Index(self.i)
+        else:
+            raise TypeError
 
 
 
 
 class PTrace:
-    def __init__(self, pnode, ordering, tiebreaking='random') -> None:
+    def __init__(self, pnode, phead, ordering, tiebreaking='random') -> None:
         self.pnode = pnode
         self.ordering = ordering
         self.tiebreaking = tiebreaking
         self.prev_hole = None
+        self.phead = phead
+
+        self.masks = []
+        self.targets = []
+        self.strings = []
+
         assert pnode.ntype.output
-        self.into_phantom_tree(self.pnode.tree) # leave the toplevel ntype.output node.
+        self.into_phantom_tree(pnode) # leave the toplevel ntype.output node.
 
     def into_phantom_tree(self,node):
         """
-        turn whole tree into Holes but without destroying the old data
+        Turn whole tree into Holes but without destroying the old data
+        But dont do this for abstractions + output nodes bc it's impossible to "guess" these
+        and theyre autofilled during search.
         """
-        node._old_ntype = node.ntype
-        node.ntype = NType.HOLE
+        assert not node.ntype.hole
+        if not (node.ntype.abs or node.ntype.output):
+            node._old_ntype = node.ntype
+            node.ntype = NType.HOLE
         for c in node.children():
             self.into_phantom_tree(c)
     
@@ -517,6 +545,11 @@ class PTrace:
         hole = self.pnode.get_hole(self.ordering,self.tiebreaking)
         if hole is None:
             return # stopiteration
+
+        self.masks.append(self.phead.build_mask(hole))
+        self.targets.append(self.phead.build_target(hole))
+        self.strings.append(str(self.pnode))
+
         yield self.pnode, hole
 
 

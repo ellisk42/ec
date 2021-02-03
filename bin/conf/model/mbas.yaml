@@ -3,6 +3,7 @@
 type: mbas
 ordering: last
 H: 64
+max_var: 10
 vhead: check_invalid # repl | rnn | check_invalid | uniform
 phead: mbas # repl | rnn | uniform
 multidir: False
