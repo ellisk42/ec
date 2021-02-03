@@ -60,6 +60,8 @@ class SMC(Solver):
         self.max_length = solver_cfg.max_length
         self.max_depth = solver_cfg.max_depth
         self.initial_particles = solver_cfg.initial_particles
+        self.phead = phead
+        self.vhead = vhead
 
     def infer(self, g, tasks, likelihoodModel, _=None,
                               #verbose=False,
@@ -131,7 +133,7 @@ class SMC(Solver):
 
         totalNumberOfPrograms = 0
 
-        assert isinstance(self.owner.valueHead,InvalidIntermediatesValueHead) # because of the valuehe function resampling stuff later that assumes it
+        assert isinstance(self.vhead,InvalidIntermediatesValueHead) # because of the valuehe function resampling stuff later that assumes it
 
         while time.time() - starting < timeout:
             if returnAfterHit and len(self.allHits) > 0: break
@@ -164,7 +166,7 @@ class SMC(Solver):
                             #if t > 2 or d > 3:
                                 #mlb.purple(f"[{totalNumberOfPrograms}] node: {p.trajectory}")
                                 #mlb.purple(f"T{t}d{d}s{s}")
-                            newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
+                            newObject, newZippers = self.phead.sampleSingleStep(task, g, p.trajectory,
                                                     request, p.zippers, self.max_depth)
                             totalNumberOfPrograms += 1
                             #print(f"{p.frequency=}")
@@ -236,7 +238,7 @@ class SMC(Solver):
                 if len(samples) == 0: break
 
                 if self.no_resample:
-                    population = [p for p in samples if not p.finished and self.owner.valueHead.computeValue(p.trajectory,task) == 0]
+                    population = [p for p in samples if not p.finished and self.vhead.value(p.trajectory,task) == 0]
                     if len(population) == 0:
                         break
                     continue
@@ -251,7 +253,7 @@ class SMC(Solver):
                         if (p.trajectory, task) in self.valueMem:
                             p.distance = self.valueMem[ (p.trajectory, task) ] 
                         else:
-                            p.distance = self.owner.valueHead.computeValue(p.trajectory, task)
+                            p.distance = self.vhead.value(p.trajectory, task)
                             self.valueMem[ (p.trajectory, task) ] = p.distance
                 # Resample
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 

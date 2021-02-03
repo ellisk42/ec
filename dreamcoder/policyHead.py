@@ -89,9 +89,12 @@ class PolicyHead(nn.Module):
             self.prim_to_index[Index(v)] = i
             i += 1
 
-    def sampleSingleStep(self, task, g, sk,
-                        request, holeZippers=None,
-                        maximumDepth=4):
+    # def sampleSingleStep(self, task, g, sk,
+    #                     request, holeZippers=None,
+    #                     maximumDepth=4):
+    def fill_one_hole(self,
+                      sk,
+                      max_depth):
         hole = sk.get_hole(self.ordering)
         try:
             dist = self.masked_distribution(hole)

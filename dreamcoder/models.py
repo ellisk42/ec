@@ -76,7 +76,7 @@ class MBAS(nn.Module):
     self.train()
     self.zero_grad()
 
-    vloss = self.vhead.valueLossFromFrontier(f, sing.g)
+    vloss = self.vhead.train_loss(f.p, f.t)
     ploss = self.phead.train_loss(f.p, f.t)
 
     self.running_vloss.add(vloss)
