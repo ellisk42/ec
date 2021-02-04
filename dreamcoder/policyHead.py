@@ -94,23 +94,28 @@ class PolicyHead(nn.Module):
     # def sampleSingleStep(self, task, g, sk,
     #                     request, holeZippers=None,
     #                     maximumDepth=4):
-    def fill_one_hole(self,
-                      sk,
+    def sample_action(self,
+                      pnode,
                       max_depth):
-        hole = sk.get_hole(self.ordering,self.tiebreaking)
+        hole = pnode.get_hole(self.ordering,self.tiebreaking)
         try:
-            dist = self.masked_distribution(hole)
+            prods,lls = self.action_distribution(hole,max_depth)
         except InvalidSketchError as e:
             red(f"sampleSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
-        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prod.items()}
+        idx = sample_log_dist(lls)
+        prod = prods[idx]
+        return prod
+        #hole.expand_to(prod, clear_cache=self.cache_mode)
 
-        newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
-        return newSk, newZippers
 
-    def enumSingleStep(self, task, g, sk, request, 
-                        holeZipper=None,
-                        maximumDepth=4):
+
+    # def enumSingleStep(self, task, g, sk, request, 
+    #                     holeZipper=None,
+    #                     maximumDepth=4):
+    def enumerate_actions(self,
+                      pnode,
+                      max_depth):
         hole = sk.get_hole(self.ordering,self.tiebreaking)
         try:
             dist = self.masked_distribution(hole)
@@ -145,7 +150,7 @@ class PolicyHead(nn.Module):
         masks = torch.stack(masks) # [num_sks,Q]
         targets = torch.stack(targets) # [num_sks,1] the non-onehot version
 
-        dists = self.unmasked_distributions(processed_holes, task) # [num_sks,Q]
+        dists = self.unmasked_distributions(processed_holes) # [num_sks,Q]
         assert dists.shape == masks.shape
 
         masked_dists = dists + masks
@@ -159,23 +164,35 @@ class PolicyHead(nn.Module):
             # idx = (nn.NLLLoss(reduction='none')(maskedDist,targets) == np.inf).nonzero()
         return loss
     
-    def masked_distribution(self, hole, task):
-        mask = self.build_mask(hole)
+    def masked_distribution(self, hole, max_depth):
+        mask = self.build_mask(hole, max_depth)
         processed_hole = self.process_hole(hole)
-        dist = self.unmasked_distributions([processed_hole],task).unsqueeze(0)
+        dist = self.unmasked_distributions([processed_hole]).unsqueeze(0)
         return mask + dist
+
+    def action_distribution(self, hole, max_depth):
+        dist = self.masked_distribution(hole, max_depth)
+        prod_ll = [(prod, dist[i].item()) for i, prod in self.index_to_prod.items() if dist[i].item != -np.inf]
+        prods,lls = list(zip(*prod_ll))
+        lls = normalize_log_dist(lls)
+        return prods,lls
+
 
     def build_target(self, hole):
         target = self.prod_to_index[hole.get_prod()]
         return torch.tensor(target, device=sing.device) # not a onehot
 
-    def build_mask(self, hole):
+    def build_mask(self, hole, max_depth):
         g_use = sing.g.g_lambdas if hole.in_HOF_lambda else sing.g
 
         # tp.returns() is `self` if its a base type or the return type if its an arrow type
         indices = [self.prod_to_index[p] for p in g_use.primitives if p.tp.returns() == hole.tp]
         # we gotta include variables too
         indices += [self.prod_to_index[Index(i)] for i,(tp,exwise) in enumerate(hole.ctx) if tp == hole.tp]
+
+        if hole.depth() >= max_depth:
+            # force leaf (ie an index or a non-arrow primitive)
+            indices = [i for i in indices if self.index_to_prod[i].isIndex or not self.index_to_prod[i].tp.isArrow()]
 
         mask = torch.zeros(len(self.prod_to_index),device=sing.device)
         mask[indices] = 1.
@@ -326,10 +343,11 @@ class RNNPolicyHead(PolicyHead):
     def process_hole(self,hole):
         return str(hole.root())
 
-    def unmasked_distributions(self, processed_holes, task):
+    def unmasked_distributions(self, processed_holes):
         num_sks = len(processed_holes)
         if num_sks > 1:
             assert processed_holes[0] != processed_holes[1] # sanity check that we arent messing with the inplace operation and making everything the same by accident
+        assert all(h.task is processed_holes[0].task for h in processed_holes), "we assume everyone has the same task"
 
         # sk features
         sk_feats = sing.model.program_rnn.encode_sketches(processed_holes)
@@ -414,7 +432,8 @@ class ListREPLPolicyHead(PolicyHead):
         # BAS
         return hole.root().propagate_upward()
 
-    def unmasked_distributions(self, processed_holes, task):
+    def unmasked_distributions(self, processed_holes):
+        assert all(h.task is processed_holes[0].task for h in processed_holes), "we assume everyone has the same task"
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
         sk_reps = torch.stack([p.abstract() for p in processed_holes]) # [num_sks,num_exs,H]
