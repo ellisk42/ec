@@ -311,7 +311,7 @@ def load_all_curricula(args):
     
     # Now, start constructing the curricula
     curricula = dict()
-    for datablock in range(args["num_data_blocks_per_category"] + 1):
+    for datablock in range(num_data_blocks_per_category + 1):
         for hard_category in hard_categories:
             curriculum_categories = easy_categories + [hard_category]
             curriculum_key = (tuple(curriculum_categories), datablock)
