@@ -92,7 +92,7 @@ class AbstractionFn(nn.Module):
       start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
       end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
 
-      ctx = torch.cat([start] + [c.exwise.abstract.unsqueeze(0) for c in ctx] + [end])
+      ctx = torch.cat([start] + [c.exwise.abstract().unsqueeze(0) for c in ctx] + [end])
       _, res = self.encoder.ctx_encoder(ctx)
       res = res.sum(0) # sum bidir
       return res

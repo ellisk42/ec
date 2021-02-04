@@ -66,16 +66,18 @@ from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.list.makeDeepcoderData import *
 from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
-from dreamcoder.pnode import PNode,PTask,PTrace
+from dreamcoder.pnode import PNode,PTask
 from dreamcoder.matt.sing import sing
 
 
 class PolicyHead(nn.Module):
-    def __init__(self):
+    def __init__(self, cache_mode):
         super().__init__()
+        self.cache_mode = cache_mode
 
         self.H = H = sing.cfg.model.H
         self.ordering = sing.cfg.model.ordering
+        self.tiebreaking = sing.cfg.model.tiebreaking
 
         self.index_to_prod = {}
         self.prod_to_index = {}
@@ -95,7 +97,7 @@ class PolicyHead(nn.Module):
     def fill_one_hole(self,
                       sk,
                       max_depth):
-        hole = sk.get_hole(self.ordering)
+        hole = sk.get_hole(self.ordering,self.tiebreaking)
         try:
             dist = self.masked_distribution(hole)
         except InvalidSketchError as e:
@@ -109,7 +111,7 @@ class PolicyHead(nn.Module):
     def enumSingleStep(self, task, g, sk, request, 
                         holeZipper=None,
                         maximumDepth=4):
-        hole = sk.get_hole(self.ordering)
+        hole = sk.get_hole(self.ordering,self.tiebreaking)
         try:
             dist = self.masked_distribution(hole)
         except InvalidSketchError as e:
@@ -137,9 +139,8 @@ class PolicyHead(nn.Module):
         
         p = PNode.from_dreamcoder(p,task)
         task = p.task
-        ptrace = PTrace(p, self, self.ordering)
 
-        processed_holes, masks, targets, strings = ptrace.process_holes(self.process_hole)
+        processed_holes, masks, targets, strings = self.trace_and_process_holes(p)
         masks = torch.stack(masks) # [num_sks,Q]
         targets = torch.stack(targets) # [num_sks,1] the non-onehot version
 
@@ -180,19 +181,26 @@ class PolicyHead(nn.Module):
         mask = mask.log()
         return mask
 
-        masks = []
-        for zipper, sk in zip(zippers, sketches):
-            # if this is a zipper into a lambda then use lambdas grammar
+    def trace_and_process_holes(self, root):
+        assert root.ntype.output
+        root.hide(recursive=True)
 
-            mask = [0. for _ in range(len(self.prod_to_index))]
-            candidates = returnCandidates(zipper, sk, task.request, g_use)
-            for c in candidates:
-                mask[self._sketchNodeToIndex(c)] = 1. 
-            masks.append(mask)
-        mask = torch.tensor(masks)
-        mask = torch.log(mask)
-        mask = mask.to(sing.device)
-        return mask
+        processed_holes = []
+        masks = []
+        targets = []
+        strings = []
+
+        while True:
+            hole = root.get_hole(self.ordering,self.tiebreaking)
+            if hole is None:
+                return processed_holes, masks, targets, strings
+            masks.append(self.build_mask(hole))
+            targets.append(self.build_target(hole))
+            strings.append(str(root))
+            processed_holes.append(self.process_hole(hole))
+            hole.unhide()
+            hole.clear_cache(self.cache_mode)
+        assert False
 class UniformPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__()
@@ -255,7 +263,8 @@ class DeepcoderListPolicyHead(PolicyHead):
 
 class RNNPolicyHead(PolicyHead):
     def __init__(self):
-        super().__init__() #should have featureExtractor?
+        cache_mode = None
+        super().__init__(cache_mode)
         H = self.H
 
         inshape = H*3
@@ -381,7 +390,8 @@ class RNNPolicyHead(PolicyHead):
 
 class ListREPLPolicyHead(PolicyHead):
     def __init__(self):
-        super().__init__()
+        cache_mode = None if sing.cfg.model.multidir else 'parents'
+        super().__init__(cache_mode)
         H = self.H
 
         self.output = nn.Sequential(
@@ -407,7 +417,7 @@ class ListREPLPolicyHead(PolicyHead):
         assert not any(p.has_concrete for p in processed_holes)
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
-        sk_reps = torch.stack([p.abstract for p in processed_holes]) # [num_sks,num_exs,H]
+        sk_reps = torch.stack([p.abstract() for p in processed_holes]) # [num_sks,num_exs,H]
         if sing.cfg.debug.zero_sk:
             sk_reps = torch.zeros_like(sk_reps)
 

@@ -28,7 +28,7 @@ class Grammar(object):
         self.expression2likelihood[Index(0)] = self.logVariable
 
         self.max_hole_depth = max_hole_depth
-        self.g_lambdas = None
+        self.g_lambdas = g_lambdas
 
     def randomWeights(self, r):
         """returns a new grammar with random weights drawn from r. calls `r` w/ old weight"""
@@ -53,6 +53,7 @@ class Grammar(object):
             else:
                 continuationType = None
         if 'g_lambdas' not in state:
+            assert False
             state['g_lambdas'] = None
         self.__init__(state['logVariable'], state['productions'], continuationType=continuationType, max_hole_depth=state['max_hole_depth'], g_lambdas=state['g_lambdas'])
 

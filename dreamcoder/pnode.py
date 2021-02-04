@@ -22,18 +22,31 @@ def cached_propagate(propagate):
     def _cached_propagate(self,towards,concrete_only=False):
         # if self.no_cache:
             # return propagate(self, towards, concrete_only=concrete_only)
+        # self.cache = Cache(None,None) # disable cache TODO
 
         if self.cache.towards is not towards:
             exwise = propagate(self, towards, concrete_only=concrete_only)
             self.cache = Cache(towards,exwise)
         elif sing.cfg.debug.validate_cache:
-            # for cache validation. Note that this will actually recurse
-            # since when we manually call propagate here then that inner
-            # call will call self.propagate (which is _cached_propagate) internally so
-            # it'll end up verifying the entire cache since validate_cache will be true
-            # for all these cases.
+            """
+            for cache validation. Note that this will actually recurse
+            since when we manually call propagate here then that inner
+            call will call self.propagate (which is _cached_propagate) internally so
+            it'll end up verifying the entire cache since validate_cache will be true
+            for all these cases.
+            """
             exwise = propagate(self, towards, concrete_only=concrete_only)
-            assert self.cache.exwise == exwise # __eq__ is very thorough equality of both concrete and abstract parts
+            if self.cache.exwise.has_abstract:
+                """
+                We're in a weird position. The caller of propagate() is the one who often then calls
+                .abstract(), so we don't actually know if we're about to be abstracted or not. However,
+                we know that if our cache did NOT have abstract then we definitely wont be abstract
+                (programs get strictly more concrete). So here by calling .abstract() below in the case
+                where the cache was abstract, we may be doing something unnecessary but thats why
+                this is a debugging thing. If the cache hasn't been invalidated then its .abstract()
+                better be the same as our .abstract(), I think that's fair enough.
+                """
+                assert torch.allclose(self.cache.exwise.abstract(),exwise.abstract())
 
         return self.cache.exwise
     return _cached_propagate
@@ -66,7 +79,7 @@ class PTask:
         assert len(_argwise) == self.argc
         self.inputs = [Examplewise(arg) for arg in _argwise]
     def output_features(self):
-        return self.outputs.abstract
+        return self.outputs.abstract()
     def input_features(self):
         return sing.model.abstraction_fn.encode_known_ctx(self.inputs)
 
@@ -96,7 +109,6 @@ class Examplewise:
             assert len(data) == sing.num_exs
             self._check_in_range()
 
-    @property
     def abstract(self):
         if self._abstract is None:
             self._abstract = sing.model.abstraction_fn.encode_exwise(self)
@@ -109,20 +121,6 @@ class Examplewise:
     @property
     def has_concrete(self):
         return self.concrete is not None
-
-    def __eq__(self,other):
-        """
-        completely thorough careful equality for use by the cache validator
-        """
-        if self.has_abstract ^ other.has_abstract:
-            return False
-        if self.has_concrete ^ other.has_concrete:
-            return False
-        if self.has_concrete and (self.concrete != other.concrete):
-            return False
-        if self.has_abstract and not torch.allclose(self.abstract,other.abstract):
-            return False
-        return True
 
     def as_concrete_fn(self,*args):
         """
@@ -172,7 +170,7 @@ class Examplewise:
         if self.concrete is not None:
             return repr(self.concrete)
         assert self._abstract is not None
-        return repr(self.abstract) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
+        return repr(self.abstract()) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
 
 
 class PNode:
@@ -476,7 +474,7 @@ class PNode:
 
             if concrete_only and None in evaluated_args: return None # one of our chilren was abstract
 
-            if towards is self.parent and all(arg.concrete is not None for arg in evaluated_args) and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
+            if towards is self.parent and all(arg.has_concrete for arg in evaluated_args) and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
                 ## CONCRETE EVAL
                 # calls evaluate() on self.fn which should return a concrete callable primitive
                 # wrapped in an Examplewise then we just use Examplewise.as_concrete_function
@@ -487,7 +485,7 @@ class PNode:
             assert not concrete_only # the earlier check would have caught this
             sing.stats.fn_called_abstractly += 1
             nm = sing.model.abstract_transformers.fn_nms[self.fn.name][propagation_direction]
-            return Examplewise(nm(*[arg.abstract for arg in evaluated_args]))
+            return Examplewise(nm(*[arg.abstract() for arg in evaluated_args]))
 
         else:
             raise TypeError
@@ -586,20 +584,20 @@ class PNode:
             return max([x.depth() for x in (*self.xs,self.fn)]) # max among fn and args
         else:
             raise TypeError
-    def get_hole(self, ordering, tiebreaker='random'):
+    def get_hole(self, ordering, tiebreaking):
         """
         returns a single hole or None if there are no holes in the subtree
         """
         if self.ntype.output:
-            return self.tree.get_hole(ordering, tiebreaker=tiebreaker)
+            return self.tree.get_hole(ordering, tiebreaking)
         elif self.ntype.abs:
-            return self.body.get_hole(ordering, tiebreaker=tiebreaker)
+            return self.body.get_hole(ordering, tiebreaking)
         elif self.ntype.var or self.ntype.prim:
             return None
         elif self.ntype.hole:
             return self
         elif self.ntype.app:
-            holes = [self.fn.get_hole(ordering, tiebreaker=tiebreaker)] + [x.get_hole(ordering,tiebreaker=tiebreaker) for x in self.xs]
+            holes = [self.fn.get_hole(ordering, tiebreaking)]+ [x.get_hole(ordering,tiebreaking) for x in self.xs]
             holes = [h for h in holes if h is not None]
             if len(holes) == 0:
                 return None
@@ -694,6 +692,8 @@ class PNode:
             - children: you, all your children, and all their children recursively
             - tree: the whole tree from the .root() downward
         """
+        if mode is None:
+            return
         self.cache = Cache(None,None)
         if mode == 'single':
             pass # nothing more to od
@@ -707,6 +707,46 @@ class PNode:
             self.root().clear_cache('children')
         else:
             raise ValueError
+    def hide(self,recursive=False):
+        """
+        Turn whole tree into Holes but without destroying the old data
+        But dont do this for abstractions + output nodes bc it's impossible to "guess" these
+        and theyre autofilled during search.
+        Also for applications we dont hide the .fn field (which we assume to be a primitive)
+        """
+        if recursive:
+            if self.ntype.output:
+                self.tree.hide(recursive=True)
+            if self.ntype.abs:
+                self.body.hide(recursive=True)
+            if self.ntype.app:
+                for x in self.xs:
+                    x.hide(recursive=True)
+                # dont hide the self.fn
+                assert self.fn.ntype.prim, "i imagine hiding will change if we had applications where the fn wasnt a prim"
+
+        if self.ntype.output or self.ntype.abs:
+            pass # we cant hide an output or abs, they just recurse if recursive=True
+        elif self.ntype.prim and self.parent.ntype.app:
+            pass # to hide an APP we hide its args and the APP node itself but not the fn (which should be revealed when the app node is unhidden)
+        elif self.ntype.hole:
+            raise TypeError
+        elif self.ntype.prim or self.ntype.var or self.ntype.app:
+            assert self.phantom_ntype is None
+            self.phantom_ntype = self.ntype
+            self.ntype = NType.HOLE
+        else:
+            raise TypeError
+    def unhide(self,recursive=False):
+        if self.ntype.hole:
+            assert self.phantom_ntype is not None
+            assert not self.phantom_ntype.hole
+            self.ntype = self.phantom_ntype
+            self.phantom_ntype = None
+
+        if recursive: # must come after setting our own ntype otherwise we dont have any children if we're a hole
+            for c in self.children():
+                c.unhide(recursive=True)
 
     def pause_cache(self, children=True):
         raise NotImplementedError
@@ -721,46 +761,7 @@ class PNode:
             for c in self.children():
                 c.pause_cache(children=True)
 
-class PTrace:
-    def __init__(self, root, phead, ordering, tiebreaking='random') -> None:
-        assert root.ntype.output
-        self.root = root
-        self.phead = phead
-        self.ordering = ordering
-        self.tiebreaking = tiebreaking
 
-        self.into_phantom_tree(root) # leave the toplevel ntype.output node.
-
-
-    def into_phantom_tree(self,node):
-        """
-        Turn whole tree into Holes but without destroying the old data
-        But dont do this for abstractions + output nodes bc it's impossible to "guess" these
-        and theyre autofilled during search.
-        """
-        assert not node.ntype.hole # tree shd be fully concrete
-        if not (node.ntype.abs or node.ntype.output):
-            node.phantom_ntype = node.ntype
-            node.ntype = NType.HOLE
-        for c in node.children():
-            self.into_phantom_tree(c)
-
-    def process_holes(self, process_hole):
-        processed_holes = []
-        masks = []
-        targets = []
-        strings = []
-        while True:
-            hole = self.root.get_hole(self.ordering,self.tiebreaking)
-            if hole is None:
-                break
-            masks.append(self.phead.build_mask(hole))
-            targets.append(self.phead.build_target(hole))
-            strings.append(str(self.root))
-            processed_holes.append(process_hole(hole))
-            hole.ntype = hole.phantom_ntype
-            hole.phantom_ntype = None
-        return processed_holes, masks, targets, strings
 
         
 class NType(enum.Enum):
