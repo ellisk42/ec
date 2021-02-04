@@ -83,10 +83,16 @@ class PTask:
         _argwise = list(zip(*_exwise)) # outer list = args, inner list = examples
         assert len(_argwise) == self.argc
         self.inputs = [Examplewise(arg) for arg in _argwise]
+        self._cached_inputs = None
     def output_features(self):
         return self.outputs.abstract()
     def input_features(self):
-        return sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs]) # we do know the ctx.tp im just lazy
+        old_cache = self._cached_inputs 
+        if self._cached_inputs is None:
+            self._cached_inputs = sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs]) # we do know the ctx.tp im just lazy
+        if sing.cfg.debug.validate_cache and old_cache is not None:
+            assert torch.allclose(self._cached_inputs,old_cache)
+        return self._cached_inputs
 
 class Examplewise:
     """
