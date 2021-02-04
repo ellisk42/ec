@@ -324,3 +324,48 @@ def uncurry(fn,args):
         else:
             res = fn(arg)
     return res
+
+def lse(xs):
+    """
+    LogSumExp: returns log(sum([exp(x) for x in xs])) but numerically stable.
+    If `lse([x-lse(xs) for x in xs])` is appx 0 you know this works right
+    Used to normalize a distribution `lls` as in normalize_log_dist()
+    """
+    import numpy as np
+    assert isinstance(xs,list)
+    largest = max(xs)
+    return largest + np.log(sum([np.exp(x-largest) for x in xs]))
+
+def normalize_nonlog_dist(xs):
+    assert isinstance(xs,list)
+    total = sum(xs)
+    return [x/total for x in xs]
+
+def normalize_log_dist(xs):
+    assert isinstance(xs,list)
+    total = lse(xs)
+    return [x-total for x in xs]
+
+def sample_nonlog_dist(xs):
+    import numpy as np, random
+    assert isinstance(xs,list)
+    if not np.allclose(sum(xs),1.):
+        # we throw an error instead of correcting it for them in case they didnt intend for this
+        raise ValueError("Please normalize distribution with normalize_nonlog_dist() or normalize_log_dist() first")
+    r = random.random()
+    xs = np.cumsum(xs)
+    xs[-1] = 1. # bc we can't count on floats to truly sum to 1.0
+    for i,x in enumerate(xs):
+        if x >= r:
+          return i
+    assert False
+
+def sample_log_dist(xs):
+    """
+    takes a list of normalized lls (this gets verified) and samples one, returning its index.
+    """
+    import numpy as np
+    assert isinstance(xs,list)
+    xs = [np.exp(x) for x in xs]
+    return sample_nonlog_dist(xs) # normalization check gets done in here (as opposed to checking lse() outside)
+
