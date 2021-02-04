@@ -17,6 +17,9 @@ class MBAS(nn.Module):
     sing.stats.call_encode_exwise = 0
     sing.stats.fn_called_concretely = 0
     sing.stats.fn_called_abstractly = 0
+    sing.stats.cache_used = 0
+    sing.stats.cache_not_used = 0
+    sing.stats.cache_cleared = 0
     self.running_vloss = RunningFloat()
     self.running_ploss = RunningFloat()
 

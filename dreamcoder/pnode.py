@@ -15,38 +15,43 @@ from dreamcoder.matt.sing import sing
 from dreamcoder.matt.util import *
 
 Ctx = namedtuple('Ctx','tp exwise')
-Cache = namedtuple('Cache','towards exwise')
+Cache = namedtuple('Cache','towards exwise string')
 
 def cached_propagate(propagate):
     @functools.wraps(propagate)
     def _cached_propagate(self,towards,concrete_only=False):
-        # if self.no_cache:
-            # return propagate(self, towards, concrete_only=concrete_only)
-        # self.cache = Cache(None,None) # disable cache TODO
 
-        if self.cache.towards is not towards:
+        if self.cache.towards is not towards or sing.cfg.debug.no_cache:
             exwise = propagate(self, towards, concrete_only=concrete_only)
-            self.cache = Cache(towards,exwise)
-        elif sing.cfg.debug.validate_cache:
-            """
-            for cache validation. Note that this will actually recurse
-            since when we manually call propagate here then that inner
-            call will call self.propagate (which is _cached_propagate) internally so
-            it'll end up verifying the entire cache since validate_cache will be true
-            for all these cases.
-            """
-            exwise = propagate(self, towards, concrete_only=concrete_only)
-            if self.cache.exwise.has_abstract:
+            self.cache = Cache(towards,exwise,str(self))
+            sing.stats.cache_not_used += 1
+        else:
+            sing.stats.cache_used += 1
+            if sing.cfg.debug.validate_cache:
                 """
-                We're in a weird position. The caller of propagate() is the one who often then calls
-                .abstract(), so we don't actually know if we're about to be abstracted or not. However,
-                we know that if our cache did NOT have abstract then we definitely wont be abstract
-                (programs get strictly more concrete). So here by calling .abstract() below in the case
-                where the cache was abstract, we may be doing something unnecessary but thats why
-                this is a debugging thing. If the cache hasn't been invalidated then its .abstract()
-                better be the same as our .abstract(), I think that's fair enough.
+                for cache validation. Note that this will actually recurse
+                since when we manually call propagate here then that inner
+                call will call self.propagate (which is _cached_propagate) internally so
+                it'll end up verifying the entire cache since validate_cache will be true
+                for all these cases.
                 """
-                assert torch.allclose(self.cache.exwise.abstract(),exwise.abstract())
+                if towards is self.parent: # if we're passing upwards and trying to use our cache, our str(self) better not have changed bc that indicates something below us changing
+                    assert str(self) == self.cache.string
+                exwise = propagate(self, towards, concrete_only=concrete_only)
+                if not self.cache.exwise.has_abstract:
+                    assert not exwise.has_abstract # programs shd be getting strictly more concrete
+                if self.cache.exwise.has_abstract:
+                    """
+                    We're in a weird position. The caller of propagate() is the one who often then calls
+                    .abstract(), so we don't actually know if we're about to be abstracted or not. However,
+                    we know that if our cache did NOT have abstract then we definitely wont be abstract
+                    (programs get strictly more concrete). So here by calling .abstract() below in the case
+                    where the cache was abstract, we may be doing something unnecessary but thats why
+                    this is a debugging thing. If the cache hasn't been invalidated then its .abstract()
+                    better be the same as our .abstract(), I think that's fair enough.
+                    """
+                    if not (exwise.has_concrete and callable(exwise.concrete[0])): # dont try to encode callables eg with the weird rare cases of ABS
+                        assert torch.allclose(self.cache.exwise.abstract(),exwise.abstract())
 
         return self.cache.exwise
     return _cached_propagate
@@ -81,7 +86,7 @@ class PTask:
     def output_features(self):
         return self.outputs.abstract()
     def input_features(self):
-        return sing.model.abstraction_fn.encode_known_ctx(self.inputs)
+        return sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs]) # we do know the ctx.tp im just lazy
 
 class Examplewise:
     """
@@ -209,7 +214,7 @@ class PNode:
         self.tp = tp
         self.ctx = ctx
 
-        self.cache = Cache(towards=None, exwise=None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
+        self.cache = Cache(None, None, None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
         
     def expand_to(self, prim, clear_cache=None):
         """
@@ -450,7 +455,8 @@ class PNode:
                 # this handles the case where our parent is an HOF who's about to do concrete application
                 # and we're the HOF so it needs us to return a python lambda that it can feed to its HOF
                 # primitive function. We use execute_single() to get that python lambda version of ourselves
-                if self.body.in_HOF_lambda and not self.has_holes and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
+                # oh and if our parent is an abstraction too and they chose not to do execute_single() then clearly we shouldnt
+                if self.body.in_HOF_lambda and not self.parent.ntype.abs and not self.has_holes and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
                     assert self.parent.ntype.app
                     if not self.parent.has_holes:
                         fn = self.execute_single([])
@@ -694,7 +700,8 @@ class PNode:
         """
         if mode is None:
             return
-        self.cache = Cache(None,None)
+        self.cache = Cache(None,None,None)
+        sing.stats.cache_cleared += 1
         if mode == 'single':
             pass # nothing more to od
         elif mode == 'parents':

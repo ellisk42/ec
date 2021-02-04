@@ -130,9 +130,9 @@ def main():
         if mlb.predicate('return'):
             return
         if mlb.predicate('which'):
-            sing.which()
+            print(sing.which())
         if mlb.predicate('cfg'):
-            sing.yaml()
+            print(sing.yaml())
 
         # printing and logging
         if s.print_every.check():

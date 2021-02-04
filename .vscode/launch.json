@@ -16,11 +16,17 @@
                 "model.vhead=check_invalid",
                 "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
+                "model.multidir=True",
+
+                "debug.validate_cache=True",
+                "debug.no_cache=False",
+                "model.ordering=random",
 
                 "data.T=2",
                 "data.lambda_depth=3",
+                "loader.freeze=True",
 
-                "loader.buf_size=100",
+                "loader.buf_size=3",
 
                 "loop.search_valid_num_tasks=2",
                 "loop.save_every=100",

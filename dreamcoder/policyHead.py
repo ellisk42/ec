@@ -141,6 +141,7 @@ class PolicyHead(nn.Module):
         task = p.task
 
         processed_holes, masks, targets, strings = self.trace_and_process_holes(p)
+        mlb.freezer('trace')
         masks = torch.stack(masks) # [num_sks,Q]
         targets = torch.stack(targets) # [num_sks,1] the non-onehot version
 
@@ -414,7 +415,6 @@ class ListREPLPolicyHead(PolicyHead):
         return hole.root().propagate_upward()
 
     def unmasked_distributions(self, processed_holes, task):
-        assert not any(p.has_concrete for p in processed_holes)
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
         sk_reps = torch.stack([p.abstract() for p in processed_holes]) # [num_sks,num_exs,H]
@@ -423,7 +423,7 @@ class ListREPLPolicyHead(PolicyHead):
 
         if sing.cfg.model.multidir:
             # MBAS
-            sk_reps = sk_reps.max(1) # max over examples to yield [num_sks,H]
+            sk_reps = sk_reps.max(1).values # max over examples to yield [num_sks,H]
             return self.output(sk_reps)
         else:
             # BAS
