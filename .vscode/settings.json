@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/scratch/mlbowers/python/bin/python",
+    "python.pythonPath": "/scratch/mlbowers/python/bin/python3",
     "python.linting.enabled": true,
     "editor.formatOnSave": false,
 }
