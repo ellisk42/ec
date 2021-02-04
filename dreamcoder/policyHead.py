@@ -91,12 +91,12 @@ class PolicyHead(nn.Module):
             self.prod_to_index[Index(v)] = i
             i += 1
 
-    # def sampleSingleStep(self, task, g, sk,
-    #                     request, holeZippers=None,
-    #                     maximumDepth=4):
     def sample_action(self,
                       pnode,
                       max_depth):
+        """
+        Returns a production which you could then apply with hole.expand_to(prod, clear_cache=self.cache_mode) (eg SMC)
+        """
         hole = pnode.get_hole(self.ordering,self.tiebreaking)
         try:
             prods,lls = self.action_distribution(hole,max_depth)
@@ -106,29 +106,22 @@ class PolicyHead(nn.Module):
         idx = sample_log_dist(lls)
         prod = prods[idx]
         return prod
-        #hole.expand_to(prod, clear_cache=self.cache_mode)
 
-
-
-    # def enumSingleStep(self, task, g, sk, request, 
-    #                     holeZipper=None,
-    #                     maximumDepth=4):
     def enumerate_actions(self,
                       pnode,
                       max_depth):
-        hole = sk.get_hole(self.ordering,self.tiebreaking)
+        """
+        Returns a (prods,lls) tuple, that is a list of productions and their corresponding lls. 
+        hole.expand_to(prod, clear_cache=self.cache_mode) could be used on each with cloning in between (eg Astar)
+        """
+        hole = pnode.get_hole(self.ordering,self.tiebreaking)
         try:
-            dist = self.masked_distribution(hole)
+            prods,lls = self.action_distribution(hole,max_depth)
         except InvalidSketchError as e:
             red(f"enumSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
 
-        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prod.items()}
-
-        try:
-            yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
-        except NoCandidates:
-            return
+        return prods,lls
 
     def train_loss(self, p, task):
         assert not p.hasHoles
