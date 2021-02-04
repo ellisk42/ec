@@ -20,14 +20,22 @@ Cache = namedtuple('Cache','towards exwise')
 def cached_propagate(propagate):
     @functools.wraps(propagate)
     def _cached_propagate(self,towards,concrete_only=False):
-        if self.no_cache:
-            return propagate(self, towards, concrete_only=concrete_only)
+        # if self.no_cache:
+            # return propagate(self, towards, concrete_only=concrete_only)
 
-        if self.cache.towards is towards:
-            return self.cache.exwise
+        if self.cache.towards is not towards:
+            exwise = propagate(self, towards, concrete_only=concrete_only)
+            self.cache = Cache(towards,exwise)
+        elif sing.cfg.debug.validate_cache:
+            # for cache validation. Note that this will actually recurse
+            # since when we manually call propagate here then that inner
+            # call will call self.propagate (which is _cached_propagate) internally so
+            # it'll end up verifying the entire cache since validate_cache will be true
+            # for all these cases.
+            exwise = propagate(self, towards, concrete_only=concrete_only)
+            assert self.cache.exwise == exwise # __eq__ is very thorough equality of both concrete and abstract parts
 
-        exwise = propagate(self, towards, concrete_only=concrete_only)
-        self.cache = Cache(towards,exwise)
+        return self.cache.exwise
     return _cached_propagate
 
 class PTask:
@@ -93,6 +101,28 @@ class Examplewise:
         if self._abstract is None:
             self._abstract = sing.model.abstraction_fn.encode_exwise(self)
         return self._abstract
+
+    @property
+    def has_abstract(self):
+        return self._abstract is not None
+
+    @property
+    def has_concrete(self):
+        return self.concrete is not None
+
+    def __eq__(self,other):
+        """
+        completely thorough careful equality for use by the cache validator
+        """
+        if self.has_abstract ^ other.has_abstract:
+            return False
+        if self.has_concrete ^ other.has_concrete:
+            return False
+        if self.has_concrete and (self.concrete != other.concrete):
+            return False
+        if self.has_abstract and not torch.allclose(self.abstract,other.abstract):
+            return False
+        return True
 
     def as_concrete_fn(self,*args):
         """
@@ -166,7 +196,7 @@ class PNode:
 
     """
     
-    def __init__(self, ntype, parent, ctx:list):
+    def __init__(self, ntype, tp, parent, ctx:list):
         super().__init__()
 
         if isinstance(parent,PTask):
@@ -177,6 +207,8 @@ class PNode:
             self.parent = parent
 
         self.ntype = ntype
+        self.phantom_ntype = None
+        self.tp = tp
         self.ctx = ctx
 
         self.cache = Cache(towards=None, exwise=None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
@@ -200,9 +232,10 @@ class PNode:
 
 
         """
+        if clear_cache is not None:
+            self.clear_cache(clear_cache) # ok to do this here bc we wont be editing cache at all during expand_to
         self = self.unwrap_abstractions()
         assert self.ntype.hole
-        assert self.tp == prim.tp
         assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
         
         if prim.isIndex:
@@ -220,7 +253,12 @@ class PNode:
             else:
                 # APP case
                 self.ntype = NType.APP
-                self.fn = self.build_hole(prim.tp.returns())
+                # make self.fn as a PRIM 
+                self.fn = PNode(NType.PRIM, tp=prim.tp, parent=self, ctx=self.ctx)
+                self.fn.prim = prim
+                self.fn.name = prim.name
+                self.fn.value = prim.value
+                # make holes for args
                 self.xs = [self.build_hole(arg_tp) for arg_tp in prim.tp.functionArguments()]
         else:
             raise TypeError
@@ -231,7 +269,7 @@ class PNode:
         This also handles expanding into Abstractions if tp.isArrow()
         """
         if not tp.isArrow():
-            return PNode(NType.HOLE, parent=self, ctx=self.ctx)
+            return PNode(NType.HOLE, tp, parent=self, ctx=self.ctx)
         # Introduce a lambda
 
         which_toplevel_arg = len(self.ctx) # ie if we're just entering the first level of lambda this will be 0
@@ -240,11 +278,11 @@ class PNode:
         # (so for non toplevel lambdas this is always None)
         exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
 
-        arg_tp = self.tp.arguments[0] # the input arg to this arrow
-        res_tp = self.tp.arguments[1] # the return arg (which may be an arrow)
+        arg_tp = tp.arguments[0] # the input arg to this arrow
+        res_tp = tp.arguments[1] # the return arg (which may be an arrow)
 
         # push it onto the ctx stack
-        abs = PNode(NType.ABS, parent=self, ctx=(Ctx(arg_tp,exwise),*self.ctx))
+        abs = PNode(NType.ABS, tp, parent=self, ctx=(Ctx(arg_tp,exwise),*self.ctx))
         # now make an inner hole (which may itself be an abstraction ofc)
         inner_hole = abs.build_hole(res_tp)
         abs.body = inner_hole
@@ -266,7 +304,7 @@ class PNode:
         Or however many abstractions make sense for the given ptask
         Returns the root of the tree (the output node)
         """
-        root = PNode(NType.OUTPUT, parent=ptask, ctx=())
+        root = PNode(NType.OUTPUT, tp=None, parent=ptask, ctx=())
         root.tree = root.build_hole(ptask.request)
 
         # do some sanity checks
@@ -302,8 +340,6 @@ class PNode:
         while p.isAbstraction:
             p = p.body
 
-        assert p.infer() == self.tp
-
         if p.isPrimitive or p.isIndex:
             # p is a Primitive or Index
             self.expand_to(p)
@@ -313,9 +349,9 @@ class PNode:
             assert False # can't happen bc of the `while p.isAbstraction` unwrapping above
         elif p.isApplication:
             # application. We expand each hole we create (the f hole and the xs holes)
-            self.expand_to(p) # expand, creating holes
             f, xs = p.applicationParse()
-            self.fn.expand_from_dreamcoder(f)
+            assert f.isPrimitive
+            self.expand_to(f) # expand to an APP with proper fn and holes for args
             for x,x_ in zip(self.xs,xs):
                 x.expand_from_dreamcoder(x_)
         else:
@@ -325,14 +361,16 @@ class PNode:
         if self.ntype.abs:
             return f'(lambda {self.body})'
         elif self.ntype.app:
-            args = ' '.join(repr(arg) for arg in self.args)
+            args = ' '.join(repr(arg) for arg in self.xs)
             return f'({self.fn} {args})'
         elif self.ntype.prim:
             return f'{self.name}'
         elif self.ntype.var:
             return f'${self.i}'
-        elif self.ntype.HOLE:
+        elif self.ntype.hole:
             return f'<HOLE>'
+        elif self.ntype.output:
+            return f'{self.tree}'
         else:
             raise TypeError
     @property
@@ -608,25 +646,31 @@ class PNode:
             return []
         else:
             raise TypeError
-    def get_prim(self):
+    def get_prod(self):
         self = self.unwrap_abstractions()
-        if self.ntype.output or self.ntype.hole:
+
+        ntype = self.ntype
+        if ntype.hole and self.phantom_ntype is not None:
+            ntype = self.phantom_ntype
+
+        if ntype.output:
             raise TypeError
-        elif self.ntype.app:
-            return self.fn.get_prim()
-        if self.ntype.prim:
+        elif ntype.hole:
+            raise TypeError
+        elif ntype.app:
+            return self.fn.get_prod()
+        elif ntype.prim:
             return self.prim
-        elif self.ntype.var:
+        elif ntype.var:
             return Index(self.i)
-        elif self.ntype.abs:
+        elif ntype.abs:
             assert False, "not possible bc we unwrapped abstractions"
         else:
             raise TypeError
     def unwrap_abstractions(self, count=False):
         """
-        traverse down .body attributes until you get to the first non-abstraction PNode
+        traverse down .body attributes until you get to the first non-abstraction PNode.
         """
-        assert self.ntype.abs
         node = self
         i = 0
         while node.ntype.abs:
@@ -684,7 +728,6 @@ class PTrace:
         self.phead = phead
         self.ordering = ordering
         self.tiebreaking = tiebreaking
-        self.prev_hole = None
 
         self.into_phantom_tree(root) # leave the toplevel ntype.output node.
 
@@ -695,9 +738,9 @@ class PTrace:
         But dont do this for abstractions + output nodes bc it's impossible to "guess" these
         and theyre autofilled during search.
         """
-        assert not node.ntype.hole
+        assert not node.ntype.hole # tree shd be fully concrete
         if not (node.ntype.abs or node.ntype.output):
-            node._old_ntype = node.ntype
+            node.phantom_ntype = node.ntype
             node.ntype = NType.HOLE
         for c in node.children():
             self.into_phantom_tree(c)
@@ -713,8 +756,10 @@ class PTrace:
                 break
             masks.append(self.phead.build_mask(hole))
             targets.append(self.phead.build_target(hole))
-            strings.append(str(self.pnode))
+            strings.append(str(self.root))
             processed_holes.append(process_hole(hole))
+            hole.ntype = hole.phantom_ntype
+            hole.phantom_ntype = None
         return processed_holes, masks, targets, strings
 
         

@@ -73,7 +73,7 @@ class AbstractionFn(nn.Module):
       sing.stats.call_encode_exwise += 1
       return self.encoder.encodeValue(exwise.concrete)
 
-    def encode_known_ctx(self,exwise_list):
+    def encode_known_ctx(self,ctx):
       """
       Takes a list of Examplewise objects, abstracts them all, 
       cats on ctx_start and ctx_end vectors, and runs them thru
@@ -86,13 +86,13 @@ class AbstractionFn(nn.Module):
       in all the inputs to the task as exwise_list
       """
       sing.stats.call_encode_known_ctx += 1
-      assert all(exwise is not None for exwise in exwise_list)
+      assert all(c.exwise is not None for c in ctx)
 
       lex = self.encoder.lexicon_embedder
       start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
       end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
 
-      ctx = torch.cat([start] + [exwise.abstract.unsqueeze(0) for exwise in exwise_list] + [end])
+      ctx = torch.cat([start] + [c.exwise.abstract.unsqueeze(0) for c in ctx] + [end])
       _, res = self.encoder.ctx_encoder(ctx)
       res = res.sum(0) # sum bidir
       return res
@@ -133,37 +133,7 @@ class AbstractComparer(nn.Module):
       H = sing.cfg.model.H
       self.compare_module = nn.Sequential(nn.Linear(H*2, H), nn.ReLU())
 
-  def forward(self, sks, task):
-    """
-    encodes tasks and sketches, cats them, runs them through compareModule
-    applies `reduce` over the examples dimension (None means no reduction)
-    """
-    assert isinstance(sks,(list,tuple))
-
-    output_feats = PTask(task).output_features()
-    output_feats = output_feats.expand(len(sks),-1,-1) # [num_sketches,num_exs,H]
-    if sing.cfg.debug.zero_output_feats:
-        output_feats = torch.zeros_like(output_feats)
-
-    output_pnodes = [PNode(p=sk,from_task=task,parent=None,ctx=[]) for sk in sks]
-    sk_reps = torch.stack([pnode.upward_only_embedding().abstract for pnode in output_pnodes]) # [num_sketches,num_exs,H]
-    #sk_reps = torch.stack([self.rep(sk,task) for sk in sks]) # [num_sketches,num_exs,H]
-
-
-    if sing.cfg.debug.zero_sk:
-        sk_reps = torch.zeros_like(sk_reps)
-
+  def forward(self, sk_reps, output_feats):
     compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
-
     compared = self.compare_module(compare_input) # [num_sketches,num_exs,H]
-
-    if sing.cfg.debug.channel and not sing.cfg.debug.zero_output_feats:
-        # check for mixing between sketches
-        x = torch.autograd.grad(
-            outputs=compared[0].sum(),
-            inputs=[output_feats])[0]
-        assert x[0].sum() != 0
-        assert x[1:].sum() == 0
-        print(x)
-
     return compared

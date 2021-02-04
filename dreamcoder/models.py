@@ -106,8 +106,8 @@ class MBAS(nn.Module):
       running_vloss = RunningFloat()
       running_ploss = RunningFloat()
       for f in fs:
-        vloss = self.vhead.valueLossFromFrontier(f, sing.g)
-        ploss = self.phead.policyLossFromFrontier(f, sing.g)
+        vloss = self.vhead.train_loss(f.p,f.t)
+        ploss = self.phead.train_loss(f.p,f.t)
         running_vloss.add(vloss)
         running_ploss.add(ploss)
         running_loss.add(vloss+ploss)

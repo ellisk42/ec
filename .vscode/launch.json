@@ -26,6 +26,8 @@
                 "loop.save_every=100",
                 "loop.print_every=20",
 
+                "loop.search_valid_every=null",
+
                 "device=cpu",
                 "job_name=vscode",
                 "run_name=vscode",

@@ -77,16 +77,16 @@ class PolicyHead(nn.Module):
         self.H = H = sing.cfg.model.H
         self.ordering = sing.cfg.model.ordering
 
-        self.index_to_prim = {}
-        self.prim_to_index = {}
+        self.index_to_prod = {}
+        self.prod_to_index = {}
         i = 0
         for p in sing.g.primitives:
-            self.index_to_prim[i] = p
-            self.prim_to_index[p] = i
+            self.index_to_prod[i] = p
+            self.prod_to_index[p] = i
             i += 1
         for v in range(sing.cfg.model.max_var):
-            self.index_to_prim[i] = Index(v)
-            self.prim_to_index[Index(v)] = i
+            self.index_to_prod[i] = Index(v)
+            self.prod_to_index[Index(v)] = i
             i += 1
 
     # def sampleSingleStep(self, task, g, sk,
@@ -101,7 +101,7 @@ class PolicyHead(nn.Module):
         except InvalidSketchError as e:
             red(f"sampleSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
-        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prim.items()}
+        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prod.items()}
 
         newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
         return newSk, newZippers
@@ -116,7 +116,7 @@ class PolicyHead(nn.Module):
             red(f"enumSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
 
-        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prim.items()}
+        supplyDist = { prim: float(dist[i]) for i, prim in self.index_to_prod.items()}
 
         try:
             yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
@@ -124,16 +124,19 @@ class PolicyHead(nn.Module):
             return
 
     def train_loss(self, p, task):
+        assert not p.hasHoles
 
-        if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
-            p = PNode(p,parent=None,ctx=[],from_task=task)
-            # make sure concrete part of propagate() works
-            assert p.upward_only_embedding().concrete == p.task.outputs.concrete
-            # make sure execute_single() works
-            #assert p.execute_single([]) == p.task.outputs.concrete
-            assert p.execute_single([])(p.task.inputs[0].concrete[0]) == p.task.outputs.concrete[0]
+        if sing.cfg.debug.pnode_concrete_check:
+            if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
+                _p = PNode.from_dreamcoder(p,task)
+                # make sure concrete part of propagate() works
+                assert _p.propagate_upward().concrete == _p.task.outputs.concrete
+                # make sure execute_single() works
+                assert _p.execute_single([])(_p.task.inputs[0].concrete[0]) == _p.task.outputs.concrete[0]
+                del _p
         
-        p = PNode(p,parent=None,ctx=[],from_task=task)
+        p = PNode.from_dreamcoder(p,task)
+        task = p.task
         ptrace = PTrace(p, self, self.ordering)
 
         processed_holes, masks, targets, strings = ptrace.process_holes(self.process_hole)
@@ -161,18 +164,18 @@ class PolicyHead(nn.Module):
         return mask + dist
 
     def build_target(self, hole):
-        target = self.prim_to_index[hole.get_prim()]
+        target = self.prod_to_index[hole.get_prod()]
         return torch.tensor(target, device=sing.device) # not a onehot
 
     def build_mask(self, hole):
         g_use = sing.g.g_lambdas if hole.in_HOF_lambda else sing.g
 
         # tp.returns() is `self` if its a base type or the return type if its an arrow type
-        indices = [self.prim_to_index[p] for p in g_use.primitives if p.tp.returns() == hole.tp]
+        indices = [self.prod_to_index[p] for p in g_use.primitives if p.tp.returns() == hole.tp]
         # we gotta include variables too
-        indices += [Index(i) for i,(tp,exwise) in enumerate(hole.ctx) if tp == hole.tp]
+        indices += [self.prod_to_index[Index(i)] for i,(tp,exwise) in enumerate(hole.ctx) if tp == hole.tp]
 
-        mask = torch.zeros(len(self.prim_to_index),device=sing.device)
+        mask = torch.zeros(len(self.prod_to_index),device=sing.device)
         mask[indices] = 1.
         mask = mask.log()
         return mask
@@ -181,7 +184,7 @@ class PolicyHead(nn.Module):
         for zipper, sk in zip(zippers, sketches):
             # if this is a zipper into a lambda then use lambdas grammar
 
-            mask = [0. for _ in range(len(self.prim_to_index))]
+            mask = [0. for _ in range(len(self.prod_to_index))]
             candidates = returnCandidates(zipper, sk, task.request, g_use)
             for c in candidates:
                 mask[self._sketchNodeToIndex(c)] = 1. 
@@ -261,7 +264,7 @@ class RNNPolicyHead(PolicyHead):
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
-                nn.Linear(H, len(self.prim_to_index) ),
+                nn.Linear(H, len(self.prod_to_index) ),
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
@@ -386,7 +389,7 @@ class ListREPLPolicyHead(PolicyHead):
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
-                nn.Linear(H, len(self.prim_to_index) ),
+                nn.Linear(H, len(self.prod_to_index) ),
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
@@ -394,20 +397,21 @@ class ListREPLPolicyHead(PolicyHead):
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
     def process_hole(self,hole):
-        if self.multidir:
+        if sing.cfg.model.multidir:
             # MBAS
             return hole.propagate_to_hole()
         # BAS
         return hole.root().propagate_upward()
 
     def unmasked_distributions(self, processed_holes, task):
+        assert not any(p.has_concrete for p in processed_holes)
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
-        sk_reps = torch.stack(processed_holes) # [num_sks,num_exs,H]
+        sk_reps = torch.stack([p.abstract for p in processed_holes]) # [num_sks,num_exs,H]
         if sing.cfg.debug.zero_sk:
             sk_reps = torch.zeros_like(sk_reps)
 
-        if self.multidir:
+        if sing.cfg.model.multidir:
             # MBAS
             sk_reps = sk_reps.max(1) # max over examples to yield [num_sks,H]
             return self.output(sk_reps)
@@ -417,9 +421,8 @@ class ListREPLPolicyHead(PolicyHead):
             if sing.cfg.debug.zero_output_feats:
                 output_feats = torch.zeros_like(output_feats)
             
-            compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
-            compared = self.compare_module(compare_input) # [num_sketches,num_exs,H]
-            compared = compared.max(1) # max over examples to yield [num_sks,H]
+            compared = sing.model.abstract_comparer(sk_reps,output_feats) # [num_sketches,num_exs,H]
+            compared = compared.max(1).values # max over examples to yield [num_sks,H]
 
             return self.output(compared)
 
@@ -496,17 +499,17 @@ class RBREPLPolicyHead(PolicyHead):
         self.H = H
         #self.REPLHead = RBREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
 
-        self.index_to_prim = {}
-        self.prim_to_index = {}
+        self.index_to_prod = {}
+        self.prod_to_index = {}
         i = 0
         for _, _, expr in g.productions:
-            self.index_to_prim[i] = expr
-            self.prim_to_index[expr] = i
+            self.index_to_prod[i] = expr
+            self.prod_to_index[expr] = i
             i += 1
 
         for v in range(maxVar):
-            self.index_to_prim[i] = Index(v)
-            self.prim_to_index[Index(v)] = i
+            self.index_to_prod[i] = Index(v)
+            self.prod_to_index[Index(v)] = i
             i += 1
 
         self.output = nn.Sequential(
@@ -514,7 +517,7 @@ class RBREPLPolicyHead(PolicyHead):
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
-                nn.Linear(H, len(self.prim_to_index) ),
+                nn.Linear(H, len(self.prod_to_index) ),
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
