@@ -9,11 +9,11 @@ from omegaconf import DictConfig,OmegaConf,open_dict
 from datetime import datetime
 import pathlib
 from pathlib import Path
+import heapq
 from torch.utils.tensorboard import SummaryWriter
 import contextlib
 from time import time
 from tqdm import tqdm
-
 
 ################
 # * PRINTING * #
@@ -369,3 +369,39 @@ def sample_log_dist(xs):
     xs = [np.exp(x) for x in xs]
     return sample_nonlog_dist(xs) # normalization check gets done in here (as opposed to checking lse() outside)
 
+
+# HEAP
+class Heap:
+    def __init__(self, max_size=None, reset_to_size=None):
+        """
+        A min heap! Optionally provide max_size and reset_to_size. These are used as a heap with a capacity.
+            * This is a min-heap (as the method pop_min() suggests)
+            * When `max_size` is reached for the heap, it will cut its size down to `reset_to_size`, throwing out large elements
+                This is a slightly expensive operation which is why we make reset_to_size a bit lower than
+                max_size. It's not too expensive, but we'd rather not call it nonstop hence the `reset_to_size` thing
+            * the .q field is a list, and if you sort() it you'll still maintain the heap invariant (yay!) so thats harmless
+                This is pretty great. If you want the n cheapest elements just do sorted(heap.q)[:n]. Likewise with most expensive
+                just do [:-n] after sorting. Also .sort() wont hurt it so for popping many at a time just sort it, slice it, and modify
+                .q directly! For the record heap[0] is always the pop_min result.
+        """
+        if max_size is not None:
+            assert reset_to_size is not None
+            assert reset_to_size <= max_size
+
+        self.q = []
+        self.max_size = max_size
+        self.reset_to_size = reset_to_size
+
+    def push(self,x):
+        heapq.heappush(self.q,x)
+        if self.max_size is not None:
+            if len(self.q) > self.max_size:
+                # cut down to self.reset_to_size
+                self.q.sort() # this actually maintains the heap invariant so it's safe to do! (https://docs.python.org/3/library/heapq.html)
+                self.q = self.q[:self.reset_to_size] # cut out the final elements (most expensive) leaving the cheap ones. self.q[0] is the result of pop_min() always for example
+    def pop_min(self):
+        heapq.heappop(self.q)
+    def peek_min(self):
+        return min(self.q)
+    def __len__(self):
+        return len(self.q)
