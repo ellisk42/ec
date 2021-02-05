@@ -1,245 +1,82 @@
-
-
-import os
-import mlb
-#import time
+from dreamcoder.pnode import FoundSolution, PNode
 import sys
-from dreamcoder.program import Hole
-from dreamcoder.frontier import Frontier, FrontierEntry
-from dreamcoder.utilities import *
-from dreamcoder.zipper import *
-from dreamcoder.grammar import NoCandidates
-#from dreamcoder.type import Context
 import time
-import numpy as np
+from dataclasses import dataclass, field
+from dreamcoder.matt.plot import SearchTry
+from dreamcoder.matt.util import *
+@dataclass(order=True)
+class HeapItem:
+    cost: float
+    pcost: float = field(compare=False)
+    hole: PNode = field(compare=False)
+    prod = field(compare=False)
+    verify_str: str = field(compare=False)
 
-from dreamcoder.SMC import SearchResult, Solver
+def astar_search(root, phead, vhead, timeout, max_depth):
+    """
+    Feel free to pass in a tree that is already partially filled in
+    """
+    assert root.ntype.output
+    # self.critic_coeff = solver_cfg.critic_coeff
+    # self.max_depth = solver_cfg.max_depth
 
-from queue import PriorityQueue
-import signal
-"""
-TODO
-- [X] node rep: might need object
-- [X] queue syntax and comparison op
-- [X] reporting
-- [X] finishing & returning
-- [ ] record node expansions or whatever (both ways), search times
-- [X] enumSingleStep 2x
-- [X] all start-up stuff
+    sys.setrecursionlimit(5000)
 
-"""
-class InferenceTimeout(Exception):
-    pass
+    q = Heap(max_size=1200000,reset_to_size=1000000)
+    seen = set()
+    nodes_expanded = 0
+    tstart = time.time()
 
-class Astar(Solver):
+    next = root.root()
+    prev_pcost = 0
 
-    def __init__(self,
-                 phead,
-                 vhead,
-                 solver_cfg,
-                 ): 
+    while True:
+        if time.time() - tstart > timeout:
+            return SearchTry(time=timeout, nodes_expanded=nodes_expanded, soln=None)
 
-        self.reportNodeExpansions = True
+        verify_str = next.root_str()
 
-        self.phead = phead
-        self.vhead = vhead
+        # enumerate cand actions
+        hole, prods, pcosts = phead.enumerate_actions(next, max_depth)
 
-        self.critic_coeff = solver_cfg.critic_coeff
-        self.max_depth = solver_cfg.max_depth
-
-
-    def _getNextNodes(self, task, node, g, request):
-        totalCost, policyCost, sketch, zippers = node
-        #print("TOTAL COSTS", totalCost)
-        if self.ordering == 'first':
-            zippers = [zippers[0]]
-        elif self.ordering == 'last':
-            zippers = [zippers[-1]]
-        elif self.ordering == 'random':
-            pass
-        else:
-            raise ValueError
-        for zipper in zippers:
-            try:
-                for stepCost, newZippers, newSketch in self.phead.enumSingleStep(task, g, sketch, request, zipper, self.max_depth):
-                    yield policyCost + stepCost, newZippers, newSketch
-            except AssertionError:
-                raise
-                #print("SKKKK", sketch)
-                return
-
-    def infer(self, g, tasks, likelihoodModel, _=None,
-                              #verbose=False,
-                              timeout=None,
-                              elapsedTime=0.,
-                              starting_nodes=None,
-                              maximumFrontiers=2): #IDK what this is...
-        
-        assert hasattr(self.phead,'ordering')
-        self.ordering = self.phead.ordering
-
-            
-        sys.setrecursionlimit(5000)
-                #START
-        assert timeout is not None, \
-            "enumerateForTasks: You must provide a timeout."
-
-        request = tasks[0].request
-        assert all(t.request == request for t in tasks), \
-            "enumerateForTasks: Expected tasks to all have the same type"
-        assert len(tasks) == 1, "only should be one task"
-        # if not all(task == tasks[0] for task in tasks):
-        #     print("WARNING, tasks are not all the same")
-        task = tasks[0]
-        self.maximumFrontiers = [2]
-        # store all of the hits in a priority queue
-        self.fullPrograms = set()
-        hits = [PQ() for _ in tasks]
-
-        self.reportedSolutions = {t: [] for t in tasks}
-
-        allObjects = set()
-        
-        starting = time.time()
-        totalNumberOfPrograms = 0
-
-
-        q = PQMaxSize(maxSize=1000000)
-        #base node
-        if starting_nodes is None:
-            h = baseHoleOfType(request)
-            starting_nodes = [h]
-        for node in starting_nodes:
-            zippers = findHoles(node, request)
-            q.push(0., (0., 0., node, zippers))
-
-
+        # value costs on that whole batch of actions
         try:
-            def timeoutCallBack(_1, _2): raise InferenceTimeout()
-            # signal.signal(signal.SIGVTALRM, timeoutCallBack)
-            # signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
-
-            #signal.signal(signal.SIGALRM, timeoutCallBack)
-            #signal.setitimer(signal.ITIMER_REAL, timeout) ##TODO TEMP DISABLED
+            vcosts = vhead.values(hole,prods)
+        except FoundSolution as fs:
+            soln = fs.p
+            return SearchTry(time=time.time()-tstart, nodes_expanded=nodes_expanded, soln=soln)
 
 
-            from dreamcoder.domains.list.makeDeepcoderData import get_depth
-            while time.time() - starting < timeout:
+        assert verify_str == next.root_str(), "vhead.values() seems to have modified the hole"
+        assert len(vcosts) == len(prods) == len(pcosts)
 
-                node = q.popMaximum() #TODO
-                #print(">>>>>>node", node)
-                #print("queue size", len(q))
+        hashed_hole = hole.marked_str()
 
-                #t,d,s = get_depth(node[2])
-                #if t > 2 or d > 3:
-                    #mlb.purple(f"[{totalNumberOfPrograms}] node: {node[2]}")
-                    #mlb.purple(f"T{t}d{d}s{s}")
-
-                nNei = 0
-                #print(f"Parent: {node[2]}")
-                for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
-                    #print(policyCost, neighbor)
-                    # import pdb; pdb.set_trace()
-                    nNei += 1
-                    if (neighbor) in allObjects:
-                        continue
-                    #print(f"\t{neighbor} {policyCost=}")
-                    allObjects.add(neighbor)
-                    if self.reportNodeExpansions: totalNumberOfPrograms += 1
-
-                    if not zippers:
-                        success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
-                                                                    request, g, tasks, 
-                                                                    likelihoodModel,
-                                                                    hits, 
-                                                                    starting, 
-                                                                    elapsedTime, 
-                                                                    totalNumberOfPrograms) #TODO
-                        if success: return self._finish(tasks,
-                                                        hits, 
-                                                        totalNumberOfPrograms)
-                        else: continue
-
-                    valueCost = self.vhead.value(neighbor, task) #TODO 
-                    totalCost = policyCost - self.critic_coeff * valueCost #TODO normalize and scale
-                    #print("neighbor:", neighbor)
-                    #print("policyCost", policyCost)
-                    #print("valueCost", valueCost)
-                    #print("totalCost", totalCost)
-                    #import pdb; pdb.set_trace()
-                    newNode = (totalCost, policyCost, neighbor, zippers)
-                    q.push(totalCost, newNode)
-
-
-                    if time.time() - starting > timeout:
-                        break
-                #print('\t num neighbors', nNei)
-
-        except InferenceTimeout:
-            #print("Timed out while evaluating, timeout", timeout)
-            #print("time elapsed")
-            #print(time.time() - starting)
-            pass
-        finally:
-            # signal.signal(signal.SIGVTALRM, lambda *_: None)
-            # signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-            try:
-                signal.signal(signal.SIGALRM, lambda *_: None)
-                signal.setitimer(signal.ITIMER_REAL, 0)
-            except InferenceTimeout:
-                pass
-
-        return self._finish(tasks, hits, totalNumberOfPrograms)
-
-    def _report(self, p, prior, request, g, tasks, 
-                likelihoodModel,
-                hits, 
-                starting, 
-                elapsedTime, 
-                totalNumberOfPrograms):
-        if not self.reportNodeExpansions:
-            totalNumberOfPrograms += 1
-
-        if p in self.fullPrograms:
-            return totalNumberOfPrograms
-        else:
-            self.fullPrograms.add(p)
-
-        # prior = g.logLikelihood(request, p) # TODO for speed can compute this at sample time
-        # prior
-        for n in range(len(tasks)):
-            #assert n == 0, "for now, just doing one task per thread seems reasonable"
-            task = tasks[n]
-
-            success, likelihood = likelihoodModel.score(p, task)
-            if not success:
+        for prod, pcost, vcost in zip(prods,pcosts,vcosts):
+            pcost += prev_pcost # pcost accumulates but vcost doesnt
+            cost = pcost - critic_coeff * vcost
+            q.push(HeapItem(
+                cost=cost,
+                pcost=pcost,
+                hole=hole,
+                prod=prod,
+                verify_str=verify_str,
+            ))
+            nodes_expanded += 1
+            
+            if (hashed_hole,prod) in seen:
+                assert False, "im doubtful that this would even ever fire??"
                 continue
+            seen.add((hashed_hole,prod))
 
-            dt = time.time() - starting + elapsedTime
-            priority = -(likelihood + prior)
-            hits[n].push(priority,
-                         (dt, FrontierEntry(program=p,
-                                            logLikelihood=likelihood,
-                                            logPrior=prior)))
-
-            if len(hits[n]) > self.maximumFrontiers[n]:
-                hits[n].popMaximum()
-            self.reportedSolutions[task].append(SearchResult(p, -priority, dt,
-                                                       totalNumberOfPrograms))
-
-        return success, totalNumberOfPrograms
-
-
-    def _finish(self,
-                tasks,
-                hits, 
-                totalNumberOfPrograms):        
-        frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
-                                        task=tasks[n])
-                     for n in range(len(tasks))}
-        searchTimes = {
-            tasks[n]: None if len(hits[n]) == 0 else \
-            min(t for t,_ in hits[n]) for n in range(len(tasks))}
-
-        return frontiers, searchTimes, totalNumberOfPrograms, self.reportedSolutions
-
+        # pop a hole off the heap, clone it, fill it in w the production from the heap (this is lazy for efficiency)
+        # and we done.
+        heap_item = q.pop_min()
+        hole = heap_item.hole
+        assert hole.ntype.hole
+        prod = heap_item.prod
+        prev_pcost = heap_item.pcost
+        assert heap_item.verify_str == hole.root_str(), "the hole seems to have been modified while in the heapitem"
+        next = hole.clone() # duplicates by cloning every pnode to make a fully independent tree, 
+        next.expand_to(prod) # this is our new guy!
+        next = next.root()

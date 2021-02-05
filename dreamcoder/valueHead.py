@@ -19,7 +19,7 @@ from dreamcoder.domains.rb.rbPrimitives import *
 from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 from dreamcoder.domains.list.makeDeepcoderData import *
-from dreamcoder.pnode import PNode,PTask
+from dreamcoder.pnode import PNode,PTask,FoundSolution
 
 from dreamcoder.matt.sing import sing
 
@@ -130,9 +130,11 @@ class SemiOracleValueHead(nn.Module):
 class ValueHead(nn.Module):
     def __init__(self):
         super(ValueHead, self).__init__()
-    def computeValue(self, sketch, task):
+    def value(self, root):
         assert False, "not implemented"
     def train_loss(self, p, task):
+        raise NotImplementedError
+    def values(self, hole, prods):
         raise NotImplementedError
 
 class UniformValueHead(ValueHead):
@@ -641,14 +643,29 @@ class InvalidIntermediatesValueHead(ValueHead):
         super().__init__()
     def train_loss(self, p, task):
         return torch.tensor([0.], device=sing.device)
-    def value(self, sketch, task):
+    def value(self, root):
+        assert root.root() is root, "value fn shd be fed the root of the tree, bro please try to keep up"
         try:
-            p = PNode.from_dreamcoder(sketch,task)
             p.propagate_upward(concrete_only=True)
         except InvalidSketchError as e:
-            print(f"caught an invalid sketch {e}")
-            return 100000000000
+            print(f"vhead.value() caught an invalid sketch {e}")
+            return np.inf
         return 0
+    def values(self, hole:PNode, prods):
+        """
+        Try out all the prods in the hole (preferably without much cloning) and return the list of value()s for each
+        """
+        root = hole.root()
+        vcosts = []
+        for prod in prods:
+            hole.expand_to(prod,clear_cache=None) # as long as our vhead propagates upwards all cache clears will happen naturally
+            if hole.check_solve():
+                raise FoundSolution(hole)
+            vcost = self.value(hole.root())
+            vcosts.append(vcost)
+            hole.into_hole(cache_mode='parents') # upwards-only style cache mode
+
+        return vcosts
 
 
 

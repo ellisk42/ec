@@ -17,6 +17,7 @@ class AllOrNothingLikelihoodModel:
             logLikelihood = task.logLikelihood(program, self.timeout)
             return valid(logLikelihood), logLikelihood
         except EvaluationTimeout:
+            assert False, "I wanna know if this happens"
             return False, NEGATIVEINFINITY
 
 

@@ -16,6 +16,9 @@ from dreamcoder.matt.util import *
 
 Ctx = namedtuple('Ctx','tp exwise')
 Cache = namedtuple('Cache','towards exwise string')
+class FoundSolution(Exception):
+    def __init__(self,p):
+        self.p = p
 
 def cached_propagate(propagate):
     @functools.wraps(propagate)
@@ -23,7 +26,7 @@ def cached_propagate(propagate):
 
         if self.cache.towards is not towards or sing.cfg.debug.no_cache:
             exwise = propagate(self, towards, concrete_only=concrete_only)
-            self.cache = Cache(towards,exwise,str(self))
+            self.cache = Cache(towards,exwise,self.subtree_str())
             sing.stats.cache_not_used += 1
         else:
             sing.stats.cache_used += 1
@@ -221,8 +224,24 @@ class PNode:
         self.ctx = ctx
 
         self.cache = Cache(None, None, None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
-        
-    def expand_to(self, prim, clear_cache=None):
+    def root_str(self):
+        """
+        Useful for when you wanna ensure that the whole program hasnt been inplace
+        modified somehow over some period
+        """
+        return str(self.root())
+    def subtree_str(self):
+        """
+        Useful for when you wanna ensure that the subtree below this hasnt been modified
+        over some period
+        """
+        return str(self)
+    def marked_str(self,):
+        """
+        A unique little string that shows the whole program but with `self` marked clearly with double brackets [[]]
+        """
+        return self.root().marked_repr(self)
+    def expand_to(self, prim, cache_mode=None):
         """
         Call this on a hole to transform it inplace into something else.
          - prim :: Primitive | Index
@@ -297,6 +316,27 @@ class PNode:
         abs.body = inner_hole
 
         return abs # and return our abstraction
+    def into_hole(self, cache_mode=None):
+        """
+        reverts a PNode thats not a hole back into a hole. If you still want to keep around
+        a ground truth non-hole version of the node you probably want PNode.hide() instead.
+        """
+        assert not self.ntype.hole
+        assert not self.ntype.abs, "you never want an arrow shaped hole buddy"
+        assert not self.ntype.output, "nonono dont be crazy"
+        for attr in ('prim','name','value','fn','xs','i','body','tree'):
+            if hasattr(self,attr):
+                delattr(self,attr) # not super important but eh why not
+        self.cache = Cache(None,None,None)
+        self.ntype = NType.HOLE
+    def check_solve(self):
+        """
+        check if we're a solution to the task
+        """
+        if self.has_holes:
+            return False
+        return self.root().propagate_upward(concrete_only=True).concrete == self.task.outputs.concrete
+
 
     @staticmethod
     def from_ptask(ptask: PTask):
@@ -382,6 +422,25 @@ class PNode:
             return f'{self.tree}'
         else:
             raise TypeError
+    def marked_repr(self,marked_node):
+        """
+        A recursive repr() function like repr() but if it encounters 'marked_node' that node
+        will be printed with [[]] brackets around it
+        """
+        if self.ntype.abs:
+            res = f'(lambda {self.body.marked_repr(marked_node)})'
+        elif self.ntype.app:
+            args = ' '.join(arg.marked_repr(marked_node) for arg in self.xs)
+            res = f'({self.fn.marked_repr(marked_node)} {args})'
+        elif self.ntype.prim or self.ntype.var or self.ntype.hole:
+            res = repr(self)
+        elif self.ntype.output:
+            res = self.tree.marked_repr(marked_node)
+        else:
+            raise TypeError
+        if self is marked_node:
+            return f'[[{res}]]'
+        return res
     @property
     def in_HOF_lambda(self):
         return len(self.ctx) > len(self.task.inputs)

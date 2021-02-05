@@ -92,12 +92,13 @@ class PolicyHead(nn.Module):
             i += 1
 
     def sample_action(self,
-                      pnode,
+                      root,
                       max_depth):
         """
         Returns a production which you could then apply with hole.expand_to(prod, clear_cache=self.cache_mode) (eg SMC)
         """
-        hole = pnode.get_hole(self.ordering,self.tiebreaking)
+        verify_str = root.root_str()
+        hole = root.get_hole(self.ordering,self.tiebreaking)
         try:
             prods,lls = self.action_distribution(hole,max_depth)
         except InvalidSketchError as e:
@@ -105,23 +106,26 @@ class PolicyHead(nn.Module):
             raise NoCandidates
         idx = sample_log_dist(lls)
         prod = prods[idx]
-        return prod
+        assert root.root_str() == verify_str, "root was mutated"
+        return hole, prod
 
     def enumerate_actions(self,
-                      pnode,
+                      root,
                       max_depth):
         """
         Returns a (prods,lls) tuple, that is a list of productions and their corresponding lls. 
         hole.expand_to(prod, clear_cache=self.cache_mode) could be used on each with cloning in between (eg Astar)
         """
-        hole = pnode.get_hole(self.ordering,self.tiebreaking)
+        verify_str = root.root_str()
+        hole = root.get_hole(self.ordering,self.tiebreaking)
         try:
             prods,lls = self.action_distribution(hole,max_depth)
         except InvalidSketchError as e:
             red(f"enumSingleStep Valuehead should have caught this: {e}")
             raise NoCandidates
 
-        return prods,lls
+        assert root.root_str() == verify_str, "root was mutated"
+        return hole, prods,lls
 
     def train_loss(self, p, task):
         assert not p.hasHoles
