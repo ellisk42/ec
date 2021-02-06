@@ -260,8 +260,8 @@ class PNode:
 
 
         """
-        if clear_cache is not None:
-            self.clear_cache(clear_cache) # ok to do this here bc we wont be editing cache at all during expand_to
+        if cache_mode is not None:
+            self.clear_cache(cache_mode) # ok to do this here bc we wont be editing cache at all during expand_to
         self = self.unwrap_abstractions()
         assert self.ntype.hole
         assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
@@ -316,6 +316,7 @@ class PNode:
         abs.body = inner_hole
 
         return abs # and return our abstraction
+
     def into_hole(self, cache_mode=None):
         """
         reverts a PNode thats not a hole back into a hole. If you still want to keep around
@@ -329,6 +330,37 @@ class PNode:
                 delattr(self,attr) # not super important but eh why not
         self.cache = Cache(None,None,None)
         self.ntype = NType.HOLE
+
+    def expand_from(self, other, recursive=True):
+        """
+        like expand_to but taking another PNode instead of a Prod.
+        recursive=True means itll recurse so you can fill in whole subtrees.
+        cache wont be copied, you should call self.copy_cache_from(other, recursive=True) at the
+            end if you want that
+        Abstractions and Outputs get unwrapped
+        """
+        if self.ntype.output:
+            self = self.tree
+        if other.ntype.output:
+            other = other.tree
+        self = self.unwrap_abstractions()
+        other = other.unwrap_abstractions()
+        assert self.ntype.hole
+        assert self.tp == other.tp
+        assert not other.ntype.output, "holes never expand into outputs"
+        assert not other.ntype.abs, "this should have been unwrapped"
+
+        if other.ntype.hole:
+            return # we're already a hole! Nothing to change
+        
+        prod = other.get_prod()
+        self.expand_to(prod)
+        assert self.ntype == other.ntype, "expansion didnt yield the expected ntype"
+        
+        if recursive:
+            for c,o in zip(self.children(),other.children()):
+                c.expand_from(o,recursive=True)
+        
     def check_solve(self):
         """
         check if we're a solution to the task
@@ -698,8 +730,6 @@ class PNode:
             raise ValueError(ordering)
         else:
             raise TypeError
-    def cache_friendly_clone(self):
-        raise NotImplementedError
     def children(self):
         """
         returns a list of any nodes immediately below this one in the tree (empty list if leaf)
@@ -779,6 +809,96 @@ class PNode:
             self.root().clear_cache('children')
         else:
             raise ValueError
+    def get_zipper(self):
+        """
+        Get a zipper to yourself from your self.root()
+
+        Zipper looks like ('tree','body','body',1,2,1) for example where ints are used for which arg of a fn ur talking about
+        """
+        root = self.root()
+        if self is root:
+            return ()
+        parent = self.parent
+        if parent.ntype.output:
+            attr = 'tree'
+        elif parent.ntype.abs:
+            attr = 'body'
+        elif parent.ntype.hole or parent.ntype.prim or parent.ntype.var:
+            raise TypeError
+        elif parent.ntype.app:
+            if parent.fn is self:
+                attr = 'fn'
+            for i,arg in enumerate(parent.xs):
+                if arg is self:
+                    attr = i
+        elif parent.ntype.abs:
+            attr = 'body'
+        elif parent.ntype.abs:
+            attr = 'body'
+        else:
+            raise TypeError
+        
+        return (*parent.get_zipper(),attr)
+    def apply_zipper(self, zipper):
+        """
+        Returns the node retrieved by the zipper
+        """
+        if len(zipper) == 0:
+            return self
+        getattr(self,zipper[0]).apply_zipper(zipper[1:])
+
+    def clone(self, cache_mode, no_cache_copy=False):
+        """
+        Clone the tree from self.root() down, and return the node corresponding to `self` thats in
+        the newly cloned tree.
+            * no pointers in the newly cloned tree will point to PNodes in the old tree
+                ie a new copy of every PNode will be made, and all parent and child pointers
+                will be adjusted to point to things in this new tree.
+            * the original tree will be unaffected
+            * this is cache safe, it'll actually copy over the same `cache.exwise` and adjust the `cache.towards` properly
+                this doesnt duplicate the exwise object, it just means now both new and old trees point to the same one.
+                since exwises dont change inplace (beyond turning their .concrete into a .abstract()) this will be fine! As
+                soon as one of the caches invalidates itll just change which exwise it points to and wont disrupt the other
+                tree.
+            * the PTask will be shared (even if no_cache_copy=True)
+        """
+        zipper = self.get_zipper() # so we can find our way back to this node in the new tree
+        root = self.root()
+        assert root.ntype.output
+
+        cloned_root = PNode.from_ptask(root.task) # share same ptask
+        cloned_root.expand_from(root)
+        if not no_cache_copy:
+            cloned_root.copy_cache_from(root, recursive=True)
+
+        cloned_self = cloned_root.apply_zipper(zipper)
+        assert self.marked_str() == cloned_self.marked_str()
+        cloned_self.clear_cache(cache_mode)
+        return cloned_self
+
+    def copy_cache_from(self, other, recursive=True):
+        assert self.ntype == other.ntype
+        assert self.marked_str() == other.marked_str(), "maaaaybe you can relax this but be careful. Esp given that cache.string is getting copied (tho u could change that)"
+        cache = other.cache
+        if cache.towards is None:
+            self.cache = Cache(None,None,None)
+            return
+
+        new_towards = None
+        if cache.towards is other:
+            new_towards = self
+        elif cache.towards is other.parent:
+            new_towards = self.parent
+        else:
+            for i,c in enumerate(other.children()):
+                if cache.towards is c:
+                    new_towards = self.children()[i]
+        assert new_towards is not None
+        self.cache = Cache(new_towards,cache.exwise,cache.string)
+        if recursive:
+            for c,o in zip(self.children(),other.children()):
+                c.copy_cache_from(o,recursive=True)
+            
     def hide(self,recursive=False):
         """
         Turn whole tree into Holes but without destroying the old data
