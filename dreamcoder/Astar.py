@@ -4,6 +4,8 @@ import time
 from dataclasses import dataclass, field
 from dreamcoder.matt.plot import SearchTry
 from dreamcoder.matt.util import *
+from dreamcoder.matt.sing import sing
+
 @dataclass(order=True)
 class HeapItem:
     cost: float
@@ -12,7 +14,7 @@ class HeapItem:
     prod = field(compare=False)
     verify_str: str = field(compare=False)
 
-def astar_search(root, phead, vhead, timeout, max_depth):
+def astar_search(root, phead, vhead, timeout):
     """
     Feel free to pass in a tree that is already partially filled in
     """
@@ -37,7 +39,7 @@ def astar_search(root, phead, vhead, timeout, max_depth):
         verify_str = next.root_str()
 
         # enumerate cand actions
-        hole, prods, pcosts = phead.enumerate_actions(next, max_depth)
+        hole, prods, pcosts = phead.enumerate_actions(next, sing.cfg.solver.max_depth)
 
         # value costs on that whole batch of actions
         try:
@@ -54,7 +56,7 @@ def astar_search(root, phead, vhead, timeout, max_depth):
 
         for prod, pcost, vcost in zip(prods,pcosts,vcosts):
             pcost += prev_pcost # pcost accumulates but vcost doesnt
-            cost = pcost - critic_coeff * vcost
+            cost = pcost - sing.cfg.solver.critic_coeff * vcost
             q.push(HeapItem(
                 cost=cost,
                 pcost=pcost,
@@ -77,6 +79,6 @@ def astar_search(root, phead, vhead, timeout, max_depth):
         prod = heap_item.prod
         prev_pcost = heap_item.pcost
         assert heap_item.verify_str == hole.root_str(), "the hole seems to have been modified while in the heapitem"
-        next = hole.clone() # duplicates by cloning every pnode to make a fully independent tree, 
+        next = hole.clone() # duplicates by cloning every pnode to make a fully independent tree, but with shared cache
         next.expand_to(prod) # this is our new guy!
         next = next.root()

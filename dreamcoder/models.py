@@ -2,8 +2,8 @@ from dreamcoder.matt.util import *
 import torch
 from torch import nn
 from dreamcoder.matt.sing import sing
-from dreamcoder.SMC import SMC
-from dreamcoder.Astar import Astar
+from dreamcoder.pnode import PNode,PTask
+from dreamcoder.Astar import astar_search
 from dreamcoder import valueHead,policyHead
 from dreamcoder.matt import plot
 from dreamcoder import aux_models
@@ -131,9 +131,21 @@ class MBAS(nn.Module):
     assert len(fs) > 0
 
     if sing.cfg.test.scaffold:
-      raise NotImplementedError # see the old test.py:test_models() if you want to impl this
+      raise NotImplementedError # see the old test.py:test_models() if you want to impl this. It shd be super easy given the new astar btw
 
-    likelihood_model = AllOrNothingLikelihoodModel(timeout=0.01)
+    # quick checks
+    for f in fs:
+      assert f.p.depth() <= sing.solver.cfg.max_depth
+      if hasattr(sing.solver.cfg,'max_size'):
+        assert f.p.size() <= sing.solver.cfg.max_size
+
+    if sing.cfg.solver.type == 'astar':
+      astar_search()
+    elif sing.cfg.solver.type == 'astar':
+      raise NotImplementedError
+    else:
+      raise ValueError
+
     solver = {
       'astar': Astar,
       'smc': SMC,
@@ -146,33 +158,35 @@ class MBAS(nn.Module):
     self.eval()
     with torch.no_grad():
       for i,f in enumerate(fs):
-        t = f.t
-        _fs, times, num_progs, solns = solver.infer(
-          sing.g,
-          [t],
-          likelihood_model,
-          timeout=timeout,
-          starting_nodes=starting_nodes
-        )
-        solns = solns[t]
-        time = times[t]
-        if len(solns) == 0:
-          search_tries.append(plot.SearchTry(timeout,num_progs,None))
-          if verbose:
-            red(f"[{i+1}/{len(fs)}] failed to solve {t.name} (searched {num_progs} programs)")
+
+        # prep the task
+        task = PTask(f.t)
+        root = PNode.from_task(task)
+
+        # run search
+        if sing.cfg.solver.type == 'astar':
+          search_try = astar_search(root, self.phead, self.vhead, timeout)
+        elif sing.cfg.solver.type == 'smc':
+          raise NotImplementedError
         else:
-          assert len(solns) == 1
-          [soln] = solns
-          search_tries.append(plot.SearchTry(time,num_progs,soln))
-          if verbose:
-              green(f"[{i+1}/{len(fs)}] solved {t.name} in {time:.2f}s (searched {num_progs} programs)")
-              # t,d,s = get_depth(solns[0].program)
-              # print(f"\t-> [T{t}d{d}s{s}] {soln.program}")
-              print(f"\t-> {soln.program}")
-    
+          raise TypeError
+
+        search_tries.append(search_try)
+
+        if verbose:
+          if search_try.hit:
+            green(f"[{i+1}/{len(fs)}] solved {task.name} in {search_try.time:.2f}s (searched {search_try.nodes_expanded} programs)")
+            print(f"\t-> [T?d{search_try.soln.depth()}s{search_try.soln.size()}] {search_try.soln}")
+          else:
+            red(f"[{i+1}/{len(fs)}] failed to solve {task.name} (searched {search_try.nodes_expanded} programs)")
+
+    # build final model result
+    model_result = plot.ModelResult(search_tries,timeout)
+
     if verbose:
       blue(f'solved {len(search_tries)}/{len(fs)} tasks ({len(search_tries)/len(fs)*100:.1f}%)\n')
-    model_result = plot.ModelResult(search_tries,timeout)
+      blue(f'solved {len(model_result.hits)}/{len(fs)} tasks ({model_result.accuracy():.1f}%)\n')
+
     return model_result
     
 class Deepcoder(nn.Module):

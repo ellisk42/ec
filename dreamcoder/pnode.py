@@ -847,7 +847,7 @@ class PNode:
             return self
         getattr(self,zipper[0]).apply_zipper(zipper[1:])
 
-    def clone(self, cache_mode, no_cache_copy=False):
+    def clone(self, cache_mode=None, no_cache_copy=False):
         """
         Clone the tree from self.root() down, and return the node corresponding to `self` thats in
         the newly cloned tree.
@@ -905,6 +905,7 @@ class PNode:
         But dont do this for abstractions + output nodes bc it's impossible to "guess" these
         and theyre autofilled during search.
         Also for applications we dont hide the .fn field (which we assume to be a primitive)
+        We also dont touch the cache
         """
         if recursive:
             if self.ntype.output:
