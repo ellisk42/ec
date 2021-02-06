@@ -464,7 +464,6 @@ def evaluate(e, ctx, V):
     check_in_range(res,V) # may raise InvalidSketchError
     return res
 
-class InvalidSketchError(Exception): pass
 
 class FakeRecognitionModel(nn.Module):
     # pretends to be whatever Astar wants from its RecognitionModel. Which isn't much lol

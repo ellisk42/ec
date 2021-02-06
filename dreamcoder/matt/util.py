@@ -15,6 +15,8 @@ import contextlib
 import time
 from tqdm import tqdm
 
+class InvalidSketchError(Exception): pass
+
 ################
 # * PRINTING * #
 ################
@@ -319,10 +321,13 @@ def uncurry(fn,args):
         return fn()
     res = None
     for arg in args:
-        if res is not None:
-            res = res(arg)
-        else:
-            res = fn(arg)
+        try:
+            if res is not None:
+                res = res(arg)
+            else:
+                res = fn(arg)
+        except (ZeroDivisionError,FloatingPointError) as e:
+            raise InvalidSketchError(e)
     return res
 
 def lse(xs):

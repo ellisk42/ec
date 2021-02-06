@@ -41,26 +41,32 @@ def astar_search(root, phead, vhead, timeout):
         verify_str = next.root_str()
 
         # enumerate cand actions
-        hole, prods, pcosts = phead.enumerate_actions(next, sing.cfg.solver.max_depth)
+        hole, prods, pcost_lls = phead.enumerate_actions(next, sing.cfg.solver.max_depth)
 
         # value costs on that whole batch of actions
         try:
-            vcosts = vhead.values(hole,prods)
+            values = vhead.values(hole,prods)
         except FoundSolution as fs:
             soln = fs.p
             return SearchTry(time=time.time()-tstart, nodes_expanded=nodes_expanded, soln=soln)
         
 
         assert verify_str == next.root_str(), "vhead.values() seems to have modified the hole"
-        assert len(vcosts) == len(prods) == len(pcosts)
+        assert len(values) == len(prods) == len(pcost_lls)
 
         hashed_hole = hole.marked_str()
 
-        for prod, pcost, vcost in zip(prods,pcosts,vcosts):
-            if vcost == np.inf:
-                continue
+        for prod, ll, value in zip(prods,pcost_lls,values):
+            """
+            .value() -> lower is worse, therefore lower is higher cost, therefore vcost is -value
+            .enumerate_actions() -> lower ll (more neg) is worse, therefore lower is higher cost, therefore pcost is -ll
+            """
+            pcost = -ll # lls are negative numbers from -inf (highest cost) to 0 (lowest cost, most favorable). We're using a minheap (ie works intuitively with concept of "cost") so ll=-inf should be pcost=inf (high cost)
+            vcost = -value
             pcost += prev_pcost # pcost accumulates but vcost doesnt
-            cost = pcost - sing.cfg.solver.critic_coeff * vcost
+            cost = pcost + sing.cfg.solver.critic_coeff * vcost # these are both costs so we sum them directly we dont need to negate either
+            if cost == np.inf:
+                continue # eg if its a concrete thing then .values() does this. I think pcost being infinite is handled elsewhere already
             q.push(HeapItem(
                 cost=cost,
                 pcost=pcost,
