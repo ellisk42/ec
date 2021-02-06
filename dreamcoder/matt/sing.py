@@ -177,8 +177,9 @@ class Stats:
   def print_stats(self):
     print("Stats:")
     for k,v in self.__dict__.items():
+      if callable(v):
+        v = v(self)
       print(f'\t{k}: {v}')
-
 
 # note we must never overwrite this Sing. We should never do `matt.sing.sing = ...` 
 # because then it would only overwrite the local version and the version imported by other modules

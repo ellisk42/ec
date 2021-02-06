@@ -20,6 +20,10 @@ class MBAS(nn.Module):
     sing.stats.cache_used = 0
     sing.stats.cache_not_used = 0
     sing.stats.cache_cleared = 0
+
+    sing.stats.cache_hit_rate = cache_hit_rate
+    sing.stats.concrete_rate = concrete_rate
+
     self.running_vloss = RunningFloat()
     self.running_ploss = RunningFloat()
 
@@ -177,3 +181,16 @@ class Deepcoder(nn.Module):
   pass # todo
 class Robustfill(nn.Module):
   pass # todo
+
+
+
+def concrete_rate(stats):
+  try:
+    return stats.fn_called_concretely / (stats.fn_called_concretely + stats.fn_called_abstractly)
+  except ZeroDivisionError:
+    return 0
+def cache_hit_rate(stats):
+  try:
+    return stats.cache_used / (stats.cache_used + stats.cache_not_used)
+  except ZeroDivisionError:
+    return 0

@@ -18,9 +18,9 @@
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=True",
 
-                "debug.validate_cache=True",
+                "debug.validate_cache=False",
                 "debug.no_cache=False",
-                "model.ordering=random",
+                "model.ordering=right",
 
                 "data.T=2",
                 "data.lambda_depth=3",
@@ -31,8 +31,7 @@
                 "loop.search_valid_num_tasks=2",
                 "loop.save_every=100",
                 "loop.print_every=20",
-
-                "loop.search_valid_every=10",
+                "loop.search_valid_every=null",
 
                 "device=cpu",
                 "job_name=vscode",
