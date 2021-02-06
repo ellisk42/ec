@@ -639,7 +639,7 @@ def sort_unsort(list_of_lists):
     sizes = np.array([len(l) for l in list_of_lists])
     sorter = np.argsort(-1*sizes) # -1 so descending order
     unsorter = np.argsort(sorter) # argsort is its own inverse
-    sorted_list_of_lists = np.array(list_of_lists,dtype=object)[sorter].tolist() # briefly convert to ragged array in order to sort
+    sorted_list_of_lists = np.array(['fake']+list_of_lists,dtype=object)[1:][sorter].tolist() # briefly convert to ragged array in order to sort. An update to numpy makes the 'fake' bit necessary to avoid an error where it tries to convert the tensors to ndarrays instead of treating them as dtype=object
 
     sorted_sizes = [len(l) for l in sorted_list_of_lists]
     assert all(sorted_sizes == np.sort(sizes)[::-1]), "we didnt actually sort it"
