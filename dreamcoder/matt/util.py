@@ -12,7 +12,7 @@ from pathlib import Path
 import heapq
 from torch.utils.tensorboard import SummaryWriter
 import contextlib
-from time import time
+import time
 from tqdm import tqdm
 
 ################
@@ -304,9 +304,9 @@ class RunningFloat:
         return sum(self.vals)/len(self.vals)
     def reset(self):
         self.vals = []
-        self.tstart = time()
+        self.tstart = time.time()
     def elapsed(self):
-        return time() - self.tstart
+        return time.time() - self.tstart
     def rate(self):
         return self.count() / self.elapsed()
 
@@ -332,23 +332,23 @@ def lse(xs):
     Used to normalize a distribution `lls` as in normalize_log_dist()
     """
     import numpy as np
-    assert isinstance(xs,list)
+    assert isinstance(xs,(list,tuple))
     largest = max(xs)
     return largest + np.log(sum([np.exp(x-largest) for x in xs]))
 
 def normalize_nonlog_dist(xs):
-    assert isinstance(xs,list)
+    assert isinstance(xs,(list,tuple))
     total = sum(xs)
     return [x/total for x in xs]
 
 def normalize_log_dist(xs):
-    assert isinstance(xs,list)
+    assert isinstance(xs,(list,tuple))
     total = lse(xs)
     return [x-total for x in xs]
 
 def sample_nonlog_dist(xs):
     import numpy as np, random
-    assert isinstance(xs,list)
+    assert isinstance(xs,(list,tuple))
     if not np.allclose(sum(xs),1.):
         # we throw an error instead of correcting it for them in case they didnt intend for this
         raise ValueError("Please normalize distribution with normalize_nonlog_dist() or normalize_log_dist() first")
@@ -365,7 +365,7 @@ def sample_log_dist(xs):
     takes a list of normalized lls (this gets verified) and samples one, returning its index.
     """
     import numpy as np
-    assert isinstance(xs,list)
+    assert isinstance(xs,(list,tuple))
     xs = [np.exp(x) for x in xs]
     return sample_nonlog_dist(xs) # normalization check gets done in here (as opposed to checking lse() outside)
 
@@ -400,8 +400,10 @@ class Heap:
                 self.q.sort() # this actually maintains the heap invariant so it's safe to do! (https://docs.python.org/3/library/heapq.html)
                 self.q = self.q[:self.reset_to_size] # cut out the final elements (most expensive) leaving the cheap ones. self.q[0] is the result of pop_min() always for example
     def pop_min(self):
-        heapq.heappop(self.q)
+        return heapq.heappop(self.q)
     def peek_min(self):
         return min(self.q)
     def __len__(self):
         return len(self.q)
+    def __repr__(self):
+        return f'{len(self)}: {self.q}'

@@ -11,7 +11,6 @@ import random
 import mlb
 from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
 from dreamcoder.domains.tower.tower_common import renderPlan
-from dreamcoder.Astar import InferenceTimeout
 
 from dreamcoder.program import Index, Program
 import types 
@@ -644,9 +643,10 @@ class InvalidIntermediatesValueHead(ValueHead):
     def train_loss(self, p, task):
         return torch.tensor([0.], device=sing.device)
     def value(self, root):
-        assert root.root() is root, "value fn shd be fed the root of the tree, bro please try to keep up"
+        assert root.ntype.output, "value fn shd be fed the root of the tree, bro please try to keep up"
+        assert root.has_holes
         try:
-            p.propagate_upward(concrete_only=True)
+            root.propagate_upward(concrete_only=True)
         except InvalidSketchError as e:
             print(f"vhead.value() caught an invalid sketch {e}")
             return np.inf
@@ -654,14 +654,16 @@ class InvalidIntermediatesValueHead(ValueHead):
     def values(self, hole:PNode, prods):
         """
         Try out all the prods in the hole (preferably without much cloning) and return the list of value()s for each
+        
+        I think this method can really go in ValueHead in general? Other than some cache_mode question i guess. Just need a self.cache_mode for vhead ig?
         """
         root = hole.root()
         vcosts = []
         for prod in prods:
-            hole.expand_to(prod,clear_cache=None) # as long as our vhead propagates upwards all cache clears will happen naturally
+            hole.expand_to(prod) # as long as our vhead propagates upwards all cache clears will happen naturally
             if hole.check_solve():
                 raise FoundSolution(hole)
-            vcost = self.value(hole.root())
+            vcost = self.value(root) if root.has_holes else np.inf # infinite cost if concrete and not soln
             vcosts.append(vcost)
             hole.into_hole(cache_mode='parents') # upwards-only style cache mode
 

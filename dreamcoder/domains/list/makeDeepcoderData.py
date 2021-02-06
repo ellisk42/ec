@@ -1,27 +1,10 @@
-import sys
 import mlb
 import numpy as np
-import os
 from hydra import utils
-from dreamcoder.Astar import Astar
-from dreamcoder.SMC import SMC
-import itertools
 from torch import nn
-#import mlb
 import contextlib
-import multiprocessing as mp
-import queue
 import contextlib
-# sys.path.append(ospath.abspath('./'))
-# sys.path.append(os.path.abspath('./ec'))
-
-import pickle
-from dreamcoder import valueHead
-#from util.algolisp_util import make_holey_algolisp
-#from util.deepcoder_util import basegrammar
-import time
 from collections import namedtuple
-#Function = namedtuple('Function', ['src', 'sig', 'fun', 'bounds'])
 
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int, deepcoderPrimitivesPlusPlus, get_lambdas
 
@@ -37,13 +20,7 @@ if __name__ == '__main__':
 
 from dreamcoder.task import Task
 
-
-from dreamcoder.utilities import flatten
-
-import math
 import random
-from itertools import zip_longest, chain, islice
-from functools import reduce
 import torch
 
 from dreamcoder.domains.list.dc_program import generate_IO_examples, compile

@@ -130,38 +130,22 @@ class MBAS(nn.Module):
     """
     assert len(fs) > 0
 
-    if sing.cfg.test.scaffold:
-      raise NotImplementedError # see the old test.py:test_models() if you want to impl this. It shd be super easy given the new astar btw
+    fs = [(PNode.from_dreamcoder(f.p,f.t), PTask(f.t)) for f in fs]
 
     # quick checks
-    for f in fs:
-      assert f.p.depth() <= sing.solver.cfg.max_depth
-      if hasattr(sing.solver.cfg,'max_size'):
-        assert f.p.size() <= sing.solver.cfg.max_size
-
-    if sing.cfg.solver.type == 'astar':
-      astar_search()
-    elif sing.cfg.solver.type == 'astar':
-      raise NotImplementedError
-    else:
-      raise ValueError
-
-    solver = {
-      'astar': Astar,
-      'smc': SMC,
-    }[sing.cfg.solver.type](self.phead, self.vhead, sing.cfg.solver)
-
-    starting_nodes = None # related to cfg.test.scaffold
+    for (soln, task) in fs:
+      assert soln.depth() <= sing.cfg.solver.max_depth
+      if hasattr(sing.cfg.solver,'max_size'):
+        assert soln.size() <= sing.cfg.solver.cfg.max_size
 
     search_tries = []
-
     self.eval()
+
     with torch.no_grad():
-      for i,f in enumerate(fs):
+      for i,(true_soln,task) in enumerate(fs):
 
         # prep the task
-        task = PTask(f.t)
-        root = PNode.from_task(task)
+        root = PNode.from_ptask(task)
 
         # run search
         if sing.cfg.solver.type == 'astar':
@@ -176,15 +160,15 @@ class MBAS(nn.Module):
         if verbose:
           if search_try.hit:
             green(f"[{i+1}/{len(fs)}] solved {task.name} in {search_try.time:.2f}s (searched {search_try.nodes_expanded} programs)")
-            print(f"\t-> [T?d{search_try.soln.depth()}s{search_try.soln.size()}] {search_try.soln}")
+            print(f"\t-> found: [T?d{search_try.soln.depth()}s{search_try.soln.size()}] {search_try.soln}")
+            print(f"\t-> orig:  [T?d{true_soln.depth()}s{true_soln.size()}] {true_soln}")
           else:
-            red(f"[{i+1}/{len(fs)}] failed to solve {task.name} (searched {search_try.nodes_expanded} programs)")
+            red(f"[{i+1}/{len(fs)}] failed to solve {true_soln} (searched {search_try.nodes_expanded} programs)")
 
     # build final model result
     model_result = plot.ModelResult(search_tries,timeout)
 
     if verbose:
-      blue(f'solved {len(search_tries)}/{len(fs)} tasks ({len(search_tries)/len(fs)*100:.1f}%)\n')
       blue(f'solved {len(model_result.hits)}/{len(fs)} tasks ({model_result.accuracy():.1f}%)\n')
 
     return model_result

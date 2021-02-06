@@ -23,6 +23,8 @@ class FoundSolution(Exception):
 def cached_propagate(propagate):
     @functools.wraps(propagate)
     def _cached_propagate(self,towards,concrete_only=False):
+        if concrete_only: # its fast enough to just do it directly and not have to deal with cache craziness
+            return propagate(self, towards, concrete_only=concrete_only)
 
         if self.cache.towards is not towards or sing.cfg.debug.no_cache:
             exwise = propagate(self, towards, concrete_only=concrete_only)
@@ -317,7 +319,7 @@ class PNode:
 
         return abs # and return our abstraction
 
-    def into_hole(self, cache_mode=None):
+    def into_hole(self, cache_mode='single'):
         """
         reverts a PNode thats not a hole back into a hole. If you still want to keep around
         a ground truth non-hole version of the node you probably want PNode.hide() instead.
@@ -328,7 +330,7 @@ class PNode:
         for attr in ('prim','name','value','fn','xs','i','body','tree'):
             if hasattr(self,attr):
                 delattr(self,attr) # not super important but eh why not
-        self.cache = Cache(None,None,None)
+        self.clear_cache(cache_mode)
         self.ntype = NType.HOLE
 
     def expand_from(self, other, recursive=True):
@@ -357,15 +359,18 @@ class PNode:
         self.expand_to(prod)
         assert self.ntype == other.ntype, "expansion didnt yield the expected ntype"
         
-        if recursive:
-            for c,o in zip(self.children(),other.children()):
+        if recursive and self.ntype.app:
+            # APP is the only case w children but we dont do the `fn` since its just a prefilled prim
+            for c,o in zip(self.xs,other.xs):
                 c.expand_from(o,recursive=True)
+
+
         
     def check_solve(self):
         """
         check if we're a solution to the task
         """
-        if self.has_holes:
+        if self.root().has_holes:
             return False
         return self.root().propagate_upward(concrete_only=True).concrete == self.task.outputs.concrete
 
@@ -404,7 +409,7 @@ class PNode:
         # meaning this will be our ntype.output node
         root = PNode.from_ptask(PTask(task))
         root.tree.expand_from_dreamcoder(p)
-        assert repr(root.tree) == repr(p), "these must be the same for the sake of the RNN which does str() of the pnode"
+        assert str(root.tree) == str(p), "these must be the same for the sake of the RNN which does str() of the pnode"
         return root
 
     def expand_from_dreamcoder(self, p: Program):
@@ -438,11 +443,11 @@ class PNode:
         else:
             raise TypeError
     
-    def __repr__(self):
+    def __str__(self):
         if self.ntype.abs:
             return f'(lambda {self.body})'
         elif self.ntype.app:
-            args = ' '.join(repr(arg) for arg in self.xs)
+            args = ' '.join(str(arg) for arg in self.xs)
             return f'({self.fn} {args})'
         elif self.ntype.prim:
             return f'{self.name}'
@@ -454,6 +459,8 @@ class PNode:
             return f'{self.tree}'
         else:
             raise TypeError
+    def __repr__(self):
+        return f'{self.ntype.name} {self.marked_str()} | {self.tp}'
     def marked_repr(self,marked_node):
         """
         A recursive repr() function like repr() but if it encounters 'marked_node' that node
@@ -465,7 +472,7 @@ class PNode:
             args = ' '.join(arg.marked_repr(marked_node) for arg in self.xs)
             res = f'({self.fn.marked_repr(marked_node)} {args})'
         elif self.ntype.prim or self.ntype.var or self.ntype.hole:
-            res = repr(self)
+            res = str(self)
         elif self.ntype.output:
             res = self.tree.marked_repr(marked_node)
         else:
@@ -845,7 +852,12 @@ class PNode:
         """
         if len(zipper) == 0:
             return self
-        getattr(self,zipper[0]).apply_zipper(zipper[1:])
+        if isinstance(zipper[0],str):
+            return getattr(self,zipper[0]).apply_zipper(zipper[1:])
+        elif isinstance(zipper[0],int):
+            return self.xs[zipper[0]].apply_zipper(zipper[1:])
+        else:
+            raise TypeError
 
     def clone(self, cache_mode=None, no_cache_copy=False):
         """

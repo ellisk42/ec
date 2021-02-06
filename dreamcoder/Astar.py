@@ -1,17 +1,19 @@
 from dreamcoder.pnode import FoundSolution, PNode
 import sys
 import time
+import numpy as np
 from dataclasses import dataclass, field
 from dreamcoder.matt.plot import SearchTry
 from dreamcoder.matt.util import *
 from dreamcoder.matt.sing import sing
 
+from typing import Any
 @dataclass(order=True)
 class HeapItem:
     cost: float
     pcost: float = field(compare=False)
     hole: PNode = field(compare=False)
-    prod = field(compare=False)
+    prod: Any = field(compare=False)
     verify_str: str = field(compare=False)
 
 def astar_search(root, phead, vhead, timeout):
@@ -47,7 +49,7 @@ def astar_search(root, phead, vhead, timeout):
         except FoundSolution as fs:
             soln = fs.p
             return SearchTry(time=time.time()-tstart, nodes_expanded=nodes_expanded, soln=soln)
-
+        
 
         assert verify_str == next.root_str(), "vhead.values() seems to have modified the hole"
         assert len(vcosts) == len(prods) == len(pcosts)
@@ -55,6 +57,8 @@ def astar_search(root, phead, vhead, timeout):
         hashed_hole = hole.marked_str()
 
         for prod, pcost, vcost in zip(prods,pcosts,vcosts):
+            if vcost == np.inf:
+                continue
             pcost += prev_pcost # pcost accumulates but vcost doesnt
             cost = pcost - sing.cfg.solver.critic_coeff * vcost
             q.push(HeapItem(

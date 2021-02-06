@@ -1,7 +1,5 @@
 from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
-from dreamcoder.SMC import SMC
-from dreamcoder.Astar import Astar
 # luke
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 
