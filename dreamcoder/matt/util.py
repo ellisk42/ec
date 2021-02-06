@@ -25,8 +25,8 @@ class InvalidSketchError(Exception): pass
 def print(*args,**kwargs):
     s = ''.join([str(arg) for arg in args])
     tqdm.write(s,**kwargs)
-def die(*args,**kwargs):
-    print(*args,**kwargs)
+def die(s):
+    red(s)
     sys.exit(1)
 def print_if(s,cond):
     from dreamcoder.matt.sing import sing

@@ -39,7 +39,7 @@ def hydra_main(cfg):
     cfg.argv = ' '.join(sys.argv)
     repo = git.Repo(toplevel_path())
     if repo.is_dirty() and not cfg.dirty:
-        raise ValueError("repo is dirty. please add/commit. Or run with `dirty=True`")
+        die("repo is dirty. please add/commit. Or run with `dirty=True`")
     cfg.commit = repo.head.commit.hexsha
     del repo
 

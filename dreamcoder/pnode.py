@@ -372,7 +372,10 @@ class PNode:
         """
         if self.root().has_holes:
             return False
-        return self.root().propagate_upward(concrete_only=True).concrete == self.task.outputs.concrete
+        try:
+            return self.root().propagate_upward(concrete_only=True).concrete == self.task.outputs.concrete
+        except InvalidSketchError:
+            return False
 
 
     @staticmethod
