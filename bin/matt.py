@@ -90,12 +90,12 @@ def hydra_main(cfg):
         # PLOT
         elif cfg.mode == 'plot':
             plot.main()
-            return
+            sys.exit(0)
 
         # TESTGEN
         elif cfg.mode == 'testgen':
             testgen.main()
-            return
+            sys.exit(0)
 
         # TEST
         elif cfg.mode == 'test':
@@ -103,12 +103,12 @@ def hydra_main(cfg):
             test.main()
             notify_done()
             mlb.yellow("===TEST DONE===")
-            return
+            sys.exit(0)
 
         # CMD
         elif cfg.mode == 'cmd':
             command.main()
-            return
+            sys.exit(0)
 
         # TRAIN
         elif cfg.mode == 'train':
@@ -117,12 +117,12 @@ def hydra_main(cfg):
             train.main()
             notify_done()
             mlb.yellow("===TRAINING DONE===")
-            return
+            sys.exit(0)
 
         # PROFILE
         elif cfg.mode == 'profile':
             profile.main()
-            return
+            sys.exit(0)
 
         # INSPECT
         elif cfg.mode == 'inspect':
@@ -136,7 +136,7 @@ def hydra_main(cfg):
             mlb.die(f"Mode not recognized: {cfg.mode}")
 
 
-        return
+        sys.exit(0)
 
         # PLOT
         if cfg.mode == 'plot':
