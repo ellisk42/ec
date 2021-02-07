@@ -57,6 +57,7 @@ def which(cfg, no_yaml=False):
     yaml_str = "" if no_yaml else yaml(cfg) + "\n\n"
     return f'''
 {yaml_str}
+full_name: {cfg.full_name}
 cwd: {cwd_path()}
 tensorboard: http://localhost:6696/#scalars&regexInput={regex}
 commit: {cfg.commit}

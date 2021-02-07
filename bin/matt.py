@@ -26,22 +26,28 @@ def hydra_main(cfg):
     if isinstance(cfg.load,str) and cfg.load.strip().startswith('['):
         cfg.load = eval(cfg.load)
 
-    assert cfg.notify_done in ('text','email',None)
-
     _time = timestamp()
     cfg.start_time = str(_time)
     cfg.start_time_filename = timestamp_to_filename(_time)
     cfg.argv = ' '.join(sys.argv)
+    cfg.full_name = f'{cfg.job_name}.{cfg.run_name}'
     repo = git.Repo(toplevel_path())
     if repo.is_dirty() and not cfg.dirty:
         die("repo is dirty. please add/commit. Or run with `dirty=True`")
+    cfg.is_dirty = repo.is_dirty()
     cfg.commit = repo.head.commit.hexsha
+    assert cfg.notify_crash in (None,'email','text')
+    assert cfg.notify_done in (None,'email','text')
     del repo
 
+
     def notify_done():
-        email_subj = f'[{sing.cfg.mode} done from {sing.cfg.start_time}]'
+        # important to use `sing` and not local `cfg` so that we closure the true `sing` which
+        # `load` will modify
+        info = f'{sing.cfg.mode} done: {sing.cfg.full_name} from {sing.cfg.start_time}'
+        email_subj = f'[{info}]'
         email_body = f'{sing.which()}'
-        text_body = f'[{sing.cfg.mode} done from {sing.cfg.start_time}]\n{sing.which(no_yaml=True)}'
+        text_body = f'[{info}]\n{sing.which(no_yaml=True)}'
         if sing.cfg.notify_done == 'email':
             email_me(email_subj,email_body)
         elif sing.cfg.notify_done == 'text':
@@ -49,11 +55,12 @@ def hydra_main(cfg):
             email_me(email_subj,email_body)
 
     def notify_crash(e:Exception):
+        info = f'{sing.cfg.mode} crash: {sing.cfg.full_name} from {sing.cfg.start_time}'
         print(sing.which(no_yaml=True))
         full_exc = ''.join(traceback.format_exception(e.__class__, e, e.__traceback__))
-        email_subj = f'[{sing.cfg.mode} crash from {sing.cfg.start_time}]'
+        email_subj = f'[{info}]'
         email_body = f'{e}\n\n{sing.which()}\n\n{full_exc}'
-        text_body = f'[{sing.cfg.mode} crash from {sing.cfg.start_time}]\n{e}\n{sing.which(no_yaml=True)}'
+        text_body = f'[{info}]\n{e}\n{sing.which(no_yaml=True)}'
         if sing.cfg.notify_crash == 'email':
             email_me(email_subj,email_body)
         elif sing.cfg.notify_crash == 'text':
