@@ -235,7 +235,7 @@ def outputs_search(regexes, sort=True, ext=None, expand=False, rundirs=False):
 def get_rundir(path):
     path = path.relative_to(outputs_path())
     assert len(path.parts) >= 2, "path is too short to have a rundir"
-    return Path(f'{p.parts[0]}/{p.parts[1]}')
+    return Path(f'{path.parts[0]}/{path.parts[1]}')
 
 def filter_paths(paths, predicate):
     return [p for p in paths if predicate(p)]
