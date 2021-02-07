@@ -50,6 +50,7 @@ def hydra_main(cfg):
         # important to use `sing` and not local `cfg` so that we closure the true `sing` which
         # `load` will modify
         info = f'{sing.cfg.mode} done: {sing.cfg.full_name} from {sing.cfg.start_time}'
+        print(sing.which(no_yaml=True))
         email_subj = f'[{info}]'
         email_body = f'{sing.which()}'
         text_body = f'[{info}]\n{sing.which(no_yaml=True)}'
