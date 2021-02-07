@@ -17,11 +17,6 @@ import git
 import traceback
 
 
-# doesnt actually do anything i think
-# def tmux_closed():
-#     sys.exit(1)
-# signal.signal(signal.SIGHUP,tmux_closed)
-
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen

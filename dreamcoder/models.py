@@ -163,7 +163,7 @@ class MBAS(nn.Module):
 
         if verbose:
           if search_try.hit:
-            green(f"[{i+1}/{len(fs)}] solved {task.name} in {search_try.time:.2f}s (searched {search_try.nodes_expanded} programs)")
+            green(f"[{i+1}/{len(fs)}] solved in {search_try.time:.2f}s (searched {search_try.nodes_expanded} programs)")
             print(f"\t-> found: [T?d{search_try.soln.depth()}s{search_try.soln.size()}] {search_try.soln}")
             print(f"\t-> orig:  [T?d{true_soln.depth()}s{true_soln.size()}] {true_soln}")
           else:
