@@ -13,6 +13,7 @@ import functools
 from torch.utils.tensorboard import SummaryWriter
 import shutil
 from mlb.mail import email_me,text_me
+from dreamcoder.matt import fix
 
 class Sing(Saveable):
   no_save = ('w',)
@@ -87,10 +88,10 @@ class Sing(Saveable):
           rundir = get_rundir(path) # get DATE/TIME dir
           saves = list((rundir / 'saves').glob('*autosave*.sing'))
           if len(saves) == 0:
-            die(f'saves folder seems to be empty: {saves}')
+            die(f'saves folder seems to be empty: {rundir / "saves"}')
           def savenum(save):  # convert 'autosave_0000100.sing' -> 100
             stem = save.stem # strip suffix of .sing so 'autosave_0000100.sing' -> 'autosave_0000100'
-            num = save.split('_')[-1] # 'autosave_0000100' -> '0000100'
+            num = stem.split('_')[-1] # 'autosave_0000100' -> '0000100'
             return int(num)
           path = max(saves, key=lambda save: savenum(save))
 
@@ -101,7 +102,20 @@ class Sing(Saveable):
         del _sing
         if new_device is not None:
           self.device = new_device # override sings device indicator used in various places
+
+        fix.fix_cfg(self.cfg) # any forwards compatability fixes to the loaded cfg
+
         self.apply_overrides(overrided,cfg)
+
+        # turn commit, is_dirty, and argv into lists and append our new values onto the old ones
+        if not isinstance(cfg.commit,list):
+          cfg.commit = [cfg.commit]
+          cfg.is_dirty = [cfg.is_dirty]
+          cfg.argv = [cfg.argv]
+        self.cfg.commit = (*cfg.commit, self.cfg.commit)
+        self.cfg.is_dirty = (*cfg.is_dirty, self.cfg.is_dirty)
+        self.cfg.argv = (*cfg.argv, self.cfg.argv)
+
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
         self.set_tensorboard(self.name)
@@ -126,19 +140,24 @@ class Sing(Saveable):
       believe theyre modifying the training data when really that gets set
       in stone when you first create a new run
     """
-    if 'device' in overrided:
-      overrided.remove('device') # since we already handled it
-    whitelisted_keypaths = ()
+    whitelisted_keypaths = ('device','load','dirty')
     whitelisted_keypaths_startswith = ()
     for keypath in overrided:
       if cfg_get(cfg,keypath) == cfg_get(self.cfg,keypath):
         continue # if theyre already equal then no worries
       if keypath not in whitelisted_keypaths and not any(keypath.startswith(start) for start in whitelisted_keypaths_startswith):
-        die(f'keypath {keypath} is not in whitelisted overrides. Modify in sing.py:Sing.apply_overrides()')
+        die(f'keypath `{keypath}` is not in whitelisted overrides. Modify in sing.py:Sing.apply_overrides()')
       """
       If you want any custom behavior for an override, put it here
       """
-      cfg_set(self.cfg,keypath,cfg_get(cfg,keypath)) # override it
+      val = cfg_get(cfg,keypath)
+      if keypath == 'device':
+        pass # handled elsewhere
+      if keypath == 'load':
+        pass # no need to handle
+      if keypath == 'dirty':
+        pass # no need to handle
+      cfg_set(self.cfg,keypath,val) # override it
    
   def save(self, name):
       path = with_ext(saves_path() / name, 'sing')

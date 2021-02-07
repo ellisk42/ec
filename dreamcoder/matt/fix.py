@@ -1,6 +1,13 @@
 
 from omegaconf import DictConfig,OmegaConf,open_dict
 
+def fix_cfg(cfg):
+    if 'is_dirty' not in cfg:
+        with open_dict(cfg):
+            cfg.is_dirty = True
+
+
+
 
 def fix_state_testmode(state):
     if not hasattr(state.phead,'featureExtractor'):

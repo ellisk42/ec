@@ -226,16 +226,23 @@ def outputs_search(regexes, sort=True, ext=None, expand=False, rundirs=False):
             if len(p.parts) == 1:
                 paths.extend(p.glob('*')) # expand a lone DATE dir to all its DATE/TIME children
         paths = [p for p in paths if len(p.parts) >= 2] # throw out those lone DATE dirs you expanded
-        paths = [get_rundir(p) for p in paths] # convert children to their parent DATE/TIME
+        paths = [Path(p.parts[0],p.parts[1]) for p in paths] # convert children to their parent DATE/TIME
         paths = list(OrderedDict.fromkeys(paths)) # dedup while maintaining order
     if sort:
         paths = sorted(paths)
     return paths
 
-def get_rundir(path):
-    path = path.relative_to(outputs_path())
+def get_rundir(orig_path):
+    """
+    Get the DATE/TIME dir, but if the input was like foo/bar/outputs/DATE/TIME/x/y then return foo/bar/DATE/TIME
+        instead of just DATE/TIME. This means that if orig_path was valid to the caller, then the return value here
+        will be valid to the caller (whereas the simple path DATE/TIME would only be valid if the caller were in the
+        outputs directory as their cwd)
+    """
+    path = orig_path.relative_to(outputs_path())
+    shortened_by = len(orig_path.parts) - len(path.parts)
     assert len(path.parts) >= 2, "path is too short to have a rundir"
-    return Path(f'{path.parts[0]}/{path.parts[1]}')
+    return Path(*orig_path.parts[:shortened_by], path.parts[0], path.parts[1])
 
 def filter_paths(paths, predicate):
     return [p for p in paths if predicate(p)]
