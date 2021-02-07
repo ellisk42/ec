@@ -1,4 +1,4 @@
-from dreamcoder.matt.util import *
+from dreamcoder.matt.unthread import unthread, set_deterministic
 unthread()
 try:
     import binutil  # required to import from dreamcoder modules
@@ -7,6 +7,7 @@ except ModuleNotFoundError:
 
 from dreamcoder.matt import plot,test,train,fix,profile,command,testgen
 from dreamcoder.matt.sing import sing
+from dreamcoder.matt.util import *
 
 from mlb.mail import email_me,text_me
 
@@ -20,6 +21,10 @@ import traceback
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
+    if cfg.seed is not None:
+        set_deterministic(cfg.seed)
+    else:
+        yellow('warning: not setting determinism nor seeding rng')
 
     if isinstance(cfg.plot.legend,str):
         cfg.plot.legend = eval(cfg.plot.legend)

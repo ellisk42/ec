@@ -12,6 +12,9 @@ from pathlib import Path
 import heapq
 from torch.utils.tensorboard import SummaryWriter
 import contextlib
+import math
+import random
+import numpy as np
 import time
 from tqdm import tqdm
 
@@ -228,32 +231,6 @@ def filter_paths(paths, predicate):
 
     return results
 
-def unthread():
-    """
-    disables parallelization
-    """
-    import os
-    if 'numpy' in sys.modules:
-        mlb.yellow("warning: unthread() might not work properly if done after importing numpy")
-    
-    os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=4
-    os.environ["OPENBLAS_NUM_THREADS"] = "1" # export OPENBLAS_NUM_THREADS=4 
-    os.environ["MKL_NUM_THREADS"] = "1" # export MKL_NUM_THREADS=6
-    os.environ["VECLIB_MAXIMUM_THREADS"] = "1" # export VECLIB_MAXIMUM_THREADS=4
-    os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
-    import torch
-    torch.set_num_threads(1)
-
-def deterministic(seed):
-    import torch
-    import numpy as np
-    import random
-    torch.manual_seed(seed)
-    # warning: these may slow down your model
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
-    random.seed(seed)
 
 class NoPickle: pass
 class Saveable:
@@ -337,10 +314,9 @@ def lse(xs):
     If `lse([x-lse(xs) for x in xs])` is appx 0 you know this works right
     Used to normalize a distribution `lls` as in normalize_log_dist()
     """
-    import numpy as np
     assert isinstance(xs,(list,tuple))
     largest = max(xs)
-    return largest + np.log(sum([np.exp(x-largest) for x in xs]))
+    return largest + math.log(sum([math.exp(x-largest) for x in xs]))
 
 def normalize_nonlog_dist(xs):
     assert isinstance(xs,(list,tuple))
@@ -353,9 +329,8 @@ def normalize_log_dist(xs):
     return [x-total for x in xs]
 
 def sample_nonlog_dist(xs):
-    import numpy as np, random
     assert isinstance(xs,(list,tuple))
-    if not np.allclose(sum(xs),1.):
+    if not math.isclose(sum(xs),1.):
         # we throw an error instead of correcting it for them in case they didnt intend for this
         raise ValueError("Please normalize distribution with normalize_nonlog_dist() or normalize_log_dist() first")
     r = random.random()
@@ -370,9 +345,8 @@ def sample_log_dist(xs):
     """
     takes a list of normalized lls (this gets verified) and samples one, returning its index.
     """
-    import numpy as np
     assert isinstance(xs,(list,tuple))
-    xs = [np.exp(x) for x in xs]
+    xs = [math.exp(x) for x in xs]
     return sample_nonlog_dist(xs) # normalization check gets done in here (as opposed to checking lse() outside)
 
 
