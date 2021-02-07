@@ -85,7 +85,7 @@ class Sing(Saveable):
         [path] = paths
         if not path.suffix == '.sing': # if not a .sing file, get the parent dir then load the appropriate autosave
           rundir = get_rundir(path) # get DATE/TIME dir
-          saves = (rundir / 'saves').glob('*autosave*.sing')
+          saves = list((rundir / 'saves').glob('*autosave*.sing'))
           if len(saves) == 0:
             die(f'saves folder seems to be empty: {saves}')
           def savenum(save):  # convert 'autosave_0000100.sing' -> 100
