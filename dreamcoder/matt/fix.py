@@ -2,6 +2,8 @@
 from omegaconf import DictConfig,OmegaConf,open_dict
 
 def fix_cfg(cfg):
+
+    # feb 7
     if 'is_dirty' not in cfg:
         with open_dict(cfg):
             cfg.is_dirty = True
