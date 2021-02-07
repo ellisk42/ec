@@ -271,6 +271,27 @@ class Saveable:
       for k,v in other.__dict__.items():
           self[k] = v
 
+
+def cfg_get(cfg, keypath):
+    """
+    Given a cfg and something like keypath=`pnode.model.whatever` this accesses that field and returns its value
+    """
+    zipper = keypath.split('.') # 'model.pnode.whatever' -> ['model','pnode','whatever']
+    inner = cfg
+    for key in zipper:
+        inner = inner[key]
+    return inner
+
+def cfg_set(cfg, keypath, val):
+    """
+    Given a cfg and something like keypath=`pnode.model.whatever` this accesses that field and sets its value to `val`
+    """
+    zipper = keypath.split('.') # 'model.pnode.whatever' -> ['model','pnode','whatever']
+    inner = cfg
+    for key in zipper[:-1]:
+        inner = inner[key]
+    inner[zipper[-1]] = val
+
 class RunningFloat:
     def __init__(self):
         self.reset()

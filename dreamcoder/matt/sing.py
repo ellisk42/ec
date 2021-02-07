@@ -47,7 +47,7 @@ class Sing(Saveable):
         self.train_state = TrainState(cfg)
         self.cwd = cwd_path()
         init_paths()
-        self.name = f'{cfg.job_name}.{cfg.run_name}'
+        self.name = self.cfg.full_name
         self.device = torch.device(cfg.device)
         self.stats = Stats()
 
@@ -69,27 +69,26 @@ class Sing(Saveable):
         ############################################
         ### * LOAD OLD SING CONTAINING A MODEL * ###
         ############################################
-        overrided = [arg.split('=')[0] for arg in sys.argv[1:]]
-        device = torch.device(cfg.device) if 'device' in overrided else None
-        # in these cases cfg.load points to a Sing file
 
-        paths = outputs_search(sing.cfg.load, ext='sing')
+        overrided = [arg.split('=')[0] for arg in sys.argv[1:]]
+        new_device = torch.device(cfg.device) if 'device' in overrided else None
+
+        paths = outputs_search(cfg.load, ext='sing')
         if len(paths) == 0:
-            red(f'Error: cfg.load={sing.cfg.load} doesnt match any files')
-            sys.exit(1)
+            die(f'Error: cfg.load={cfg.load} doesnt match any files')
         if len(paths) > 1:
-            red(f'Error: cfg.load={sing.cfg.load} matches more than one file')
+            red(f'Error: cfg.load={cfg.load} matches more than one file')
             red(f'Matched files:')
             for p in paths:
                 red(f'\t{p}')
             sys.exit(1)
         [path] = paths
 
-        _sing = torch.load(path,map_location=device) # `None` means stay on original device
+        _sing = torch.load(path,map_location=new_device) # `None` means stay on original device
         self.clone_from(_sing) # will even copy over stuff like SummaryWriter object so no need for post_load()
         del _sing
-        if device is not None:
-          self.device = device # override sings device indicator used in various places
+        if new_device is not None:
+          self.device = new_device # override sings device indicator used in various places
         self.apply_overrides(overrided,cfg)
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
@@ -102,6 +101,32 @@ class Sing(Saveable):
     else:
       raise ValueError(f"mode={cfg.mode} is not a valid mode")
 
+  def apply_overrides(self,overrided,cfg):
+    """
+    Used when loading a model and overriding some aspects of it
+    Takes:
+     * overrided = [arg.split('=')[0] for arg in sys.argv[1:]]
+     * cfg: new config where we'll pull the values for the overrides
+    If a key shows up in `overrided` and its value (cfg[key]) differs
+      from `self.cfg[key]` and it is whitelisted, then we override it.
+    This allows for custom behavior depending on what the override key is,
+      and the whitelist setup means we wont let someone do something like
+      believe theyre modifying the training data when really that gets set
+      in stone when you first create a new run
+    """
+    if 'device' in overrided:
+      overrided.remove('device') # since we already handled it
+    whitelisted_keypaths = ()
+    whitelisted_keypaths_startswith = ()
+    for keypath in overrided:
+      if cfg_get(cfg,keypath) == cfg_get(self.cfg,keypath):
+        continue # if theyre already equal then no worries
+      if keypath not in whitelisted_keypaths and not any(keypath.startswith(start) for start in whitelisted_keypaths_startswith):
+        die(f'keypath {keypath} is not in whitelisted overrides. Modify in sing.py:Sing.apply_overrides()')
+      """
+      If you want any custom behavior for an override, put it here
+      """
+      cfg_set(self.cfg,keypath,cfg_get(cfg,keypath)) # override it
    
   def save(self, name):
       path = with_ext(saves_path() / name, 'sing')
