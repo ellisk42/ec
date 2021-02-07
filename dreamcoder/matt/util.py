@@ -194,27 +194,48 @@ def plots_path():
     """
     return cwd_path() / 'plots'
 
-def outputs_search(regexes, sort=True, ext=None):
+def outputs_search(regexes, sort=True, ext=None, expand=False, rundirs=False):
     """
+    Returns a list of Paths
     The union of one or more regexes treated like `outputs/**/*{regex}`
         * regexes :: str | [str]
         * duplicates are removed
         * note theres no '*' built into the end of the regex so you should add one yourself if you want one
         * sorts results unless sort=False
-
-    Returns a list of Paths
+        * if `ext` is True then filter out any files that dont have the proper extension
+            Often used with `expand`
+        * if `expand` is True then convert every matched directory to all if its children and their children etc (**/*)
+            Explodes size of output but may be desirable for grabbing exact files
+        * if `rundirs` is True then reduce each path to its DATE/TIME folder, removing duplicates
+            Often useful if you want the DATE/TIME dirs based on matching a regex on their contents
     """
     if isinstance(regexes,str):
         regexes = [regexes]
 
     # glob all the paths, dedup using OrderedDict.fromkeys() (like set() but preserves order)
     paths = list(OrderedDict.fromkeys(itertools.chain.from_iterable([list(outputs_path().glob(f'**/*{regex}')) for regex in regexes])))
-    if sort:
-        paths = sorted(paths)
+
+    assert not any(len(p.parts) == 0 for p in paths), "you seem to have regexed the entire directory"
+
+    if expand:
+        paths = itertools.chain.from_iterable(p.glob('**/*') for p in paths)
     if ext:
         paths = [p for p in paths if p.suffix == ext]
+    if rundirs:
+        for p in paths:
+            if len(p.parts) == 1:
+                paths.extend(p.glob('*')) # expand a lone DATE dir to all its DATE/TIME children
+        paths = [p for p in paths if len(p.parts) >= 2] # throw out those lone DATE dirs you expanded
+        paths = [get_rundir(p) for p in paths] # convert children to their parent DATE/TIME
+        paths = list(OrderedDict.fromkeys(paths)) # dedup while maintaining order
+    if sort:
+        paths = sorted(paths)
     return paths
 
+def get_rundir(path):
+    path = path.relative_to(outputs_path())
+    assert len(path.parts) >= 2, "path is too short to have a rundir"
+    return Path(f'{p.parts[0]}/{p.parts[1]}')
 
 def filter_paths(paths, predicate):
     return [p for p in paths if predicate(p)]

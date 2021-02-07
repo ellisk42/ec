@@ -73,7 +73,7 @@ class Sing(Saveable):
         overrided = [arg.split('=')[0] for arg in sys.argv[1:]]
         new_device = torch.device(cfg.device) if 'device' in overrided else None
 
-        paths = outputs_search(cfg.load, ext='sing')
+        paths = outputs_search(cfg.load)
         if len(paths) == 0:
             die(f'Error: cfg.load={cfg.load} doesnt match any files')
         if len(paths) > 1:
@@ -83,6 +83,18 @@ class Sing(Saveable):
                 red(f'\t{p}')
             sys.exit(1)
         [path] = paths
+        if not path.suffix == '.sing': # if not a .sing file, get the parent dir then load the appropriate autosave
+          rundir = get_rundir(path) # get DATE/TIME dir
+          saves = (rundir / 'saves').glob('*autosave*.sing')
+          if len(saves) == 0:
+            die(f'saves folder seems to be empty: {saves}')
+          def savenum(save):  # convert 'autosave_0000100.sing' -> 100
+            stem = save.stem # strip suffix of .sing so 'autosave_0000100.sing' -> 'autosave_0000100'
+            num = save.split('_')[-1] # 'autosave_0000100' -> '0000100'
+            return int(num)
+          path = max(saves, key=lambda save: savenum(save))
+
+        green(f'loading from {path}')
 
         _sing = torch.load(path,map_location=new_device) # `None` means stay on original device
         self.clone_from(_sing) # will even copy over stuff like SummaryWriter object so no need for post_load()
