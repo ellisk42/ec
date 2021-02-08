@@ -16,6 +16,7 @@ device: cpu
 seed: 100 # null means random
 print: False # just print the cfg and exit
 
+
 dirty: False # set to True to skip errors due to dirty repo
 is_dirty: null # set by matt.py. This tells whether the repo was actually dirty when launching
 
@@ -24,6 +25,7 @@ commit: null # this will get set by matt.py
 start_time: null # this will get set by matt.py
 start_time_filename: null # this will get set by matt.py. It's a filename-safe version of start_time
 kill_by: null # not used internally for anything, just by the `job` manager
+job_info: null # optionally set by job.py to {time_str}.{self.job_name}.{run_name}
 
 printif:
   fake: False # print_if(s,'fake') will only fire if this is True
@@ -59,7 +61,7 @@ testgen: # for mode=test
 
 test:
   from_file: null
-  out: null # output file. defaults to time str + job + run. `.res` will be added if not already present
+  out: null # output file. defaults to job_info if thats set (job.py sets it to {time_str}.{self.job_name}.{run_name}), else to {sing.cfg.time_start_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}
   timeout: 30
   max_tasks: null
   validator_vhead: True
@@ -68,3 +70,7 @@ test:
     wave: 3 # 1 | 2 | 3 | 3.1 | final
   lucas:
     version: 1 # 1 | 2 | 3 | old | bootstrap
+
+hydra:
+  run:
+    dir: ./${mode}/${now:%Y-%m-%d}/${now:%H-%M-%S}.${job_name}.${run_name}

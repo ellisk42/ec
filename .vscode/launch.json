@@ -25,6 +25,7 @@
                 "model.ordering=right",
 
                 "data.T=2",
+                "data.T=3",
                 "data.lambda_depth=3",
                 "loader.freeze=True",
 

@@ -20,6 +20,12 @@ import traceback
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
+
+    try:
+        Path('.lock').mkdir()
+    except FileExistsError:
+        die(f'Someone else is already using this working directory: {os.getcwd()}')
+
     np.seterr(all='raise') # so we actually get errors when overflows and zero divisions happen
     if cfg.seed is not None:
         set_deterministic(cfg.seed)

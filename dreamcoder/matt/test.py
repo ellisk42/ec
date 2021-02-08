@@ -4,13 +4,15 @@ import sys
 import torch
 
 from dreamcoder.matt.sing import sing
+from fastcore.basics import ifnone
 
 
 def main():
     test = sing.cfg.test
 
     if test.out is None:
-        test.out = f'{sing.cfg.time_start_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}.res'
+        test.out = ifnone(sing.cfg.job_info, f'{sing.cfg.time_start_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}')
+        test.out += '.res'
     
     if test.from_file is None:
         die('Error: missing argument test.from_file')
