@@ -154,12 +154,6 @@ class Sing(Saveable):
       If you want any custom behavior for an override, put it here
       """
       val = cfg_get(cfg,keypath)
-      if keypath == 'device':
-        pass # handled elsewhere
-      if keypath == 'load':
-        pass # no need to handle
-      if keypath == 'dirty':
-        pass # no need to handle
       cfg_set(self.cfg,keypath,val) # override it
    
   def save(self, name):

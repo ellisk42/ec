@@ -70,22 +70,22 @@ plot: # for mode=plot
   linewidth: 4
   filetype: eps # only used if no `plot.file` is provided (otherwise we just use the extension on `plot.file`)
   x_max: null # manually set the x axis to a certain maximum
+  iclr_paper: False # set some stuff w coloring and zorder
 
-testgen: # for mode=test
+testgen: # for mode=testgen
   from_fn: null # deepcoder | josh | lucas
-  to_file: null
-
-test:
-  from_file: null
-  out: null # output file. defaults to job_info if thats set (job.py sets it to {time_str}.{self.job_name}.{run_name}), else to {sing.cfg.start_time_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}
-  timeout: 30
-  max_tasks: null
-  validator_vhead: True
-  scaffold: False
+  to_file: null # path relative to testgen_path()
+  num_tasks: null
   josh:
     wave: 3 # 1 | 2 | 3 | 3.1 | final
   lucas:
     version: 1 # 1 | 2 | 3 | old | bootstrap
+
+test: # for mode=test
+  from_file: null # path relative to testgen_path()
+  out: null # output file. defaults to job_info if thats set (job.py sets it to {time_str}.{self.job_name}.{run_name}), else to {sing.cfg.start_time_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}
+  timeout: 30
+  max_tasks: null
 
 printif:
   fake: False # print_if(s,'fake') will only fire if this is True

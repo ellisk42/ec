@@ -51,10 +51,29 @@
             "args":[
                 "mode=test",
                 "load=2021-02-09/12-30-30.feb9_mbas_train.rnn",
+                "test.from_file=foo",
+                "test.timeout=3",
 
                 "check_overrides=False",
                 
                 "device=cpu",
+                "job_name=vscode",
+                "run_name=vscode",
+                "debug.mlb_debug=False",
+                "dirty=True",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Plot MBAS",
+            "type": "python",
+            "request": "launch",
+            "program": "bin/matt.py",
+            "args":[
+                "mode=plot",
+                "load=18-04-34.vscode.vscode.res",
+
                 "job_name=vscode",
                 "run_name=vscode",
                 "debug.mlb_debug=False",

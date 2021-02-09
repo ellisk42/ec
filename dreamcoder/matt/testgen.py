@@ -1,37 +1,55 @@
 
 from dreamcoder.matt.util import *
 import torch
+from dreamcoder.matt.sing import sing
+from dreamcoder import loader
 
 
-class TestGen:
+def main():
+
+    testgen_path().mkdir(exist_ok=True)
+
+    assert sing.cfg.mode == 'testgen'
+    tg = sing.cfg.testgen
+    if tg.from_fn is None:
+        die('missing argument testgen.from_fn')
+    if tg.to_file is None:
+        die('missing argument testgen.to_file')
+    if tg.num_tasks is None:
+        die('missing argument testgen.num_tasks')
+
+    outfile = testgen_path() / tg.to_file
+    
+    try:
+        testgen_fn = eval(tg.from_fn)
+    except Exception as e:
+        die(f"cant find fn `{tg.from_fn}` (Actual exception: {e})")
+    
+    assert callable(testgen_fn)
+
+    frontiers = testgen_fn(sing.cfg)
+    st = SavedTest(sing.cfg,frontiers)
+    st.save(outfile)
+    
+
+class SavedTest:
   def __init__(self,cfg,fs) -> None:
     self.cfg = cfg
     self.fs = fs
   def save(self,name):
     path = with_ext(testgen_path() / name, 'tgen')
     if move_existing(path):
-        red("WARNING MOVED EXISTING TESTGEN FILE")
+        red("WARNING: MOVED EXISTING TESTGEN FILE")
     torch.save(self,path)
-    print(f"saved testgen with name {name}")
-      
-class Tests:
-    def __init__(self):
-        self.tests = {}
-        self.tests_dir = testgen_path()
-    def test(self,fn):
-        self.tests[fn.__name__] = fn
-tests = Tests()
+    print(f"saved testgen with name {path}")
 
-@tests.test
+
 def deepcoder(cfg):
-    test_cfg = cfg.data.test
-    taskloader = DeepcoderTaskloader(
-        cfg=cfg,
-        mode='test',
-        )
-    tasks = taskloader.getTasks()
-    if cfg.data.test.num_templates is not None:
-        assert len(tasks) == cfg.data.test.num_templates
+    taskloader = loader.DeepcoderTaskloader(test=True)
+
+    tasks = taskloader.test_tasks(n=cfg.testgen.num_tasks)
+
+    assert len(tasks) == cfg.testgen.num_tasks
     return tasks
 
 def joshTasks(w):
@@ -69,13 +87,11 @@ def joshTasks(w):
                             for e in data["data"] ]))
     return list(sorted(ts,key=lambda t: t.name))
 
-@tests.test
 def josh(cfg):
     tasks = joshTasks(str(cfg.test.josh.wave))
     frontiers = [FakeFrontier(None,task) for task in tasks]
     return frontiers
 
-@tests.test
 def lucas(cfg):
     from dreamcoder.domains.list.main import retrieveJSONTasks, sortBootstrap, make_list_bootstrap_tasks
     def get_tasks(f):

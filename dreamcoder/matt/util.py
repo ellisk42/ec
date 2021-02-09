@@ -115,10 +115,7 @@ def get_unique_path(orig_path):
     p = Path(orig_path) # in case its not
     i=0
     while p.exists():
-        if orig_path.suffix != '': # has file extension
-            p = pathlib.Path(f'{orig_path.stem}.old{i}.{orig_path.suffix}')
-        else:
-            p = pathlib.Path(f'{orig_path}.old{i}')
+        p = orig_path.with_suffix(f'.old_{i}{orig_path.suffix}') # eg foo.tmp -> foo.old_0.tmp or foo -> foo.old_0
         i += 1
     return p
 
@@ -132,7 +129,7 @@ def move_existing(path):
     if path.exists(): # super rare honestly bc `job` includes timestamps in names
         safe_name = get_unique_path(path)
         path.rename(safe_name)
-        red(f"moved file: {path.relative_to(outputs_path())} -> {safe_name.relative_to(outputs_path())}")
+        red(f"moved file: {path} -> {safe_name}")
         return True
     return False
 
@@ -254,8 +251,11 @@ def path_search(top_dir, regexes, sort=True, ext=None, expand=False, rundirs=Fal
     assert not any(len(p.parts) == 0 for p in paths), "you seem to have regexed the entire directory"
 
     if expand:
-        paths = itertools.chain.from_iterable(p.glob('**/*') for p in paths)
+        raise NotImplementedError
+        paths = itertools.chain.from_iterable([(p.glob('**/*') if p.is_dir() else p) for p in paths])
     if ext:
+        if not ext.startswith('.'):
+            ext = '.' + ext
         paths = [p for p in paths if p.suffix == ext]
     if rundirs:
         for p in paths:

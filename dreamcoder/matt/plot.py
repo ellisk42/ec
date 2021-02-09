@@ -65,12 +65,12 @@ def load_model_results(load):
         * will filter anything thats not '.res' out
         * will maintain the ordering of the list of load regexes in case you're relying on that eg in order to make it align with a plot legend
     """
-    paths = path_search(train_path(), load, sort=False, expand=True, ext='res')
+    paths = path_search(train_path(), load, sort=False, ext='res')
     model_results = [torch.load(p) for p in paths]
     print(f"Loaded {len(paths)} model results:")
     for p,m in zip(paths,model_results):
-        print(f"\t{m.cfg.job_name}.{m.cfg.run_name} from {p}")
 
+        print(f"\t{m.cfg.job_name}.{m.cfg.run_name} from {p}")
     return model_results
 
 def main():
@@ -105,7 +105,7 @@ def main():
         'robustfill':'C4',
         'deepcoder':'C5',
     }
-    if plot.colors:
+    if plot.iclr_paper:
         for line in lines:
             label = line.get_label().lower().strip()
             if label in colors:
@@ -113,21 +113,21 @@ def main():
             if label == 'robustfill':
                 line.set_zorder(0)
 
-    if plot.xmax:
+    if plot.x_max:
         (xmin,xmax) = ax.get_xlim()
-        fig.xlim(left=xmin, right=plot.xmax)
+        fig.xlim(left=xmin, right=plot.x_max)
 
     # Add plot to tensorboard
     w = SummaryWriter(log_dir=toplevel_plots_path())
     w.add_figure(plot.file, fig)
     w.flush()
     w.close()
-    print(f"Added plot to tensorboard at http://localhost:6696/#images&tagFilter={plot.file}&regexInput=_toplevel")
+    green(f"Added plot to tensorboard at http://localhost:6696/#images&tagFilter={plot.file}&regexInput=toplevel")
 
     # Save plot to file
     path = toplevel_plots_path() / plot.file
     fig.savefig(path, dpi=200)
-    print(f"saved fig to {path.relative_to(toplevel_path())}")
+    green(f"saved fig to {path.relative_to(toplevel_path())}")
 
     # Save args used to generate plot to file
     with open(f'{path}.argv','w') as f:

@@ -22,6 +22,8 @@ def main(test_cfg):
     if test.from_file is None:
         die('Error: missing argument test.from_file')
     
+    apply_test_overrides(test_cfg) 
+    
     # load tests
     path = with_ext(testgen_path() / test.from_file, 'tgen')
     if not path.exists():
@@ -31,99 +33,41 @@ def main(test_cfg):
     model_result = sing.model.search(tgen.fs, test.timeout, verbose=True)
     model_result.save(test.out)
 
+
 def apply_test_overrides(test_cfg):
+    """
+    override `sing.cfg` using parts of test_cfg that were present in the argv overrides
+    """
     overrided = [arg.split('=')[0] for arg in sys.argv[1:]]
 
+
+    blacklisted_keypath_suffixes = ('data.','model.')
+    allowed_exceptions = ()
+
     for keypath in overrided:
-        if keypath.startswith('test.'):
-            continue # we dont need to override these things
+      if cfg_get(test_cfg,keypath) == cfg_get(sing.cfg,keypath):
+        continue # if theyre already equal then no worries
 
-    
-
-
-
-
-def test_models(astars, test_tasks, g, timeout, verbose=True, scaffold=False):
-    """
-    `astars`: a list of one or more Astar objects
-        These can be easily made with makeDeepcoderData.make_solver('astar',vhead,phead,maxDepth)
-    `test_tasks`: a list of Tasks or FakeFrontiers to run search on
-    `g`: Grammar passed to Astar.infer()
-    `timeout`: the search timeout
-    """
-    test_scaffolds = None
-    if len(test_tasks) > 0 and isinstance(test_tasks[0], FakeFrontier):
-        if scaffold:
-            test_scaffolds = [f.scaffold for f in test_tasks]
-        test_tasks = [f.task for f in test_tasks]
-
-    model_results = []
-    for astar in astars:
-        rec_model = None
-        if hasattr(astar,'actual_solver') and astar.actual_solver is not None:
-            assert isinstance(astar.owner.policyHead, DeepcoderListPolicyHead)
-            rec_model = astar.owner.policyHead.rec_model
-            astar = astar.actual_solver
-            mlb.purple('[deepcoder model testing]')
-        
-        if isinstance(astar.owner.policyHead,SyntaxCheckingRobustFill):
-            model_results.append(robustfill_search(astar.owner.policyHead, test_tasks, timeout))
-            continue
-
-        sing.to_optimize.eval()
-        astar.owner.policyHead.eval()
-        astar.owner.valueHead.eval()
-        #name = f"{astar.owner.policyHead.__class__.__name__}_&&_{astar.owner.valueHead.__class__.__name__}"
-        name = astar.owner.policyHead.cfg.name
-        prefix = astar.owner.policyHead.cfg.prefix
-        print(f"Testing: {name}")
-        search_results = []
-        search_failures = []
-        likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-        for i,task in enumerate(test_tasks):
-            if scaffold:
-                starting_nodes = [test_scaffolds[i]]
-            else:
-                starting_nodes = None
-            with torch.no_grad():
-
-                if rec_model is not None:
-                    rec_model.eval()
-                    g = rec_model.grammarOfTask(task).untorch()
-                    rec_model.train()
-                fs, times, num_progs, solns = astar.infer(
-                        g, 
-                        [task],
-                        likelihoodModel, 
-                        timeout=timeout,
-                        elapsedTime=0,
-                        evaluationTimeout=0.01,
-                        maximumFrontiers={task: 2},
-                        CPUs=1,
-                        starting_nodes=starting_nodes,
-                    ) 
-            solns = solns[task]
-            times = times[task]
-            if len(solns) > 0:
-                assert len(solns) == 1 # i think this is true, I want it to be true lol
-                soln = solns[0]
-                search_results.append(soln)
-                if verbose:
-                    mlb.green(f"[{i+1}/{len(test_tasks)}] solved {task.name} with {len(solns)} solns in {times:.2f}s (searched {num_progs} programs)")
-                    t,d,s = get_depth(solns[0].program)
-                    print(f"\t-> [T{t}d{d}s{s}] {solns[0].program}")
-            else:
-                if verbose: mlb.red(f"[{i+1}/{len(test_tasks)}] failed to solve {task.name} (searched {num_progs} programs)")
-                search_failures.append(num_progs)
-        model_results.append(plot.ModelResult(prefix=prefix,name=name, cfg=astar.owner.policyHead.cfg, search_results=search_results, search_failures=search_failures, timeout=timeout))
-        if verbose: mlb.blue(f'solved {len(search_results)}/{len(test_tasks)} tasks ({len(search_results)/len(test_tasks)*100:.1f}%)\n')
-    return model_results
+      if any(keypath.startswith(k) for k in blacklisted_keypath_suffixes):
+        # yes it is blacklisted
+        if keypath not in allowed_exceptions:
+            # not it is not an allowed exception
+            red(f'keypath `{keypath}` is not in whitelisted overrides. Modify in sing.py:Sing.apply_overrides()')
+            if test_cfg.check_overrides:
+                sys.exit(1)
 
 
-# def analyze_tasks(tasks):
-#     requests = defaultdict(int)
-#     for task in tasks:
-#         task.request
+      """
+      If you want any custom behavior for an override, put it here
+      """
+
+      # if we got this far we're allowed to set the sing.cfg
+      val = cfg_get(test_cfg,keypath)
+      cfg_set(sing.cfg,keypath,val) # override it
+
+
+
+
 
 def cfg_diff(train_cfg,test_cfg):
     mlb.magenta("Differences between train and test:")
