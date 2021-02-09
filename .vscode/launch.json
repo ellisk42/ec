@@ -6,16 +6,11 @@
     "configurations": [
 
         {
-            "name": "Test List REPL",
+            "name": "Train MBAS",
             "type": "python",
             "request": "launch",
             "program": "bin/matt.py",
             "args":[
-
-
-                // "mode=test",
-                // "load=",
-
                 "model=mbas",
                 "model.vhead=check_invalid",
                 "model.phead=repl",
@@ -44,6 +39,26 @@
                 "debug.mlb_debug=False",
                 "dirty=True",
 
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Test MBAS",
+            "type": "python",
+            "request": "launch",
+            "program": "bin/matt.py",
+            "args":[
+                "mode=test",
+                "load=2021-02-09/12-30-30.feb9_mbas_train.rnn",
+
+                "check_overrides=False",
+                
+                "device=cpu",
+                "job_name=vscode",
+                "run_name=vscode",
+                "debug.mlb_debug=False",
+                "dirty=True",
             ],
             "console": "integratedTerminal",
             "justMyCode": true,

@@ -215,7 +215,7 @@ def is_datedir(p):
     """
     p = p.name
     template = "2021-02-09"
-    if len(p) != template:
+    if len(p) != len(template):
         return False
     for c,t in zip(p,template):
         if t.isdigit():
@@ -224,6 +224,7 @@ def is_datedir(p):
         else:
             if c != t:
                 return False # if template is a non-digit (ie a dash), they should match exactly
+    return True
 
 
 def path_search(top_dir, regexes, sort=True, ext=None, expand=False, rundirs=False):
@@ -241,7 +242,7 @@ def path_search(top_dir, regexes, sort=True, ext=None, expand=False, rundirs=Fal
         * if `rundirs` is True then reduce each path to its DATE/TIME folder, removing duplicates
             Often useful if you want the DATE/TIME dirs based on matching a regex on their contents
     """
-    top_dir = Path(dir)
+    top_dir = Path(top_dir)
     assert top_dir.is_dir()
 
     if isinstance(regexes,str):

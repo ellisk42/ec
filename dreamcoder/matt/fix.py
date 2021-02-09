@@ -3,10 +3,14 @@ from omegaconf import DictConfig,OmegaConf,open_dict
 
 def fix_cfg(cfg):
 
-    # feb 7
-    if 'is_dirty' not in cfg:
-        with open_dict(cfg):
+    with open_dict(cfg):
+        # feb 7
+        if 'is_dirty' not in cfg:
             cfg.is_dirty = True
+        # feb 9
+        if 'check_overrides' not in cfg:
+            cfg.check_overrides = True
+
 
 
 

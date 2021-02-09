@@ -648,7 +648,7 @@ class InvalidIntermediatesValueHead(ValueHead):
         try:
             root.propagate_upward(concrete_only=True)
         except InvalidSketchError as e:
-            print(f"vhead.value() caught an invalid sketch {e}")
+            # print(f"vhead.value() caught an invalid sketch {e}")
             return -np.inf
         return 0
     def values(self, hole:PNode, prods):

@@ -34,7 +34,7 @@ class Sing(Saveable):
         ###########################################
 
         if cfg.mode == 'test':
-          raise ValueError("can't do mode=test without a file to load from")
+          die("can't do mode=test without a file to load from")
 
         self.cfg = cfg
 
@@ -105,16 +105,17 @@ class Sing(Saveable):
 
         fix.fix_cfg(self.cfg) # any forwards compatability fixes to the loaded cfg
 
-        self.apply_overrides(overrided,cfg)
+        if cfg.mode != 'test': # if mode == test then we actually dont apply any overrides besides the `self.device` one
+          self.apply_train_overrides(overrided,cfg)
 
-        # turn commit, is_dirty, and argv into lists and append our new values onto the old ones
-        if not isinstance(cfg.commit,list):
-          cfg.commit = [cfg.commit]
-          cfg.is_dirty = [cfg.is_dirty]
-          cfg.argv = [cfg.argv]
-        self.cfg.commit = (*cfg.commit, self.cfg.commit)
-        self.cfg.is_dirty = (*cfg.is_dirty, self.cfg.is_dirty)
-        self.cfg.argv = (*cfg.argv, self.cfg.argv)
+          # turn commit, is_dirty, and argv into lists and append our new values onto the old ones
+          if not isinstance(cfg.commit,list):
+            cfg.commit = [cfg.commit]
+            cfg.is_dirty = [cfg.is_dirty]
+            cfg.argv = [cfg.argv]
+          self.cfg.commit = (*cfg.commit, self.cfg.commit)
+          self.cfg.is_dirty = (*cfg.is_dirty, self.cfg.is_dirty)
+          self.cfg.argv = (*cfg.argv, self.cfg.argv)
 
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
@@ -127,7 +128,7 @@ class Sing(Saveable):
     else:
       raise ValueError(f"mode={cfg.mode} is not a valid mode")
 
-  def apply_overrides(self,overrided,cfg):
+  def apply_train_overrides(self,overrided,cfg):
     """
     Used when loading a model and overriding some aspects of it
     Takes:
@@ -140,13 +141,15 @@ class Sing(Saveable):
       believe theyre modifying the training data when really that gets set
       in stone when you first create a new run
     """
-    whitelisted_keypaths = ('device','load','dirty')
+    whitelisted_keypaths = ('device', 'load', 'dirty', 'mode', 'check_overrides')
     whitelisted_keypaths_startswith = ()
     for keypath in overrided:
       if cfg_get(cfg,keypath) == cfg_get(self.cfg,keypath):
         continue # if theyre already equal then no worries
       if keypath not in whitelisted_keypaths and not any(keypath.startswith(start) for start in whitelisted_keypaths_startswith):
-        die(f'keypath `{keypath}` is not in whitelisted overrides. Modify in sing.py:Sing.apply_overrides()')
+        red(f'keypath `{keypath}` is not in whitelisted overrides. Modify in sing.py:Sing.apply_overrides()')
+        if cfg.check_overrides:
+          sys.exit(1)
       """
       If you want any custom behavior for an override, put it here
       """

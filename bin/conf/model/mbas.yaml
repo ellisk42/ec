@@ -1,6 +1,8 @@
 
 # @package _group_
 type: mbas
+optim:
+  lr: .001
 ordering: right
 tiebreaking: random
 H: 64

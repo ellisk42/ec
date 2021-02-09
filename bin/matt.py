@@ -20,6 +20,8 @@ import traceback
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
+    # foo=bar
+    # cfg.foo = bar
 
     try:
         Path('.lock').mkdir(exist_ok=False)
@@ -106,7 +108,7 @@ def hydra_main(cfg):
         # TEST
         elif cfg.mode == 'test':
             mlb.yellow("===START TEST===")
-            test.main()
+            test.main(test_cfg=cfg)
             notify_done()
             mlb.yellow("===TEST DONE===")
             sys.exit(0)

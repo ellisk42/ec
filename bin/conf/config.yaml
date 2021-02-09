@@ -1,21 +1,19 @@
 # @package _global_
 defaults:
   - data: deepcoder
-  - loader: curr
-  - loop: curr
-  - optim: curr
   - model: mbas
   - solver: astar # not used by model=rb
 
 job_name: anon_job # used to be called `prefix`
 run_name: anon_run # used to be called `name`
-full_name: null # this will be set by matt.py to be {job_name}.{run_name}
+full_name: null # this will be set by matt.py to be cwd_path().name which is `time.job.run`
 load: null
 mode: train
 device: cpu
 seed: 100 # null means random
 print: False # just print the cfg and exit
 
+check_overrides: True # if set to False, theres to checking on if an override was okay to do.
 
 dirty: False # set to True to skip errors due to dirty repo
 is_dirty: null # set by matt.py. This tells whether the repo was actually dirty when launching
@@ -27,12 +25,28 @@ start_time_filename: null # this will get set by matt.py. It's a filename-safe v
 job_id: null # not used internally for anything, just by the `job` manager.
 job_info: null # optionally set by job.py to {time_str}.{self.job_name}.{run_name}
 
-printif:
-  fake: False # print_if(s,'fake') will only fire if this is True
-
-
 notify_crash: null # null | email | text
 notify_done: null  # null | email | text
+
+loop:
+  print_every: 100
+  save_every: 10000
+  max_steps: 500000
+  # validation
+  valid_every: 10000
+  search_valid_every: 50000
+  search_valid_timeout: 3
+  search_valid_num_tasks: 50
+  round_j: False
+  j_multiplier: 1
+
+loader:
+  buf_size: 1000 # size of buffer
+  max_tasks: null # truncate to this many tasks. null = unlimited
+  max_valid: 20 # truncate validation tasks to this many
+  repeat: True # loop once you reach the end of the dataset
+  freeze: False # loop a single buffer of tasks forever
+  threaded: False # multithreading
 
 debug:
   verbose: False
@@ -45,6 +59,8 @@ debug:
   validate_cache: False # double check that the cache is identical to the non-cache verison. Also applies to PTask.input_feats()
   pnode_concrete_check: True # cheap check to make sure both concrete-mode propagate() is working (equivalent to actual outputs) and execute_single() as well
   no_cache: False # disables caching altogether
+
+
 plot: # for mode=plot
   file: null # defaults to time string
   title: null # defaults to time string
@@ -61,7 +77,7 @@ testgen: # for mode=test
 
 test:
   from_file: null
-  out: null # output file. defaults to job_info if thats set (job.py sets it to {time_str}.{self.job_name}.{run_name}), else to {sing.cfg.time_start_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}
+  out: null # output file. defaults to job_info if thats set (job.py sets it to {time_str}.{self.job_name}.{run_name}), else to {sing.cfg.start_time_filename}.{sing.cfg.job_name}.{sing.cfg.run_name}
   timeout: 30
   max_tasks: null
   validator_vhead: True
@@ -70,6 +86,9 @@ test:
     wave: 3 # 1 | 2 | 3 | 3.1 | final
   lucas:
     version: 1 # 1 | 2 | 3 | old | bootstrap
+
+printif:
+  fake: False # print_if(s,'fake') will only fire if this is True
 
 hydra:
   run:
