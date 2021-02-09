@@ -90,8 +90,11 @@ def main():
     for s.j in tqdm(range(
                           s.j, # start
                           ifnone(sing.cfg.loop.max_steps,int(1e10)), # stop
-                          sing.cfg.loop.j_multiplier) # step
-                          ):
+                          sing.cfg.loop.j_multiplier # step
+                         ),
+                    dynamic_ncols=True, # allow window resizing
+                    desc=sing.cfg.full_name,
+                    ):
         t = Temps()
 
         # get another batch if needed

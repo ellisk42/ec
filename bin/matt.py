@@ -41,7 +41,7 @@ def hydra_main(cfg):
     cfg.start_time = str(_time)
     cfg.start_time_filename = timestamp_to_filename(_time)
     cfg.argv = ' '.join(sys.argv)
-    cfg.full_name = f'{cfg.job_name}.{cfg.run_name}'
+    cfg.full_name = cwd_path().name # time.job.run
     repo = git.Repo(toplevel_path())
     if repo.is_dirty() and not cfg.dirty:
         die("repo is dirty. please add/commit. Or run with `dirty=True`")

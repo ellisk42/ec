@@ -12,6 +12,10 @@
             "program": "bin/matt.py",
             "args":[
 
+
+                // "mode=test",
+                // "load=",
+
                 "model=mbas",
                 "model.vhead=check_invalid",
                 "model.phead=repl",
