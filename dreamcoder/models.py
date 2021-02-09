@@ -70,7 +70,7 @@ class MBAS(nn.Module):
     }[sing.cfg.model.phead]()
 
     # init the optimizer
-    self.optim = torch.optim.Adam(self.parameters(), lr=sing.cfg.optim.lr, eps=1e-3, amsgrad=True)
+    self.optim = torch.optim.Adam(self.parameters(), lr=sing.cfg.model.optim.lr, eps=1e-3, amsgrad=True)
 
   def run_tests(self,fs):
     # fs are the validation frontiers for the record
