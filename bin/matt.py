@@ -22,7 +22,7 @@ import traceback
 def hydra_main(cfg):
 
     try:
-        Path('.lock').mkdir(exists_ok=False)
+        Path('.lock').mkdir(exist_ok=False)
     except FileExistsError:
         die(f'Someone else is already using this working directory: {os.getcwd()}')
 

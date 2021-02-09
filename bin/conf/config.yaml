@@ -24,7 +24,7 @@ argv: null # this will get set by matt.py
 commit: null # this will get set by matt.py
 start_time: null # this will get set by matt.py
 start_time_filename: null # this will get set by matt.py. It's a filename-safe version of start_time
-kill_by: null # not used internally for anything, just by the `job` manager
+job_id: null # not used internally for anything, just by the `job` manager.
 job_info: null # optionally set by job.py to {time_str}.{self.job_name}.{run_name}
 
 printif:
