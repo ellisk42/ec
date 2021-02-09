@@ -183,7 +183,7 @@ def main():
                 )
             t.fig.set_dpi(100)
             t.fig.savefig(plots_path() / f'valid_{s.j:07}.png') # :07 left-pads with zeros to 7 digits long
-            sing.w.add_figure('Validation Accuracy',t.fig)
+            sing.w.add_figure('Validation Accuracy',t.fig,global_step=s.j)
 
         if s.save_every.check():
             loop_check(locals())
