@@ -2,7 +2,7 @@
 
 buf_size: 1000 # size of buffer
 max_tasks: null # truncate to this many tasks. null = unlimited
-max_valid: 4 # truncate validation tasks to this many
+max_valid: 20 # truncate validation tasks to this many
 repeat: True # loop once you reach the end of the dataset
 freeze: False # loop a single buffer of tasks forever
 threaded: False # multithreading
