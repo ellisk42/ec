@@ -65,7 +65,7 @@ def load_model_results(load):
         * will filter anything thats not '.res' out
         * will maintain the ordering of the list of load regexes in case you're relying on that eg in order to make it align with a plot legend
     """
-    paths = outputs_search(load, sort=False, ext='res')
+    paths = path_search(train_path(), load, sort=False, expand=True, ext='res')
     model_results = [torch.load(p) for p in paths]
     print(f"Loaded {len(paths)} model results:")
     for p,m in zip(paths,model_results):

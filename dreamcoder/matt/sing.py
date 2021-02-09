@@ -65,7 +65,7 @@ class Sing(Saveable):
         }[cfg.model.type]()
 
         self.model.to(self.device)
-        self.set_tensorboard(self.name)
+        self.set_tensorboard()
       else:
         ############################################
         ### * LOAD OLD SING CONTAINING A MODEL * ###
@@ -74,7 +74,7 @@ class Sing(Saveable):
         overrided = [arg.split('=')[0] for arg in sys.argv[1:]]
         new_device = torch.device(cfg.device) if 'device' in overrided else None
 
-        paths = outputs_search(cfg.load)
+        paths = path_search(train_path(),cfg.load)
         if len(paths) == 0:
             die(f'Error: cfg.load={cfg.load} doesnt match any files')
         if len(paths) > 1:
@@ -118,7 +118,7 @@ class Sing(Saveable):
 
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
-        self.set_tensorboard(self.name)
+        self.set_tensorboard()
     elif cfg.mode in ('plot','testgen','cmd'):
       ######################################################################
       ### * BARE BONES SING: NO TRAIN_STATE, NO MODEL, NO LOADERS, ETC * ###
@@ -172,10 +172,10 @@ class Sing(Saveable):
     we've chdired into a better place
     """
     pass
-  def set_tensorboard(self,log_dir):
+  def set_tensorboard(self):
     print("intializing tensorboard")
     self.w = SummaryWriter(
-        log_dir=self.name,
+        log_dir='tb',
         max_queue=1,
     )
     print("initialized writer for", self.name)

@@ -100,13 +100,12 @@ def init_paths():
     assert cwd_path() != toplevel_path(), "must be called when already within an experiment folder"
     saves_path().mkdir()
     plots_path().mkdir()
-
+    model_results_path().mkdir()
 
 def with_ext(path,ext):
     if not str(path).endswith(f'.{ext}'):
         return Path(f'{path}.{ext}')
     return path
-
 
 def get_unique_path(orig_path):
     """
@@ -123,7 +122,6 @@ def get_unique_path(orig_path):
         i += 1
     return p
 
-
 def move_existing(path):
     """
     Does nothing if `path` doesnt exist.
@@ -138,13 +136,12 @@ def move_existing(path):
         return True
     return False
 
-
 def toplevel_plots_path():
     """
     Same as the overall git repo path.
     /scratch/mlbowers/proj/ec/outputs/_toplevel
     """
-    return outputs_path() / '_toplevel'
+    return outputs_path() / 'toplevel'
 
 def toplevel_path():
     """
@@ -159,6 +156,20 @@ def outputs_path():
     Out: /scratch/mlbowers/proj/ec/outputs
     """
     return toplevel_path() / 'outputs'
+
+def train_path():
+    """
+    The path to the 'outputs' directory
+    Out: /scratch/mlbowers/proj/ec/outputs
+    """
+    return outputs_path() / 'train'
+
+def test_path():
+    """
+    The path to the 'outputs' directory
+    Out: /scratch/mlbowers/proj/ec/outputs
+    """
+    return outputs_path() / 'test'
 
 def testgen_path():
     """
@@ -194,7 +205,28 @@ def plots_path():
     """
     return cwd_path() / 'plots'
 
-def outputs_search(regexes, sort=True, ext=None, expand=False, rundirs=False):
+
+def is_datedir(p):
+    """
+    foo/bar/2021-02-09 -> True (date dir)
+    foo/bar/2021-02-09/12-23-12 -> False (time dir)
+    foo/bar -> False (other dir)
+    foo/bar/2021-02-09/x.py -> False (not a dir)
+    """
+    p = p.name
+    template = "2021-02-09"
+    if len(p) != template:
+        return False
+    for c,t in zip(p,template):
+        if t.isdigit():
+            if not c.isdigit():
+                return False # both shd be digits
+        else:
+            if c != t:
+                return False # if template is a non-digit (ie a dash), they should match exactly
+
+
+def path_search(top_dir, regexes, sort=True, ext=None, expand=False, rundirs=False):
     """
     Returns a list of Paths
     The union of one or more regexes treated like `outputs/**/*{regex}`
@@ -209,11 +241,14 @@ def outputs_search(regexes, sort=True, ext=None, expand=False, rundirs=False):
         * if `rundirs` is True then reduce each path to its DATE/TIME folder, removing duplicates
             Often useful if you want the DATE/TIME dirs based on matching a regex on their contents
     """
+    top_dir = Path(dir)
+    assert top_dir.is_dir()
+
     if isinstance(regexes,str):
         regexes = [regexes]
 
     # glob all the paths, dedup using OrderedDict.fromkeys() (like set() but preserves order)
-    paths = list(OrderedDict.fromkeys(itertools.chain.from_iterable([list(outputs_path().glob(f'**/*{regex}')) for regex in regexes])))
+    paths = list(OrderedDict.fromkeys(itertools.chain.from_iterable([list(top_dir.glob(f'**/*{regex}')) for regex in regexes])))
 
     assert not any(len(p.parts) == 0 for p in paths), "you seem to have regexed the entire directory"
 
@@ -223,26 +258,34 @@ def outputs_search(regexes, sort=True, ext=None, expand=False, rundirs=False):
         paths = [p for p in paths if p.suffix == ext]
     if rundirs:
         for p in paths:
-            if len(p.parts) == 1:
+            if is_datedir(p):
                 paths.extend(p.glob('*')) # expand a lone DATE dir to all its DATE/TIME children
-        paths = [p for p in paths if len(p.parts) >= 2] # throw out those lone DATE dirs you expanded
-        paths = [Path(p.parts[0],p.parts[1]) for p in paths] # convert children to their parent DATE/TIME
+        paths = [p for p in paths if not is_datedir(p)] # throw out those lone DATE dirs you expanded
+        paths = [get_rundir(p) for p in paths] # convert children to their parent rundir
         paths = list(OrderedDict.fromkeys(paths)) # dedup while maintaining order
     if sort:
         paths = sorted(paths)
     return paths
 
-def get_rundir(orig_path):
+
+def get_rundir(p):
     """
-    Get the DATE/TIME dir, but if the input was like foo/bar/outputs/DATE/TIME/x/y then return foo/bar/DATE/TIME
-        instead of just DATE/TIME. This means that if orig_path was valid to the caller, then the return value here
-        will be valid to the caller (whereas the simple path DATE/TIME would only be valid if the caller were in the
-        outputs directory as their cwd)
+    Given  foo/bar/outputs/MODE/DATE/TIME.job.run/x/y
+    Return foo/bar/outputs/MODE/DATE/TIME.job.run/
+
+    If orig_path was valid to the caller, then the return value here
+    will be valid to the caller (whereas the simple path MODE/DATE/TIME would only be valid if the caller were in the
+    outputs directory as their cwd)
     """
-    path = orig_path.relative_to(outputs_path())
-    shortened_by = len(orig_path.parts) - len(path.parts)
-    assert len(path.parts) >= 2, "path is too short to have a rundir"
-    return Path(*orig_path.parts[:shortened_by], path.parts[0], path.parts[1])
+    orig_path = p
+    while not is_datedir(p.parent): # if our parent is a datedir, clearly we are the rundir
+        if p == p.parent: # at root of path
+            raise ValueError(f"path {orig_path} doesnt contain a rundir (can't find the datedir that should be right above it)")
+        p = p.parent
+    
+    assert p.parent.parent.parent.name == outputs_path().name, "sanity check"
+    return p
+
 
 def filter_paths(paths, predicate):
     return [p for p in paths if predicate(p)]

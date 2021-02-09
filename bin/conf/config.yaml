@@ -73,4 +73,4 @@ test:
 
 hydra:
   run:
-    dir: ./${mode}/${now:%Y-%m-%d}/${now:%H-%M-%S}.${job_name}.${run_name}
+    dir: ./outputs/${mode}/${now:%Y-%m-%d}/${now:%H-%M-%S}.${job_name}.${run_name}

@@ -18,8 +18,6 @@
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=True",
 
-                "loop.max_steps=10",
-
                 "debug.validate_cache=False",
                 "debug.no_cache=False",
                 "model.ordering=right",
