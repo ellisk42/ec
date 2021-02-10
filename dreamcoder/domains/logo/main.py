@@ -564,7 +564,8 @@ def main(args):
             eprint(f"Sampling n={sample_n_supervised} supervised tasks.")
             train = sampleSupervised(train, sample_n_supervised)    
     else: 
-        tasks = makeTasks(target, proto)
+        # tasks = makeTasks(target, proto)
+        tasks = [] # for dissection
         eprint("Generated", len(tasks), "tasks")
 
         os.chdir("prototypical-networks")
@@ -574,8 +575,8 @@ def main(args):
 
         test, train = testTrainSplit(tasks, split)
         eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
-        if test: montageTasks(test,"test_")    
-        montageTasks(train,"train_")
+        # if test: montageTasks(test,"test_")    
+        # montageTasks(train,"train_")
 
     red = args.pop("reduce")
     if red is not []:

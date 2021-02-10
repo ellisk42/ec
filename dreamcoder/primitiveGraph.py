@@ -65,6 +65,7 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
     depth = {}                                      
     
     def getName(p):
+        
         if p in name: return name[p]
         children = {k: getName(k)
                     for _,k in p.body.walk()
@@ -150,6 +151,8 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
         p_name = str(p) if p not in simplification else str(simplification[p])
         p_name = p_name.replace("<br />", "")
         print(f"FN: {p_name}")
+        
+        # Print the ground truth
             
         if str(p) in translations:
             print("Translations")

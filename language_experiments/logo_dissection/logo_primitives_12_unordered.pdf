@@ -1,107 +1,107 @@
 digraph {
 	graph [rankdir=LR]
-	f2 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f2=(λ (x y) (f1 x 5 x y))>]
-	f12 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>arms | 0.0933063<br />as | 0.0866935</u></font><br />f12=(λ (x y) (f9 (λ (z) (f11 x <br /> (y z)))))>]
-	f1 [label=<<font face="boldfontname"><u> </u><u>concentric | 0.3238095<br />s | 0.1508621</u></font><br />f1=(λ (x y z u) (for y (λ (v w) <br /> (get/set (λ (a) (f0 z (/ <br /> 2π x) (* 1 v) a)) w)) u))>]
-	f19 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f19=(λ (x y z u) (f18 x (λ (v w) <br /> (y (λ (a) (v a)) w)) (λ (b <br /> c) (z b c)) u))>]
-	f22 [label=<<font face="boldfontname"><u> </u><u>medium | 0.108642<br />circle | 0.2553957</u></font><br />f22=(λ (x) (f21 2 x))>]
-	f17 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f17=(λ (x y z u) (f16 (λ (v w) (y <br /> v w)) (λ (a b) (z (λ (c) (a <br /> c)) b)) x u))>]
-	f23 [label=<<font face="boldfontname"><u> </u><u>arms | 0.0649087<br />as | 0.0504032<br />sided | 0.0654397<br />with | 0.0625<br />snowflake | 0.062<br />small | 0.0635359</u></font><br />f23=(λ (x y) (f5 y (λ (z) (f11 x <br /> z))))>]
-	f24 [label=<<font face="boldfontname"><u> </u><u>6 | 0.0431655<br />turns | 0.8333333<br />8 | 0.0347222<br />greek | 0.625<br />zigzag | 0.0714286<br />spiral | 0.3571429<br />vertical | 0.2</u></font><br />f24=(λ (x y z) (for y (λ (u v) <br /> (move (* 1 u) (/ 2π x) v)) <br /> z))>]
-	f20 [label=<<font face="boldfontname"><u> </u><u>turns | 0.0833333<br />staircase | 0.0634921<br />concentric | 0.0857143<br />circle | 0.1546763<br />space | 0.0520548</u></font><br />f20=(λ (x y) (for 7 (λ (z u) <br /> (f13 x u)) y))>]
-	f25 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>short | 0.0391909<br />and | 0.0366972</u></font><br />f25=(λ (x y) (y (λ (z) (f11 1 <br /> (f8 1 (x z)))) 1))>]
-	f26 [label=<<font face="boldfontname"><u> </u><u>short | 0.0240202<br />and | 0.0183486</u></font><br />f26=(λ (x y) (x (λ (z) (f11 1 <br /> (f8 1 (y z)))) 1))>]
-	f15 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f15=(λ (x y z) (f14 (λ (u v) (z u <br /> v)) y (λ (w a) (x (λ (b) (w <br /> b)) a))))>]
-	f27 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f27=(λ (x y z u) (z (λ (v) (f11 x <br /> v)) 1 y u))>]
-	f18 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f18=(λ (x y z u) (f17 x (λ (v w) <br /> (z v w)) (λ (a b) (y (λ (c) <br /> (a c)) b)) u))>]
-	f28 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>short | 0.022756</u></font><br />f28=(λ (x y z u) (f11 z (f8 y (x <br /> u))))>]
-	f29 [label=<<font face="boldfontname"><u> </u><u>connected | 0.0925926<br />by | 0.0787402<br />semicircle | 0.2959184<br />2 | 0.1538462<br />circle | 0.0899281<br />small | 0.0787293</u></font><br />f29=(λ (x) (f13 ε x))>]
-	f30 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>to | 0.1219512<br />gon | 0.0645161<br />next | 0.24</u></font><br />f30=(λ (x y z) (f28 (λ (u) (x <br /> u)) 2 y z))>]
-	f32 [label=<<font face="boldfontname"><u> </u><u>row | 0.11<br />in | 0.1262136</u></font><br />f32=(λ (x y z) (f31 x (λ (u v) (y <br /> (λ (w) (u w)) v)) (λ (a b) <br /> (f8 a b)) z))>]
-	f5 [label=<<font face="boldfontname"><u> </u><u>vertical | 0.1333333<br />arms | 0.0933063<br />as | 0.0846774<br />sided | 0.0940695<br />with | 0.0907258<br />snowflake | 0.09</u></font><br />f5=(λ (x y) (f3 (λ (z u) (f4 y 0 <br /> x u))))>]
-	f6 [label=<<font face="boldfontname"><u> </u><u>5 | 0.0405405</u></font><br />f6=(λ (x) (f0 x (/ 2π 5) 1))>]
-	f33 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f33=(λ (x y z) (y (λ (u) (f11 1 <br /> (f8 1 (x z u)))) 1))>]
-	f34 [label=<<font face="boldfontname"><u> </u><u>medium | 0.1333333<br />connected | 0.0740741<br />by | 0.0629921<br />semicircle | 0.255102<br />circle | 0.1043165</u></font><br />f34=(f0 ∞ ε (* ε 2))>]
-	f35 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f35=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π x) (z w))) <br /> u))>]
-	f36 [label=<<font face="boldfontname"><u> </u><u>stepped | 1.0<br />staircase | 0.6349206<br />zigzag | 0.3571429</u></font><br />f36=(λ (x) (for x (λ (y z) <br /> (move 1 (/ 2π 4) (move 1 (- <br /> 2π (/ 2π 4)) z)))))>]
+	f3 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f3=(λ (x y z) (f2 (λ (u v) (z u <br /> v)) y (λ (w a) (x (λ (b) (w <br /> b)) a))))>]
+	f4 [label=<<font face="boldfontname"><u> </u><u>concentric | 0.3238095<br />s | 0.1508621</u></font><br />f4=(λ (x y z u) (for y (λ (v w) <br /> (get/set (λ (a) (f0 z (/ <br /> 2π x) (* 1 v) a)) w)) u))>]
+	f7 [label=<<font face="boldfontname"><u> </u><u>row | 0.29<br />in | 0.2815534<br />s | 0.1206897</u></font><br />f7=(λ (x y z u) (for y (λ (v w) <br /> (f6 z (f6 x w))) u))>]
+	f8 [label=<<font face="boldfontname"><u>a small circle connected by a medium line to a small 8 gon<br />5 sided snowflake with a small 5 gon and a small circle as arms<br />a small circle next to a small 6 gon<br />a small 9 gon separated by a big space from a small circle<br />6 sided snowflake with a medium semicircle and a small circle as arms<br />7 sided snowflake with a medium space and a small circle as arms<br />5 sided snowflake with a short line and a medium circle as arms<br />6 sided snowflake with a short line and a medium circle as arms</u><u>turns | 0.0833333<br />staircase | 0.0634921<br />concentric | 0.0857143<br />circle | 0.1546763<br />space | 0.0520548</u></font><br />f8=(λ (x y) (for 7 (λ (z u) (f1 <br /> x u)) y))>]
+	f9 [label=<<font face="boldfontname"><u>8 sided snowflake with a short line and a medium circle as arms<br />6 sided snowflake with a medium semicircle and a small circle as arms<br />a medium circle connected by a big line to a medium circle<br />6 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />3 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />5 sided snowflake with a short space and a medium circle as arms<br />a medium semicircle connected by a medium line to a medium circle<br />7 sided snowflake with a medium circle and a small 5 gon as arms</u><u>medium | 0.1333333<br />connected | 0.0740741<br />by | 0.0629921<br />semicircle | 0.255102<br />circle | 0.1043165</u></font><br />f9=(f0 ∞ ε (* ε 2))>]
+	f18 [label=<<font face="boldfontname"><u> </u><u>row | 0.11<br />in | 0.1262136</u></font><br />f18=(λ (x y z) (f14 x (λ (u v) (y <br /> (λ (w) (u w)) v)) (λ (a b) <br /> (f17 a b)) z))>]
+	f5 [label=<<font face="boldfontname"><u>8 sided snowflake with a small triangle and a medium circle as arms<br />a medium semicircle connected by a medium line to a medium circle<br />a small 8 gon next to a small 7 gon</u><u>small | 0.0883978</u></font><br />f5=(λ (x y z) (f0 x (/ 2π y) 1 <br /> z))>]
+	f19 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f19=(λ (x y z) (y (λ (u) (f6 1 <br /> (f17 1 (z x u)))) 1))>]
+	f20 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f20=(λ (x y z u) (z (λ (v w) <br /> (move 0 (/ 2π y) (x w))) <br /> u))>]
+	f21 [label=<<font face="boldfontname"><u> </u><u>short | 0.0240202<br />and | 0.0183486</u></font><br />f21=(λ (x y) (x (λ (z) (f6 1 <br /> (f17 1 (y z)))) 1))>]
+	f22 [label=<<font face="boldfontname"><u>a small circle connected by a medium line to a small 8 gon<br />a medium circle connected by a medium line to a small 5 gon<br />a medium triangle separated by a big space from a small 9 gon<br />a medium triangle separated by a big space from a medium triangle<br />8 sided snowflake with a small 5 gon and a short line as arms<br />a small 8 gon next to a medium square<br />a medium semicircle connected by a medium line to a medium circle</u><u>triangle | 0.0065359<br />medium | 0.5333333</u></font><br />f22=(λ (x) (f0 x (/ 2π x) (* 1 <br /> 2)))>]
+	f24 [label=<<font face="boldfontname"><u> </u><u>to | 0.1219512<br />gon | 0.0645161<br />next | 0.24</u></font><br />f24=(λ (x y z) (f23 (λ (u) (x <br /> u)) 2 y z))>]
+	f28 [label=<<font face="boldfontname"><u> </u><u>arms | 0.0649087<br />as | 0.0504032<br />sided | 0.0654397<br />with | 0.0625<br />snowflake | 0.062<br />small | 0.0635359</u></font><br />f28=(λ (x y) (f27 y (λ (z) (f6 x <br /> z))))>]
+	f23 [label=<<font face="boldfontname"><u>a small 8 gon next to a small 7 gon<br />5 sided snowflake with a short line and a small 5 gon as arms<br />a small 8 gon next to a medium square<br />a small 9 gon separated by a big space from a small circle<br />3 sided snowflake with a short space and a short line and a short space and a small square as arms<br />8 sided snowflake with a short space and a short line and a short space and a small square as arms<br />7 sided snowflake with a short space and a short line and a short space and a small triangle as arms<br />6 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />3 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />a small 5 gon separated by a big space from a small 9 gon<br />5 sided snowflake with a short line and a medium circle as arms<br />6 sided snowflake with a short line and a medium circle as arms</u><u>short | 0.022756</u></font><br />f23=(λ (x y z u) (f6 z (f17 y (x <br /> u))))>]
+	f17 [label=<<font face="boldfontname"><u>8 sided snowflake with a short space and a medium circle as arms<br />a medium triangle separated by a big space from a small 9 gon<br />a medium triangle separated by a big space from a medium triangle<br />a small circle next to a small 6 gon<br />a small 5 gon separated by a big space from a small 9 gon<br />7 sided snowflake with a small semicircle and a short line as arms<br />6 sided snowflake with a medium semicircle and a small circle as arms<br />a medium circle connected by a big line to a medium circle<br />3 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />7 sided snowflake with a medium circle and a small 5 gon as arms</u><u>4 | 0.0204082<br />separated | 0.6666667<br />from | 0.5<br />NULL | 0.1666667<br />big | 0.144<br />by | 0.1417323<br />line | 0.0319549<br />semicircle | 0.0816327<br />next | 0.1466667<br />space | 0.060274</u></font><br />f17=(λ (x) (pen-up (λ (y) <br /> (f16 x y))))>]
+	f15 [label=<<font face="boldfontname"><u> </u><u>5 | 0.0405405</u></font><br />f15=(λ (x) (f0 x (/ 2π 5) 1))>]
+	f29 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f29=(λ (x y z u) (y z (λ (v w) (x <br /> (λ (a) (v a)) w)) (λ (b c) <br /> (f17 b c)) u))>]
+	f30 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f30=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π x) (z w))) <br /> u))>]
+	f31 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f31=(λ (x y z) (z (λ (u) (f6 1 <br /> (f17 1 (y u)))) 1 x))>]
+	f32 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f32=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π z) (y w))) <br /> u))>]
+	f34 [label=<<font face="boldfontname"><u>5 sided snowflake with a short space and a short line and a short space and a small triangle as arms<br />6 sided snowflake with a small 5 gon and a short line as arms<br />5 sided snowflake with a short line and a small 5 gon as arms<br />3 sided snowflake with a small triangle and a small 5 gon as arms<br />5 sided snowflake with a small square and a small triangle as arms<br />3 sided snowflake with a short space and a short line and a short space and a small square as arms<br />8 sided snowflake with a short space and a short line and a short space and a small square as arms<br />7 sided snowflake with a short space and a short line and a short space and a small triangle as arms<br />5 sided snowflake with a medium circle and a short line as arms</u><u>short | 0.0353982<br />arms | 0.1419878<br />as | 0.1431452<br />and | 0.0982962<br />small | 0.0883978<br />space | 0.2082192</u></font><br />f34=(λ (x y) (f33 (λ (z) (f6 y <br /> (f17 1 (f6 x z)))) 1))>]
+	f36 [label=<<font face="boldfontname"><u>8 sided snowflake with a short line and a medium circle as arms<br />a medium circle connected by a medium line to a small 5 gon<br />8 sided snowflake with a short space and a medium circle as arms<br />a medium semicircle connected by a medium line to a medium circle<br />8 sided snowflake with a small triangle and a medium circle as arms<br />7 sided snowflake with a medium circle and a small 5 gon as arms<br />a small semicircle connected by a big line to a medium circle<br />a medium circle connected by a big line to a medium circle<br />5 sided snowflake with a short space and a medium circle as arms<br />5 sided snowflake with a short line and a medium circle as arms<br />5 sided snowflake with a medium circle and a short line as arms<br />6 sided snowflake with a short line and a medium circle as arms</u><u>medium | 0.108642<br />circle | 0.2553957</u></font><br />f36=(λ (x) (f35 2 x))>]
+	f25 [label=<<font face="boldfontname"><u>8 sided snowflake with a short space and a medium circle as arms</u><u>8 | 0.0763889<br />zigzag | 0.0714286</u></font><br />f25=(λ (x) (for 9 (λ (y) (x (f0 <br /> 5 ε 0)))))>]
+	f13 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f13=(λ (x y z u) (f12 x (λ (v w) <br /> (y (λ (a) (v a)) w)) (λ (b <br /> c) (z b c)) u))>]
+	f37 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f37=(λ (x y) (f4 x 5 x y))>]
+	f1 [label=<<font face="boldfontname"><u> </u><u>staircase | 0.1111111<br />NULL | 0.5<br />semicircle | 0.0663265</u></font><br />f1=(f0 ∞ ε)>]
+	f38 [label=<<font face="boldfontname"><u>a small semicircle connected by a big line to a medium circle<br />a small circle connected by a big line to a small semicircle<br />a medium circle connected by a big line to a medium circle</u><u>connected | 0.5185185<br />big | 0.448<br />by | 0.4409449<br />to | 0.3292683<br />line | 0.112782</u></font><br />f38=(f5 5 1)>]
+	f26 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f26=(λ (x y z u) (move y (/ 2π z) <br /> (x u)))>]
+	f39 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f39=(λ (x y z u) (z (λ (v) (f6 x <br /> v)) 1 y u))>]
+	f40 [label=<<font face="boldfontname"><u> </u><u>6 | 0.0431655<br />turns | 0.8333333<br />8 | 0.0347222<br />greek | 0.625<br />zigzag | 0.0714286<br />spiral | 0.3571429<br />vertical | 0.2</u></font><br />f40=(λ (x y z) (for y (λ (u v) <br /> (move (* 1 u) (/ 2π x) v)) <br /> z))>]
+	f41 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f41=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π y) (z w))) <br /> u))>]
+	f27 [label=<<font face="boldfontname"><u> </u><u>vertical | 0.1333333<br />arms | 0.0933063<br />as | 0.0846774<br />sided | 0.0940695<br />with | 0.0907258<br />snowflake | 0.09</u></font><br />f27=(λ (x y) (f25 (λ (z u) (f26 <br /> y 0 x u))))>]
+	f42 [label=<<font face="boldfontname"><u> </u><u>stepped | 1.0<br />staircase | 0.6349206<br />zigzag | 0.3571429</u></font><br />f42=(λ (x) (for x (λ (y z) <br /> (move 1 (/ 2π 4) (move 1 (- <br /> 2π (/ 2π 4)) z)))))>]
+	f16 [label=<<font face="boldfontname"><u>8 sided snowflake with a small 5 gon and a short line as arms<br />a small 5 gon separated by a big space from a small 9 gon<br />5 sided snowflake with a small 5 gon and a small circle as arms</u><u>5 | 0.072973<br />row | 0.16<br />in | 0.1553398</u></font><br />f16=(λ (x) (for x (λ (y z) (f15 <br /> 5 (move 1 2π z)))))>]
+	f33 [label=<<font face="boldfontname"><u>5 sided snowflake with a small 5 gon and a small circle as arms<br />7 sided snowflake with a small semicircle and a short line as arms<br />7 sided snowflake with a short space and a short line and a short space and a small triangle as arms<br />8 sided snowflake with a small triangle and a medium circle as arms<br />5 sided snowflake with a short line and a small 5 gon as arms<br />a medium triangle separated by a big space from a medium triangle<br />8 sided snowflake with a small 5 gon and a short line as arms<br />a small 8 gon next to a medium square<br />3 sided snowflake with a short space and a short line and a short space and a small square as arms<br />5 sided snowflake with a medium circle and a short line as arms<br />6 sided snowflake with a short line and a medium circle as arms<br />6 sided snowflake with a medium semicircle and a small circle as arms<br />7 sided snowflake with a medium space and a small circle as arms<br />3 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />5 sided snowflake with a short space and a medium circle as arms<br />8 sided snowflake with a short line and a medium circle as arms<br />a small circle next to a small 6 gon<br />8 sided snowflake with a short space and a short line and a short space and a small square as arms<br />6 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms<br />5 sided snowflake with a short line and a medium circle as arms<br />7 sided snowflake with a medium circle and a small 5 gon as arms</u><u>separated | 0.1111111<br />zigzag | 0.1071429<br />arms | 0.2920892<br />as | 0.2762097</u></font><br />f33=(λ (x y z) (f27 z (λ (u) <br /> (get/set (λ (v) (f17 y (x <br /> v))) u))))>]
+	f2 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f2=(λ (x y z u) (for y (λ (v w) <br /> (z (λ (a) (x v (f1 (* ε 2) <br /> a))) w)) u))>]
+	f35 [label=<<font face="boldfontname"><u>a small 9 gon separated by a big space from a small circle<br />7 sided snowflake with a medium space and a small circle as arms</u><u>concentric | 0.0666667<br />2 | 0.1538462</u></font><br />f35=(λ (x y) (f8 (* ε x) y))>]
+	f12 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f12=(λ (x y z u) (f11 x (λ (v w) <br /> (z v w)) (λ (a b) (y (λ (c) <br /> (a c)) b)) u))>]
+	f6 [label=<<font face="boldfontname"><u>8 sided snowflake with a short line and a medium circle as arms<br />a medium circle connected by a medium line to a small 5 gon<br />a small circle connected by a medium line to a small 8 gon<br />a medium triangle separated by a big space from a small 9 gon<br />a small 8 gon next to a small 7 gon<br />8 sided snowflake with a small triangle and a medium circle as arms<br />5 sided snowflake with a short line and a small 5 gon as arms<br />a small circle next to a small 6 gon<br />8 sided snowflake with a small 5 gon and a short line as arms<br />a small 8 gon next to a medium square<br />a small 5 gon separated by a big space from a small 9 gon<br />3 sided snowflake with a short space and a short line and a short space and a small square as arms<br />8 sided snowflake with a short space and a short line and a short space and a small square as arms<br />7 sided snowflake with a short space and a short line and a short space and a small triangle as arms<br />7 sided snowflake with a small semicircle and a short line as arms<br />5 sided snowflake with a medium circle and a short line as arms<br />7 sided snowflake with a medium circle and a small 5 gon as arms</u><u>6 | 0.0359712<br />staircase | 0.0634921<br />connected | 0.037037<br />NULL | 0.1666667<br />vertical | 0.1333333<br />to | 0.0609756<br />gon | 0.2655087<br />small | 0.218232</u></font><br />f6=(λ (x y) (f5 x x y))>]
+	f43 [label=<<font face="boldfontname"><u> </u><u>vertical | 0.1333333<br />to | 0.1036585<br />line | 0.0488722<br />gon | 0.0645161<br />next | 0.0533333</u></font><br />f43=(λ (x y z) (y 1 (f6 x z)))>]
+	f14 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f14=(λ (x y z u) (f13 x (λ (v w) <br /> (y (λ (a) (v a)) w)) (λ (b <br /> c) (z b c)) u))>]
+	f44 [label=<<font face="boldfontname"><u> </u><u>7 | 0.0540541<br />8 | 0.0486111<br />concentric | 0.1619048<br />s | 0.0732759</u></font><br />f44=(λ (x y) (for x (λ (z u) <br /> (get/set (λ (v) (f35 z <br /> v)) u)) y))>]
+	f11 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f11=(λ (x y z u) (f10 (λ (v w) (y <br /> v w)) (λ (a b) (z (λ (c) (a <br /> c)) b)) x u))>]
+	f45 [label=<<font face="boldfontname"><u>a small circle connected by a medium line to a small 8 gon<br />a small circle next to a small 6 gon<br />a small semicircle connected by a big line to a medium circle<br />7 sided snowflake with a small semicircle and a short line as arms<br />a small circle connected by a big line to a small semicircle</u><u>connected | 0.0925926<br />by | 0.0787402<br />semicircle | 0.2959184<br />2 | 0.1538462<br />circle | 0.0899281<br />small | 0.0787293</u></font><br />f45=(λ (x) (f1 ε x))>]
+	f46 [label=<<font face="boldfontname"><u>6 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms</u><u>short | 0.0391909<br />and | 0.0366972</u></font><br />f46=(λ (x y) (y (λ (z) (f6 1 <br /> (f17 1 (x z)))) 1))>]
+	f47 [label=<<font face="boldfontname"><u> </u><u>arms | 0.0933063<br />as | 0.0866935</u></font><br />f47=(λ (x y) (f33 (λ (z) (f6 x <br /> (y z)))))>]
+	f10 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f10=(λ (x y z u) (f3 (λ (v w) (y <br /> (λ (a) (v a)) w)) z (λ (b c) <br /> (x b c)) u))>]
 	f0 [label=<<font face="boldfontname"><u> </u><u>star | 0.2941176<br />row | 0.06<br />in | 0.0582524</u></font><br />f0=(λ (x y z) (for x (λ (u v) <br /> (move z y v))))>]
-	f8 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>4 | 0.0204082<br />separated | 0.6666667<br />from | 0.5<br />NULL | 0.1666667<br />big | 0.144<br />by | 0.1417323<br />line | 0.0319549<br />semicircle | 0.0816327<br />next | 0.1466667<br />space | 0.060274</u></font><br />f8=(λ (x) (pen-up (λ (y) (f7 <br /> x y))))>]
-	f37 [label=<<font face="boldfontname"><u> </u><u>row | 0.29<br />in | 0.2815534<br />s | 0.1206897</u></font><br />f37=(λ (x y z u) (for y (λ (v w) <br /> (f11 z (f11 x w))) u))>]
-	f38 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f38=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π y) (z w))) <br /> u))>]
-	f14 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f14=(λ (x y z u) (for y (λ (v w) <br /> (z (λ (a) (x v (f13 (* ε 2) <br /> a))) w)) u))>]
-	f10 [label=<<font face="boldfontname"><u> </u><u>small | 0.0883978</u></font><br />f10=(λ (x y z) (f0 x (/ 2π y) 1 <br /> z))>]
-	f3 [label=<<font face="boldfontname"><u> </u><u>8 | 0.0763889<br />zigzag | 0.0714286</u></font><br />f3=(λ (x) (for 9 (λ (y) (x (f0 <br /> 5 ε 0)))))>]
-	f39 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f39=(λ (x y z u) (y z (λ (v w) (x <br /> (λ (a) (v a)) w)) (λ (b c) <br /> (f8 b c)) u))>]
-	f9 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>separated | 0.1111111<br />zigzag | 0.1071429<br />arms | 0.2920892<br />as | 0.2762097</u></font><br />f9=(λ (x y z) (f5 z (λ (u) <br /> (get/set (λ (v) (f8 y (x <br /> v))) u))))>]
-	f11 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>6 | 0.0359712<br />staircase | 0.0634921<br />connected | 0.037037<br />NULL | 0.1666667<br />vertical | 0.1333333<br />to | 0.0609756<br />gon | 0.2655087<br />small | 0.218232</u></font><br />f11=(λ (x y) (f10 x x y))>]
-	f40 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f40=(λ (x y z) (y (λ (u) (f11 1 <br /> (f8 1 (z x u)))) 1))>]
-	f16 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f16=(λ (x y z u) (f15 (λ (v w) (y <br /> (λ (a) (v a)) w)) z (λ (b c) <br /> (x b c)) u))>]
-	f41 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f41=(λ (x y z u) (z (λ (v w) <br /> (move 0 (/ 2π y) (x w))) <br /> u))>]
-	f42 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f42=(λ (x y z) (z (λ (u) (f11 1 <br /> (f8 1 (y u)))) 1 x))>]
-	f43 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>short | 0.0353982<br />arms | 0.1419878<br />as | 0.1431452<br />and | 0.0982962<br />small | 0.0883978<br />space | 0.2082192</u></font><br />f43=(λ (x y) (f9 (λ (z) (f11 y <br /> (f8 1 (f11 x z)))) 1))>]
-	f31 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f31=(λ (x y z u) (f19 x (λ (v w) <br /> (y (λ (a) (v a)) w)) (λ (b <br /> c) (z b c)) u))>]
-	f44 [label=<<font face="boldfontname"><u> </u><u>connected | 0.5185185<br />big | 0.448<br />by | 0.4409449<br />to | 0.3292683<br />line | 0.112782</u></font><br />f44=(f10 5 1)>]
-	f45 [label=<<font face="boldfontname"><u> </u><u>7 | 0.0540541<br />8 | 0.0486111<br />concentric | 0.1619048<br />s | 0.0732759</u></font><br />f45=(λ (x y) (for x (λ (z u) <br /> (get/set (λ (v) (f21 z <br /> v)) u)) y))>]
-	f13 [label=<<font face="boldfontname"><u> </u><u>staircase | 0.1111111<br />NULL | 0.5<br />semicircle | 0.0663265</u></font><br />f13=(f0 ∞ ε)>]
-	f7 [label=<<font face="boldfontname"><u> </u><u>5 | 0.072973<br />row | 0.16<br />in | 0.1553398</u></font><br />f7=(λ (x) (for x (λ (y z) (f6 5 <br /> (move 1 2π z)))))>]
-	f46 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f46=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π z) (y w))) <br /> u))>]
-	f21 [label=<<font face="boldfontname"><u> </u><u>concentric | 0.0666667<br />2 | 0.1538462</u></font><br />f21=(λ (x y) (f20 (* ε x) y))>]
-	f47 [label=<<font face="boldfontname"><u>7 sided snowflake with a short space and a short line and a short space and a small triangle as arms</u><u>vertical | 0.1333333<br />to | 0.1036585<br />line | 0.0488722<br />gon | 0.0645161<br />next | 0.0533333</u></font><br />f47=(λ (x y z) (y 1 (f11 x z)))>]
-	f4 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f4=(λ (x y z u) (move y (/ 2π z) <br /> (x u)))>]
-	f48 [label=<<font face="boldfontname"><u> </u><u>triangle | 0.0065359<br />medium | 0.5333333</u></font><br />f48=(λ (x) (f0 x (/ 2π x) (* 1 <br /> 2)))>]
+	f48 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f48=(λ (x y z) (y (λ (u) (f6 1 <br /> (f17 1 (x z u)))) 1))>]
 	f49 [label=<<font face="boldfontname"><u> </u><u> </u></font><br />f49=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π z) (x w))) <br /> u))>]
-	f1 -> f2
-	f9 -> f12
-	f11 -> f12
-	f0 -> f1
-	f18 -> f19
-	f21 -> f22
-	f16 -> f17
-	f5 -> f23
-	f11 -> f23
-	f13 -> f20
-	f11 -> f25
-	f8 -> f25
-	f11 -> f26
-	f8 -> f26
-	f14 -> f15
-	f11 -> f27
-	f17 -> f18
-	f11 -> f28
-	f8 -> f28
-	f13 -> f29
-	f28 -> f30
-	f31 -> f32
-	f8 -> f32
-	f4 -> f5
-	f3 -> f5
-	f0 -> f6
-	f11 -> f33
-	f8 -> f33
-	f0 -> f34
-	f7 -> f8
-	f11 -> f37
-	f13 -> f14
-	f0 -> f10
-	f0 -> f3
-	f8 -> f39
-	f5 -> f9
-	f8 -> f9
-	f10 -> f11
-	f11 -> f40
-	f8 -> f40
-	f15 -> f16
-	f11 -> f42
-	f8 -> f42
-	f9 -> f43
-	f11 -> f43
-	f8 -> f43
-	f19 -> f31
-	f10 -> f44
-	f21 -> f45
-	f0 -> f13
+	f2 -> f3
+	f0 -> f4
 	f6 -> f7
-	f20 -> f21
-	f11 -> f47
-	f0 -> f48
+	f1 -> f8
+	f0 -> f9
+	f14 -> f18
+	f17 -> f18
+	f0 -> f5
+	f17 -> f19
+	f6 -> f19
+	f17 -> f21
+	f6 -> f21
+	f0 -> f22
+	f23 -> f24
+	f27 -> f28
+	f6 -> f28
+	f17 -> f23
+	f6 -> f23
+	f16 -> f17
+	f0 -> f15
+	f17 -> f29
+	f17 -> f31
+	f6 -> f31
+	f17 -> f34
+	f33 -> f34
+	f6 -> f34
+	f35 -> f36
+	f0 -> f25
+	f12 -> f13
+	f4 -> f37
+	f0 -> f1
+	f5 -> f38
+	f6 -> f39
+	f26 -> f27
+	f25 -> f27
+	f15 -> f16
+	f27 -> f33
+	f17 -> f33
+	f1 -> f2
+	f8 -> f35
+	f11 -> f12
+	f5 -> f6
+	f6 -> f43
+	f13 -> f14
+	f35 -> f44
+	f10 -> f11
+	f1 -> f45
+	f17 -> f46
+	f6 -> f46
+	f33 -> f47
+	f6 -> f47
+	f3 -> f10
+	f17 -> f48
+	f6 -> f48
 }

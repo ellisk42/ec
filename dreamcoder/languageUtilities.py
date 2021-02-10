@@ -2,6 +2,13 @@
 import os
 from collections import defaultdict
 
+from dreamcoder.domains.logo.logoPrimitives import primitives, turtle
+from dreamcoder.task import Task
+from dreamcoder.program import Abstraction, Application, Index, Program
+from dreamcoder.type import arrow
+from dreamcoder.utilities import eprint, jsonBinaryInvoke, random_seed, montage
+from dreamcoder.grammar import Grammar
+
 example_logos = {
     # "a small triangle",
     # "a small 5 gon",
@@ -72,7 +79,17 @@ def get_example_tasks(frontiers, max_translations, max_tasks=10, word_in_name=Fa
     frontier_programs = {}
     top_tokens = defaultdict(list)  
     
-    for f in list(frontiers)[:50]:
+    # Sort the frontiers by their ground truth description length.
+    def ground_truth_description_length(task, frontier):
+        from dreamcoder.domains.logo.logoPrimitives import primitives, turtle
+        g = Grammar.uniform(primitives, continuationType=turtle)
+        p = task.groundTruthProgram
+        l =  g.logLikelihood(arrow(turtle,turtle),p)
+        return -l
+    
+    longest_frontiers = sorted(frontiers, key=lambda task : -ground_truth_description_length(task, frontiers[task]))
+    
+    for f in list(longest_frontiers)[:50]:
         if f.name in examples or True:
             print("_".join(f.name.split())) # So we can find it
             # Ground truth programs
