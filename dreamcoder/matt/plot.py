@@ -167,7 +167,7 @@ def evals_plot(
     plt.ylim(bottom=0., top=100.)
     plt.xlim(left=0., right=x_max)
     for i,m in enumerate(model_results):
-        label = legend[i] if legend else f'{m.cfg.job_name}.{m.cfg.run_name}'
+        label = legend[i] if legend else m.cfg.full_name
         xs = list(range(m.cropped_x_max_evals)) # 0..earliest_failure
         ys = [m.percent(lambda search_try: search_try.hit and search_try.nodes_expanded <= x) for x in xs]
         plt.plot(
