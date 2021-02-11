@@ -8,7 +8,9 @@
 *.blg
 *.p
 *.pyc
-*.png
+!docs/
+!docs/icml_2021_results.png
+language_experiments/logo_dissection
 *~
 figures/
 __pycache__
