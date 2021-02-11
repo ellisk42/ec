@@ -10,6 +10,8 @@ class SearchTry:
   def __init__(self, time, nodes_expanded, soln):
     self.hit = soln is not None
     self.soln = soln
+    if soln is not None:
+        soln.clear_cache('tree')
     self.time = time
     self.nodes_expanded = nodes_expanded
 class ModelResult:
