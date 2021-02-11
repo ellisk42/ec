@@ -187,7 +187,7 @@ Pretrained models for the best models on each domain in the paper trained with a
 ## Results
 The table below (Table 1 in the main paper) shows % held-out tasks solved on both the graphics program and regex domains, including when testing and trained on synthetic and human language data; the table also shows performance on model ablations and baselines.
 
-![results](./docs/icml_2021_results.png "Results")
+![results](./docs/imcl_2021_results.png "Results")
 
 Commands to reproduce each of these experiments (including replications) can be found in the ```docs/icml_2021_experiments``` file.
 
