@@ -1,0 +1,106 @@
+####### Graphics Programs #######
+### Synth (language); Model: No language
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --skip_first_test --taskDataset logo_unlimited_200 --sample_n_supervised 0 --om_original_ordering 1
+
+# N.B. All replications are run by changing the random seed in --seed.
+# We run all replications with --seed = 1,2,3; but omit here for concision.
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --skip_first_test --taskDataset logo_unlimited_200 --sample_n_supervised 0 --taskReranker randomShuffle --seed 1
+
+### Synth (language); Model: No compression
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionTimeout 1800 --recognition_0 --recognition_1 examples language --Helmholtz 0  --skip_first_test --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/synthetic --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1 --language_compression --lc_score 0.2 --max_compression 5 --om_original_ordering 1 --smt_pseudoalignments 0.1 --no-consolidation
+
+### Synth (language); Model: No generative language model
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/synthetic --sample_n_supervised 0
+
+### Synth (language); Model: Ours, generative language
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionTimeout 1800 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/synthetic --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1
+
+### Synth (language); Model: Ours, GL + Translation Priors
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/synthetic --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1 --om_original_ordering 1
+
+### Synth (language); Model: Ours, GL + TP + Language Compression
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionTimeout 1800 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/synthetic --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1 --language_compression --lc_score 0.2 --max_compression 5 --om_original_ordering 1 --smt_pseudoalignments 0.1
+
+
+### Human train, human test. 
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/human --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5 --om_original_ordering 1 
+
+### DSL Comparison: pure enumeration. # Check for first testing evaluation.
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 12 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 --recognition_1 examples language --Helmholtz 0 --taskDataset logo_unlimited_200 --language_encoder recurrent --languageDataset logo_unlimited_200/synthetic --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1 --language_compression --lc_score 0.2 --max_compression 5 --om_original_ordering 1 --smt_pseudoalignments 0.1 --no-consolidation
+
+# The following experiments require the released pretrained checkpoints.
+### Synth train, human test. This requires resuming from the pretrained model (best (Ours))
+python3.7 bin/logo.py  --enumerationTimeout 1 --testingTimeout 1800  --iterations 13 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/human --resume logo_best_dsl_language.pickle --no-dsl --no-consolidation --test_human_clean_vocab 
+
+### DSL Comparison: best DSL (no language), pure enumeration. This requires resuming from a pretrained checkpoint.
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 28 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic --resume logo_best_dsl_no_language.pickle --no-dsl --no-consolidation
+
+### DSL Comparison: best DSL (Ours): pure enumeration. This requires resuming from a pretrained checkpoint.
+### DSL Comparison: best DSL (Ours): neural search. This requires resuming from a pretrained checkpoint.
+# Both evaluations will be run using the following command.
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 14 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic --resume logo_best_dsl_language.pickle --no-dsl --no-consolidation --test_dsl_only --test_only_after_recognition
+
+
+
+###### Text Editing #######
+### Synth (language); Model: No language
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --skip_first_test --taskDataset re2_1000 --primitives re2_chars_None re2_bootstrap_v1_primitives
+
+### Synth (language); Model: No compression
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0  --skip_first_test  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0  --language_compression --lc_score 0 --max_compression 5 --no-consolidation
+
+### Synth (language); Model: No generative language model
+ python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0  --skip_first_test  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0  --language_compression --lc_score 0 --max_compression 5
+
+### Synth (language); Model: Ours, generative language
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0  --language_compression --lc_score 0 --max_compression 5
+
+### Synth (language); Model: Ours, GL + Translation Priors
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0 --max_compression 5 
+
+### Synth (language); Model: Ours, GL + TP + Language Compression
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5 
+
+### Human train, human test. 
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test --pretrained_word_embeddings  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/human --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5
+
+### DSL Comparison: pure enumeration. # See evaluation at first iteration.
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 1 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --pretrained_word_embeddings  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/human --primitives re2_chars_None re2_bootstrap_v1_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5
+
+# The following experiments require the released pretrained checkpoints.
+### Synth train, human test. This requires resuming from the pretrained model (best (Ours))
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 31 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset re2_1000 --languageDataset re2_1000/human --resume re2_best_dsl_language.pickle --no-dsl --no-consolidation --primitives re2_chars_None re2_bootstrap_v1_primitives --test_human_clean_vocab
+
+### DSL Comparison: best DSL (no language), pure enumeration. This requires resuming from a pretrained checkpoint.
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 28 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset re2_1000 --languageDataset re2_1000/synthetic --resume re2_best_dsl_language.pickle --no-dsl --no-consolidation --test_dsl_only --primitives re2_chars_None re2_bootstrap_v1_primitives
+
+### DSL Comparison: best DSL (Ours): pure enumeration. This requires resuming from a pretrained checkpoint.
+### DSL Comparison: best DSL (Ours): neural search. This requires resuming from a pretrained checkpoint.
+# Both evaluations are run with the following command.
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 31 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset re2_1000 --languageDataset re2_1000/synthetic --resume re2_best_dsl_language.pickle --no-dsl --no-consolidation --test_dsl_only --primitives re2_chars_None re2_bootstrap_v1_primitives--test_only_after_recognition
+
+####### Scene Reasoning #######
+####### The following experiments use a curriculum. For concision, we omit the random seed replications; these can be immediatley generated by setting --seed to a random seed and --taskReranker to randomShuffle #######
+### Synth (language); Model: No language
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --CPUs 24  --recognition_0 examples --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform  --taskReranker sentence_length --seed 1 
+
+### Synth (language); Model: No compression
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --CPUs 24 --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform --no-consolidation --taskReranker sentence_length --seed 1
+
+### Synth (language); Model: No generative language model
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --CPUs 24 --recognition_0 --recognition_1 examples language --Helmholtz 0 --primitives clevr_bootstrap clevr_map_transform --taskReranker sentence_length --seed 1 
+
+### Synth (language); Model: Ours, generative language
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --CPUs 24 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform  --synchronous_grammar --lc_score 0  --taskReranker sentence_length --seed 1
+
+### Synth (language); Model: Ours, GL + Translation Priors
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --CPUs 24 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform --synchronous_grammar --lc_score 0 --smt_pseudoalignments 0.05 --taskReranker sentence_length --seed 1
+
+### Synth (language); Model: Ours, GL + TP + Language Compression
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --CPUs 24 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform --synchronous_grammar --smt_pseudoalignments 0.05 --lc_score 0.05 --max_compression 5 --taskReranker sentence_length --seed 1
+
+### Human train, human test. 
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform --synchronous_grammar --lc_score 0 --languageDatasetDir data/clevr/language_human  --taskReranker sentence_length --seed 1
+
+### DSL Comparison: pure enumeration. # See evaluation at first iteration.
+python bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 5 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --recognition_0 examples --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform --synchronous_grammar --no-dsl --no-consolidation --test_dsl_only --test_only_after_recognition --taskReranker sentence_length --seed 1
