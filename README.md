@@ -1,6 +1,6 @@
 #  Leveraging Language for Abstraction and Program Search
 
-This repository is the official implementation of Leveraging Language for Abstraction and Program Search (currently under review at ICML 2021). 
+This repository is the official implementation of Leveraging Language for Abstraction and Program Search (currently under review). 
 This repository and branch is a static branch designed to reproduce the results in the paper. 
 This README will be updated with a link to a deanonymized live branch and paper after the review period.
 
@@ -94,15 +94,15 @@ The repository also contains code to generate the compositional graphics dataset
 python bin/logo.py \
 --generateTaskDataset [logo_unlimited_200 | logo_unlimited_500 | logo_unlimited_500] \
 --generateLanguageDataset [logo_unlimited_200 | logo_unlimited_500 | logo_unlimited_500] \
-
+```
 ###### Scene Reasoning Domain
-The scene reasoning dataset is available on Zenodo TODO.
+The scene reasoning dataset is available on Zenodo [here](https://doi.org/10.5281/zenodo.4533370).
 The unzipped dataset should be stored in ```data/clevr```.
 
-Code to generate the scene reasoning datasets and their synthetic annotations, as well as to render the images, is provided at this repository [here](https://github.com/CatherineWong/too_clevr) [Warning: this is a deanonymized link. Do not click during the review period].
+Code to generate the scene reasoning datasets and their synthetic annotations, as well as to render the images, is provided at this repository [here](https://github.com/CatherineWong/too_clevr) [Warning: this is a link to a live GitHub repository. Do not click during the review period].
 This code builds on the CLEVR generation code from *CLEVR: A Diagnostic Dataset for Compositional Language and Elementary Visual Reasoning*(Johson et. al, 2017)[[paper](http://cs.stanford.edu/people/jcjohns/clevr/)] [[code](https://github.com/facebookresearch/clevr-dataset-gen)]
 
-```
+
 ## Training and Evaluation
 Scripts to run the algorithm on each of the domains are located in the `bin/` directory. 
 By default, as the algorithm is iterative, the training scripts will both run the algorithm for a specified number of iterations, and evaluate on a held-out test task every n iterations (where n is an adjustable argument.)
@@ -134,7 +134,7 @@ A full list of commandline arguments (and descriptions of their functions) can b
 python bin/logo.py -h
 ```
 
-To train and evaluate the full model in the paper (Ours, Generative Language + Translation Priors + Language Compression in Fig. 5), run:
+To train and evaluate the full model in the paper (LAPS + ME + language-program compression in Table 1), run:
 ```
 python3.7 bin/logo.py \
   --enumerationTimeout 1800 \  # Search timeout (s)
@@ -161,21 +161,35 @@ A full list of commandline arguments (and documentation) can be found by running
 python bin/re2.py -h
 ```
 
-To train and evaluate the full model in the paper (Ours, Generative Language + Translation Priors + Language Compression in Fig. 5), run:
+To train and evaluate the full model in the paper (LAPS + ME + language-program compression in Table 1), run:
 ```
 python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives re2_vowel_consonant_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5
 ```
 A file with the commands for every experiment in the main paper can be found in the Results section.
 
+###### Scene Reasoning
+The script to train and evaluate on the scene resaoning domain is located at ```bin/clevr.py```.
+
+A full list of commandline arguments (and documentation) can be found by running 
+```
+python bin/clevr.py -h
+```
+
+To train and evaluate the full model in the paper (LAPS + ME + language-program compression in Table 1), run:
+```
+python3.7 bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform --synchronous_grammar --smt_pseudoalignments 0.05 --lc_score 0.01 --max_compression 5 --taskReranker randomShuffle
+```
+A file with the commands for every experiment in the main paper can be found in the Results section.
+
 ## Pretrained Models
-Pretrained models for the best models on each domain in the paper trained with and without language in the table below are available on Zenodo [here](https://zenodo.org/record/3889158#.XuGsop5Kg8M). These are checkpoints, and should be resumed using the ```--resume``` command. They can also be used to reproduce the experimental results given in the ```docs/neurips_2020_experiments``` file.
+Pretrained models for the best models on each domain in the paper trained with and without language in the table below are available on Zenodo [here](https://zenodo.org/record/3889158#.XuGsop5Kg8M). These are checkpoints, and should be resumed using the ```--resume``` command. They can also be used to reproduce the experimental results given in the ```docs/icml_2021_experiments``` file. [TODO]
 
 ## Results
 The table below (Table 1 in the main paper) shows % held-out tasks solved on both the graphics program and regex domains, including when testing and trained on synthetic and human language data; the table also shows performance on model ablations and baselines.
 
-![results](./docs/neurips_2020.png "Results")
+![results](./docs/icml_2021_results.png "Results")
 
-Commands to reproduce each of these experiments (including replications) can be found in the ```docs/neurips_2020_experiments``` file.
+Commands to reproduce each of these experiments (including replications) can be found in the ```docs/icml_2021_experiments``` file.
 
 
 ## Contributing
