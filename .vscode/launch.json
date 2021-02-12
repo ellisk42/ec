@@ -17,7 +17,7 @@
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=True",
 
-                "debug.validate_cache=False",
+                "debug.validate_cache=True",
                 "debug.no_cache=False",
                 "model.ordering=right",
 
