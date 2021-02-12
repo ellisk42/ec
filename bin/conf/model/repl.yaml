@@ -2,7 +2,7 @@
 type: repl
 H: 64
 allow_concrete_eval: True
-encode_index_as: constant # inputs | constant
+encode_index_as: inputs # inputs | constant
 tied: True
 value: False # dummy will be used
 policy: True
