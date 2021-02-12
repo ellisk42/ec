@@ -194,7 +194,6 @@ class NeuralPolicyHead(nn.Module):
             md1 = self._computeDist([trace], [zipper], frontier.task, g)
             print("ayy")
             maskedDist = self._computeDist(posTraces, holesToExpand, frontier.task, g)
-            print("fuck")
         return loss
 
     def _computeDist(): raise NotImplementedError
