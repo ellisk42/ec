@@ -137,3 +137,75 @@ class AbstractComparer(nn.Module):
     compare_input = torch.cat((sk_reps,output_feats),dim=2) # [num_sketches,num_exs,H*2]
     compared = self.compare_module(compare_input) # [num_sketches,num_exs,H]
     return compared
+
+
+
+class ApplyNN(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.cfg = cfg
+        self.apply_cfg = cfg.model.apply
+
+        self.func_indicator = NM(0)
+        self.arg_indicators = [NM(0) for _ in range(4)]
+
+
+        self.H = cfg.model.H
+        self.bound_H = {
+            'sum': self.H,
+            'cat': self.H*2,
+        }[self.apply_cfg.bind]
+
+        if self.apply_cfg.type == 'transformer':
+            raise NotImplementedError
+        elif self.apply_cfg.type == 'rnn':
+            self.gru = nn.GRU(
+                input_size=cfg.model.H,
+                hidden_size=cfg.model.H,
+                num_layers=self.apply_cfg.gru_layers,
+            )
+        else:
+            assert False
+
+
+    def bind(self, vec,indicator):
+        if self.apply_cfg.bind == 'sum':
+            return vec+indicator
+        elif self.apply_cfg.bind == 'cat':
+            return torch.cat([vec,indicator],dim=-1)
+        assert False
+    
+    def apply(self,bound_func,bound_args):
+        return {
+            'rnn': self.gru_apply,
+            'transformer': self.transformer_apply,
+        }[self.apply_cfg.type](bound_func,bound_args)
+        
+    def transformer_apply(self,bound_func,bound_args):
+        raise NotImplementedError
+
+    def gru_apply(self,bound_func,bound_args):
+        """
+        bound_func :: T[num_exs,H]
+        bound_args :: list of T[num_exs,H]
+
+        gru wants (argc+1,num_exs,H) as input
+        gru gives (argc+1,num_exs,H),(num_layers,num_exs,H) as tuple of outputs. We care about the second tuple (hidden not output) 
+        """
+        gru_input = torch.stack([bound_func,*bound_args])
+        _, hidden = self.gru(gru_input)
+        hidden = hidden.sum(0) # sum over layers to yield [num_exs,H]
+        return hidden
+
+
+    def forward(self,func,args):
+        """
+        call self.bind then self.apply
+        """
+        func = self.bind(func,self.func_indicator)
+        assert len(args) <= len(self.arg_indicators)
+        args = [self.bind(arg,ind) for arg,ind in zip(args,self.arg_indicators)]
+        res = self.apply(func,args)
+        return res
+
+
