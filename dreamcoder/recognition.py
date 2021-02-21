@@ -5,14 +5,20 @@ from dreamcoder.grammar import *
 
 import gc
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch.autograd import Variable
+    from torch.nn.utils.rnn import pack_padded_sequence
+except:
+    eprint("WARNING: Could not import torch. This is only okay when doing pypy compression.")
 
-import numpy as np
-# luke
+try:
+    import numpy as np
+except:
+    eprint("WARNING: Could not import np. This is only okay when doing pypy compression.")
+    
 import json
 
 
@@ -800,7 +806,8 @@ class RecognitionModel(nn.Module):
 
     def frontierKL(self, frontier, auxiliary=False, vectorized=True):
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None, None
+        if features is None:
+            return None, None
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
 
@@ -810,7 +817,8 @@ class RecognitionModel(nn.Module):
             g = self(features)
             return - entry.program.logLikelihood(g), al
         else:
-            features = self._MLP(features).expand(1, features.size(-1))
+            features = self._MLP(features).unsqueeze(0)
+            
             ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
             return -ll, al
             

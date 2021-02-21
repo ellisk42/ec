@@ -8,6 +8,7 @@ import sys
 from dreamcoder.fragmentGrammar import FragmentGrammar
 from dreamcoder.frontier import Frontier, FrontierEntry
 from dreamcoder.grammar import Grammar
+from dreamcoder.task import Task
 from dreamcoder.program import Program, Invented
 from dreamcoder.utilities import eprint, timing, callCompiled, get_root_dir
 from dreamcoder.vs import induceGrammar_Beta
@@ -17,8 +18,21 @@ def induceGrammar(*args, **kwargs):
     if sum(not f.empty for f in args[1]) == 0:
         eprint("No nonempty frontiers, exiting grammar induction early.")
         return args[0], args[1]
+    backend = kwargs.pop("backend", "pypy")
+    if 'pypy' in backend:
+        # pypy might not like some of the imports needed for the primitives
+        # but the primitive values are irrelevant for compression
+        # therefore strip them out and then replace them once we are done
+        # ditto for task data
+        g0,frontiers = args[0].strip_primitive_values(), \
+                       [front.strip_primitive_values() for front in args[1]]
+        original_tasks = {f.task.name: f.task for f in frontiers}
+        frontiers = [Frontier(f.entries, Task(f.task.name,f.task.request,[]))
+                     for f in frontiers ]
+        args = [g0,frontiers]
+
+    
     with timing("Induced a grammar"):
-        backend = kwargs.pop("backend", "pypy")
         if backend == "pypy":
             g, newFrontiers = callCompiled(pypyInduce, *args, **kwargs)
         elif backend == "rust":
@@ -43,6 +57,14 @@ def induceGrammar(*args, **kwargs):
             g, newFrontiers = memorizeInduce(*args, **kwargs)
         else:
             assert False, "unknown compressor"
+
+    if 'pypy' in backend:
+        g, newFrontiers = g.unstrip_primitive_values(), \
+                          [front.unstrip_primitive_values() for front in newFrontiers]
+        newFrontiers = [Frontier(f.entries, original_tasks[f.task.name])
+                        for f in newFrontiers] 
+        
+
     return g, newFrontiers
 
 def memorizeInduce(g, frontiers, **kwargs):

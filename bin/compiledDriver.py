@@ -1,3 +1,4 @@
+import dill
 import sys
 import time
 import traceback
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     sys.setrecursionlimit(10000)
     
     start = time.time()
-    request = pickle.load(sys.stdin.buffer)
+    request = dill.load(sys.stdin.buffer)
     dt = time.time() - start
     if dt > 1:
         eprint(

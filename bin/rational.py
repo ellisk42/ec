@@ -151,7 +151,6 @@ def prettyFunction(f, export):
     #matplotlib.use('Agg')
 
     import matplotlib.pyplot as plot
-    from scipy.misc import imresize
 
     figure = plot.figure()
     plot.plot(np.arange(-dx, dx, 0.05),
@@ -179,7 +178,7 @@ def drawFunction(n, dx, f, resolution=64):
     matplotlib.use('Agg')
 
     import matplotlib.pyplot as plot
-    from scipy.misc import imresize
+    from PIL import Image
 
     figure = plot.figure()
     plot.plot(np.arange(-dx, dx, 0.05),
@@ -188,14 +187,15 @@ def drawFunction(n, dx, f, resolution=64):
     plot.ylim([-10, 10])
     plot.axis('off')
     figure.canvas.draw()
-    data = np.fromstring(figure.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    data = np.frombuffer(figure.canvas.tostring_rgb(), dtype=np.uint8)
     data = data.reshape(figure.canvas.get_width_height()[::-1] + (3,))
     data = data[:, :, 0]
     data = 255 - data
     data = data / 255.
     # print "upper and lower bounds before
     # resizing",np.max(data),np.min(data),data.dtype
-    data = imresize(data, (resolution, resolution)) / 255.
+    data = np.array(Image.fromarray(data).resize(size=(resolution, resolution), resample=Image.BICUBIC).getdata()).reshape((resolution, resolution))
+        
     # print "upper and lower bounds after
     # resizing",np.max(data),np.min(data),data.dtype
 
@@ -296,8 +296,8 @@ def demo():
 
         prettyFunction(f, f"/tmp/rational_demo/{name.replace('/','$')}.png")
         print(j, "\n", name)
-        # a = drawFunction(200, 5., f, resolution=32) * 255
-        # Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
+        a = drawFunction(200, 5., f, resolution=32) * 255
+        Image.fromarray(a).convert('RGB').save("/tmp/rational_demo/%d.png" % j)
     assert False
 #demo()    
 

@@ -1,3 +1,30 @@
+EC^2 Baseline: w/ minibatching
+
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-standard-64 baseline_ec2_batch_list "python bin/list.py --compressor pypy  --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600  --testingTimeout 720 --storeTaskMetrics  --taskReranker randomShuffle --taskBatchSize 10 -RS 5000 --seed $SEED"; done
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-standard-64 baseline_ec2_batch_text "python bin/text.py --compressor pypy -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600  -RS 5000 --testingTimeout 600 --storeTaskMetrics  --taskReranker randomShuffle --taskBatchSize 10 --seed $SEED"; done
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-megamem-96 baseline_ec2_batch_logo "python bin/logo.py --compressor pypy  --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600  --taskReranker randomShuffle --taskBatchSize 50 -RS 5000 --seed $SEED"; done
+for SEED in `seq 1 5`; do python bin/launch.py -c  -k -z n1-highmem-64 baseline_ec2_batch_tower "python bin/tower.py --compressor pypy -t 3600  --pseudoCounts 30 --tasks new --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 50 --primitives new --recognitionTimeout 3600 -RS 5000 --seed $SEED" ; done
+for SEED in `seq 42 46`; do python bin/launch.py -k  -c -z n1-standard-64 baseline_ec2_batch_regex "python bin/regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram None --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --compressor pypy  --maximumFrontier 5 -i 25 -R 3600 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 40 --seed $SEED --primitives strConst --use_str_const --primitives reduced "; done
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-standard-20 baseline_ec2_batch_rational "python bin/rational.py --compressor pypy  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 10   -i 20 --structurePenalty 1.0 --pseudoCounts 30.0   -t 120 --recognitionTimeout 3600 -RS 5000 --testingTimeout 600 --CPUs 20 --seed $SEED"; done
+
+EC^2 Baseline: w/o minibatching
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-standard-64 baseline_ec2_no_batch_list "python bin/list.py --compressor pypy  --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600  --testingTimeout 600 --storeTaskMetrics  -RS 5000 --seed $SEED"; done
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-standard-64 baseline_ec2_no_batch_text "python bin/text.py --compressor pypy -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600  --testingTimeout 600 --storeTaskMetrics   --seed $SEED"; done
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-megamem-96 baseline_ec2_no_batch_logo "python bin/logo.py --compressor pypy  --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600   -RS 5000 --seed $SEED"; done
+for SEED in `seq 1 5`; do python bin/launch.py -c  -k -z n1-highmem-64 baseline_ec2_no_batch_tower "python bin/tower.py --compressor pypy -t 3600  --pseudoCounts 30 --tasks new --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600  --primitives new --recognitionTimeout 3600 -RS 5000 --seed $SEED" ; done
+for SEED in `seq 42 46`; do python bin/launch.py -k  -c -z n1-standard-64 baseline_ec2_no_batch_regex "python bin/regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram None --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --compressor pypy  --maximumFrontier 5 -i 25 -R 3600 --testingTimeout 600  --seed $SEED --primitives strConst --use_str_const --primitives reduced "; done
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-standard-20 baseline_ec2_no_batch_rational "python bin/rational.py --compressor pypy  --storeTaskMetrics  -i 20 --structurePenalty 1.0 --pseudoCounts 30.0   -t 120 --recognitionTimeout 3600 -RS 5000 --testingTimeout 600 --CPUs 20 --seed $SEED"; done
+
+
+EC^2 Baseline: origami programming and physics
+python bin/launch.py -k  -c -z n1-highmem-64 baseline_ec2_McCarthy "python  bin/list.py --primitives McCarthy --dataset bootstrap --structurePenalty 1. --pseudoCounts 30 --arity 4 -g  -t 57600 --taskReranker unsolved --topK 5 --maximumFrontier 5 --compressor pypy "
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-highmem-64 baseline_ec2_scientific "python bin/scientificLaws.py  -t 14400 --topK 5 --arity 3 --maximumFrontier 5 -i 20 -R 30 -RS 5000  -r 0. --taskReranker unsolved --compressor pypy"; done
+
+
+
+
+
+
 To see the billing information broken down by instance type:
 https://console.aws.amazon.com/cost-reports/home#/custom?groupBy=InstanceType&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&timeRangeOption=Last12Months&granularity=Monthly&reportName=&reportType=CostUsage&isTemplate=true&startDate=2018-01-01&endDate=2018-12-31&filter=%5B%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack
 

@@ -1,6 +1,6 @@
 from dreamcoder.utilities import eprint
 import random
-import numpy as np
+
 
 class DefaultTaskBatcher:
         """Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
@@ -97,6 +97,7 @@ def entropyRandomBatch(ec_result, tasks, taskBatchSize, randomRatio):
 
 def kNearestNeighbors(ec_result, tasks, k, task):
         """Finds the k nearest neighbors in the recognition model logProduction space to a given task."""
+        import numpy as np
         cosDistance = ec_result.recognitionModel.grammarLogProductionDistanceToTask(task, tasks)
         argSort = np.argsort(-cosDistance)# Want the greatest similarity.
         topK = argSort[:k]

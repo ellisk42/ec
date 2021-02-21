@@ -34,6 +34,18 @@ class Grammar(object):
                                     for l,t,p in self.productions ],
                        continuationType=self.continuationType)
 
+    def strip_primitive_values(self):
+        return Grammar(logVariable=self.logVariable,
+                       productions=[(l,t,strip_primitive_values(p))
+                                    for l,t,p in self.productions ],
+                       continuationType=self.continuationType)
+
+    def unstrip_primitive_values(self):
+        return Grammar(logVariable=self.logVariable,
+                       productions=[(l,t,unstrip_primitive_values(p))
+                                    for l,t,p in self.productions ],
+                       continuationType=self.continuationType)
+
     def __setstate__(self, state):
         """
         Legacy support for loading grammar objects without the imperative type filled in

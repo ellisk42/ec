@@ -1146,7 +1146,38 @@ class EtaLongVisitor(object):
         
 
 
-        
+class StripPrimitiveVisitor():
+    """Replaces all primitives .value's w/ None. Does not destructively modify anything"""
+    def invented(self,e):
+        return Invented(e.body.visit(self))
+    def primitive(self,e):
+        return Primitive(e.name,e.tp,None)
+    def application(self,e):
+        return Application(e.f.visit(self),
+                           e.x.visit(self))
+    def abstraction(self,e):
+        return Abstraction(e.body.visit(self))
+    def index(self,e): return e
+
+class ReplacePrimitiveValueVisitor():
+    """Intended to be used after StripPrimitiveVisitor.
+    Replaces all primitive.value's with their corresponding entry in Primitive.GLOBALS"""
+    def invented(self,e):
+        return Invented(e.body.visit(self))
+    def primitive(self,e):
+        return Primitive(e.name,e.tp,Primitive.GLOBALS[e.name].value)
+    def application(self,e):
+        return Application(e.f.visit(self),
+                           e.x.visit(self))
+    def abstraction(self,e):
+        return Abstraction(e.body.visit(self))
+    def index(self,e): return e
+
+def strip_primitive_values(e):
+    return e.visit(StripPrimitiveVisitor())
+def unstrip_primitive_values(e):
+    return e.visit(ReplacePrimitiveValueVisitor())
+    
 
 # from luke
 class TokeniseVisitor(object):

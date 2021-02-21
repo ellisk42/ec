@@ -1,4 +1,5 @@
 from dreamcoder.utilities import *
+from dreamcoder.program import *
 from dreamcoder.task import Task
 
 
@@ -19,6 +20,17 @@ class FrontierEntry(object):
         return "FrontierEntry(program={self.program}, logPrior={self.logPrior}, logLikelihood={self.logLikelihood}".format(
             self=self)
 
+    def strip_primitive_values(self):
+        return FrontierEntry(program=strip_primitive_values(self.program),
+                             logPrior=self.logPrior,
+                             logPosterior=self.logPosterior,
+                             logLikelihood=self.logLikelihood)
+    def unstrip_primitive_values(self):
+        return FrontierEntry(program=unstrip_primitive_values(self.program),
+                             logPrior=self.logPrior,
+                             logPosterior=self.logPosterior,
+                             logLikelihood=self.logLikelihood)
+
 
 class Frontier(object):
     def __init__(self, frontier, task):
@@ -38,6 +50,13 @@ class Frontier(object):
                 "programs": [{"program": str(e.program),
                               "logLikelihood": e.logLikelihood}
                              for e in self ]}
+
+    def strip_primitive_values(self):
+        return Frontier([e.strip_primitive_values() for e in self.entries ],
+                        self.task)
+    def unstrip_primitive_values(self):
+        return Frontier([e.unstrip_primitive_values() for e in self.entries ],
+                        self.task)
 
     DUMMYFRONTIERCOUNTER = 0
 

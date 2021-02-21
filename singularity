@@ -13,8 +13,7 @@ From: ubuntu
 
     HOME=/container
     export HOME
-
-    PATH="/usr/local/conda/bin:/container/pypy3.5-6.0.0-linux_x86_64-portable/bin:$PATH"
+    PATH="/usr/local/conda/bin:/container/pypy3.6-v7.3.3-linux64/bin:$PATH"
     export PATH
 
 
@@ -31,10 +30,21 @@ From: ubuntu
     chmod 777 /container
     HOME=/container
     export HOME
+    
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    chmod +x Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh -b  -p /usr/local/conda
+    rm ./Miniconda3-latest-Linux-x86_64.sh
+    export PATH="/usr/local/conda/bin:$PATH"
 
+    conda install -y  numpy dill pyzmq matplotlib protobuf scikit-learn scipy
+    pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz frozendict pathos
+    
+    conda install pytorch torchvision -c pytorch
+    
     opam init -y --auto-setup --root /container/.opam
     opam update
-    opam switch 4.06.1+flambda
+    opam switch create 4.06.1+flambda
     eval `opam config env`
     opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq utop jbuilder
     #opam install ocp-indent merlin
@@ -47,26 +57,18 @@ open Core;;
 " >> /container/.ocamlinit
     echo 'eval `opam config env`' >> /container/.bashrc  
 
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    chmod +x Miniconda3-latest-Linux-x86_64.sh
-    ./Miniconda3-latest-Linux-x86_64.sh -b  -p /usr/local/conda
-    rm ./Miniconda3-latest-Linux-x86_64.sh
-    export PATH="/usr/local/conda/bin:$PATH"
 
-    conda install -y  numpy dill pyzmq matplotlib scipy protobuf scikit-learn
-    conda install pytorch torchvision -c pytorch
-    pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz frozendict pathos
 
-    wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
-    tar xjvf pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
-    rm pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
-    mv pypy3.5-6.0.0-linux_x86_64-portable /container
-    PATH=/container/pypy3.5-6.0.0-linux_x86_64-portable/bin:$PATH
+    wget https://downloads.python.org/pypy/pypy3.6-v7.3.3-linux64.tar.bz2
+    tar xjvf pypy3.6-v7.3.3-linux64.tar.bz2
+    rm pypy3.6-v7.3.3-linux64.tar.bz2
+    mv pypy3.6-v7.3.3-linux64 /container
+    PATH=/container/pypy3.6-v7.3.3-linux64/bin:$PATH
 
     pypy3 -m ensurepip
-    pypy3 -m pip install --user vmprof
-    pypy3 -m pip install --user dill
-    pypy3 -m pip install --user psutil
+    pypy3 -m pip install vmprof
+    pypy3 -m pip install dill
+    pypy3 -m pip install psutil
+    
 
-
-
+    

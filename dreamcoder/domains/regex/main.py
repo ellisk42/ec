@@ -6,7 +6,6 @@ from dreamcoder.dreamcoder import explorationCompression, Task
 from dreamcoder.grammar import Grammar
 from dreamcoder.likelihoodModel import add_cutoff_values, add_string_constants
 from dreamcoder.program import Abstraction, Application
-from dreamcoder.recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 from dreamcoder.type import tpregex
 from dreamcoder.utilities import eprint, flatten, testTrainSplit, POSITIVEINFINITY
 
@@ -15,76 +14,77 @@ import math
 import pregex as pre
 import os
 
+try:
+    from dreamcoder.recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
+    class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+        H = 64
+        special = 'regex'
 
-class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    H = 64
-    special = 'regex'
+        def tokenize(self, examples):
+            def sanitize(l): return [z if z in self.lexicon else "?"
+                                     for z_ in l
+                                     for z in (z_ if isinstance(z_, list) else [z_])]
 
-    def tokenize(self, examples):
-        def sanitize(l): return [z if z in self.lexicon else "?"
-                                 for z_ in l
-                                 for z in (z_ if isinstance(z_, list) else [z_])]
-
-        tokenized = []
-        for xs, y in examples:
-            if isinstance(y, list):
-                y = ["LIST_START"] + y + ["LIST_END"]
-            else:
-                y = [y]
-            y = sanitize(y)
-            if len(y) > self.maximumLength:
-                return None
-
-            serializedInputs = []
-            for xi, x in enumerate(xs):
-                if isinstance(x, list):
-                    x = ["LIST_START"] + x + ["LIST_END"]
+            tokenized = []
+            for xs, y in examples:
+                if isinstance(y, list):
+                    y = ["LIST_START"] + y + ["LIST_END"]
                 else:
-                    x = [x]
-                x = sanitize(x)
-                if len(x) > self.maximumLength:
+                    y = [y]
+                y = sanitize(y)
+                if len(y) > self.maximumLength:
                     return None
-                serializedInputs.append(x)
 
-            tokenized.append((tuple(serializedInputs), y))
+                serializedInputs = []
+                for xi, x in enumerate(xs):
+                    if isinstance(x, list):
+                        x = ["LIST_START"] + x + ["LIST_END"]
+                    else:
+                        x = [x]
+                    x = sanitize(x)
+                    if len(x) > self.maximumLength:
+                        return None
+                    serializedInputs.append(x)
 
-        return tokenized
+                tokenized.append((tuple(serializedInputs), y))
 
-    def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
-            x, str))).union({"LIST_START", "LIST_END", "?"})
+            return tokenized
 
-        self.num_examples_list = [len(t.examples) for t in tasks]
+        def __init__(self, tasks, testingTasks=[], cuda=False):
+            self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
+                x, str))).union({"LIST_START", "LIST_END", "?"})
 
-        # Calculate the maximum length
-        self.maximumLength = POSITIVEINFINITY
-        self.maximumLength = max(len(l)
-                                 for t in tasks + testingTasks
-                                 for xs, y in self.tokenize(t.examples)
-                                 for l in [y] + [x for x in xs])
+            self.num_examples_list = [len(t.examples) for t in tasks]
 
-        super(
-            LearnedFeatureExtractor,
-            self).__init__(
-            lexicon=list(
-                self.lexicon),
-            tasks=tasks,
-            cuda=cuda,
-            H=self.H,
-            bidirectional=True)
-        self.parallelTaskOfProgram = False
+            # Calculate the maximum length
+            self.maximumLength = POSITIVEINFINITY
+            self.maximumLength = max(len(l)
+                                     for t in tasks + testingTasks
+                                     for xs, y in self.tokenize(t.examples)
+                                     for l in [y] + [x for x in xs])
+
+            super(
+                LearnedFeatureExtractor,
+                self).__init__(
+                lexicon=list(
+                    self.lexicon),
+                tasks=tasks,
+                cuda=cuda,
+                H=self.H,
+                bidirectional=True)
+            self.parallelTaskOfProgram = False
 
 
-    def taskOfProgram(self, p, t):
-        #raise NotImplementedError
-        num_examples = random.choice(self.num_examples_list)
+        def taskOfProgram(self, p, t):
+            #raise NotImplementedError
+            num_examples = random.choice(self.num_examples_list)
 
-        p = p.visit(ConstantInstantiateVisitor.SINGLE)
+            p = p.visit(ConstantInstantiateVisitor.SINGLE)
 
-        preg = p.evaluate([])(pre.String(""))
-        t = Task("Helm", t, [((), list(preg.sample())) for _ in range(num_examples) ])
-        return t
-        
+            preg = p.evaluate([])(pre.String(""))
+            t = Task("Helm", t, [((), list(preg.sample())) for _ in range(num_examples) ])
+            return t
+except: pass
         #in init: loop over tasks, save lengths, 
 
 
@@ -332,7 +332,7 @@ def main(args):
         "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
-        "compressor": "ocaml"
+        "compressor": args.get("compressor","ocaml")
     })
     ####
 

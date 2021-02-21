@@ -3,7 +3,11 @@ import datetime
 import dill
 
 from dreamcoder.compression import induceGrammar
-from dreamcoder.recognition import *
+from dreamcoder.utilities import *
+try:
+    from dreamcoder.recognition import *
+except:
+    eprint("Failure loading recognition - only acceptable if using pypy ")
 from dreamcoder.enumeration import *
 from dreamcoder.fragmentGrammar import *
 from dreamcoder.taskBatcher import *
@@ -431,7 +435,7 @@ def ecIterator(grammar, tasks,
                 previousRecognitionModel = result.recognitionModel
 
             thisRatio = helmholtzRatio
-            if j == 0 and not biasOptimal: thisRatio = 0
+            #if j == 0 and not biasOptimal: thisRatio = 0
             if all( f.empty for f in result.allFrontiers.values() ): thisRatio = 1.                
 
             tasksHitBottomUp = \

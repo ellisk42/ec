@@ -8,123 +8,122 @@ from dreamcoder.utilities import *
 import os
 import datetime
 
-from dreamcoder.recognition import variable
-import torch.nn as nn
-import torch.nn.functional as F
+try: #pypy will fail
+    from dreamcoder.recognition import variable
+    import torch.nn as nn
+    import torch.nn.functional as F
+
+    class Flatten(nn.Module):
+        def __init__(self):
+            super(Flatten, self).__init__()
+
+        def forward(self, x):
+            return x.view(x.size(0), -1)
 
 
+    class TowerCNN(nn.Module):
+        special = 'tower'
 
-class Flatten(nn.Module):
-    def __init__(self):
-        super(Flatten, self).__init__()
+        def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
+            super(TowerCNN, self).__init__()
+            self.CUDA = cuda
+            self.recomputeTasks = True
 
-    def forward(self, x):
-        return x.view(x.size(0), -1)
+            self.outputDimensionality = H
+            def conv_block(in_channels, out_channels):
+                return nn.Sequential(
+                    nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                    # nn.BatchNorm2d(out_channels),
+                    nn.ReLU(),
+                    nn.MaxPool2d(2)
+                )
 
+            self.inputImageDimension = 256
+            self.resizedDimension = 64
+            assert self.inputImageDimension % self.resizedDimension == 0
 
-class TowerCNN(nn.Module):
-    special = 'tower'
-    
-    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
-        super(TowerCNN, self).__init__()
-        self.CUDA = cuda
-        self.recomputeTasks = True
+            # channels for hidden
+            hid_dim = 64
+            z_dim = 64
 
-        self.outputDimensionality = H
-        def conv_block(in_channels, out_channels):
-            return nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, 3, padding=1),
-                # nn.BatchNorm2d(out_channels),
-                nn.ReLU(),
-                nn.MaxPool2d(2)
+            self.encoder = nn.Sequential(
+                conv_block(6, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, z_dim),
+                Flatten()
             )
 
-        self.inputImageDimension = 256
-        self.resizedDimension = 64
-        assert self.inputImageDimension % self.resizedDimension == 0
+            self.outputDimensionality = 1024
 
-        # channels for hidden
-        hid_dim = 64
-        z_dim = 64
+            if cuda:
+                self.CUDA=True
+                self.cuda()  # I think this should work?
 
-        self.encoder = nn.Sequential(
-            conv_block(6, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, z_dim),
-            Flatten()
-        )
+        def forward(self, v, v2=None):
+            """v: tower to build. v2: image of tower we have built so far"""
+            # insert batch if it is not already there
+            if len(v.shape) == 3:
+                v = np.expand_dims(v, 0)
+                inserted_batch = True
+                if v2 is not None:
+                    assert len(v2.shape) == 3
+                    v2 = np.expand_dims(v2, 0)
+            elif len(v.shape) == 4:
+                inserted_batch = False
+                pass
+            else:
+                assert False, "v has the shape %s"%(str(v.shape))
 
-        self.outputDimensionality = 1024
+            if v2 is None: v2 = np.zeros(v.shape)
 
-        if cuda:
-            self.CUDA=True
-            self.cuda()  # I think this should work?
+            v = np.concatenate((v,v2), axis=3)
+            v = np.transpose(v,(0,3,1,2))
+            assert v.shape == (v.shape[0], 6,self.inputImageDimension,self.inputImageDimension)
+            v = variable(v, cuda=self.CUDA).float()
+            window = int(self.inputImageDimension/self.resizedDimension)
+            v = F.avg_pool2d(v, (window,window))
+            #showArrayAsImage(np.transpose(v.data.numpy()[0,:3,:,:],[1,2,0]))
+            v = self.encoder(v)
+            if inserted_batch:
+                return v.view(-1)
+            else:
+                return v
 
-    def forward(self, v, v2=None):
-        """v: tower to build. v2: image of tower we have built so far"""
-        # insert batch if it is not already there
-        if len(v.shape) == 3:
-            v = np.expand_dims(v, 0)
-            inserted_batch = True
-            if v2 is not None:
-                assert len(v2.shape) == 3
-                v2 = np.expand_dims(v2, 0)
-        elif len(v.shape) == 4:
-            inserted_batch = False
-            pass
-        else:
-            assert False, "v has the shape %s"%(str(v.shape))
-        
-        if v2 is None: v2 = np.zeros(v.shape)
-        
-        v = np.concatenate((v,v2), axis=3)
-        v = np.transpose(v,(0,3,1,2))
-        assert v.shape == (v.shape[0], 6,self.inputImageDimension,self.inputImageDimension)
-        v = variable(v, cuda=self.CUDA).float()
-        window = int(self.inputImageDimension/self.resizedDimension)
-        v = F.avg_pool2d(v, (window,window))
-        #showArrayAsImage(np.transpose(v.data.numpy()[0,:3,:,:],[1,2,0]))
-        v = self.encoder(v)
-        if inserted_batch:
-            return v.view(-1)
-        else:
-            return v
+        def featuresOfTask(self, t, t2=None):  # Take a task and returns [features]
+            return self(t.getImage(),
+                        None if t2 is None else t2.getImage(drawHand=True))
 
-    def featuresOfTask(self, t, t2=None):  # Take a task and returns [features]
-        return self(t.getImage(),
-                    None if t2 is None else t2.getImage(drawHand=True))
-    
-    def featuresOfTasks(self, ts, t2=None):  # Take a task and returns [features]
-        """Takes the goal first; optionally also takes the current state second"""
-        if t2 is None:
-            pass
-        elif isinstance(t2, Task):
-            assert False
-            #t2 = np.array([t2.getImage(drawHand=True)]*len(ts))
-        elif isinstance(t2, list):
-            t2 = np.array([t.getImage(drawHand=True) if t else np.zeros((self.inputImageDimension,
-                                                                         self.inputImageDimension,
-                                                                         3))
-                           for t in t2])
-        else:
-            assert False
-            
-        return self(np.array([t.getImage() for t in ts]),
-                    t2)
+        def featuresOfTasks(self, ts, t2=None):  # Take a task and returns [features]
+            """Takes the goal first; optionally also takes the current state second"""
+            if t2 is None:
+                pass
+            elif isinstance(t2, Task):
+                assert False
+                #t2 = np.array([t2.getImage(drawHand=True)]*len(ts))
+            elif isinstance(t2, list):
+                t2 = np.array([t.getImage(drawHand=True) if t else np.zeros((self.inputImageDimension,
+                                                                             self.inputImageDimension,
+                                                                             3))
+                               for t in t2])
+            else:
+                assert False
 
-    def taskOfProgram(self, p, t,
-                      lenient=False):
-        try:
-            pl = executeTower(p,0.05)
-            if pl is None or (not lenient and len(pl) == 0): return None
-            if len(pl) > 100 or towerLength(pl) > 360: return None
+            return self(np.array([t.getImage() for t in ts]),
+                        t2)
 
-            t = SupervisedTower("tower dream", p)
-            return t
-        except Exception as e:
-            return None
+        def taskOfProgram(self, p, t,
+                          lenient=False):
+            try:
+                pl = executeTower(p,0.05)
+                if pl is None or (not lenient and len(pl) == 0): return None
+                if len(pl) > 100 or towerLength(pl) > 360: return None
 
+                t = SupervisedTower("tower dream", p)
+                return t
+            except Exception as e:
+                return None
+except: pass
 
 
 
@@ -309,12 +308,15 @@ def main(arguments):
     shuffledTrain = shuffledTrain + [None]*(60 - len(shuffledTrain))
     random.shuffle(shuffledTest)
     shuffledTest = shuffledTest + [None]*(60 - len(shuffledTest))
-    SupervisedTower.exportMany("/tmp/every_tower.png",shuffledTrain + shuffledTest, shuffle=False, columns=10)
-    for j,task in enumerate(tasks):
-        task.exportImage(f"/tmp/tower_task_{j}.png")
-    for k,v in dSLDemo().items():
-        scipy.misc.imsave(f"/tmp/tower_dsl_{k}.png", v)
-        os.system(f"convert /tmp/tower_dsl_{k}.png -channel RGB -negate /tmp/tower_dsl_{k}.png")
+    try:
+        SupervisedTower.exportMany("/tmp/every_tower.png",shuffledTrain + shuffledTest, shuffle=False, columns=10)
+        for j,task in enumerate(tasks):
+            task.exportImage(f"/tmp/tower_task_{j}.png")
+        for k,v in dSLDemo().items():
+            scipy.misc.imsave(f"/tmp/tower_dsl_{k}.png", v)
+            os.system(f"convert /tmp/tower_dsl_{k}.png -channel RGB -negate /tmp/tower_dsl_{k}.png")
+    except:
+        eprint("WARNING: can't export images. scipy needs to be an older version")
         
 
     timestamp = datetime.datetime.now().isoformat()
@@ -322,7 +324,11 @@ def main(arguments):
     os.system("mkdir -p %s"%outputDirectory)
 
     os.system("mkdir  -p data/tower_dreams_initial")
-    dreamOfTowers(g0, "data/tower_dreams_initial", make_montage=False)
+    try:
+        dreamOfTowers(g0, "data/tower_dreams_initial", make_montage=False)
+        dreamOfTowers(g0, "%s/random_0"%outputDirectory)
+    except:
+        eprint("WARNING: can't export images. scipy needs to be an older version")
 
     evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
@@ -331,7 +337,7 @@ def main(arguments):
                            evaluationTimeout=evaluationTimeout,
                            **arguments)
 
-    dreamOfTowers(g0, "%s/random_0"%outputDirectory)
+    
     
     for result in generator:
         continue

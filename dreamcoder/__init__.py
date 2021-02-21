@@ -35,7 +35,10 @@ from dreamcoder import grammar
 from dreamcoder import likelihoodModel
 from dreamcoder import program
 from dreamcoder import primitiveGraph
-from dreamcoder import recognition
+try:
+    from dreamcoder import recognition
+except:
+    print("Failure loading recognition - only acceptable if using pypy ",file=sys.stderr)
 from dreamcoder import task
 from dreamcoder import taskBatcher
 from dreamcoder import type
@@ -51,7 +54,7 @@ from dreamcoder.domains.tower import main as tower_main
 from dreamcoder.domains.regex import groundtruthRegexes
 from dreamcoder.domains.regex import regexPrimitives
 from dreamcoder.domains.regex import makeRegexTasks
-from dreamcoder.domains.regex import main as regex_main
+#from dreamcoder.domains.regex import main as regex_main
 from dreamcoder.domains.logo import logoPrimitives
 from dreamcoder.domains.logo import makeLogoTasks
 from dreamcoder.domains.logo import main as logo_main
@@ -72,7 +75,8 @@ sys.modules['frontier'] = frontier
 sys.modules['grammar'] = grammar
 sys.modules['likelihoodModel'] = likelihoodModel
 sys.modules['program'] = program
-sys.modules['recognition'] = recognition
+try: sys.modules['recognition'] = recognition
+except: pass
 sys.modules['task'] = task
 sys.modules['taskBatcher'] = taskBatcher
 sys.modules['type'] = type
@@ -84,20 +88,20 @@ sys.modules['napsPrimitives'] = napsPrimitives
 sys.modules['makeTowerTasks'] = makeTowerTasks
 sys.modules['towerPrimitives'] = towerPrimitives
 sys.modules['tower_common'] = tower_common
-sys.modules['tower'] = tower_main
+#sys.modules['tower'] = tower_main
 sys.modules['groundtruthRegexes'] = groundtruthRegexes
 sys.modules['regexPrimitives'] = regexPrimitives
 sys.modules['makeRegexTasks'] = makeRegexTasks
-sys.modules['regexes'] = regex_main
+#sys.modules['regexes'] = regex_main
 sys.modules['deepcoderPrimitives'] = deepcoderPrimitives
 sys.modules['logoPrimitives'] = logoPrimitives
 sys.modules['makeLogoTasks'] = makeLogoTasks
-sys.modules['logo'] = logo_main
+#sys.modules['logo'] = logo_main
 sys.modules['listPrimitives'] = listPrimitives
 sys.modules['makeListTasks'] = makeListTasks
-sys.modules['list'] = list_main
+#sys.modules['list'] = list_main
 sys.modules['arithmeticPrimitives'] = arithmeticPrimitives
 sys.modules['textPrimitives'] = textPrimitives
 sys.modules['makeTextTasks'] = makeTextTasks
-sys.modules['text'] = text_main
+#sys.modules['text'] = text_main
 sys.modules['primitiveGraph'] = primitiveGraph

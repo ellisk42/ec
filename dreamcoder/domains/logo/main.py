@@ -8,17 +8,25 @@ import subprocess
 import sys
 import time
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+try:
+    import numpy as np
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+except:
+    print("WARNING: Could not import torch. This is only okay when doing pypy compression.",
+          file=sys.stderr)
 
 from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
-from dreamcoder.recognition import variable, maybe_cuda
+try:
+    from dreamcoder.recognition import variable, maybe_cuda
+except:
+    print("WARNING: Could not import recognition. This is only okay when doing pypy compression.",
+          file=sys.stderr)
 from dreamcoder.task import Task
 from dreamcoder.type import arrow
 from dreamcoder.utilities import eprint, testTrainSplit, loadPickle
@@ -66,89 +74,91 @@ def dreamFromGrammar(g, directory, N=100):
         with open(f"{directory}/{n}.dream","w") as handle:
             handle.write(str(p))        
     
+try:
+    class Flatten(nn.Module):
+        def __init__(self):
+            super(Flatten, self).__init__()
 
-class Flatten(nn.Module):
-    def __init__(self):
-        super(Flatten, self).__init__()
-
-    def forward(self, x):
-        return x.view(x.size(0), -1)
-
-
-class LogoFeatureCNN(nn.Module):
-    special = "LOGO"
-    
-    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
-        super(LogoFeatureCNN, self).__init__()
-
-        self.sub = prefix_dreams + str(int(time.time()))
-
-        self.recomputeTasks = False
-
-        def conv_block(in_channels, out_channels, p=True):
-            return nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, 3, padding=1),
-                # nn.BatchNorm2d(out_channels),
-                nn.ReLU(),
-                # nn.Conv2d(out_channels, out_channels, 3, padding=1),
-                # nn.ReLU(),
-                nn.MaxPool2d(2))
-
-        self.inputImageDimension = 128
-        self.resizedDimension = 128
-        assert self.inputImageDimension % self.resizedDimension == 0
-
-        # channels for hidden
-        hid_dim = 64
-        z_dim = 64
-
-        self.encoder = nn.Sequential(
-            conv_block(1, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, z_dim),
-            Flatten()
-        )
-
-        self.outputDimensionality = 256
-
-        
+        def forward(self, x):
+            return x.view(x.size(0), -1)
 
 
-    def forward(self, v):
-        assert len(v) == self.inputImageDimension*self.inputImageDimension
-        floatOnlyTask = list(map(float, v))
-        reshaped = [floatOnlyTask[i:i + self.inputImageDimension]
-                    for i in range(0, len(floatOnlyTask), self.inputImageDimension)]
-        v = variable(reshaped).float()
-        # insert channel and batch
-        v = torch.unsqueeze(v, 0)
-        v = torch.unsqueeze(v, 0)
-        v = maybe_cuda(v, next(self.parameters()).is_cuda)/256.
-        window = int(self.inputImageDimension/self.resizedDimension)
-        v = F.avg_pool2d(v, (window,window))
-        v = self.encoder(v)
-        return v.view(-1)
+    class LogoFeatureCNN(nn.Module):
+        special = "LOGO"
 
-    def featuresOfTask(self, t):  # Take a task and returns [features]
-        return self(t.highresolution)
+        def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
+            super(LogoFeatureCNN, self).__init__()
 
-    def tasksOfPrograms(self, ps, types):
-        images = drawLogo(*ps, resolution=128)
-        if len(ps) == 1: images = [images]
-        tasks = []
-        for i in images:
-            if isinstance(i, str): tasks.append(None)
-            else:
-                t = Task("Helm", arrow(turtle,turtle), [])
-                t.highresolution = i
-                tasks.append(t)
-        return tasks        
+            self.sub = prefix_dreams + str(int(time.time()))
 
-    def taskOfProgram(self, p, t):
-        return self.tasksOfPrograms([p], None)[0]
+            self.recomputeTasks = False
+
+            def conv_block(in_channels, out_channels, p=True):
+                return nn.Sequential(
+                    nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                    # nn.BatchNorm2d(out_channels),
+                    nn.ReLU(),
+                    # nn.Conv2d(out_channels, out_channels, 3, padding=1),
+                    # nn.ReLU(),
+                    nn.MaxPool2d(2))
+
+            self.inputImageDimension = 128
+            self.resizedDimension = 128
+            assert self.inputImageDimension % self.resizedDimension == 0
+
+            # channels for hidden
+            hid_dim = 64
+            z_dim = 64
+
+            self.encoder = nn.Sequential(
+                conv_block(1, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, z_dim),
+                Flatten()
+            )
+
+            self.outputDimensionality = 256
+
+
+
+
+        def forward(self, v):
+            assert len(v) == self.inputImageDimension*self.inputImageDimension
+            floatOnlyTask = list(map(float, v))
+            reshaped = [floatOnlyTask[i:i + self.inputImageDimension]
+                        for i in range(0, len(floatOnlyTask), self.inputImageDimension)]
+            v = variable(reshaped).float()
+            # insert channel and batch
+            v = torch.unsqueeze(v, 0)
+            v = torch.unsqueeze(v, 0)
+            v = maybe_cuda(v, next(self.parameters()).is_cuda)/256.
+            window = int(self.inputImageDimension/self.resizedDimension)
+            v = F.avg_pool2d(v, (window,window))
+            v = self.encoder(v)
+            return v.view(-1)
+
+        def featuresOfTask(self, t):  # Take a task and returns [features]
+            return self(t.highresolution)
+
+        def tasksOfPrograms(self, ps, types):
+            images = drawLogo(*ps, resolution=128)
+            if len(ps) == 1: images = [images]
+            tasks = []
+            for i in images:
+                if isinstance(i, str): tasks.append(None)
+                else:
+                    t = Task("Helm", arrow(turtle,turtle), [])
+                    t.highresolution = i
+                    tasks.append(t)
+            return tasks        
+
+        def taskOfProgram(self, p, t):
+            return self.tasksOfPrograms([p], None)[0]
+except:
+    pass
 
 def list_options(parser):
     parser.add_argument("--proto",
@@ -383,8 +393,11 @@ def main(args):
 
     test, train = testTrainSplit(tasks, args.pop("split"))
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
-    if test: montageTasks(test,"test_")    
-    montageTasks(train,"train_")
+    try:
+        if test: montageTasks(test,"test_")    
+        montageTasks(train,"train_")
+    except:
+        eprint("WARNING: couldn't generate montage. Do you have an old version of scipy?")
 
     if red is not []:
         for reducing in red:

@@ -2,7 +2,6 @@ from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.domains.text.makeTextTasks import makeTasks, loadPBETasks
 from dreamcoder.domains.text.textPrimitives import primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget
-from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 
 import os
@@ -32,34 +31,37 @@ class ConstantInstantiateVisitor(object):
         return Abstraction(e.body.visit(self))
 
 
-class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    special = 'string'
-    
-    def tokenize(self, examples):
-        def tokenize_example(xs,y):
-            if not isinstance(y, list): y = [y]
-            return xs,y
-        return [tokenize_example(*e) for e in examples]
+try:
+    from dreamcoder.recognition import *
+    class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+        special = 'string'
 
-    def __init__(self, tasks, testingTasks=[], cuda=False):
-        lexicon = {c
-                   for t in tasks + testingTasks
-                   for xs, y in self.tokenize(t.examples)
-                   for c in reduce(lambda u, v: u + v, list(xs) + [y])}
-        self.recomputeTasks = True
+        def tokenize(self, examples):
+            def tokenize_example(xs,y):
+                if not isinstance(y, list): y = [y]
+                return xs,y
+            return [tokenize_example(*e) for e in examples]
 
-        super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
-                                                      H=64,
-                                                      tasks=tasks,
-                                                      bidirectional=True,
-                                                      cuda=cuda)
-        self.MAXINPUTS = 8
+        def __init__(self, tasks, testingTasks=[], cuda=False):
+            lexicon = {c
+                       for t in tasks + testingTasks
+                       for xs, y in self.tokenize(t.examples)
+                       for c in reduce(lambda u, v: u + v, list(xs) + [y])}
+            self.recomputeTasks = True
 
-    def taskOfProgram(self, p, tp):
-        # Instantiate STRING w/ random words
-        p = p.visit(ConstantInstantiateVisitor.SINGLE)
-        return super(LearnedFeatureExtractor, self).taskOfProgram(p, tp)
+            super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
+                                                          H=64,
+                                                          tasks=tasks,
+                                                          bidirectional=True,
+                                                          cuda=cuda)
+            self.MAXINPUTS = 8
 
+        def taskOfProgram(self, p, tp):
+            # Instantiate STRING w/ random words
+            p = p.visit(ConstantInstantiateVisitor.SINGLE)
+            return super(LearnedFeatureExtractor, self).taskOfProgram(p, tp)
+except:
+    pass
 
 ### COMPETITION CODE
 

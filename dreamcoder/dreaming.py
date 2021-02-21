@@ -2,13 +2,10 @@ import json
 import os
 import subprocess
 
-from pathos.multiprocessing import Pool
-
 from dreamcoder.domains.arithmetic.arithmeticPrimitives import k1, k0, addition, subtraction, multiplication
 from dreamcoder.frontier import Frontier, FrontierEntry
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
-from dreamcoder.recognition import RecognitionModel, DummyFeatureExtractor
 from dreamcoder.task import Task
 from dreamcoder.type import arrow, tint
 from dreamcoder.utilities import tuplify, timing, eprint, get_root_dir, mean
@@ -39,6 +36,7 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None):
+    from pathos.multiprocessing import Pool
     requests = list({t.request for t in tasks})
     inputs = {r: list({tuplify(xs)
                        for t in tasks if t.request == r
@@ -72,6 +70,7 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
 
 
 if __name__ == "__main__":
+    from dreamcoder.recognition import RecognitionModel, DummyFeatureExtractor
     g = Grammar.uniform([k1, k0, addition, subtraction, multiplication])
     frontiers = helmholtzEnumeration(g,
                                      arrow(tint, tint),

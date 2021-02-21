@@ -1,8 +1,13 @@
+import sys
 from dreamcoder.program import Primitive
 from dreamcoder.grammar import Grammar
 from dreamcoder.type import arrow, tpregex
 from string import printable
-from pregex import pregex
+
+try:
+    from pregex import pregex
+except:
+    print("Failure to load pregex. This is only acceptable if using pypy",file=sys.stderr)
 
 
 # evaluation to regular regex form. then I can unflatten using Luke's stuff.

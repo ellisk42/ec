@@ -3,7 +3,11 @@ import os
 import json
 from string import printable
 
-from pregex import pregex
+import sys
+try:
+    from pregex import pregex
+except:
+    print("Failure to load pregex. This is only acceptable if using pypy",file=sys.stderr)
 
 from dreamcoder.task import Task
 from dreamcoder.type import tpregex, arrow
