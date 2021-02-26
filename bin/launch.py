@@ -7,6 +7,18 @@ import sys
 
 ZONE = None
 
+## Azure configuration flags.
+# Approximate conversion between similar VMs on Amazon and Azure.
+AMAZON_TO_AZURE_SIZING = {
+    "n1-standard-64" : "Standard_E64_v3",
+    "n1-highmem-64" : "Standard_E64_v4",
+    "n1-megamem-96" : "Standard_M128s"
+}
+AZURE_DEFAULT_RESOURCE_GROUP = "ec2_resource_group_0"
+AZURE_DEFAULT_REGION = "centralus"
+AZURE_DEFAULT_BASE_IMAGE = "/subscriptions/655f1464-5d1f-48ef-9ed3-dca83e60bdd5/resourceGroups/ec2_resource_group_0/providers/Microsoft.Compute/galleries/cocosci/images/ec2_base_image_0"
+AZURE_DEFAULT_USERNAME = "azureuser"
+
 def user():
     import getpass
     return getpass.getuser()
@@ -15,6 +27,21 @@ def user():
 def branch():
     return subprocess.check_output(
         ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode("utf-8").strip()
+
+def launchAzureCloud(size="Standard_E64_v3",name):
+    """
+    Provisions an Azure VM. Requires Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli. Users must be added to the Computational Cognitive Science Azure account with login credentials.
+    > az account set --subscription "Computational Cognitive Science Lab" to use the default subscription.
+    """
+    if size in AMAZON_TO_AZURE_SIZING: size = AMAZON_TO_AZURE_SIZING[size]
+    name = name.replace('_','-').replace('.','-').lower()
+    azure_command = f"az vm create --size {size} --name {name} --generate-ssh-keys --data-disk-sizes-gb 64 --location {AZURE_DEFAULT_REGION} --image {AZURE_DEFAULT_BASE_IMAGE} --resource-group {AZURE_DEFAULT_RESOURCE_GROUP}"
+    
+    output = subprocess.check_output(["/bin/bash", "-c", azure_command])
+    output = json.loads(output)
+    ip_address = output['publicIpAddress']
+    return name, ip_address
+     
 
 def launchGoogleCloud(size, name):
     name = name.replace('_','-').replace('.','-').lower()
@@ -67,7 +94,11 @@ def scp(address, localFile, remoteFile):
     if arguments.google:
         command = f"gcloud compute scp --zone={ZONE} {localFile} {address}:{remoteFile}"
     else:
-        command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} ubuntu@{address}:{remoteFile}"
+        if arguments.azure:
+            login_name = "azureuser"
+        else: # AWS
+            login_name = "ubuntu"
+        command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} {login_name}@{address}:{remoteFile}"
     print(command)
     os.system(command)
 
@@ -76,7 +107,11 @@ def ssh(address, command, pipeIn=None):
     if arguments.google:
         command = f"gcloud compute ssh --zone={ZONE} {address} --command='{command}'"
     else:
-        command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@{address} '{command}'"
+        if arguments.azure:
+            login_name = "azureuser"
+        else: # AWS
+            login_name = "ubuntu"
+        command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {login_name}@{address} '{command}'"
     if pipeIn:
         command = f"{pipeIn} | {command}"
     print(command)
@@ -217,7 +252,6 @@ sudo shutdown -h now
     ssh(address, "bash ./script.sh > /dev/null 2>&1 &")
     print("Executing script on remote host.")
 
-
 def launchExperiment(
         name,
         command,
@@ -252,6 +286,8 @@ def launchExperiment(
     if arguments.google:
         name = job_id
         instance, address = launchGoogleCloud(size, name)
+    elif arguments.azure:
+        instance, address = launchAzureCloud(size, name=name)
     else:
         instance, address = launchAmazonCloud(size, name=name)
     time.sleep(120)
@@ -299,6 +335,9 @@ if __name__ == "__main__":
                         default=False,
                         action="store_true")
     parser.add_argument('-c', "--google",
+                        default=False,
+                        action="store_true")
+    parser.add_argument("--azure",
                         default=False,
                         action="store_true")
     parser.add_argument('-g', "--gpuImage", default=False, action='store_true')
