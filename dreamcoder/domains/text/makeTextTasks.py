@@ -270,7 +270,6 @@ def makeTasks():
                   for _ in range(NUMBEROFEXAMPLES)
                   for s in [randomWords(" ")]
                   for f in [random.choice([True,False])] ])
-        eprint(problems[-1])
             
 
     for p in problems:
@@ -283,7 +282,7 @@ def loadPBETasks(directory="PBE_Strings_Track"):
     """
     Processes sygus benchmarks into task objects
     For these benchmarks, all of the constant strings are given to us.
-    In a sense this is cheating (nb: the production release of flashfill does something equivalent to this "cheating")
+    In a sense this is cheating
     Returns (tasksWithoutCheating, tasksWithCheating).
     NB: Results in paper are done without "cheating"
     """
