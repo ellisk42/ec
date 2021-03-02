@@ -18,6 +18,7 @@ from dreamcoder.task import DifferentiableTask, squaredErrorLoss
 from dreamcoder.type import baseType, tlist, arrow, t0, t1
 from dreamcoder.utilities import eprint, numberOfCPUs, flatten
 import math
+import random
 
 tvector = baseType("vector")
 treal = baseType("real")
@@ -94,6 +95,116 @@ def makeTask(name, request, law,
                               steps=25,
                               maxParameters=1,
                               loss=squaredErrorLoss)
+
+def makeTasks():
+    tasks = []
+    tasksPerType = 5
+    
+    ts = []
+    while len(ts) < tasksPerType:
+        n, f = randomRealAddition()
+        if makeTask(n, arrow(treal, treal), f) is None:
+            continue
+        ts.append(makeTask(n, arrow(treal, treal), f))
+    tasks += ts
+
+    ts = []
+    while len(ts) < tasksPerType:
+        n, f = randomRealVector()
+        if makeTask(n, arrow(tvector, tvector), f) is None:
+            continue
+        ts.append(makeTask(n, arrow(tvector, tvector), f))
+    tasks += ts
+
+    ts = []
+    while len(ts) < tasksPerType:
+        n, f = randomRealMatrix()
+        if makeTask(n, arrow(tlist(tvector), tlist(tvector)), f) is None:
+            continue
+        ts.append(makeTask(n, arrow(tlist(tvector), tlist(tvector)), f))
+    tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomRealAddition2Arg()
+    #     if makeTask(n, arrow(treal, treal, treal), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(treal, treal, treal), f))
+    # tasks += ts
+
+    ts = []
+    while len(ts) < tasksPerType:
+        n, f = randomVectorAddition()
+        if makeTask(n, arrow(tvector, tvector), f) is None:
+            continue
+        ts.append(makeTask(n, arrow(tvector, tvector), f))
+    tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomVectorAddition2Arg()
+    #     if makeTask(n, arrow(tvector, tvector, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector, tvector), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomRealMultiplication()
+    #     if makeTask(n, arrow(treal, treal), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(treal, treal), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomVectorMultiplication()
+    #     if makeTask(n, arrow(tvector, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomDotProduct()
+    #     if makeTask(n, arrow(tvector, treal), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, treal), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomScaleVector()
+    #     if makeTask(n, arrow(treal, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(treal, tvector), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomMatrixMult()
+    #     if makeTask(n, arrow(tvector, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomForgetGateNoActivation()
+    #     if makeTask(n, arrow(tvector, tvector, treal, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector, treal, tvector), f))
+    # tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomForgetGate()
+    #     if makeTask(n, arrow(tvector, tvector, treal, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector, treal, tvector), f))
+    # tasks += ts
+    
+    return tasks
 
 # class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 #     def tokenize(self, examples):
@@ -185,31 +296,76 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         p = program.visit(RandomParameterization.single)
         return super(LearnedFeatureExtractor, self).featuresOfProgram(p, tp)
 
+def randomCoefficient(m=2.5):
+    t = 0.3
+    f = t + (random.random() * (m - t))
+    if random.random() > 0.5:
+        f = -f
+    f = float("%0.1f" % f)
+    return f
+
+# Default dimension is 3
+def randomVector(m=2.5, D=3):
+    return [randomCoefficient() for _ in range(D)]
+
+# Default is 3 by 3
+def randomMatrix(m=2.5, D=3, rows=3):
+    return [randomVector() for _ in range(rows)]
+
+def randomRealAddition():
+    c = randomCoefficient()
+    def f(x): return x + c
+    name = "x + %0.1f" % c
+    return name, f
+
+def randomRealAddition2Arg():
+    c = randomCoefficient()
+    def f(x, y): return x + y + c
+    name = "x + y + %0.1f" % c
+    return name, f
+
+def randomRealVector():
+    c = randomVector()
+    def f(x): return c
+    name = "[%0.1f, %0.1f, %0.1f]" % (c[0], c[1], c[2])
+    return name, f
+
+def randomRealMatrix():
+    c = randomMatrix()
+    def f(x): return c
+    name = "[[%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f]] * x" % (c[0][0], c[0][1], c[0][2],
+                                                                                          c[1][0], c[1][1], c[1][2],
+                                                                                          c[2][0], c[2][1], c[2][2])
+    return name, f
+
+def randomVectorAddition():
+    c = randomVector()
+    def f(x): return [a + b for a, b in zip(x, c)]
+    name = "x + [%0.1f, %0.1f, %0.1f]" % (c[0], c[1], c[2])
+    return name, f
+
 def vectorAddition(u, v):
     return [a + b for a, b in zip(u, v)]
 
-# Inverse problem
-def vectorAdd1(v):
-    n = len(v)
-    u = [1] * n
-    return [a + b for a, b in zip(u, v)]
+def randomVectorAddition2Arg():
+    c = randomVector()
+    def f(x, y): 
+        temp = [a + b for a, b in zip(x, y)]
+        return [a + b for a, b in zip(temp, c)]
+    name = "x + y + [%0.1f, %0.1f, %0.1f]" % (c[0], c[1], c[2])
+    return name, f
 
-def vectorAddFraction(v):
-    n = len(v)
-    u = [0.3] * n
-    return [a + b for a, b in zip(u, v)]
+def randomRealMultiplication():
+    c = randomCoefficient()
+    def f(x): return x*c
+    name = "x * %0.1f" % c
+    return name, f
 
-def add1(x):
-    return x + 1
-
-def addFraction(x):
-    return x + 0.3
-
-def addFractionMed(x):
-    return x + 0.375
-
-def addFractionHard(x):
-    return x + 0.375612
+def randomVectorMultiplication():
+    c = randomVector()
+    def f(x): return [a * b for a, b in zip(x, c)]
+    name = "x * [%0.1f, %0.1f, %0.1f]" % (c[0], c[1], c[2])
+    return name, f
 
 def vectorMultiplication(u, v):
     return [a * b for a, b in zip(u, v)]
@@ -220,8 +376,20 @@ def vectorSum(v):
 def dotProduct(a, b):
     return sum(x * y for x, y in zip(a, b))
 
-def scaleVector(a, v):
-    return [a * x for x in v]
+def randomDotProduct():
+    c = randomVector()
+    def f(x): sum(x * y for x, y in zip(x, c))
+    name = "dot product with [%0.1f, %0.1f, %0.1f]" % (c[0], c[1], c[2])
+    return name, f
+
+def randomScaleVector():
+    c = randomVector()
+    def f(x): [x * a for a in c]
+    name = "x * [%0.1f, %0.1f, %0.1f] scale" % (c[0], c[1], c[2])
+    return name, f
+
+def scaleVector(x, v): 
+    return [x * a for a in v]
 
 def sum_matrix_rows(m):
     return list(map(vectorSum, m))
@@ -230,6 +398,16 @@ def sum_matrix_rows(m):
 def _matrix_mult(m, l): 
     # map dotProduct(l) with m so dot product is computed along rows of m and stored in a list
     return [dotProduct(m[0], l), dotProduct(m[1], l), dotProduct(m[2], l)]
+
+# multiplying a list of lists with a list
+def randomMatrixMult(): 
+    # map dotProduct(l) with m so dot product is computed along rows of m and stored in a list
+    c = randomMatrix()
+    def f(x): [dotProduct(c[0], x), dotProduct(c[1], x), dotProduct(c[2], x)]
+    name = "[[%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f]] * x" % (c[0][0], c[0][1], c[0][2],
+                                                                                          c[1][0], c[1][1], c[1][2],
+                                                                                          c[2][0], c[2][1], c[2][2])
+    return name, f
 
 def _matrix_mult_vectors(l, r1, r2, r3):
     return [dotProduct(r1, l), dotProduct(r2, l), dotProduct(r3, l)]
@@ -256,8 +434,37 @@ def _forget_gate_noActivation(htm1, ctm1, xt, Uf, Wf, bf):
     v2 = scaleVector(xt, Wf)
     return vectorAddition(bf, vectorAddition(v1, v2))
 
+def randomForgetGateNoActivation():
+    # ft=sigmoid(Ufht−1+Wfxt+bf)
+    #return lambda Uf: lambda Wf: lambda bf: list(map(_sigmoid, Uf @ htm1 + np.dot(Wf, xt) + bf))
+    Uf = randomMatrix()
+    Wf = randomVector()
+    bf = randomVector()
+    def f(htm1, ctm1, xt):
+        v1 = _matrix_mult(Uf, htm1)
+        v2 = scaleVector(xt, Wf)
+        return vectorAddition(bf, vectorAddition(v1, v2))
+    name = "[[%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f]] = Uf, [%0.1f, %0.1f, %0.1f] = Wf, [%0.1f, %0.1f, %0.1f] = bf. Forget gate no activation" % (Uf[0][0], Uf[0][1], Uf[0][2], 
+                                                                                                                                                                              Uf[1][0], Uf[1][1], Uf[1][2],
+                                                                                                                                                                              Uf[2][0], Uf[2][1], Uf[2][2],
+                                                                                                                                                                              Wf[0], Wf[1], Wf[2],
+                                                                                                                                                                              bf[0], bf[1], bf[2])
+    return name, f
+
 def _forget_gate(htm1, ctm1, xt, Uf, Wf, bf):
     return list(map(_sigmoid, _forget_gate_noActivation(htm1, ctm1, xt, Uf, Wf, bf)))
+
+def randomForgetGate():
+    Uf = randomMatrix()
+    Wf = randomVector()
+    bf = randomVector()
+    def f(htm1, ctm1, xt): return list(map(_sigmoid, _forget_gate_noActivation(htm1, ctm1, xt, Uf, Wf, bf)))
+    name = "[[%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f]] = Uf, [%0.1f, %0.1f, %0.1f] = Wf, [%0.1f, %0.1f, %0.1f] = bf. Forget gate w/ activation" % (Uf[0][0], Uf[0][1], Uf[0][2], 
+                                                                                                                                                                              Uf[1][0], Uf[1][1], Uf[1][2],
+                                                                                                                                                                              Uf[2][0], Uf[2][1], Uf[2][2],
+                                                                                                                                                                              Wf[0], Wf[1], Wf[2],
+                                                                                                                                                                              bf[0], bf[1], bf[2])
+    return name, f
 
 def _candidate_cell_state(htm1, ctm1, xt, Uc, Wc, bc):
     # ctilda=tanh(Ucht−1+Wcxt+bc)
@@ -307,31 +514,13 @@ prim_trunc4f = Primitive("trunc4f", arrow(treal, treal), _trunc4f)
 
 if __name__ == "__main__":
 
-    tasks = [
+    tasks = makeTasks()
+    ts = [
         # parallel distributed processing
         makeTask("vector addition (2)",
                  arrow(tvector, tvector, tvector),
                  vectorAddition),
-        makeTask("vector addition with (1, 1, 1)",
-                 arrow(tvector, tvector),
-                 vectorAdd1),
-        makeTask("vector addition with (0.3, 0.3, 0.3)",
-                 arrow(tvector, tvector),
-                 vectorAddFraction),
-        makeTask("addition with 1",
-                 arrow(treal, treal),
-                 add1),
-        makeTask("addition with 0.3",
-                 arrow(treal, treal),
-                 addFraction),
-        makeTask("addition with 0.375",
-                 arrow(treal, treal),
-                 addFractionMed),
-        makeTask("addition with 0.375612",
-                 arrow(treal, treal),
-                 addFractionHard)
-    ]
-    """ makeTask("vector addition (3)",
+        makeTask("vector addition (3)",
                  arrow(tvector, tvector, tvector, tvector),
                  lambda v1, v2, v3: vectorAddition(v3, vectorAddition(v1, v2))),
         makeTask("vector addition (4)",
@@ -361,150 +550,160 @@ if __name__ == "__main__":
         makeTask("scale vector + sigmoid",
                  arrow(treal, tvector, tvector),
                  lambda r, v: applySigmoid(scaleVector(r, v))),
-        #makeTask("sigmoid",
-        #         arrow(treal, treal),
-        #         _sigmoid),
+        makeTask("sigmoid",
+                arrow(treal, treal),
+                _sigmoid),
         makeTask("vector of vector sums",
                  arrow(tvector, tvector, tvector, tvector),
                  lambda v1, v2, v3: [vectorSum(v1), vectorSum(v2), vectorSum(v3)]),
-        makeTask("singleton",
-                 arrow(treal, tvector),
-                 lambda x: [x]),
-        makeTask("reals to vector (2) + tanh",
-                 arrow(treal, treal, tvector),
-                 lambda x1, x2: applyTanh([x1, x2])),
-        makeTask("reals to vector (3) + sigmoid",
-                 arrow(treal, treal, treal, tvector),
-                 lambda x1, x2, x3: applySigmoid([x1, x2, x3])),
-        makeTask("adding vector 1 and vector 3",
-                 arrow(tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3: vectorAddition(v1, v3)),
+        # makeTask("singleton",
+        #          arrow(treal, tvector),
+        #          lambda x: [x]),
+        # makeTask("reals to vector (2) + tanh",
+        #          arrow(treal, treal, tvector),
+        #          lambda x1, x2: applyTanh([x1, x2])),
+        # makeTask("reals to vector (3) + sigmoid",
+        #          arrow(treal, treal, treal, tvector),
+        #          lambda x1, x2, x3: applySigmoid([x1, x2, x3])),
+        # makeTask("adding vector 1 and vector 3",
+        #          arrow(tvector, tvector, tvector, tvector),
+        #          lambda v1, v2, v3: vectorAddition(v1, v3)),
         makeTask("adding vector 2 and vector 3 + sigmoid",
                  arrow(tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3: applySigmoid(vectorAddition(v2, v3))),
-        makeTask("sum matrix rows", 
-                 arrow(tlist(tvector), tvector),
-                 sum_matrix_rows, triple=True),
-        makeTask("matrix multiplication", 
-                 arrow(tlist(tvector), tvector, tvector),
-                 _matrix_mult, triple=True),
-        makeTask("matrix multiplication + sigmoid", 
-                 arrow(tlist(tvector), tvector, tvector),
-                 lambda m, l: applySigmoid(_matrix_mult(m, l)), 
-                 triple=True),
+                 lambda v1, v2, v3: applySigmoid(vectorAddition(v2, v3)))
+        # makeTask("sum matrix rows", 
+        #          arrow(tlist(tvector), tvector),
+        #          sum_matrix_rows, triple=True),
+        # makeTask("matrix multiplication", 
+        #          arrow(tlist(tvector), tvector, tvector),
+        #          _matrix_mult, triple=True),
+        # makeTask("matrix multiplication + sigmoid", 
+        #          arrow(tlist(tvector), tvector, tvector),
+        #          lambda m, l: applySigmoid(_matrix_mult(m, l)), 
+        #          triple=True),
         #makeTask("matrix mult 3 vectors",
         #         arrow(tvector, tvector, tvector, tvector, tvector),
         #         _matrix_mult_vectors),
-        makeTask("matrix mult + addition",
-                 arrow(tlist(tvector), tvector, tvector, tvector),
-                 lambda m, l, b: vectorAddition(_matrix_mult(m, l), b),
-                 triple=True),
-        makeTask("matrix mult + addition w scaled vector",
-                 arrow(tlist(tvector), tvector, treal, tvector, tvector),
-                 lambda m, l, W, b: vectorAddition(_matrix_mult(m, l), scaleVector(W, b)),
-                 triple=True),
-        makeTask("addition with a scaled vector",
-                 arrow(tvector, treal, tvector, tvector),
-                 lambda v, W, b: vectorAddition(scaleVector(W, b), v)),
-        makeTask("scaled vector addition",
-                 arrow(treal, tvector, treal, tvector, tvector),
-                 lambda W1, b1, W2, b2: vectorAddition(scaleVector(W1, b1), scaleVector(W2, b2))),
-        makeTask("scaled vector addition + tanh",
-                 arrow(treal, tvector, treal, tvector, tvector),
-                 lambda W1, b1, W2, b2: applyTanh(vectorAddition(scaleVector(W1, b1), scaleVector(W2, b2)))),
-        makeTask("forget gate without sigmoid",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
-                 _forget_gate_noActivation, 
-                 triple=True),
-        makeTask("forget gate",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
-                 _forget_gate,
-                 triple=True),
-        makeTask("forget gate + vector",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), v),
-                 triple=True),
-        makeTask("candidate cell state + vector",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorAddition(_candidate_cell_state(htm1, ctm1, xt, Uf, Wf, bf), v),
-                 triple=True),
-        makeTask("candidate cell state * vector",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorMultiplication(_candidate_cell_state(htm1, ctm1, xt, Uf, Wf, bf), v),
-                 triple=True),
-        makeTask("forget gate * vector",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorMultiplication(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), v),
-                 triple=True),
-        makeTask("forget gate + vector reuse htm1",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), htm1),
-                 triple=True),
-        makeTask("forget gate + scaled vector reuse xt",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), scaleVector(xt, v)),
-                 triple=True),
-        makeTask("forget gate + matrix mult",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, U, v: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _matrix_mult(U, v)),
-                 triple=True),
-        makeTask("forget gate + matrix mult reuse htm1 + bias",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, U, b: vectorAddition(vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _matrix_mult(U, htm1)), b),
-                 triple=True),
-        makeTask("forget gate addition",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, Ui, Wi, bi: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _forget_gate(htm1, ctm1, xt, Ui, Wi, bi)),
-                 triple=True),
-        makeTask("forget gate multiplication",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, Ui, Wi, bi: vectorMultiplication(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _forget_gate(htm1, ctm1, xt, Ui, Wi, bi)),
-                 triple=True),
-        makeTask("candidate cell state",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
-                 _candidate_cell_state,
-                 triple=True),
-        makeTask("forget gate + candidate cell state",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
-                 lambda htm1, ctm1, xt, Uf, Wf, bf, Uc, Wc, bc: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _candidate_cell_state(htm1, ctm1, xt, Uc, Wc, bc)),
-                 triple=True),
-        makeTask("vector sum of 2 vector multiplications",
-                 arrow(tvector, tvector, tvector, tvector, tvector),
-                 _new_cell_state),
-        makeTask("new hidden state",
-                 arrow(tvector, tvector, tvector),
-                 _new_hidden_state),
-        makeTask("lstm cell state no activations",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
-                 _lstm_cell_state_noActivation,
-                 triple=True),
-        makeTask("lstm cell state",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
-                 _lstm_cell_state,
-                 triple=True), 
-        makeTask("lstm cell",
-                 arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector)),
-                 _lstm_cell,
-                 triple=True) """
-    #]
+        # makeTask("matrix mult + addition",
+        #          arrow(tlist(tvector), tvector, tvector, tvector),
+        #          lambda m, l, b: vectorAddition(_matrix_mult(m, l), b),
+        #          triple=True),
+        # makeTask("matrix mult + addition w scaled vector",
+        #          arrow(tlist(tvector), tvector, treal, tvector, tvector),
+        #          lambda m, l, W, b: vectorAddition(_matrix_mult(m, l), scaleVector(W, b)),
+        #          triple=True),
+        # makeTask("addition with a scaled vector",
+        #          arrow(tvector, treal, tvector, tvector),
+        #          lambda v, W, b: vectorAddition(scaleVector(W, b), v)),
+        # makeTask("scaled vector addition",
+        #          arrow(treal, tvector, treal, tvector, tvector),
+        #          lambda W1, b1, W2, b2: vectorAddition(scaleVector(W1, b1), scaleVector(W2, b2))),
+        # makeTask("scaled vector addition + tanh",
+        #          arrow(treal, tvector, treal, tvector, tvector),
+        #          lambda W1, b1, W2, b2: applyTanh(vectorAddition(scaleVector(W1, b1), scaleVector(W2, b2)))),
+        # makeTask("forget gate without sigmoid",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
+        #          _forget_gate_noActivation, 
+        #          triple=True),
+        # makeTask("forget gate",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
+        #          _forget_gate,
+        #          triple=True),
+        # makeTask("forget gate + vector",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), v),
+        #          triple=True),
+        # makeTask("candidate cell state + vector",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorAddition(_candidate_cell_state(htm1, ctm1, xt, Uf, Wf, bf), v),
+        #          triple=True),
+        # makeTask("candidate cell state * vector",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorMultiplication(_candidate_cell_state(htm1, ctm1, xt, Uf, Wf, bf), v),
+        #          triple=True),
+        # makeTask("forget gate * vector",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorMultiplication(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), v),
+        #          triple=True),
+        # makeTask("forget gate + vector reuse htm1",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), htm1),
+        #          triple=True),
+        # makeTask("forget gate + scaled vector reuse xt",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, v: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), scaleVector(xt, v)),
+        #          triple=True),
+        # makeTask("forget gate + matrix mult",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, U, v: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _matrix_mult(U, v)),
+        #          triple=True),
+        # makeTask("forget gate + matrix mult reuse htm1 + bias",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, U, b: vectorAddition(vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _matrix_mult(U, htm1)), b),
+        #          triple=True),
+        # makeTask("forget gate addition",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, Ui, Wi, bi: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _forget_gate(htm1, ctm1, xt, Ui, Wi, bi)),
+        #          triple=True),
+        # makeTask("forget gate multiplication",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, Ui, Wi, bi: vectorMultiplication(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _forget_gate(htm1, ctm1, xt, Ui, Wi, bi)),
+        #          triple=True),
+        # makeTask("candidate cell state",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tvector),
+        #          _candidate_cell_state,
+        #          triple=True),
+        # makeTask("forget gate + candidate cell state",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
+        #          lambda htm1, ctm1, xt, Uf, Wf, bf, Uc, Wc, bc: vectorAddition(_forget_gate(htm1, ctm1, xt, Uf, Wf, bf), _candidate_cell_state(htm1, ctm1, xt, Uc, Wc, bc)),
+        #          triple=True),
+        # makeTask("vector sum of 2 vector multiplications",
+        #          arrow(tvector, tvector, tvector, tvector, tvector),
+        #          _new_cell_state),
+        # makeTask("new hidden state",
+        #          arrow(tvector, tvector, tvector),
+        #          _new_hidden_state),
+        # makeTask("lstm cell state no activations",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
+        #          _lstm_cell_state_noActivation,
+        #          triple=True),
+        # makeTask("lstm cell state",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tvector),
+        #          _lstm_cell_state,
+        #          triple=True), 
+        # makeTask("lstm cell",
+        #          arrow(tvector, tvector, treal, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector), tvector, tvector, tlist(tvector)),
+        #          _lstm_cell,
+        #          triple=True)
+    ]
 
+    tasks += ts
+    
     real = Primitive("REAL", treal, None)
+    real_vector = Primitive("REAL_VECTOR", tvector, None)
+    real_matrix = Primitive("REAL_MATRIX", tlist(tvector), None)
+    vector_addition = Primitive("add_vector",
+                       arrow(tvector, tvector, tvector),
+                       vectorAddition)
     bootstrapTarget()
     equationPrimitives = [
         real,
+        real_vector,
+        #real_matrix,
         f0,
         f1,
         #real_power,
         #real_subtraction,
         real_addition,
-        real_division,
+        vector_addition,
+        #real_division,
         real_multiplication,
         prim_tanh,
         prim_sigmoid] + [
         #prim_relu] + [
             Program.parse(n)
             for n in ["map","fold",
-                      "empty","cons","car","cdr",
+                      "empty","cons",#"car","cdr",
                       "zip", "reduce"]]
     baseGrammar = Grammar.uniform(equationPrimitives)
 

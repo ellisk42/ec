@@ -42,6 +42,22 @@ let make_binary_variable forward backward a b =
       |_ -> raise (Failure "Binary variable did not get 2 backward arguments"))
     [a;b;]
 
+let forward_fun forward = fun x -> match x with
+      |[a;b] -> forward a b
+      |_ -> raise (Failure "Binary variable did not get 2 arguments")
+
+let backward_fun backward = fun x -> match x with
+      |[a;b] -> backward a b
+      |_ -> raise (Failure "Binary variable did not get 2 backward arguments")
+
+(* Let a and b be variable lists. Return a variable list. Forward/backward are the elementwise operation *)
+let make_binary_list_variable forward backward a b =
+  match a, b with 
+  | ([a1; a2; a3], [b1; b2; b3]) -> [(make_variable (forward_fun forward) (backward_fun backward) [a1;b1]);
+                                     (make_variable (forward_fun forward) (backward_fun backward) [a2;b2]);
+                                     (make_variable (forward_fun forward) (backward_fun backward) [a3;b3])]
+  | _ -> raise (Failure "Binary list variable received wrong arguments")
+
 let make_unitary_variable forward backward a =
   make_variable (fun x -> match x with
       |[a;] -> forward a 
@@ -84,6 +100,30 @@ let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 
               }
   in s
 
+(*let random_variable_vector ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 1.) () =
+  let normals = normal_vector standard_deviation mean in 
+
+  let rec s = {gradient = None;
+               arguments = [];
+               descendents = [];
+               volatile = true;
+               data = Some(normal_vector standard_deviation mean);
+               forwardProcedure = (fun _ -> s.data |> get_some);
+               backwardProcedure = (fun _ -> []);
+              }
+  in s*)
+
+(*let random_variable_matrix ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 1.) () =
+  let rec s = {gradient = None;
+               arguments = [];
+               descendents = [];
+               volatile = true;
+               data = Some(normal_matrix standard_deviation mean);
+               forwardProcedure = (fun _ -> s.data |> get_some);
+               backwardProcedure = (fun _ -> []);
+              }
+  in s*)
+
 let update_variable v x =
   assert (v.arguments = []);
   v.data <- Some(x)
@@ -91,6 +131,9 @@ let update_variable v x =
 
 let (+&) =
   make_binary_variable (+.) (fun _ _ -> [1.;1.]) 
+
+let add_vector =
+  make_binary_list_variable (+.) (fun _ _ -> [1.;1.])
 
 let (-&) =
   make_binary_variable (-.) (fun _ _ -> [1.;-1.]) 
@@ -100,6 +143,24 @@ let ( *& ) =
 
 let ( /& ) =
   make_binary_variable ( /. ) (fun a b -> [1./.b;0.-.a/.(b*.b)])
+
+let sigmoid = 
+  make_unitary_variable (fun x -> 
+    1.0 /. (1.0 +. (exp (-1.0 *. x))))
+  (fun x -> 
+    let sigma = 1.0 /. (1.0 +. (exp (-1.0 *. x))) in
+    [sigma *. (1.-.sigma)])
+
+let tanh = 
+  make_unitary_variable Float.tanh (fun z -> 
+    let a = Float.tanh z in
+    [1.-.a*.a])
+
+let relu = 
+  make_unitary_variable (fun x -> 
+    if (x > 0.) then x else 0.)
+  (fun x -> 
+    if (x > 0.) then [1.] else [0.])
 
 let power =
   make_binary_variable ( ** ) (fun a b -> [b*.(a**(b-.1.));
@@ -285,11 +346,17 @@ let differentiable_zero = primitive "0." treal (~$ 0.);;
 let differentiable_one = primitive "1." treal (~$ 1.);;
 let differentiable_pi = primitive "pi" treal (~$ 3.14);;
 let differentiable_add = primitive "+." (treal @> treal @> treal) (+&);;
+let differentiable_vector_add = primitive "add_vector" (tlist treal @> tlist treal @> tlist treal) (add_vector);;
 let differentiable_subtract = primitive "-." (treal @> treal @> treal) (-&);;
 let differentiable_multiply = primitive "*." (treal @> treal @> treal) ( *&);;
 let differentiable_division = primitive "/." (treal @> treal @> treal) ( /&);;
 let differentiable_power = primitive "power" (treal @> treal @> treal) (power);;
 let differentiable_placeholder = primitive "REAL" treal ();;
+let differentiable_placeholder_vector = primitive "REAL_VECTOR" (tlist treal) ();;
+(*let differentiable_placeholder_matrix = primitive "REAL_MATRIX" (tlist (tlist treal)) ();;*)
+let differentiable_sigmoid = primitive "sigmoid" (treal @> treal) (sigmoid);;
+let differentiable_tanh = primitive "tanh" (treal @> treal) (tanh);;
+let differentiable_relu = primitive "relu" (treal @> treal) (relu);;
 
 let replace_placeholders program =
   let placeholders = ref [] in
@@ -311,6 +378,24 @@ let replace_placeholders program =
         placeholders := v :: !placeholders;
         Primitive(t,"REAL", ref v |> magical)
       end
+    | Primitive(t,"REAL_VECTOR",_) -> begin
+        (* create and append 3 random variables instead of 1 *)
+        let rec aux acc1 acc2 i =
+          if i < 3 then
+            let v = random_variable() in
+            aux (v::acc1) (v::acc2) (i+1)
+          else acc2
+        in
+        let var_list = aux !placeholders [] 0 in
+        Primitive(t,"REAL_VECTOR", ref var_list |> magical)
+      end
+    (*| Primitive(t,"REAL_MATRIX",_) -> begin
+        (*let v = random_variable_matrix() in *)
+        let v = random_variable() in
+        (* update_variable v 0.; *)
+        placeholders := v :: !placeholders;
+        Primitive(t,"REAL_MATRIX", ref v |> magical)
+      end*)
     | p -> p
   in
   let program = r program in

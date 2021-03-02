@@ -275,6 +275,24 @@ let normal s m =
   in
   s *. n +. m
 
+let normal_vector s m =
+  let rec aux acc i =
+  if i < 3 then
+    let normal_val = normal s m in
+    aux (normal_val::acc) (i+1)
+  else (List.rev acc)
+  in
+  aux [] 0
+
+let normal_matrix s m =
+  let rec aux acc i =
+  if i < 3 then
+    let normal_val = normal_vector s m in
+    aux (normal_val::acc) (i+1)
+  else (List.rev acc)
+  in
+  aux [] 0
+
 let print_arguments () = 
   Array.iter Sys.argv ~f:(fun a -> Printf.printf "%s " a);
   Out_channel.newline stdout
