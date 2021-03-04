@@ -10,6 +10,7 @@ max_var: 10
 vhead: check_invalid # repl | rnn | check_invalid | uniform
 phead: repl # repl | rnn | uniform
 multidir: False
+apply_mode: apply_nn # apply_nn | nmns
 abstraction_fn: # AbstractionFn class
   modular: True
   digitwise: True

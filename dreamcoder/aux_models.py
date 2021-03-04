@@ -64,14 +64,14 @@ class AbstractionFn(nn.Module):
       super().__init__()
       from dreamcoder.domains.list.main import ListFeatureExtractor
       self.encoder = ListFeatureExtractor(maximumLength=sing.taskloader.L_big)
-    def encode_exwise(self,exwise):
+    def encode_concrete_exwise(self,exwise):
       """
       This gets called by Examplewise.abstract() to encode
       its .concrete field and produce a .abstract field
       """
-      assert exwise.concrete is not None
       sing.stats.call_encode_exwise += 1
-      return self.encoder.encodeValue(exwise.concrete)
+      assert exwise.concrete() is not None
+      return self.encoder.encodeValue(exwise.concrete())
 
     def encode_known_ctx(self,ctx):
       """
@@ -147,8 +147,8 @@ class ApplyNN(nn.Module):
         self.apply_cfg = cfg.model.apply
 
         self.func_indicator = NM(0)
-        self.arg_indicators = [NM(0) for _ in range(4)]
-
+        self.parent_indictor = NM(0)
+        self.arg_indicators = [NM(0) for _ in range(3)]
 
         self.H = cfg.model.H
         self.bound_H = {
@@ -167,15 +167,14 @@ class ApplyNN(nn.Module):
         else:
             assert False
 
-
-    def bind(self, vec,indicator):
+    def bind(self, vec, indicator):
         if self.apply_cfg.bind == 'sum':
             return vec+indicator
         elif self.apply_cfg.bind == 'cat':
             return torch.cat([vec,indicator],dim=-1)
         assert False
     
-    def apply(self,bound_func,bound_args):
+    def apply_bound(self,bound_func,bound_args):
         return {
             'rnn': self.gru_apply,
             'transformer': self.transformer_apply,
@@ -198,14 +197,16 @@ class ApplyNN(nn.Module):
         return hidden
 
 
-    def forward(self,func,args):
+    def forward(self, func_vec, labelled_arg_vecs=[], parent_vec=None):
         """
-        call self.bind then self.apply
+        args are of the form (int,vec) where the int indicates the argnum of this input.
+        calls self.bind then self.apply_bound
         """
-        func = self.bind(func,self.func_indicator)
-        assert len(args) <= len(self.arg_indicators)
-        args = [self.bind(arg,ind) for arg,ind in zip(args,self.arg_indicators)]
-        res = self.apply(func,args)
+        bound_func = self.bind(self.func_indicator, func_vec)
+        bound_args = [self.bind(self.arg_indicators[argi],arg) for argi, arg in labelled_arg_vecs]
+        if parent_vec is not None: # prepend parent vec if provided
+            bound_args = [self.bind(self.parent_indictor,parent_vec)] + bound_args
+        res = self.apply_bound(bound_func,bound_args)
         return res
 
 
