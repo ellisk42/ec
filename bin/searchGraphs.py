@@ -129,11 +129,11 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
         xs = list(range(min(maxLens[n], maxEvals)))
-        if any(kwd in names[n] for kwd in ['REPL', 'bound', 'value', 'Robust']): ls = '--'
+        if any(kwd in names[n] for kwd in ['REPL', 'bound', 'value', 'CNN']): ls = '--' #'Robust',
         else: ls = '-'
 
         if mode =='fractionHit':
-            if 'Robust' in names[n]:
+            if 'Robust' in names[n] or 'Bunel' in names[n]:
                 plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                       label=names[n], linewidth=4, linestyle=ls, color='C5')
             elif 'REPL' in names[n]:
@@ -150,8 +150,8 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if permOrder:
         handles, labels = plot.gca().get_legend_handles_labels()
         order = permOrder
-        plot.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
-    else: plot.legend()
+        plot.legend([handles[idx] for idx in order],[labels[idx] for idx in order], framealpha=0.9)
+    else: plot.legend( framealpha=0.9)
 
     #box = ax.get_position()
     #ax.set_position([box.x0, box.y0, box.width * 0.5, box.height])
@@ -159,7 +159,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 
     if export:
-        plot.savefig(f"{export}_evaluations.eps")
+        plot.savefig(f"{export}_evaluations.pdf")
     else:
         plot.show()
         
@@ -273,7 +273,7 @@ if __name__ == '__main__':
 
 
     graph=""
-    nameSalt = "AstarPseudoResultFilteredMaxOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "AstarPseudoResultFilteredMaxOnlyRebut" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
     runType ="PseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     maxEvals = 17000
@@ -283,7 +283,7 @@ if __name__ == '__main__':
     #list of okay tasks:
     okayList = False #range(29)
     title=None #"Tower building"
-    permOrder=[3,0,1,2]
+    permOrder=[3,0,1,2, 4]
     title = "Tower Building"
     paths = [
         
@@ -302,6 +302,7 @@ if __name__ == '__main__':
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultREPLRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug512kRL", "Abstract REPL policy + RL value (seperate weights), 512k"),
         #(f"experimentOutputs/towers3PolicyOnlyPseudoResultRNNRLValue=Truecontrastive=Falseseperate=True_SRE=True.pickleDebug", "RNN policy + RL value (seperate weights)"),
+        (f'image_robustfill_baseline_results.p', "Bunel et al."),
        ]
 
 
@@ -327,36 +328,36 @@ if __name__ == '__main__':
     #    ]
 
 
-    # graph="_graph=True"
-    # nameSalt = "SMCChallengeWed" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # ID = 'rb'
-    # runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # maxEvals = 3700
-    # useMaxLens = True
-    # maxTasksOnly=False
-    # noMaxTasks=False
-    # okayList = False
-    # challengeOnly=True#False#True
-    # synthOnly =False#True
-    # title="String Editing"
-    # permOrder=[4, 0, 1, 3, 2]
-    # paths = [
-    #     # (f'experimentOutputs/AstarBlended.pickle', 'Blended execution'),
-    #     # (f'experimentOutputs/AstarNeuralOnly.pickle', 'neural modular only'),
-    #     # (f'experimentOutputs/AstarRNN.pickle', 'RNN policy'),
-    #     # ("experimentOutputs/AstarBlendedTemp01.pickle", "Blended 1/10 temp"),
-    #     # ("experimentOutputs/AstarBlendedTemp2.pickle", "Blended 1/2 temp"),
-    #     # ("experimentOutputs/AstarBlendedTemp1over2.pickle", "Blended 2 temp"),
-    #     # ("experimentOutputs/AstarBlendedTemp1over4.pickle", "Blended 4 temp"),
-    #     # (f'experimentOutputs/rbDensePseudoResultSMCREPLtasks=kevin_SRE=True.pickle', 'old blended (2M programs)'),
-    #     # (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNNtasks=challenge_SRE=True.pickle2000000', 'old RNN Policy (2M programs)'),
-    #     # (f'experimentOutputs/rbDensePseudoResultSMCREPLNoConcretetasks=challenge_SRE=True.pickle', 'old neural only policy (~1M programs)'),
-    #     (f'experimentOutputs/newsmcBlended.pickle', 'Blended semantics (ours)'),
-    #     (f'experimentOutputs/newsmcNeuralOnly.pickle', 'Neural semantics'),
-    #     (f'experimentOutputs/newsmcRNN.pickle', 'RNN'),
-    #     (f'robustfill_baseline_results.p20001', 'RobustFill'),
-    #     (f'experimentOutputs/repl_results.p', 'REPL (upper bound)')
-    #     ]
+    graph="_graph=True"
+    nameSalt = "SMCChallengeRebuttalTransparent" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'rb'
+    runType ="PolicyOnly" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    maxEvals = 3700
+    useMaxLens = True
+    maxTasksOnly=False
+    noMaxTasks=False
+    okayList = False
+    challengeOnly=True#False#True
+    synthOnly =False#True
+    title="String Editing"
+    permOrder=[4, 0, 1, 3, 2]
+    paths = [
+        # (f'experimentOutputs/AstarBlended.pickle', 'Blended execution'),
+        # (f'experimentOutputs/AstarNeuralOnly.pickle', 'neural modular only'),
+        # (f'experimentOutputs/AstarRNN.pickle', 'RNN policy'),
+        # ("experimentOutputs/AstarBlendedTemp01.pickle", "Blended 1/10 temp"),
+        # ("experimentOutputs/AstarBlendedTemp2.pickle", "Blended 1/2 temp"),
+        # ("experimentOutputs/AstarBlendedTemp1over2.pickle", "Blended 2 temp"),
+        # ("experimentOutputs/AstarBlendedTemp1over4.pickle", "Blended 4 temp"),
+        # (f'experimentOutputs/rbDensePseudoResultSMCREPLtasks=kevin_SRE=True.pickle', 'old blended (2M programs)'),
+        # (f'experimentOutputs/rbPolicyOnlyPseudoResultSMCRNNtasks=challenge_SRE=True.pickle2000000', 'old RNN Policy (2M programs)'),
+        # (f'experimentOutputs/rbDensePseudoResultSMCREPLNoConcretetasks=challenge_SRE=True.pickle', 'old neural only policy (~1M programs)'),
+        (f'experimentOutputs/newsmcBlended.pickle', 'Blended semantics (ours)'),
+        (f'experimentOutputs/newsmcNeuralOnly.pickle', 'Neural semantics'),
+        (f'experimentOutputs/newsmcRNN.pickle', 'RNN'),
+        (f'robustfill_baseline_results.p20001', 'RobustFill'),
+        (f'experimentOutputs/repl_results.p', 'REPL (upper bound)')
+        ]
 
 
  
