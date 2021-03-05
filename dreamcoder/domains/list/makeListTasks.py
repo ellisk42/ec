@@ -561,8 +561,8 @@ if __name__ == "__main__":
         """
         For JSON of the form:
             {"name": str,
-             "type": {"input" : bool|int|list-of-bool|list-of-int,
-                      "output": bool|int|list-of-bool|list-of-int},
+             "type": {"input" : bool|int|real|list-of-bool|list-of-int|list-of-real,
+                      "output": bool|int|real|list-of-bool|list-of-int|list-of-real},
              "examples": [{"i": data, "o": data}]}
         """
         with open(filename, "r") as f:
@@ -570,8 +570,10 @@ if __name__ == "__main__":
         TP = {
             "bool": tbool,
             "int": tint,
+            "real": treal,
             "list-of-bool": tlist(tbool),
             "list-of-int": tlist(tint),
+            "list-of-real": tlist(treal)
         }
         return [Task(
             item["name"],

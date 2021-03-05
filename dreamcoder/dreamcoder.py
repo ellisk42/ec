@@ -379,7 +379,9 @@ def ecIterator(grammar, tasks,
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if useRecognitionModel and biasOptimal and helmholtzRatio > 0 and \
-           all( str(p) != "REAL" for p in grammar.primitives ): # real numbers don't support this
+           all( str(p) != "REAL" for p in grammar.primitives ) and \
+           all( str(p) != "REAL_VECTOR" for p in grammar.primitives ): #and \
+           #all( str(p) != "REAL_MATRIX" for p in grammar.primitives ): # real numbers don't support this
             # the DSL is fixed, so the dreams are also fixed. don't recompute them.
             if useDSL or 'helmholtzFrontiers' not in locals():
                 helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,

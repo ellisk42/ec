@@ -16,6 +16,7 @@ from dreamcoder.task import DifferentiableTask, squaredErrorLoss
 from dreamcoder.type import arrow, treal
 from dreamcoder.utilities import testTrainSplit, eprint, numberOfCPUs
 
+VECTOR_LEN = 3
 
 def makeTask(name, f, actualParameters):
     xs = [x / 100. for x in range(-500, 500)]
@@ -247,6 +248,10 @@ class RandomParameterization(object):
     def primitive(self, e):
         if e.name == 'REAL':
             return Primitive(str(e), e.tp, randomCoefficient())
+        if e.name == 'REAL_VECTOR':
+            return Primitive(str(e), e.tp, [randomCoefficient() for _ in range(VECTOR_LEN)])
+        #if e.name == 'REAL_MATRIX':
+        #    return Primitive(str(e), e.tp, [[randomCoefficient() for _ in range(VECTOR_LEN)] for _ in range(VECTOR_LEN)])
         return e
 
     def invented(self, e): return e.body.visit(self)

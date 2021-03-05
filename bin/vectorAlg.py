@@ -98,7 +98,7 @@ def makeTask(name, request, law,
 
 def makeTasks():
     tasks = []
-    tasksPerType = 5
+    tasksPerType = 5 # create 5 different placeholder instantiations for each task law
     
     ts = []
     while len(ts) < tasksPerType:
@@ -206,6 +206,7 @@ def makeTasks():
     
     return tasks
 
+# feature extractor from scientificLaws.py
 # class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 #     def tokenize(self, examples):
 #         # Should convert both the inputs and the outputs to lists
@@ -234,6 +235,7 @@ def makeTasks():
 #         p = program.visit(RandomParameterization.single)
 #         return super(LearnedFeatureExtractor, self).featuresOfProgram(p, tp)
 
+# feature extractor from list domain
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 64
     
@@ -296,6 +298,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         p = program.visit(RandomParameterization.single)
         return super(LearnedFeatureExtractor, self).featuresOfProgram(p, tp)
 
+# from rational.py
 def randomCoefficient(m=2.5):
     t = 0.3
     f = t + (random.random() * (m - t))
@@ -401,16 +404,12 @@ def _matrix_mult(m, l):
 
 # multiplying a list of lists with a list
 def randomMatrixMult(): 
-    # map dotProduct(l) with m so dot product is computed along rows of m and stored in a list
     c = randomMatrix()
     def f(x): [dotProduct(c[0], x), dotProduct(c[1], x), dotProduct(c[2], x)]
     name = "[[%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f], [%0.1f, %0.1f, %0.1f]] * x" % (c[0][0], c[0][1], c[0][2],
                                                                                           c[1][0], c[1][1], c[1][2],
                                                                                           c[2][0], c[2][1], c[2][2])
     return name, f
-
-def _matrix_mult_vectors(l, r1, r2, r3):
-    return [dotProduct(r1, l), dotProduct(r2, l), dotProduct(r3, l)]
 
 # activations
 def _sigmoid(x): return 1 / (1 + math.exp(-x))
@@ -504,19 +503,11 @@ def _lstm_cell(htm1, ctm1, xt, Uf, Wf, bf, Ui, Wi, bi, Uc, Wc, bc, Uo, Wo, bo):
     ht = _new_hidden_state(ot, ct)
     return [ht, ct]
 
-def _trunc8f(x): 
-    return (math.trunc(1e8*x))*1.0e-8
-prim_trunc8f = Primitive("trunc8f", arrow(treal, treal), _trunc8f)
-
-def _trunc4f(x): 
-    return (math.trunc(1e4*x))*1.0e-4
-prim_trunc4f = Primitive("trunc4f", arrow(treal, treal), _trunc4f)
 
 if __name__ == "__main__":
 
-    tasks = makeTasks()
-    ts = [
-        # parallel distributed processing
+    tasks = makeTasks() # placeholder tasks
+    ts = [              # non-placeholder tasks
         makeTask("vector addition (2)",
                  arrow(tvector, tvector, tvector),
                  vectorAddition),
@@ -526,16 +517,16 @@ if __name__ == "__main__":
         makeTask("vector addition (4)",
                  arrow(tvector, tvector, tvector, tvector, tvector),
                  lambda v1, v2, v3, v4: vectorAddition(v4, vectorAddition(v3, vectorAddition(v1, v2)))),
-        makeTask("vector addition (2) + sigmoid",
+        makeTask("vector addition (2) |> sigmoid",
                  arrow(tvector, tvector, tvector),
                  lambda v1, v2: applySigmoid(vectorAddition(v1, v2))),
-        makeTask("vector addition (3) + tanh",
+        makeTask("vector addition (3) |> tanh",
                  arrow(tvector, tvector, tvector, tvector),
                  lambda v1, v2, v3: applyTanh(vectorAddition(v3, vectorAddition(v1, v2)))),
         makeTask("vector multiplication (2)",
                  arrow(tvector, tvector, tvector),
                  vectorMultiplication),
-        makeTask("vector multiplication (2) + tanh",
+        makeTask("vector multiplication (2) |> tanh",
                  arrow(tvector, tvector, tvector),
                  lambda v1, v2: applyTanh(vectorMultiplication(v1, v2))),
         makeTask("vector sum",
@@ -547,7 +538,7 @@ if __name__ == "__main__":
         makeTask("scale vector",
                  arrow(treal, tvector, tvector),
                  scaleVector),
-        makeTask("scale vector + sigmoid",
+        makeTask("scale vector |> sigmoid",
                  arrow(treal, tvector, tvector),
                  lambda r, v: applySigmoid(scaleVector(r, v))),
         makeTask("sigmoid",
@@ -559,16 +550,16 @@ if __name__ == "__main__":
         # makeTask("singleton",
         #          arrow(treal, tvector),
         #          lambda x: [x]),
-        # makeTask("reals to vector (2) + tanh",
+        # makeTask("reals to vector (2) |> tanh",
         #          arrow(treal, treal, tvector),
         #          lambda x1, x2: applyTanh([x1, x2])),
-        # makeTask("reals to vector (3) + sigmoid",
+        # makeTask("reals to vector (3) |> sigmoid",
         #          arrow(treal, treal, treal, tvector),
         #          lambda x1, x2, x3: applySigmoid([x1, x2, x3])),
         # makeTask("adding vector 1 and vector 3",
         #          arrow(tvector, tvector, tvector, tvector),
         #          lambda v1, v2, v3: vectorAddition(v1, v3)),
-        makeTask("adding vector 2 and vector 3 + sigmoid",
+        makeTask("adding vector 2 and vector 3 |> sigmoid",
                  arrow(tvector, tvector, tvector, tvector),
                  lambda v1, v2, v3: applySigmoid(vectorAddition(v2, v3)))
         # makeTask("sum matrix rows", 
@@ -577,14 +568,11 @@ if __name__ == "__main__":
         # makeTask("matrix multiplication", 
         #          arrow(tlist(tvector), tvector, tvector),
         #          _matrix_mult, triple=True),
-        # makeTask("matrix multiplication + sigmoid", 
+        # makeTask("matrix multiplication |> sigmoid", 
         #          arrow(tlist(tvector), tvector, tvector),
         #          lambda m, l: applySigmoid(_matrix_mult(m, l)), 
         #          triple=True),
-        #makeTask("matrix mult 3 vectors",
-        #         arrow(tvector, tvector, tvector, tvector, tvector),
-        #         _matrix_mult_vectors),
-        # makeTask("matrix mult + addition",
+        # makeTask("matrix mult |> addition",
         #          arrow(tlist(tvector), tvector, tvector, tvector),
         #          lambda m, l, b: vectorAddition(_matrix_mult(m, l), b),
         #          triple=True),
@@ -598,7 +586,7 @@ if __name__ == "__main__":
         # makeTask("scaled vector addition",
         #          arrow(treal, tvector, treal, tvector, tvector),
         #          lambda W1, b1, W2, b2: vectorAddition(scaleVector(W1, b1), scaleVector(W2, b2))),
-        # makeTask("scaled vector addition + tanh",
+        # makeTask("scaled vector addition |> tanh",
         #          arrow(treal, tvector, treal, tvector, tvector),
         #          lambda W1, b1, W2, b2: applyTanh(vectorAddition(scaleVector(W1, b1), scaleVector(W2, b2)))),
         # makeTask("forget gate without sigmoid",
@@ -681,26 +669,22 @@ if __name__ == "__main__":
     
     real = Primitive("REAL", treal, None)
     real_vector = Primitive("REAL_VECTOR", tvector, None)
-    real_matrix = Primitive("REAL_MATRIX", tlist(tvector), None)
+    #real_matrix = Primitive("REAL_MATRIX", tlist(tvector), None)
     vector_addition = Primitive("add_vector",
                        arrow(tvector, tvector, tvector),
                        vectorAddition)
     bootstrapTarget()
     equationPrimitives = [
         real,
-        real_vector,
+        real_vector,           # comment out to remove grammar.py error
         #real_matrix,
         f0,
         f1,
-        #real_power,
-        #real_subtraction,
         real_addition,
-        vector_addition,
-        #real_division,
+        vector_addition,       # comment out to remove grammar.py error
         real_multiplication,
         prim_tanh,
         prim_sigmoid] + [
-        #prim_relu] + [
             Program.parse(n)
             for n in ["map","fold",
                       "empty","cons",#"car","cdr",
@@ -710,7 +694,7 @@ if __name__ == "__main__":
     eprint("Got %d equation discovery tasks..." % len(tasks))
 
     explorationCompression(baseGrammar, tasks,
-                           outputPrefix="experimentOutputs/lstm",
+                           outputPrefix="experimentOutputs/vectorAlg",
                            evaluationTimeout=0.1,
                            testingTasks=[],
                            **commandlineArguments(

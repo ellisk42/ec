@@ -1,6 +1,6 @@
 from dreamcoder.program import Primitive, Program
 from dreamcoder.grammar import Grammar
-from dreamcoder.type import tlist, tint, tbool, arrow, t0, t1, t2
+from dreamcoder.type import tlist, tint, tbool, arrow, t0, t1, t2, treal
 
 import math
 from functools import reduce
@@ -65,8 +65,7 @@ def _zip(a): return lambda b: lambda f: list(map(lambda x,y: f(x)(y), a, b))
 def _mapi(f): return lambda l: list(map(lambda i_x: f(i_x[0])(i_x[1]), enumerate(l)))
 
 
-def _reduce(f): return lambda x0: lambda l: reduce(lambda a, x: f(a)(x), l, x0)
-
+def _reduce(f): return lambda l: reduce(lambda a, x: f(a)(x), l) 
 
 def _reducei(f): return lambda x0: lambda l: reduce(
     lambda a, t: f(t[0])(a)(t[1]), enumerate(l), x0)
@@ -254,20 +253,17 @@ def primitives():
                 tlist(t0),
                 tlist(t1)),
             _mapi),
-        # Primitive("reduce", arrow(arrow(t1, t0, t1), t1, tlist(t0), t1), _reduce),
+        #Primitive("reduce", arrow(arrow(t1, t0, t1), tlist(t0), t1), _reduce),
         Primitive(
-            "reducei",
+            "reduce",
             arrow(
                 arrow(
-                    tint,
-                    t1,
-                    t0,
-                    t1),
-                t1,
-                tlist(t0),
-                t1),
-            _reducei),
-
+                    treal,
+                    treal,
+                    treal),
+                tlist(treal),
+                treal),
+            _reduce),
         Primitive("true", tbool, True),
         Primitive("not", arrow(tbool, tbool), _not),
         Primitive("and", arrow(tbool, tbool, tbool), _and),
@@ -321,7 +317,18 @@ def basePrimitives():
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
-        Primitive("-", arrow(tint, tint, tint), _subtraction)
+        Primitive("-", arrow(tint, tint, tint), _subtraction),
+        Primitive(
+            "reduce",
+            arrow(
+                arrow(
+                    treal,
+                    treal,
+                    treal),
+                tlist(treal),
+                treal),
+            _reduce),
+        Primitive("singleton", arrow(t0, tlist(t0)), _single)
     ]
 
 zip_primitive = Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip)
@@ -346,6 +353,18 @@ def bootstrapTarget():
         Primitive("car", arrow(tlist(t0), t0), _car),
         Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
+        #Primitive("reduce", arrow(arrow(t1, t0, t1), tlist(t0), t1), _reduce)
+        Primitive(
+            "reduce",
+            arrow(
+                arrow(
+                    treal,
+                    treal,
+                    treal),
+                tlist(treal),
+                treal),
+            _reduce),
+        Primitive("singleton", arrow(t0, tlist(t0)), _single)
     ] + [Primitive(str(j), tint, j) for j in range(2)]
 
 
@@ -393,6 +412,17 @@ def McCarthyPrimitives():
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
+        Primitive(
+            "reduce",
+            arrow(
+                arrow(
+                    treal,
+                    treal,
+                    treal),
+                tlist(treal),
+                treal),
+            _reduce),
+        Primitive("singleton", arrow(t0, tlist(t0)), _single)
     ] + [Primitive(str(j), tint, j) for j in range(2)]
 
 

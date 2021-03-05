@@ -1,6 +1,7 @@
 from dreamcoder.program import *
 from dreamcoder.differentiation import *
 
+import torch
 import signal
 
 
@@ -172,7 +173,7 @@ class DifferentiableTask(Task):
             cache=False)
 
     def logLikelihood(self, e, timeout=None):
-        assert timeout is None, "timeout not implemented for differentiable tasks, but not for any good reason."
+        #assert timeout is None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
         if self.maxParameters is not None and len(
                 parameters) > self.maxParameters:
@@ -182,20 +183,33 @@ class DifferentiableTask(Task):
             return NEGATIVEINFINITY
         f = e.evaluate([])
 
-        loss = sum(self.loss(self.predict(f, xs), y)
-                   for xs, y in self.examples) / float(len(self.examples))
-        if isinstance(loss, DN):
-            try:
-                loss = loss.restartingOptimize(
-                    parameters,
-                    lr=self.specialTask[1]["lr"],
-                    steps=self.specialTask[1]["steps"],
-                    decay=self.specialTask[1]["decay"],
-                    grow=self.specialTask[1]["grow"],
-                    attempts=self.specialTask[1]["restarts"],
-                    update=None)
-            except InvalidLoss:
-                loss = POSITIVEINFINITY
+        try:
+            Optimizer = torch.optim.Adam(parameters, lr=self.specialTask[1]["lr"])
+            steps = self.specialTask[1]["steps"]
+            for j in range(steps):
+                Optimizer.zero_grad()
+                loss = sum(self.loss(self.predict(f, xs), y)
+                    for xs, y in self.examples) / float(len(self.examples))
+                loss.backward()
+                Optimizer.step()
+        except:
+            loss = POSITIVEINFINITY
+
+        # old implementation without pytorch:
+        # loss = sum(self.loss(self.predict(f, xs), y)
+        #            for xs, y in self.examples) / float(len(self.examples))
+        # if isinstance(loss, DN):
+        #     try:
+        #         loss = loss.restartingOptimize(
+        #             parameters,
+        #             lr=self.specialTask[1]["lr"],
+        #             steps=self.specialTask[1]["steps"],
+        #             decay=self.specialTask[1]["decay"],
+        #             grow=self.specialTask[1]["grow"],
+        #             attempts=self.specialTask[1]["restarts"],
+        #             update=None)
+        #     except InvalidLoss:
+        #         loss = POSITIVEINFINITY
 
         # BIC penalty
         penalty = self.BIC * len(parameters) * math.log(len(self.examples))
@@ -210,8 +224,18 @@ class DifferentiableTask(Task):
 
 
 def squaredErrorLoss(prediction, target):
-    d = prediction - target
-    return d * d
+    if type(prediction) is not type(target):
+        return POSITIVEINFINITY
+    if type(prediction) is list:
+        if (len(prediction) != len(target)):
+            return POSITIVEINFINITY
+        sum = 0
+        for i in range(len(prediction)):
+            sum += squaredErrorLoss(prediction[i], target[i])
+        return sum
+    else:
+        d = prediction - target
+        return d * d
 
 
 def l1loss(prediction, target):
@@ -223,9 +247,26 @@ class PlaceholderVisitor(object):
 
     def primitive(self, e):
         if e.name == 'REAL':
-            placeholder = Placeholder.named("REAL_", random.random())
+            placeholder = (torch.rand(1)).clone().detach().requires_grad_(True)
+            #placeholder = torch.tensor(torch.rand(1), requires_grad=True)
             self.parameters.append(placeholder)
             return Primitive(e.name, e.tp, placeholder)
+        if e.name == 'REAL_VECTOR':
+            # initialize with a random 3 element list
+            placeholder = (torch.rand(3)).clone().detach().requires_grad_(True)
+            self.parameters.append(placeholder)
+            return Primitive(e.name, e.tp, placeholder)
+        #if e.name == 'REAL_MATRIX':
+            # initialize with a random 3x3 matrix
+        #    placeholder = (torch.rand(3,3)).clone().detach().requires_grad_(True)
+        #    self.parameters.append(placeholder)
+        #   return Primitive(e.name, e.tp, placeholder)
+
+        # old implementation without pytorch
+        # if e.name == 'REAL':
+        #     placeholder = Placeholder.named("REAL_", random.random())
+        #     self.parameters.append(placeholder)
+        #     return Primitive(e.name, e.tp, placeholder)
         return e
 
     def invented(self, e): return e.body.visit(self)

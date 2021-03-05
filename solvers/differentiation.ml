@@ -100,7 +100,8 @@ let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 
               }
   in s
 
-(*let random_variable_vector ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 1.) () =
+(* Currently incompatible with single-dimensional variable type
+  let random_variable_vector ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 1.) () =
   let normals = normal_vector standard_deviation mean in 
 
   let rec s = {gradient = None;
@@ -389,13 +390,6 @@ let replace_placeholders program =
         let var_list = aux !placeholders [] 0 in
         Primitive(t,"REAL_VECTOR", ref var_list |> magical)
       end
-    (*| Primitive(t,"REAL_MATRIX",_) -> begin
-        (*let v = random_variable_matrix() in *)
-        let v = random_variable() in
-        (* update_variable v 0.; *)
-        placeholders := v :: !placeholders;
-        Primitive(t,"REAL_MATRIX", ref v |> magical)
-      end*)
     | p -> p
   in
   let program = r program in

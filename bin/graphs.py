@@ -312,7 +312,7 @@ def plotECResult(
         testingTimeout=None,
         export=None,
         showSolveTime=True,
-        showTraining=False,
+        showTraining=True,
         iterations=None,
         maxP=110,
         showEpochs=False,
@@ -635,8 +635,8 @@ if __name__ == "__main__":
                         default=False, action="store_true",
                         help="When calculating average solve time, should you count missed tasks as timeout OR should you just ignore them? Default: ignore them.")
     parser.add_argument("--showTraining",
-                        default=False, action="store_true",
-                        help="Graph results for training tasks. By default only shows results for testing tasks.")
+                        default=True, action="store_true",
+                        help="Graph results for training tasks. By default only shows results for training tasks.")
     parser.add_argument("--maxPercent","-m",
                         type=int, default=110,
                         help="Maximum percent for the percent hits graph")

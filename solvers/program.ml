@@ -317,7 +317,6 @@ let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
       | 6 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f)
       | 7 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> fun g -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f) (Lazy.force g)
       | 8 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> fun g -> fun h -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f) (Lazy.force g) (Lazy.force h)
-      | 13 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> fun g -> fun h -> fun i -> fun j -> fun k -> fun l -> fun m -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f) (Lazy.force g) (Lazy.force h) (Lazy.force i) (Lazy.force j) (Lazy.force k) (Lazy.force l) (Lazy.force m)
       | _ ->
         raise (Failure (Printf.sprintf "Primitive %s can not be lazy because it has %d arguments. Change `primitive` in program.ml if you want to enable laziness for %s.\n"
                           name number_of_arguments name))
@@ -379,46 +378,14 @@ let primitive6 = primitive "6" tint 6;;
 let primitive7 = primitive "7" tint 7;;
 let primitive8 = primitive "8" tint 8;;
 let primitive9 = primitive "9" tint 9;;
-let primitive10 = primitive "10" tint 10;;
-let primitive0f = primitive "0.0" treal 0.0;;
-let primitive1f = primitive "1.0" treal 1.0;;
-let primitiven1f = primitive "-1.0" treal (0.0-.1.0);;
-let primitive2f = primitive "2.0" treal 2.0;;
-let primitive3f = primitive "3.0" treal 3.0;;
-let primitive4f = primitive "4.0" treal 4.0;;
-let primitive5f = primitive "5.0" treal 5.0;;
-let primitive6f = primitive "6.0" treal 6.0;;
-let primitive7f = primitive "7.0" treal 7.0;;
-let primitive8f = primitive "8.0" treal 8.0;;
-let primitive9f = primitive "9.0" treal 9.0;;
-let primitive10f = primitive "10.0" treal 10.0;;
-let primitiveeneg1 = primitive "0.1" treal 0.1;;
-let primitiveeneg2 = primitive "0.01" treal 0.01;;
-let primitiveeneg3 = primitive "0.001" treal 0.001;;
 let primitive20 = primitive "ifty" tint 20;;
 let primitive_addition = primitive "+" (tint @> tint @> tint) (fun x y -> x + y);;
 let primitive_increment = primitive "incr" (tint @> tint) (fun x -> 1+x);;
-let primitive_increment2 = primitive "incr2" (tint @> tint) (fun x -> 2+x);;
 let primitive_decrement = primitive "decr" (tint @> tint) (fun x -> x - 1);;
 let primitive_subtraction = primitive "-" (tint @> tint @> tint) (-);;
 let primitive_negation = primitive "negate" (tint @> tint) (fun x -> 0-x);;
 let primitive_multiplication = primitive "*" (tint @> tint @> tint) ( * );;
 let primitive_modulus = primitive "mod" (tint @> tint @> tint) (fun x y -> x mod y);;
-
-let primitive_inversef = primitive "inversef" (treal @> treal) (fun x -> 1.0 /. x);;
-let primitive_negatef = primitive "negatef" (treal @> treal) (fun x -> -1.0 *. x);;
-
-let primitive_incrf = primitive "incrf" (treal @> treal) (fun x -> 1.0 +. x);;
-let primitive_incrfeneg1 = primitive "incrfeneg1" (treal @> treal) (fun x -> 0.1 +. x);;
-let primitive_incrfeneg2 = primitive "incrfeneg2" (treal @> treal) (fun x -> 0.01 +. x);;
-let primitive_incrfeneg3 = primitive "incrfeneg3" (treal @> treal) (fun x -> 0.001 +. x);;
-let primitive_incrfeneg4 = primitive "incrfeneg4" (treal @> treal) (fun x -> 0.0001 +. x);;
-let primitive_addf = primitive "addf" (treal @> treal @> treal) (fun x y -> x +. y);;
-let primitive_subf = primitive "subf" (treal @> treal @> treal) (fun x y -> x -. y);;
-let primitive_multf = primitive "multf" (treal @> treal @> treal) ( *. );;
-let primitive_multbias = primitive "multbias" (treal @> treal @> treal @> treal) (fun x m a -> x *. m +. a);;
-let primitive_div2 = primitive "div2" (treal @> treal) (fun x -> x/.2.0);;
-let primitive_div10 = primitive "div10" (treal @> treal) (fun x -> x/.10.0);;
 
 (*let reduce f l = 
   let fun_list = List.reduce_exn l in
@@ -453,18 +420,6 @@ let rec elem_add_3in l a1 a2 =
   | [], _, _ | _, [], _ | _, _, [] -> []
   | hd1::body1, hd2::body2, hd3::body3 -> (hd1 +. hd2 +. hd3)::(elem_add_3in body1 body2 body3);;
 
-let rec ohei l n =
-  match n, l with 
-  | _, [] -> []
-  | 0, _::body -> 1::(ohei body (-1))
-  | i, _::body -> 0::(ohei body (i-1));;
-
-let rec cut_last l = 
-  match l with
-  | [] -> []
-  | [x] -> []
-  | hd::body -> hd::(cut_last body);;
-
 let rec sumf l = 
   match l with 
   | [] -> 0.0 
@@ -473,13 +428,6 @@ let rec sumf l =
 let dot_product l1 l2 = 
   let prod = elem_mult l1 l2 in sumf prod
 
-(*hardcoded 9x1 to 3x3*) 
-let list_to_matrix l = 
-  let r1 = List.slice l 0 3 in
-  let r2 = List.slice l 3 6 in
-  let r3 = List.slice l 6 9 in
-    r1::r2::r3::[];;
-
 let rec matrix_mult m l = 
   match m with
   | [] -> []
@@ -487,25 +435,20 @@ let rec matrix_mult m l =
                   let s = sumf prod in
                     s::(matrix_mult body l);;
 
-let matrix_mult_list m_list l = 
-  let m = list_to_matrix m_list in 
-    matrix_mult m l;;
 
-(*
 let sigmoid x = 1.0 /. (1.0 +. (exp (-1.0 *. x)));;
 
 let f_i_o_gate l u w b =
 (*list(map(_sigmoid, _elem_add_3in(Uf @ htm1)(np.dot(Wf, xt))(bf)))*)
   let htm1 = List.slice l 0 3 in
     let xt = List.nth_exn l 6 in
-      List.map (elem_add_3in(matrix_mult_list u htm1)(scalar_mult w xt)(b)) sigmoid;;
-*)
+      List.map (elem_add_3in(matrix_mult u htm1)(scalar_mult w xt)(b)) sigmoid;;
 
 let candidate_cell_state l u w b =
 (*list(map(_tanh, Uc @ htm1 + np.dot(Wc, xt) + bc)))*)
   let htm1 = List.slice l 0 3 in
     let xt = List.nth_exn l 6 in
-      List.map (elem_add_3in(matrix_mult_list u htm1)(scalar_mult w xt)(b)) Float.tanh;;
+      List.map (elem_add_3in(matrix_mult u htm1)(scalar_mult w xt)(b)) Float.tanh;;
 
 let new_cell_state ft ctm1 it ctilda = 
 (*ct=ft∗ct−1+it∗ctilda*)
@@ -515,29 +458,21 @@ let new_hidden_state ot ct =
 (*ht=ot∗tanh(ct)*)
 elem_mult(ot)(List.map ct Float.tanh);;
 
-(*
 let lstm_cell l uf wf bf ui wi bi uc wc bc uo wo bo = 
-let ft = f_i_o_gate l uf wf bf in
-let it = f_i_o_gate l ui wi bi in
-let ctilda = candidate_cell_state l uc wc bc in
-let ot = f_i_o_gate l uo wo bo in
-let ctm1 = List.slice l 3 6 in
-let ct = new_cell_state ft ctm1 it ctilda in
-let ht = new_hidden_state ot ct in ht @ ct;;
-*)
+  let ft = f_i_o_gate l uf wf bf in
+  let it = f_i_o_gate l ui wi bi in
+  let ctilda = candidate_cell_state l uc wc bc in
+  let ot = f_i_o_gate l uo wo bo in
+  let ctm1 = List.slice l 3 6 in
+  let ct = new_cell_state ft ctm1 it ctilda in
+  let ht = new_hidden_state ot ct in ht @ ct;;
 
 let primitive_elem_mult = primitive "elem_mult" (tlist treal @> tlist treal @> tlist treal) (elem_mult);;
 let primitive_elem_add = primitive "elem_add" (tlist treal @> tlist treal @> tlist treal) (elem_add);;
 let primitive_elem_add_3in = primitive "elem_add_3in" (tlist treal @> tlist treal @> tlist treal @> tlist treal) (elem_add_3in);;
-let primitive_ohei = primitive "ohei" (tlist treal @> tint @> tlist tint) (ohei);;
-let primitive_trunc8f = primitive "trunc8f" (treal @> treal) (fun x -> (Float.of_int (Float.to_int (100000000.0 *. x))) /. 100000000.0);;
-let primitive_trunc4f = primitive "trunc4f" (treal @> treal) (fun x -> (Float.of_int (Float.to_int (10000.0 *. x))) /. 10000.0);;
-let primitive_cut_last = primitive "cut_last" (tlist treal @> tlist treal) (cut_last);;
-let primitive_get_last = primitive "get_last" (tlist treal @> treal) (fun l -> List.hd_exn (List.rev l));;
 let primitive_sum = primitive "sumf" (tlist treal @> treal) (sumf);;
 let primitive_dot_product = primitive "dot_product" (tlist treal @> tlist treal @> treal) (dot_product);;
-let primitive_matrix_mult_list = primitive "matrix_mult_list" (tlist treal @> tlist treal @> tlist treal) (matrix_mult_list);;
-(*let primitive_f_i_o_gate = primitive "f_i_o_gate" (tlist treal @> tlist treal @> tlist treal @> tlist treal @> tlist treal) (f_i_o_gate);;*)
+let primitive_f_i_o_gate = primitive "f_i_o_gate" (tlist treal @> tlist treal @> tlist treal @> tlist treal @> tlist treal) (f_i_o_gate);;
 let primitive_candidate_cell_state = primitive "candidate_cell_state" (tlist treal @> tlist treal @> tlist treal @> tlist treal @> tlist treal) (candidate_cell_state);;
 let primitive_new_cell_state = primitive "new_cell_state" (tlist treal @> tlist treal @> tlist treal @> tlist treal @> tlist treal) (new_cell_state);;
 let primitive_new_hidden_state = primitive "new_hidden_state" (tlist treal @> tlist treal @> tlist treal) (new_hidden_state);;
@@ -598,15 +533,18 @@ let rec string_constants_length = function
   | Index(_) -> 0
 
 let rec number_of_real_constants = function
-  | Primitive(_,"REAL",_) | Primitive(_,"REAL_VECTOR",_) | Primitive(_,"REAL_MATRIX",_)-> 1
+  | Primitive(_,"REAL",_) -> 1
+  | Primitive(_,"REAL_VECTOR",_) -> 3
+  (*| Primitive(_,"REAL_MATRIX",_)-> 9*)
   | Primitive(_,_,_) -> 0
   | Invented(_,b) | Abstraction(b) -> number_of_real_constants b
   | Apply(f,x) -> number_of_real_constants f + number_of_real_constants x
   | Index(_) -> 0
 
 let rec number_of_free_parameters = function
-  | Primitive(_,"REAL",_) | Primitive(_,"REAL_VECTOR",_) | Primitive(_,"REAL_MATRIX",_) 
-  | Primitive(_,"STRING",_) | Primitive(_,"r_const",_) -> 1
+  | Primitive(_,"REAL",_) | Primitive(_,"STRING",_) | Primitive(_,"r_const",_) -> 1
+  | Primitive(_,"REAL_VECTOR",_) -> 3
+  (*| Primitive(_,"REAL_MATRIX",_) -> 9*)
   | Primitive(_,_,_) -> 0
   | Invented(_,b) | Abstraction(b) -> number_of_free_parameters b
   | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x

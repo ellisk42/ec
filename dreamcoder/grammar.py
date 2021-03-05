@@ -265,6 +265,7 @@ class Grammar(object):
                 eprint("request is", request)
                 eprint("xs", xs)
                 eprint("environment", environment)
+                eprint("Expression is", expression)
                 assert False
             return context, None
 

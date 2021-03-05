@@ -9,7 +9,7 @@ from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
 from dreamcoder.grammar import Grammar
 from dreamcoder.task import Task
-from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
+from dreamcoder.type import Context, arrow, tbool, tlist, tint, treal, t0, UnificationFailure
 from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
@@ -19,8 +19,8 @@ def retrieveJSONTasks(filename, features=False):
     """
     For JSON of the form:
         {"name": str,
-         "type": {"input" : bool|int|list-of-bool|list-of-int,
-                  "output": bool|int|list-of-bool|list-of-int},
+         "type": {"input" : bool|int|real|list-of-bool|list-of-int|list-of-real,
+                  "output": bool|int|real|list-of-bool|list-of-int|list-of-real},
          "examples": [{"i": data, "o": data}]}
     """
     with open(filename, "r") as f:
@@ -28,8 +28,10 @@ def retrieveJSONTasks(filename, features=False):
     TP = {
         "bool": tbool,
         "int": tint,
+        "real": treal,
         "list-of-bool": tlist(tbool),
         "list-of-int": tlist(tint),
+        "list-of-real": tlist(treal)
     }
     return [Task(
         item["name"],
