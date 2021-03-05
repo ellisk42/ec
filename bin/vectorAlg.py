@@ -20,8 +20,9 @@ from dreamcoder.utilities import eprint, numberOfCPUs, flatten
 import math
 import random
 
-tvector = baseType("vector")
 treal = baseType("real")
+tvector = tlist(treal)
+#tvector = baseType("vector")
 
 def makeTrainingData(request, law,
                      # Number of examples

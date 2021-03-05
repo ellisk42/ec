@@ -4,6 +4,7 @@ open Core
 open Gc
 
 open Physics
+open Differentiation
 open Pregex
 open Tower
 open Utils
