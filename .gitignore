@@ -27,5 +27,7 @@ message
 sklearn-container.img
 .idea/
 venv/
+ec-language-venv/
+language_experiments/
 tests/out/
 .DS_Store

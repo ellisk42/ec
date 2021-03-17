@@ -16,7 +16,7 @@ AMAZON_TO_AZURE_SIZING = {
 }
 AZURE_DEFAULT_RESOURCE_GROUP = "ec2_resource_group_0"
 AZURE_DEFAULT_REGION = "centralus"
-AZURE_DEFAULT_BASE_IMAGE = "/subscriptions/655f1464-5d1f-48ef-9ed3-dca83e60bdd5/resourceGroups/ec2_resource_group_0/providers/Microsoft.Compute/galleries/cocosci/images/ec2_base_image_0"
+AZURE_DEFAULT_BASE_IMAGE = "/subscriptions/655f1464-5d1f-48ef-9ed3-dca83e60bdd5/resourceGroups/ec2_resource_group_0/providers/Microsoft.Compute/galleries/cocosci/images/ec_base_image_1"
 AZURE_DEFAULT_USERNAME = "azureuser"
 
 def user():
@@ -28,11 +28,12 @@ def branch():
     return subprocess.check_output(
         ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode("utf-8").strip()
 
-def launchAzureCloud(size="Standard_E64_v3",name):
+def launchAzureCloud(size,name):
     """
     Provisions an Azure VM. Requires Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli. Users must be added to the Computational Cognitive Science Azure account with login credentials.
     > az account set --subscription "Computational Cognitive Science Lab" to use the default subscription.
     """
+    print("#######Launching on Azure cloud...")
     if size in AMAZON_TO_AZURE_SIZING: size = AMAZON_TO_AZURE_SIZING[size]
     name = name.replace('_','-').replace('.','-').lower()
     azure_command = f"az vm create --size {size} --name {name} --generate-ssh-keys --data-disk-sizes-gb 64 --location {AZURE_DEFAULT_REGION} --image {AZURE_DEFAULT_BASE_IMAGE} --resource-group {AZURE_DEFAULT_RESOURCE_GROUP}"
@@ -40,6 +41,7 @@ def launchAzureCloud(size="Standard_E64_v3",name):
     output = subprocess.check_output(["/bin/bash", "-c", azure_command])
     output = json.loads(output)
     ip_address = output['publicIpAddress']
+    print(f"Launched to: {name} | {AZURE_DEFAULT_USERNAME}@{ip_address}")
     return name, ip_address
      
 
@@ -96,9 +98,10 @@ def scp(address, localFile, remoteFile):
     else:
         if arguments.azure:
             login_name = "azureuser"
+            command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa {localFile} {login_name}@{address}:{remoteFile}"
         else: # AWS
             login_name = "ubuntu"
-        command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} {login_name}@{address}:{remoteFile}"
+            command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} {login_name}@{address}:{remoteFile}"
     print(command)
     os.system(command)
 
@@ -109,6 +112,7 @@ def ssh(address, command, pipeIn=None):
     else:
         if arguments.azure:
             login_name = "azureuser"
+            command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa {login_name}@{address} '{command}'"
         else: # AWS
             login_name = "ubuntu"
         command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {login_name}@{address} '{command}'"
@@ -165,7 +169,7 @@ cp -r ../ellisk/ec ~/ec
     else:
         preamble += "mv ~/patch ~/ec/patch\n"
         preamble += "git apply patch ; mkdir jobs\n"
-        if not arguments.google:
+        if not arguments.google or arguments.azure:
             # Google image already has these modules loaded
             preamble += "git submodule update --init --recursive\n"
 
@@ -282,6 +286,8 @@ def launchExperiment(
     script = """
 %s > jobs/%s 2>&1
 """ % (command, job_id)
+
+    print(f"###########Now launching job: {name}\nCommand: {command}. \nOutputs will be uploaded to {upload}.")
 
     if arguments.google:
         name = job_id
