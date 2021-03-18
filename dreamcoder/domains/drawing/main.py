@@ -14,7 +14,10 @@ This dataset was introduced for a series of cognitive and computational experime
 It contains convenience arguments for using both the LOGO graphics-related domain (also in logo.py) and the human experiment stimuli in Tian et. al 2020.
 
 Example usage: 
-    python bin/drawing.py TODO
+    python bin/drawing.py 
+        --taskDatasetDir logo_unlimited_200
+        --languageDatasetDir synthetic
+        --primitives logo
 
 Example tests: TODO
 """
@@ -31,15 +34,18 @@ DOMAIN_SPECIFIC_ARGS = {
 def drawing_options(parser):
     ## Dataset loading options.
     parser.add_argument("--taskDatasetDir", type=str,
-                        choices=makeDrawingTasks.getDefaultDrawingTaskDirectories(),
-                        help="Sub directory name for the task dataset. Recovers the top-level tasks dataset dir based on the unique subdirectory. If not existing, generates new tasks.")
-    parser.add_argument("--languageDatasetDir",
+                        choices=makeDrawingTasks.getDefaultCachedDrawingDatasets(),
+                        help="Sub directory name for the task dataset. Recovers the top-level tasks dataset dir based on the unique subdirectory. Must be a cached dataset.")
+    parser.add_argument("--languageDatasetSubdir",
                         help="Language dataset subdirectory. Expects the subdirectory to exist within the task dataset subdirectory, e.g. {taskDatasetDir}/language/{languageSubdir}")
     parser.add_argument("--trainTestSchedule", type=str,
-                        help="Optional file for building subschedules of train and testing stimuli -- for instance, if replicating the behavior of multiple subjects on the same smaller schedule of tasks. If not included, generates a single schedule of the full dataset.")
+                        help="[Currently unimplemented] Optional file for building subschedules of train and testing stimuli -- for instance, if replicating the behavior of multiple subjects on the same smaller schedule of tasks. If not included, generates a single schedule of the full dataset.")
     parser.add_argument("--topLevelOutputDirectory",
                         default=DEFAULT_OUTPUT_DIRECTORY, # Defined in utilities.py
                         help="Top level directory in which to store outputs. By default, this is the experimentOutputs directory.")
+    parser.add_argument("--generateTaskDataset", type=str,
+                        choices=makeDrawingTasks.GENERATED_TASK_DATASETS,
+                        help="If provided, generates a task dataset from scratch. Must specify nGeneratedTasks.")
     parser.add_argument("--nGeneratedTasks",
                         type=int,
                         help="If {taskDatasetDir} is not a cached directory, generates n tasks or {-1} to generate all takss from that generator.")
@@ -47,7 +53,7 @@ def drawing_options(parser):
     # Experiment iteration parameters.
     parser.add_argument("--primitives",
                         nargs="*",
-                        help="Which primitives to use. Choose from: [LOGO, tian_{library_version}].")
+                        help="Which primitives to use. Choose from: [logo, tian_{library_version}].")
                         
     
     # Test functionalities.

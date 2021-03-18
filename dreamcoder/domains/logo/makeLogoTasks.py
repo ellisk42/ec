@@ -15,6 +15,8 @@ from dreamcoder.type import arrow
 from dreamcoder.utilities import eprint, jsonBinaryInvoke, random_seed, montage
 from dreamcoder.grammar import Grammar
 
+SYNTHETIC_LANGUAGE_TAG = "synthetic"
+DEFAULT_LANGUAGE_DIR = "language"
 
 def drawLogo(*programs,
              timeout=None,
@@ -48,7 +50,7 @@ def drawLogo(*programs,
         return response[0]
     return response
 
-def makeTasks(subfolders, proto):
+def makeTasks(subfolders=None, proto=None):
     tasks =  manualLogoTasks()
     lens = [t.token_len for t in tasks]
     print(f"Max len: {max(lens)}, average len: {np.mean(lens)}")
@@ -276,12 +278,22 @@ def rotationalSymmetryDemo():
               (move 0d (/a 1a %d)))"""%(n,body[name],n))
     return demos
 
-def generateCompositionalLogoDataset(task_dataset, args):
-    """Wrapper to generate compositional LOGO tasks.
+def generateCompositionalLogoDataset(task_dataset_dir,task_dataset, n_tasks):
+    """Wrapper to generate compositional LOGO tasks. Generates synthetic language automatically for the dataset.
     """
-    #TODO
-    generateLogoDataset(task_dataset=None, task_dataset_dir=None, language_dataset=None, language_dataset_dir=Non, 
-    n_tasks=None)
+    language_dataset_dir=os.path.join(os.path.dirname(task_dataset_dir), DEFAULT_LANGUAGE_DIR)
+    return generateLogoDataset(task_dataset_dir=task_dataset_dir,
+                        task_dataset=task_dataset,
+                        n_tasks=n_tasks,
+                        language_dataset=task_dataset, language_dataset_dir=language_dataset_dir)
+
+def generateOriginalLogoDataset(task_dataset_dir,task_dataset):
+    """Wrapper to generate the original LOGO tasks in Ellis 2020. 
+    """
+    return generateLogoDataset(task_dataset_dir=task_dataset_dir,
+                        task_dataset=task_dataset,
+                        n_tasks=None,
+                        language_dataset=None, language_dataset_dir=None)
     
 def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, language_dataset_dir, n_tasks=None):
     """task_dataset: [logo_classic | "logo_unlimited_1300",
@@ -296,7 +308,7 @@ def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, langua
         print(f"Generating logo dataset language and saving to: [{language_dataset}]")
     
     language_data = None
-    if task_dataset == 'logo_classic':
+    if task_dataset == 'logo_classic' or task_dataset == 'logo_original_all':
         if language_dataset is not None:
             print("Error: no language defined for logo_classic dataset.")
             assert False
@@ -308,12 +320,13 @@ def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, langua
     elif task_dataset == 'logo_unlimited_200':
         tasks = makeLogoUnlimitedTasks(n_tasks=200)
     else:
+        assert n_tasks is not None
         tasks = makeLogoUnlimitedTasks(n_tasks=n_tasks)
     
-    writeLogoDataset(tasks, task_dataset, task_dataset_dir)
+    train_tasks, test_tasks = writeLogoDataset(tasks, task_dataset, task_dataset_dir)
     if language_dataset is not None:
         writeLanguageDataset(tasks, language_dataset, language_dataset_dir)
-
+    return train_tasks, test_tasks
 def writeLogoDataset(tasks, task_dataset, task_dataset_dir):
     print(f"Writing n={len(tasks)} to {task_dataset_dir}/{task_dataset}")
     from pathlib import Path
@@ -336,7 +349,8 @@ def writeLogoDataset(tasks, task_dataset, task_dataset_dir):
     for split, tasks in [("train", train_tasks), ("test", test_tasks)]:
         split_path = os.path.join(image_path, split)
         Path(split_path).mkdir(parents=True, exist_ok=True)
-        saveVisualizedTasks(tasks, split_path)   
+        saveVisualizedTasks(tasks, split_path)  
+    return train_tasks, test_tasks 
 
 def loadLogoDataset(task_dataset=None, task_dataset_dir=None, om_original_ordering=False, full_directory=None):
     if full_directory:
