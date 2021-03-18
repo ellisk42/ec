@@ -3,6 +3,8 @@ from dreamcoder.dreamcoder import ecIterator, default_wake_generative
 
 import dreamcoder.domains.drawing.makeDrawingTasks as makeDrawingTasks
 import dreamcoder.domains.drawing.test_makeDrawingTasks as test_makeDrawingTasks
+
+import dreamcoder.domains.drawing.drawingPrimitives
 import dreamcoder.domains.drawing.test_drawingPrimitives as test_drawingPrimitives
 """
 main.py (drawing)  | Author: Catherine Wong.
@@ -74,8 +76,8 @@ def main(args):
     train_test_schedules = task_and_language_schedule.train_test_schedules
     language_dataset = task_and_language_schedule.language_dataset
     
-    # Load the initial primitives.
-    primitive_names = args.pop("primitives")
+    # Load the initial grammar.
+    initial_grammar = drawingPrimitives.load_initial_grammar(args)
     
     # Create the output directory for the experiment.
     top_level_output_dir = args.pop("topLevelOutputDirectory")
