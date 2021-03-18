@@ -32,9 +32,23 @@ class CachedTensor:
         return self.val
 
 
-
-
 class Context:
+    vals = ()
+    def __add__(self,other):
+        assert isinstance(other,self.__class__)
+        return self.__class__(self.vals + other.vals)
+    def __iter__(self):
+        return iter(self.vals)
+    def __len__(self):
+        return len(self.vals)
+    def __getitem__(self,indexer):
+        return self.vals[indexer]
+    def __repr__(self):
+        inner = ', '.join(compressed_str(repr(ew)) for ew in self.vals)
+        return f'{self.__class__.__name__}(len={len(self)}: {inner})'
+
+class EWContext(Context):
+    is_ew = True
     def __init__(self, ews=()) -> None:
         """
         Takes an EW or tuple thereof and builds an immutable context
@@ -42,25 +56,12 @@ class Context:
         
         Note [0] is the top of the ctx stack and thus the $0 argument
         Note `ctx1+ctx2` would make [0] come from ctx1
-        Pushing onto the stack looks like: `ctx = Context(exwise) + ctx`
+        Pushing onto the stack looks like: `ctx = EWContext(exwise) + ctx`
         """
-        if isinstance(ews,Examplewise):
-            ews = (ews,)
-        self.ews = tuple(ews)
-        self.no_free = all(not ew.placeholder for ew in self.ews)
+        assert isinstance(ews,(tuple,list))
+        self.vals = tuple(ews)
+        self.no_free = all(not ew.placeholder for ew in self.vals)
         self.cached_encode = CachedTensor()
-    def __add__(self,other):
-        assert isinstance(other,Context)
-        return Context(self.ews + other.ews)
-    def __iter__(self):
-        return iter(self.ews)
-    def __len__(self):
-        return len(self.ews)
-    def __getitem__(self,indexer):
-        return self.ews[indexer]
-    def __repr__(self):
-        inner = ', '.join(repr(ew) for ew in self.ews)
-        return f'Context(len={len(self)}: {inner})'
     def encode(self):
         """
         used in places like beval() for Hole as well as by the policy
@@ -68,52 +69,92 @@ class Context:
         self.cached_encode.get(lambda:sing.model.abstraction_fn.encode_ctx(self))
     @staticmethod
     def get_placeholders(argc):
-        return Context([Examplewise(placeholder=True) for _ in argc])
+        return EWContext([Examplewise(placeholder=True) for _ in argc])
+
+class SinglesContext(Context):
+    is_ew = False
+    def __init__(self, vals=()) -> None:
+        """
+        Single Context (as opposed to examplewise)
+        """
+        self.vals = tuple(vals)
+
+
+
+
+
+
 
 
 class Closure:
-    def __init__(self,abs,enclosed_ctx):
+    def __init__(self, abs, enclosed_ctx):
         """
         Returned by beval() for ABS 
 
         Note enclosed_ctx can either be an Exwise list or just singles!
         """
         assert abs.ntype.abs
+        self.is_ew == enclosed_ctx.is_ew, f"classes dont match, only one is examplewise: {self.__class__} {enclosed_ctx.__class__}"
 
         self.abs = abs # an ABS
         self.enclosed_ctx = enclosed_ctx
         self.argc = self.abs.argc
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.abs} with {self.enclosed_ctx})'
+
+class SinglesClosure(Closure):
+    is_ew = False
+    def __call__(self, *args):
+        """
+        blended-exec the closure body with the context of `args + enclosed_ctx`.
+        If more args are provided than the body takes, we'll (reasonably) assume that you want
+        currying and will execute the body with fewer args then feed remaining args
+        into whatever the body returns (hopefully another closure)
+        Same as EWClosure.__call except uses beval_single_concrete and SinglesContext
+        """
+        assert len(args) >= self.argc
+        consumed_args = args[:self.argc] # consume as many args as we can
+        remaining_args = args[self.argc:]
+        ctx = SinglesContext(consumed_args) + self.enclosed_ctx
+        res = self.abs.body.beval_single_concrete(ctx)
+        if len(remaining_args) > 0:
+            assert callable(res)
+            res = res(remaining_args) # recursion of its a Closure, and works fine if its a prim fn as well
+        return res
 
 
-    def beval_with_args(self, args):
-        assert len(args) == self.argc
-        ctx = args + self.enclosed_ctx 
-        return self.abs.body.beval(ctx)
-    def beval_single_concrete_with_args(self,args):
-        assert len(args) == self.argc
-        ctx = args + self.enclosed_ctx 
-        return self.abs.body.beval_single_concrete(args)
-    def split_along_exwise(self):
+class EWClosure(Closure):
+    is_ew = True
+    def __call__(self, *args):
+        """
+        blended-exec the closure body with the context of `args + enclosed_ctx`.
+        If more args are provided than the body takes, we'll (reasonably) assume that you want
+        currying and will execute the body with fewer args then feed remaining args
+        into whatever the body returns (hopefully another closure)
+        Same as SinglesClosure.__call except uses beval and EWContext
+
+        """
+        assert len(args) >= self.argc
+        consumed_args = args[:self.argc] # consume as many args as we can
+        remaining_args = args[self.argc:]
+        ctx = EWContext(consumed_args) + self.enclosed_ctx
+        res = self.abs.body.beval(ctx)
+        if len(remaining_args) > 0:
+            assert callable(res)
+            res = res(remaining_args) # recursion of its a Closure, and works fine if its a prim fn as well
+        return res
+    def split(self):
         """
         Turn an exwise closure into a list of single closures by turning the
         exwise based enclosed ctx into num_exs non-exwise contexts
         """
-        assert all(isinstance(ew,Examplewise) for ew in self.enclosed_ctx)
-        ctx_of_ews = [ew.split() for ew in self.enclosed_ctx]
+        assert all(not ew.placeholder for ew in self.enclosed_ctx), "singlescontexts are fully concrete and never have free vars"
+        ctx_of_ews = [ew.split() for ew in self.enclosed_ctx] # Examplewise.split()
         list_of_ctxs = list(zip(*ctx_of_ews)) # [len_enclosed_ctx,num_exs] -> [num_exs,len_enclosed_ctx]
         
-        res = [Closure(self.abs,ctx) for ctx in list_of_ctxs]
+        res = [SinglesClosure(self.abs,ctx) for ctx in list_of_ctxs]
         return res
-    def __repr__(self):
-        return f'Closure({self.abs} with {self.enclosed_ctx})'
-    # def split_into_concrete_beval(self):
-    #     assert not self.abs.has_holes()
-    #     res = []
-    #     for i in range(sing.num_exs):
-    #         res.append(lambda args: self.beval_with_args(args)[i])
-    #     return res
-
 
 def cached_propagate(propagate):
     @functools.wraps(propagate)
@@ -185,13 +226,13 @@ class PTask:
         self.inputs = [Examplewise(arg) for arg in _argwise]
         self.cached_input_features = CachedTensor()
 
-        ctx = Context()
+        ctx = EWContext()
         for exwise in self.inputs:
             """
             inputs[0] is the arg to the outermost lambda therefore
             It should be pushed onto the ctx stack first
             """
-            ctx = Context(exwise) + ctx
+            ctx = EWContext(exwise) + ctx
         self.ctx = ctx
 
 
@@ -245,66 +286,40 @@ class Examplewise:
             if self.concrete is not None:
                 self.abstract = sing.model.abstraction_fn.encode_concrete_exwise(self)
             elif self.closure is not None:
-                args = Context.get_placeholders(self.argc)
+                args = EWContext.get_placeholders(self.argc)
                 self.abstract = self.closure.beval_with_args(args).get_abstract()
             else:
                 assert False
         return self.abstract
     
     def split(self):
+        """
+        Goes from an EW to a list of num_exs "singles" (python values or )
+        """
         if self.concrete:
             return self.concrete
         if self.closure:
-            return self.closure.split_along_exwise()
+            return self.closure.split() # EWClosure.split()
         if self.abstract:
+            # not sure youll ever want to split an abstract
+            # guy but this is how you'd do it.
             return [inner_tensor for inner_tensor in self.abstract]
         if self.placeholder:
-            return [Examplewise(placeholder=True) for _ in range(sing.num_exs)]
+            assert False, "singles are fully concrete"
         assert False
 
-    # @staticmethod
-    # def concrete_apply(callable_list, arg_ews):
-    #     args = [ew.get_as_concrete_arg() for ew in arg_ews] # [argc,num_exs] list
-    #     assert all(arg is not None for arg in args)
-    #     assert all(callable(fn) for fn in callable_list)
 
-    #     # this is why we can safely zip together the callable_list
-    #     # with the starred args below. We're transposing args while
-    #     # also tacking on the corresponding fn for each ex in num_exs
-    #     assert all(len(arg) == len(callable_list) for arg in args)
-
-    #     res = []
-    #     for fn,*fn_args in zip(callable_list, *args): # this loop runs num_exs times
-    #         res = fn(*fn_args)
-    #     return Examplewise(concrete=res)
-
-    def into_python(self):
+    @property
+    def can_be_concrete(self):
         """
         return a len=num_exs list of concrete values or python functions (which return other concrete values).
+        returns None if can't turn it into python (eg if abstract or closure w holes)
         """
         if self.concrete is not None:
-            return self.concrete
+            return True
         elif self.closure is not None and not self.closure.abs.has_holes:
-            return [lambda *args: uncurry(c.beval_single_concrete_with_args,args) for c in self.closure.split_along_exwise()]
-        else:
-            return None
+            return True
 
-    # def as_concrete_fn(self,*args):
-    #     """
-    #     assume self.data is just num_exs copies of the same function.
-    #     and args are Examplewise instances with concrete values
-    #     then just apply the function to the values
-    #     """
-    #     assert self.concrete is not None and callable(self.concrete[0]) and [x==self.concrete[0] for x in self.concrete]
-    #     assert all(isinstance(arg,Examplewise) and arg.concrete is not None for arg in args)
-
-    #     fn = self.concrete[0]
-
-
-    #     results = []
-    #     for ex in range(sing.num_exs):
-    #         results.append(uncurry(fn,[arg.concrete[ex] for arg in args])) # makes sense bc fn() takes len(args) arguments
-    #     return Examplewise(results)
 
     def _check_in_range(self):
         """
@@ -352,7 +367,7 @@ class PNode:
     applicationParse() etc.
 
     lambda abstractions are still used bc many things operating over
-    PNodes will want to be aware that the Context is changing
+    PNodes will want to be aware that the EWContext is changing
 
     pnode.ctx is a stack representing the context, it gets updated
     on entering an abstraction's body. 
@@ -671,7 +686,7 @@ class PNode:
 
         if self.ntype.output:
             assert ctx is None
-            return self.tree.beval_single_concrete()
+            return self.tree.beval_single_concrete(Context()) # this will just convert the toplevel ABS into a closure
         
         assert ctx is not None
 
@@ -688,13 +703,14 @@ class PNode:
             assert False
 
         elif self.ntype.abs:
-            closure = Closure(abs=self,enclosed_ctx=ctx)
-            return lambda *args: uncurry(closure.beval_single_concrete_with_args,args) # sets up context and evals body under new context w provided args
+            return SinglesClosure(abs=self,enclosed_ctx=ctx)
 
         elif self.ntype.app:
             fn = self.fn.beval_single_concrete(ctx)
             args = [arg.beval_single_concrete(ctx) for arg in self.xs]
-            return uncurry(fn,args)
+            if isinstance(fn,Closure):
+                return fn(args)
+            return uncurry(fn,args) # for prim fns...
     def beval(self, ctx):
         """
         call like root.beval(ctx=None) and the output node will fill the right ctx for you.
@@ -737,29 +753,34 @@ class PNode:
             return printed(Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp](ctx.encode())))
 
         elif self.ntype.abs:
-            return printed(Examplewise(closure=Closure(abs=self,enclosed_ctx=ctx)))
+            return printed(Examplewise(closure=EWClosure(abs=self,enclosed_ctx=ctx)))
 
         elif self.ntype.app:
             fn = self.fn.beval(ctx)
             args = [arg.beval(ctx) for arg in self.xs]
             
-            py_fn = fn.into_python()
-            py_args = [x.into_python() for x in args]
-            if all(x is not None for x in (py_fn,*py_args)):
-                """
-                CONCRETE FOLDING
-                we converted everyone into concrete python fns! Meaning nobody
-                has holes.
 
-                py_fn : [num_exs]
-                py_args : [argc,num_exs]
+            if (ctx.no_free and # no free vars
+                fn.can_be_concrete and # fn can be concrete
+                all(x.can_be_concrete for x in args) # args can be concrete
+                ):
+                """
+                Concrete application!
+                This uses beval_single_concrete implicitly since it
+                    does ew.split() on all args as well as the fn which
+                    means even if the fn was a closure it became a list of
+                    SinglesClosures with SinglesContexts (so even our current
+                    context was converted even tho we dont explicitly convert
+                    it here).
                 """
                 print(f'{indent}[concrete apply]')
-                py_args = list(zip(*py_args)) # [argc,num_exs] -> [num_exs,argc]
-                res = []
-                for i in range(sing.num_exs):
-                    res.append(uncurry(py_fn[i],py_args[i]))
+                singles_fns = fn.split()
+                singles_args = list(zip(*[ew.split() for ew in args])) # [argc,num_exs] -> [num_exs,argc]
+                assert len(singles_fns) == len(singles_args) == sing.num_exs
+                res = [fn(*args) for fn,args in zip(singles_fns,singles_args)]
                 return printed(Examplewise(concrete=res))
+
+
 
             """
             Abstract call!
@@ -847,7 +868,7 @@ class PNode:
                 Then we simply do the inverse of the body
                 """
                 assert zipper[0] == 'body'
-                ctx = Context.get_placeholders(self.argc) + ctx
+                ctx = EWContext.get_placeholders(self.argc) + ctx
                 res = self.body.inverse_beval(ctx, output_ew, zipper[1:])
                 return res
 
