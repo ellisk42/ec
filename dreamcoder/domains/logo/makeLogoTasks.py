@@ -276,7 +276,14 @@ def rotationalSymmetryDemo():
               (move 0d (/a 1a %d)))"""%(n,body[name],n))
     return demos
 
-def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, language_dataset_dir):
+def generateCompositionalLogoDataset(task_dataset, args):
+    """Wrapper to generate compositional LOGO tasks.
+    """
+    #TODO
+    generateLogoDataset(task_dataset=None, task_dataset_dir=None, language_dataset=None, language_dataset_dir=Non, 
+    n_tasks=None)
+    
+def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, language_dataset_dir, n_tasks=None):
     """task_dataset: [logo_classic | "logo_unlimited_1300",
     "logo_unlimited_500",
     "logo_unlimited_200"]
@@ -300,6 +307,8 @@ def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, langua
         tasks = makeLogoUnlimitedTasks(n_tasks=500)
     elif task_dataset == 'logo_unlimited_200':
         tasks = makeLogoUnlimitedTasks(n_tasks=200)
+    else:
+        tasks = makeLogoUnlimitedTasks(n_tasks=n_tasks)
     
     writeLogoDataset(tasks, task_dataset, task_dataset_dir)
     if language_dataset is not None:
@@ -329,8 +338,11 @@ def writeLogoDataset(tasks, task_dataset, task_dataset_dir):
         Path(split_path).mkdir(parents=True, exist_ok=True)
         saveVisualizedTasks(tasks, split_path)   
 
-def loadLogoDataset(task_dataset, task_dataset_dir, om_original_ordering):
-    dataset_path = os.path.join(task_dataset_dir, task_dataset)
+def loadLogoDataset(task_dataset=None, task_dataset_dir=None, om_original_ordering=False, full_directory=None):
+    if full_directory:
+        dataset_path = full_directory
+    else:
+        dataset_path = os.path.join(task_dataset_dir, task_dataset)
     tasks = {"train": [], "test": []}
     for split in ("train", "test"):
         split_path = os.path.join(dataset_path, split)

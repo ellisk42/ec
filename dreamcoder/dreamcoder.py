@@ -501,6 +501,7 @@ def ecIterator(grammar, tasks,
             
         sys.exit(0)
     
+    ## TODO (catwong): change this to annotate the tasks with the language.
     # Preload language dataset if avaiable.
     if languageDataset is not None:
         result.languageDatasetPath = languageDatasetDir
@@ -1285,7 +1286,14 @@ def commandlineArguments(_=None,
                         Default: %s""" %
         activation)
     
-    ### SMT generative model training.
+    ### Joint generative model training.
+    parser.add_argument("--joint_language_program_model",
+                        default=None,
+                        type=str,
+                        help="Which joint language program model to train. If None, does not train a joint language program model.")
+    parser.add_argument("--test_joint_language_program_model",
+                        action='store_true',
+                        help="Runs tests on the joint language program model.")
     parser.add_argument("--lc_score",
                         default=0.2,
                         type=float,
@@ -1299,7 +1307,7 @@ def commandlineArguments(_=None,
                         help="Whether to use the synchronous grammar during compression.")
     parser.add_argument("--synchronous_grammar",
                         action='store_true',
-                        help="Whether to train a synchronous grammar over the programs and language..")
+                        help="[DEPRECATED] Whether to train a synchronous grammar over the programs and language. This is now replaced by [joint_language_program_model] which allows specification of a more fine grained model. Setting this to true will by default use the Moses SMT model.")
     parser.add_argument("--moses_dir",
         default="../moses_compiled",
         help="Location of top-level Moses SMT directory for machine translation.")
