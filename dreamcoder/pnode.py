@@ -20,6 +20,19 @@ class FoundSolution(Exception):
     def __init__(self,p):
         self.p = p
 
+class CachedTensor:
+    def __init__(self):
+        self.val = self # sentinel
+    def get(self, func):
+        if sing.cfg.debug.validate_cache and self.val is not self:
+            new_val = func()
+            assert torch.allclose(self.val,new_val)
+        if self.val is self: # empty cache
+            self.val = func()
+        return self.val
+
+
+
 
 class Context:
     def __init__(self, ews=()) -> None:
@@ -34,31 +47,66 @@ class Context:
         if isinstance(ews,Examplewise):
             ews = (ews,)
         self.ews = tuple(ews)
+        self.no_free = all(not ew.placeholder for ew in self.ews)
+        self.cached_encode = CachedTensor()
     def __add__(self,other):
         assert isinstance(other,Context)
         return Context(self.ews + other.ews)
+    def __iter__(self):
+        return iter(self.ews)
     def __len__(self):
         return len(self.ews)
     def __getitem__(self,indexer):
         return self.ews[indexer]
     def encode(self):
-        # TODO
-        # make it do caching
-        pass
-    def with_placeholders(self,argc):
-        # TODO
-        # just prepend the placeholders
-        pass
+        """
+        used in places like beval() for Hole as well as by the policy
+        """
+        self.cached_encode.get(lambda:sing.model.abstraction_fn.encode_ctx(self))
+    @staticmethod
+    def get_placeholders(argc):
+        return Context([Examplewise(placeholder=True) for _ in argc])
+
 
 class Closure:
     def __init__(self,abs,enclosed_ctx):
+        """
+        Returned by beval() for ABS 
+
+        Note enclosed_ctx can either be an Exwise list or just singles!
+        """
+
         self.abs = abs # an ABS
         self.enclosed_ctx = enclosed_ctx
+        self.argc = self.abs.argc
 
         assert abs.ntype.abs
-    def abstract(self):
-        placeholder_ctx = self.enclosed_ctx.with_placeholders(self.abs.argc)
-        return self.abs.body.beval(placeholder_ctx)
+    def beval_with_args(self, args):
+        assert len(args) == self.argc
+        ctx = args + self.enclosed_ctx 
+        return self.abs.body.beval(ctx)
+    def beval_single_concrete_with_args(self,args):
+        assert len(args) == self.argc
+        ctx = args + self.enclosed_ctx 
+        return self.abs.body.beval_single_concrete(args)
+    def split_along_exwise(self):
+        """
+        Turn an exwise closure into a list of single closures by turning the
+        exwise based enclosed ctx into num_exs non-exwise contexts
+        """
+        assert all(isinstance(ew,Examplewise) for ew in self.enclosed_ctx)
+        res = []
+        for i in range(sing.num_exs):
+            ctx = [ew[i] for ew in self.enclosed_ctx]
+            res.append(Closure(self.abs,ctx)) # same self.abs can be used bc its fully lazy so can switch to single/exwise freely based on beval() vs beval_single_concrete()
+        return res
+    # def split_into_concrete_beval(self):
+    #     assert not self.abs.has_holes()
+    #     res = []
+    #     for i in range(sing.num_exs):
+    #         res.append(lambda args: self.beval_with_args(args)[i])
+    #     return res
+
 
 def cached_propagate(propagate):
     @functools.wraps(propagate)
@@ -128,7 +176,7 @@ class PTask:
         _argwise = list(zip(*_exwise)) # outer list = args, inner list = examples
         assert len(_argwise) == self.argc
         self.inputs = [Examplewise(arg) for arg in _argwise]
-        self._cached_inputs = None
+        self.cached_input_features = CachedTensor()
 
         ctx = Context()
         for exwise in self.inputs:
@@ -141,15 +189,16 @@ class PTask:
 
 
 
+
     def output_features(self):
-        return self.outputs.abstract()
+        return self.outputs.get_abstract()
     def input_features(self):
-        old_cache = self._cached_inputs 
-        if self._cached_inputs is None:
-            self._cached_inputs = sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs]) # we do know the ctx.tp im just lazy
-        if sing.cfg.debug.validate_cache and old_cache is not None:
-            assert torch.allclose(self._cached_inputs,old_cache)
-        return self._cached_inputs
+        # honestly i like this setup more than a decorator bc it means i get
+        # my CachedTensor object which makes garbage collection less opaque
+        return self.cached_input_features.get(self._input_features)
+    def _input_features(self):
+        return sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs])
+
 
 class Examplewise:
     """
@@ -163,12 +212,13 @@ class Examplewise:
             before itll just return you the same Tensor result as before, so no worries about
             overusing it
     """
-    def __init__(self,concrete=None,abstract=None,closure=None) -> None:
+    def __init__(self,concrete=None,abstract=None,closure=None,placeholder=False) -> None:
         super().__init__()
-        assert (concrete,abstract,closure).count(None) == 2
-        self._concrete = concrete
-        self._abstract = abstract
-        self._closure = closure
+        assert (concrete,abstract,closure).count(None) + (placeholder is False) == 3
+        self.concrete = concrete
+        self.abstract = abstract
+        self.closure = closure
+        self.placeholder = bool(placeholder)
 
         if abstract is not None:
             assert torch.is_tensor(abstract)
@@ -182,79 +232,61 @@ class Examplewise:
         
         if closure is not None:
             assert isinstance(closure,Closure)
-
-    def concrete(self):
-        return self._concrete
-
-    def closure(self):
-        return self._closure
-        
-    def abstract(self):
-        if self._abstract is None:
-            if self._concrete is not None:
-                self._abstract = sing.model.abstraction_fn.encode_concrete_exwise(self)
-            elif self._closure is not None:
-                self._abstract = self._closure.abstract()
+    
+    def get_abstract(self):
+        if self.abstract is None:
+            if self.concrete is not None:
+                self.abstract = sing.model.abstraction_fn.encode_concrete_exwise(self)
+            elif self.closure is not None:
+                args = Context.get_placeholders(self.argc)
+                self.abstract = self.closure.beval_with_args(args)
             else:
                 assert False
-        return self._abstract
+        return self.abstract
 
-    @property
-    def is_valid_concrete_arg(self):
+    # @staticmethod
+    # def concrete_apply(callable_list, arg_ews):
+    #     args = [ew.get_as_concrete_arg() for ew in arg_ews] # [argc,num_exs] list
+    #     assert all(arg is not None for arg in args)
+    #     assert all(callable(fn) for fn in callable_list)
+
+    #     # this is why we can safely zip together the callable_list
+    #     # with the starred args below. We're transposing args while
+    #     # also tacking on the corresponding fn for each ex in num_exs
+    #     assert all(len(arg) == len(callable_list) for arg in args)
+
+    #     res = []
+    #     for fn,*fn_args in zip(callable_list, *args): # this loop runs num_exs times
+    #         res = fn(*fn_args)
+    #     return Examplewise(concrete=res)
+
+    def into_python(self):
         """
-        anything with ._concrete or else a ._closure that has no holes is ok
+        return a len=num_exs list of concrete values or python functions (which return other concrete values).
         """
-        if self.concrete() is not None:
-            return True
-        if self.closure() is not None:
-            if not self._closure.abs.has_holes:
-                return True
-        return False
-    
-    @property
-    def has_closure(self):
-        return self._closure is not None
+        if self.concrete is not None:
+            return self.concrete
+        elif self.closure is not None and not self.closure.abs.has_holes():
+            return [c.beval_single_concrete_with_args for c in self.closure.split_along_exwise()]
+        else:
+            return None
 
-    @property
-    def has_concrete(self):
-        return self._concrete is not None
+    # def as_concrete_fn(self,*args):
+    #     """
+    #     assume self.data is just num_exs copies of the same function.
+    #     and args are Examplewise instances with concrete values
+    #     then just apply the function to the values
+    #     """
+    #     assert self.concrete is not None and callable(self.concrete[0]) and [x==self.concrete[0] for x in self.concrete]
+    #     assert all(isinstance(arg,Examplewise) and arg.concrete is not None for arg in args)
 
-    @property
-    def has_abstract(self):
-        return self._abstract is not None
-
-    @staticmethod
-    def concrete_apply(fn_ew, arg_ews):
-        args = [ew.get_as_concrete_arg() for ew in arg_ews]
-        assert all (callable(fn) for fn in fn_ew) # in future can weaken this to allow nonprimitives ig
+    #     fn = self.concrete[0]
 
 
-    def get_as_concrete_arg(self):
-        assert self.is_valid_concrete_arg
-        if self.has_concrete:
-            return self.concrete()
-        elif self.has_closure:
-            # TODO turn closures into executable lambdas
-            pass
-        assert False
-
-
-    def as_concrete_fn(self,*args):
-        """
-        assume self.data is just num_exs copies of the same function.
-        and args are Examplewise instances with concrete values
-        then just apply the function to the values
-        """
-        assert self.concrete is not None and callable(self.concrete[0]) and [x==self.concrete[0] for x in self.concrete]
-        assert all(isinstance(arg,Examplewise) and arg.concrete is not None for arg in args)
-
-        fn = self.concrete[0]
-
-
-        results = []
-        for ex in range(sing.num_exs):
-            results.append(uncurry(fn,[arg.concrete[ex] for arg in args])) # makes sense bc fn() takes len(args) arguments
-        return Examplewise(results)
+    #     results = []
+    #     for ex in range(sing.num_exs):
+    #         results.append(uncurry(fn,[arg.concrete[ex] for arg in args])) # makes sense bc fn() takes len(args) arguments
+    #     return Examplewise(results)
 
     def _check_in_range(self):
         """
@@ -599,6 +631,44 @@ class PNode:
         assert self.ntype.hole
         return self.propagate(self)
 
+
+
+
+    def beval_single_concrete(self, ctx):
+        """
+        non-exwise beval. If you call it on an output node or an abs node youll
+        get a python lambda you can feed args into.
+        """
+        assert not self.has_holes
+        assert ctx.no_free
+
+        if self.ntype.output:
+            assert ctx is None
+            return self.tree.beval_single_concrete()
+        
+        assert ctx is not None
+
+        if self.ntype.prim:
+            """
+            for both fn prims and other prims
+            """
+            return self.value
+
+        elif self.ntype.var:
+            return ctx[self.i]
+
+        elif self.ntype.hole:
+            assert False
+
+        elif self.ntype.abs:
+            closure = Closure(abs=self,enclosed_ctx=ctx)
+            return closure.beval_single_concrete_with_args # sets up context and evals body under new context w provided args
+
+        elif self.ntype.app:
+            fn = self.fn.beval_single_concrete(ctx)
+            args = [arg.beval_single_concrete(ctx) for arg in self.xs]
+            return fn(*args)
+
     def beval(self, ctx):
         """
         call like root.beval(ctx=None) and the output node will fill the right ctx for you.
@@ -606,10 +676,13 @@ class PNode:
 
         if self.ntype.output:
             """
-            beval on the output sets up the ctx properly
+            beval on the output sets up the ctx properly and skips over the abstractions into their bodies and
+            executes the bodies in the proper context.
             """
             assert ctx is None
-            return self.tree.beval(self.task.ctx)
+            body,i = self.tree.unwrap_abstractions(count=True)
+            assert len(self.task.ctx) == i
+            return body.beval(self.task.ctx)
         
         assert ctx is not None
 
@@ -620,147 +693,156 @@ class PNode:
             return Examplewise(concrete=[self.value for _ in range(sing.num_exs)])
 
         elif self.ntype.var:
-            return ctx[self.i]
+            ew = ctx[self.i]
+            if not ew.placeholder:
+                return ew # normal case
+            else:
+                # encode a free var
+                return Examplewise(abstract=sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
+
 
         elif self.ntype.hole:
-            return sing.model.abstract_transformers.hole_nms[self.tp](ctx.encode())
+            return Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp](ctx.encode()))
 
         elif self.ntype.abs:
             return Examplewise(closure=Closure(abs=self,enclosed_ctx=ctx))
 
         elif self.ntype.app:
-
+            fn = self.fn.beval(ctx)
             args = [arg.beval(ctx) for arg in self.xs]
             
-            if all(arg.is_valid_concrete_arg for arg in args):
-                # concrete eval
-                sing.stats.fn_called_concretely += 1
-                
-                ### * V1 * ###
-                assert self.fn.ntype.prim
-                # TODO implement EW.concrete_apply as a fn that zips together everything, also turns closures into callables, and does the application
-                return Examplewise.concrete_apply(self.fn, args)
+            py_fn = fn.into_python()
+            py_args = [x.into_python() for x in args]
+            if all(x is not None for x in (py_fn,*py_args)):
+                """
+                CONCRETE FOLDING
+                we converted everyone into concrete python fns! Meaning nobody
+                has holes.
 
+                py_fn : [num_exs]
+                py_args : [argc,num_exs]
+                """
+                py_args = list(zip(*py_args)) # [argc,num_exs] -> [num_exs,argc]
+                res = []
+                for i in range(sing.num_exs):
+                    res.append(py_fn[i](*py_args[i]))
+                return Examplewise(concrete=res)
+
+            """
+            Abstract call!
+            Abstract the fn and args (they were already beval()'d) then label them and pass to apply_nn
+            """
             ### * V1 * ###
             sing.stats.fn_called_abstractly += 1
-            assert self.fn.ntype.prim
-            f_embed = self.fn.abstract() # gets the Parameter vec for that primitive fn
+            assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
+            
+            fn_embed = fn.abstract() # gets the Parameter vec for that primitive fn
             args_embed = [arg.abstract() for arg in args]
-            labelled_args = list(enumerate(args)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
+            labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
 
-            sing.model.apply_nn(f_embed, labelled_args, parent_vec=None)
+            return sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None)
 
         else:
             raise TypeError
 
 
-def embed_from_above(self):
-    """
-    Imagine youre a hole. What would multidirectional propagation say the representation
-    of you is?
-    """
-    root = self.root()
-    zipper = self.get_zipper()
-
-    assert root.ntype.output
-    output_ew = root.task.outputs
-
-    res = root.inverse_beval(ctx=None, output_ew=None, zipper=zipper)
-    return res
-
-
-def inverse_beval(self, ctx, output_ew, zipper):
+    def embed_from_above(self):
         """
-
+        Imagine youre a hole. What would multidirectional propagation say the representation
+        of you is?
+        Note that this does NOT include your type or your context (beyond the fact that
+        context is used other places)
         """
-        if len(zipper) == 0:
-            """
-            reached end of zipper so we can just return the embedding
-            without even looking at what node we're pointing to
-            """
-            return output_ew
-        
-        if self.ntype.output:
-            """
-            beval on the output sets up the ctx properly
-            """
-            assert zipper[0] == 'tree'
-            assert ctx is None
-            assert output_ew is None
-            return self.tree.inverse_beval(self.task.ctx, output_ew, zipper[1:])
+        root = self.root()
+        zipper = self.get_zipper()
+        res = root.inverse_beval(ctx=None, output_ew=None, zipper=zipper)
+        return res
 
-        assert ctx is not None
-        assert output_ew is not None
 
-        """
-        impossible to invert into a child anyways
-        """
-        if self.ntype.prim:
-            assert False
-        elif self.ntype.var:
-            assert False
-        elif self.ntype.hole:
-            assert False
-
-        elif self.ntype.abs:
+    def inverse_beval(self, ctx, output_ew, zipper):
             """
-            We will pass our own ctx into the body since this is the enclosed_ctx anyways since
-                rn we're at definition time not application time.
-            We will add placeholders for the lambda args to our context so they can be encoded
-                and referenced by anyone.
-            Then we simply do the inverse of the body
+            follow `zipper` downward starting at `self` 
             """
-            assert zipper[0] == 'body'
-            # TODO add ABS.argc
-            # TODO add new_with_placeholders(num_placeholders) used both here and by Closure.abstract()
-            ctx = ctx.clone_with_placeholders(self.argc)
-            res = self.body.inverse_beval(ctx, output_ew, zipper[1:])
-            return res
-
-        elif self.ntype.app:
-            """
-            Applications can be inverted towards and arg (zipper[0] is an int)
-              or towards the function (zipper[0] == 'fn')
-            """
-            assert isinstance(zipper[0],int) or zipper[0] == 'fn'
-
-            if zipper[0] == 'fn':
+            if len(zipper) == 0:
                 """
-                * is our fn a HOLE, ABS, or PRIM?
-                * does that even matter? in the most general case of zipper[1:] being empty
-                * we clearly want something that is independent of this.
-                though at the same time we do wan t
-
+                reached end of zipper so we can just return the embedding
+                without even looking at what node we're pointing to
                 """
-                pass
-            elif isinstance(zipper[0],int):
-                pass
-            else:
+                return output_ew
+            
+            if self.ntype.output:
+                """
+                set up the ctx right, set output_ew to task.outputs, and strip off the abstractions
+                """
+                assert zipper[0] == 'tree'
+                zipper = zipper[1:]
+                assert ctx is None
+                assert output_ew is None
+
+                body,i = self.tree.unwrap_abstractions(count=True)
+                assert len(self.task.ctx) == i
+                assert len(zipper) >= i, "zippers must pass all the way thru the toplevel abstraction"
+                assert all(x == 'body' for x in zipper[:i])
+                zipper = zipper[i:]
+
+                return body.inverse_beval(
+                    ctx=self.task.ctx,
+                    output_ew=self.task.outputs,
+                    zipper=zipper[1:]
+                    )
+
+            assert ctx is not None
+            assert output_ew is not None
+
+            """
+            no children to invert into for these types
+            """
+            if self.ntype.prim:
+                assert False
+            elif self.ntype.var:
+                assert False
+            elif self.ntype.hole:
                 assert False
 
+            elif self.ntype.abs:
+                """
+                We will pass our own ctx into the body since this is the enclosed_ctx anyways since
+                    rn we're at definition time not application time.
+                We will add placeholders for the lambda args to our context so they can be encoded
+                    and referenced by anyone.
+                Then we simply do the inverse of the body
+                """
+                assert zipper[0] == 'body'
+                ctx = Context.get_placeholders(self.argc) + ctx
+                res = self.body.inverse_beval(ctx, output_ew, zipper[1:])
+                return res
 
-
-            args = [arg.beval(ctx) for arg in self.xs]
-            
-            # TODO make EW(closure=).has_concrete=True iff not closure.abs.has_holes
-            if all(arg.has_concrete for arg in args):
-                # concrete eval
+            elif self.ntype.app:
+                """
+                Applications can be inverted towards and arg (zipper[0] is an int)
+                or towards the function (zipper[0] == 'fn')
+                """
+                if zipper[0] == 'fn':
+                    assert False, "not a v1 thing and cant ever show up in v1 anyways"
                 
-                ### * V1 * ###
-                assert self.fn.ntype.prim
-                # TODO implement EW.concrete_apply as a fn that zips together everything, also turns closures into callables, and does the application
-                return Examplewise.concrete_apply(self.fn, args)
+                assert isinstance(zipper[0],int)
+                assert 0 <= zipper[0] < len(self.args)
 
-            ### * V1 * ###
-            assert self.fn.ntype.prim
-            f_embed = self.fn.abstract() # gets the Parameter vec for that primitive fn
-            args_embed = [arg.abstract() for arg in args]
-            labelled_args = list(enumerate(args)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
+                """
+                Abstract inversion! Bc theres no concrete inversion.
+                Beval and abstract the fn and args except the one we're inverting into.
+                label the args and run apply_nn with output_ew as the parent vector
+                """
 
-            sing.model.apply_nn(f_embed, labelled_args, parent_vec=None)
+                assert self.fn.ntype.prim, "feel free to remove post V1"
 
-        else:
-            raise TypeError
+                fn_embed = self.fn.beval(ctx).abstract()
+                labelled_args = [(i,arg.beval(ctx).abstract()) for i,arg in enumerate(self.xs) if i!=zipper[0]]
+
+                return sing.model.apply_nn(fn_embed, labelled_args, parent_vec=output_ew)
+
+            else:
+                raise TypeError
 
 
     

@@ -73,29 +73,45 @@ class AbstractionFn(nn.Module):
       assert exwise.concrete() is not None
       return self.encoder.encodeValue(exwise.concrete())
 
-    def encode_known_ctx(self,ctx):
-      """
-      Takes a list of Examplewise objects, abstracts them all, 
-      cats on ctx_start and ctx_end vectors, and runs them thru
-      the extractor's ctx_encoder GRU.
+    def encode_ctx(self,ctx):
+        """
+        Takes a list of Examplewise objects, abstracts them all, 
+        cats on ctx_start and ctx_end vectors, and runs them thru
+        the extractor's ctx_encoder GRU.
+        """
 
-      Note that this doesnt handle the case where there are Nones
-      in the Examplewise list, hence "known" in the name.
+        lex = self.encoder.lexicon_embedder
+        start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
+        end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
 
-      This has the same behavior as inputFeatures from the old days if you pass
-      in all the inputs to the task as exwise_list
-      """
-      sing.stats.call_encode_known_ctx += 1
-      assert all(c.exwise is not None for c in ctx)
+        ctx = torch.cat([start] + [c.get_abstract().unsqueeze(0) for c in ctx] + [end])
+        _, res = self.encoder.ctx_encoder(ctx)
+        res = res.sum(0) # sum bidir
+        return res
 
-      lex = self.encoder.lexicon_embedder
-      start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
-      end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
+    # def encode_known_ctx(self,ctx):
+    #   """
+    #   Takes a list of Examplewise objects, abstracts them all, 
+    #   cats on ctx_start and ctx_end vectors, and runs them thru
+    #   the extractor's ctx_encoder GRU.
 
-      ctx = torch.cat([start] + [c.exwise.abstract().unsqueeze(0) for c in ctx] + [end])
-      _, res = self.encoder.ctx_encoder(ctx)
-      res = res.sum(0) # sum bidir
-      return res
+    #   Note that this doesnt handle the case where there are Nones
+    #   in the Examplewise list, hence "known" in the name.
+
+    #   This has the same behavior as inputFeatures from the old days if you pass
+    #   in all the inputs to the task as exwise_list
+    #   """
+    #   sing.stats.call_encode_known_ctx += 1
+    #   assert all(c.exwise is not None for c in ctx)
+
+    #   lex = self.encoder.lexicon_embedder
+    #   start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
+    #   end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
+
+    #   ctx = torch.cat([start] + [c.exwise.abstract().unsqueeze(0) for c in ctx] + [end])
+    #   _, res = self.encoder.ctx_encoder(ctx)
+    #   res = res.sum(0) # sum bidir
+    #   return res
 
 class AbstractTransformers(nn.Module):
   def __init__(self):
