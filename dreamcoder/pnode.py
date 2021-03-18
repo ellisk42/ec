@@ -58,6 +58,9 @@ class Context:
         return len(self.ews)
     def __getitem__(self,indexer):
         return self.ews[indexer]
+    def __repr__(self):
+        inner = ', '.join(repr(ew) for ew in self.ews)
+        return f'Context(len={len(self)}: {inner})'
     def encode(self):
         """
         used in places like beval() for Hole as well as by the policy
@@ -75,12 +78,14 @@ class Closure:
 
         Note enclosed_ctx can either be an Exwise list or just singles!
         """
+        assert abs.ntype.abs
 
         self.abs = abs # an ABS
         self.enclosed_ctx = enclosed_ctx
         self.argc = self.abs.argc
 
-        assert abs.ntype.abs
+
+
     def beval_with_args(self, args):
         assert len(args) == self.argc
         ctx = args + self.enclosed_ctx 
@@ -95,11 +100,13 @@ class Closure:
         exwise based enclosed ctx into num_exs non-exwise contexts
         """
         assert all(isinstance(ew,Examplewise) for ew in self.enclosed_ctx)
-        res = []
-        for i in range(sing.num_exs):
-            ctx = [ew[i] for ew in self.enclosed_ctx]
-            res.append(Closure(self.abs,ctx)) # same self.abs can be used bc its fully lazy so can switch to single/exwise freely based on beval() vs beval_single_concrete()
+        ctx_of_ews = [ew.split() for ew in self.enclosed_ctx]
+        list_of_ctxs = list(zip(*ctx_of_ews)) # [len_enclosed_ctx,num_exs] -> [num_exs,len_enclosed_ctx]
+        
+        res = [Closure(self.abs,ctx) for ctx in list_of_ctxs]
         return res
+    def __repr__(self):
+        return f'Closure({self.abs} with {self.enclosed_ctx})'
     # def split_into_concrete_beval(self):
     #     assert not self.abs.has_holes()
     #     res = []
@@ -239,10 +246,21 @@ class Examplewise:
                 self.abstract = sing.model.abstraction_fn.encode_concrete_exwise(self)
             elif self.closure is not None:
                 args = Context.get_placeholders(self.argc)
-                self.abstract = self.closure.beval_with_args(args)
+                self.abstract = self.closure.beval_with_args(args).get_abstract()
             else:
                 assert False
         return self.abstract
+    
+    def split(self):
+        if self.concrete:
+            return self.concrete
+        if self.closure:
+            return self.closure.split_along_exwise()
+        if self.abstract:
+            return [inner_tensor for inner_tensor in self.abstract]
+        if self.placeholder:
+            return [Examplewise(placeholder=True) for _ in range(sing.num_exs)]
+        assert False
 
     # @staticmethod
     # def concrete_apply(callable_list, arg_ews):
@@ -266,8 +284,8 @@ class Examplewise:
         """
         if self.concrete is not None:
             return self.concrete
-        elif self.closure is not None and not self.closure.abs.has_holes():
-            return [c.beval_single_concrete_with_args for c in self.closure.split_along_exwise()]
+        elif self.closure is not None and not self.closure.abs.has_holes:
+            return [lambda *args: uncurry(c.beval_single_concrete_with_args,args) for c in self.closure.split_along_exwise()]
         else:
             return None
 
@@ -316,10 +334,14 @@ class Examplewise:
             else:
                 raise NotImplementedError(f"Unrecognized value: {val}")
     def __repr__(self):
-        if self.concrete is not None:
-            return repr(self.concrete)
-        assert self._abstract is not None
-        return repr(self.abstract()) # wont accidentally trigger lazy compute bc we alreayd made sure _abstract was set
+        if self.concrete:
+            return f'EW(c={compressed_str(repr(self.concrete))})'
+        if self.closure:
+            return f'EW({self.closure})'
+        if self.abstract:
+            return 'EW(abstract)'
+        if self.placeholder:
+            return 'EW(placeholder)'
 
 
 class PNode:
@@ -449,6 +471,7 @@ class PNode:
         # now make an inner hole (which may itself be an abstraction ofc)
         inner_hole = abs.build_hole(res_tp)
         abs.body = inner_hole
+        abs.argc = 1
 
         return abs # and return our abstraction
 
@@ -639,8 +662,12 @@ class PNode:
         non-exwise beval. If you call it on an output node or an abs node youll
         get a python lambda you can feed args into.
         """
+
+        indent = count_frames('beval') + count_frames('beval_single_concrete')-1
+        print('  '*indent + f'beval_single {self} with ctx={ctx}')
+
         assert not self.has_holes
-        assert ctx.no_free
+
 
         if self.ntype.output:
             assert ctx is None
@@ -662,17 +689,22 @@ class PNode:
 
         elif self.ntype.abs:
             closure = Closure(abs=self,enclosed_ctx=ctx)
-            return closure.beval_single_concrete_with_args # sets up context and evals body under new context w provided args
+            return lambda *args: uncurry(closure.beval_single_concrete_with_args,args) # sets up context and evals body under new context w provided args
 
         elif self.ntype.app:
             fn = self.fn.beval_single_concrete(ctx)
             args = [arg.beval_single_concrete(ctx) for arg in self.xs]
-            return fn(*args)
-
+            return uncurry(fn,args)
     def beval(self, ctx):
         """
         call like root.beval(ctx=None) and the output node will fill the right ctx for you.
         """
+        indent = '  ' * (count_frames('beval')-1)
+        print(f'{indent}{mlb.mk_blue("beval")}({self.ntype}) {self} with ctx={ctx}')
+
+        def printed(res):
+            print(f'{indent} {mlb.mk_green("->")} {res}')
+            return res
 
         if self.ntype.output:
             """
@@ -682,7 +714,7 @@ class PNode:
             assert ctx is None
             body,i = self.tree.unwrap_abstractions(count=True)
             assert len(self.task.ctx) == i
-            return body.beval(self.task.ctx)
+            return printed(body.beval(self.task.ctx))
         
         assert ctx is not None
 
@@ -690,22 +722,22 @@ class PNode:
             """
             even for fn primitives, just always return an EW(concrete=...)
             """
-            return Examplewise(concrete=[self.value for _ in range(sing.num_exs)])
+            return printed(Examplewise(concrete=[self.value for _ in range(sing.num_exs)]))
 
         elif self.ntype.var:
             ew = ctx[self.i]
             if not ew.placeholder:
-                return ew # normal case
+                return printed(ew) # normal case
             else:
                 # encode a free var
-                return Examplewise(abstract=sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
+                return printed(Examplewise(abstract=sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1)))
 
 
         elif self.ntype.hole:
-            return Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp](ctx.encode()))
+            return printed(Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp](ctx.encode())))
 
         elif self.ntype.abs:
-            return Examplewise(closure=Closure(abs=self,enclosed_ctx=ctx))
+            return printed(Examplewise(closure=Closure(abs=self,enclosed_ctx=ctx)))
 
         elif self.ntype.app:
             fn = self.fn.beval(ctx)
@@ -722,17 +754,19 @@ class PNode:
                 py_fn : [num_exs]
                 py_args : [argc,num_exs]
                 """
+                print(f'{indent}[concrete apply]')
                 py_args = list(zip(*py_args)) # [argc,num_exs] -> [num_exs,argc]
                 res = []
                 for i in range(sing.num_exs):
-                    res.append(py_fn[i](*py_args[i]))
-                return Examplewise(concrete=res)
+                    res.append(uncurry(py_fn[i],py_args[i]))
+                return printed(Examplewise(concrete=res))
 
             """
             Abstract call!
             Abstract the fn and args (they were already beval()'d) then label them and pass to apply_nn
             """
             ### * V1 * ###
+            print(f'{indent}[abstract apply]')
             sing.stats.fn_called_abstractly += 1
             assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
             
@@ -740,7 +774,7 @@ class PNode:
             args_embed = [arg.abstract() for arg in args]
             labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
 
-            return sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None)
+            return printed(sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None))
 
         else:
             raise TypeError

@@ -136,7 +136,16 @@ class PolicyHead(nn.Module):
             if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
                 _p = PNode.from_dreamcoder(p,task)
                 # make sure concrete part of propagate() works
-                assert _p.propagate_upward().concrete == _p.task.outputs.concrete
+
+                #assert _p.propagate_upward().concrete == _p.task.outputs.concrete
+                assert _p.beval(ctx=None).concrete == _p.task.outputs.concrete
+                _p_closure = _p.beval_single_concrete(ctx=None) 
+
+
+                raise NotImplementedError # TODO test single stuff and maybe even the closure.split on _p.tree.beval()
+                _p.task.inputs
+                uncurry(_p_closure, _p.task.inputs)
+
                 # make sure execute_single() works
                 assert _p.execute_single([])(_p.task.inputs[0].concrete[0]) == _p.task.outputs.concrete[0]
                 del _p

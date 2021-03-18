@@ -18,6 +18,20 @@ import git
 import traceback
 
 
+import pdoc
+context = pdoc.Context()
+
+docs = {
+    'pnode': pdoc.Module('dreamcoder.pnode',context=context),
+    'util': pdoc.Module('dreamcoder.matt.util',context=context),
+}
+
+pdoc.link_inheritance(context)
+
+for name,pdoc_mod in docs.items():
+    with open(f'pdocs/{name}.html','w') as f:
+        f.write(pdoc_mod.html())
+
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
     # foo=bar

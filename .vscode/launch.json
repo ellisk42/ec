@@ -17,13 +17,14 @@
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=True",
 
+                
+
                 "debug.validate_cache=True",
                 "debug.no_cache=False",
                 "model.ordering=right",
 
-                "data.T=2",
-                "data.T=3",
-                "data.lambda_depth=3",
+                "data.T=1",
+                "data.lambda_depth=2",
                 "loader.freeze=True",
 
                 "loader.buf_size=3",

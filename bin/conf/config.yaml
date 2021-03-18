@@ -89,6 +89,8 @@ test: # for mode=test
 
 printif:
   fake: False # print_if(s,'fake') will only fire if this is True
+  beval: True
+  beval_single: True
 
 hydra:
   run:

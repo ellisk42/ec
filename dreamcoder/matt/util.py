@@ -51,6 +51,18 @@ def yellow(s):
 def gray(s):
     print(mlb.mk_gray(s))
 
+def count_frames(name):
+    """
+    return number of frames in call stack (relative to
+    this count_frames() function ie including the caller) corresponding
+    to a function call with the given function name.
+    """
+    import inspect
+    call_stack_fn_names = [x.function for x in inspect.stack()]
+    return call_stack_fn_names.count(name)
+
+def compressed_str(s):
+    return s.replace('\n',' ').replace('\t',' ').replace(' ','')
 
 def cls_name(v):
     return v.__class__.__name__
