@@ -436,15 +436,17 @@ class ListREPLPolicyHead(PolicyHead):
     def process_hole(self,hole):
         if sing.cfg.model.multidir:
             # MBAS
-            return hole.propagate_to_hole()
+            return hole.embed_from_above()
+            #return hole.propagate_to_hole()
         # BAS
-        return hole.root().propagate_upward()
+        return hole.root().beval()
+        #return hole.root().propagate_upward()
 
     def unmasked_distributions(self, processed_holes, task):
         # assert all(h.task is processed_holes[0].task for h in processed_holes), "we assume everyone has the same task"
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
-        sk_reps = torch.stack([p.abstract() for p in processed_holes]) # [num_sks,num_exs,H]
+        sk_reps = torch.stack([p.get_abstract() for p in processed_holes]) # [num_sks,num_exs,H]
         if sing.cfg.debug.zero_sk:
             sk_reps = torch.zeros_like(sk_reps)
 

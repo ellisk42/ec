@@ -61,6 +61,7 @@ class EWContext(Context):
         Pushing onto the stack looks like: `ctx = EWContext(exwise) + ctx`
         """
         assert isinstance(ews,(tuple,list))
+        assert all(isinstance(ew,Examplewise) for ew in ews)
         self.vals = tuple(ews)
         self.no_free = all(not ew.placeholder for ew in self.vals)
         self.cached_encode = CachedTensor()
@@ -68,10 +69,10 @@ class EWContext(Context):
         """
         used in places like beval() for Hole as well as by the policy
         """
-        self.cached_encode.get(lambda:sing.model.abstraction_fn.encode_ctx(self))
+        return self.cached_encode.get(lambda:sing.model.abstraction_fn.encode_ctx(self))
     @staticmethod
     def get_placeholders(argc):
-        return EWContext([Examplewise(placeholder=True) for _ in argc])
+        return EWContext([Examplewise(placeholder=True) for _ in range(argc)])
     def split(self):
         """
         Turn an exwise context into a list of single contexts
@@ -178,6 +179,7 @@ class EWClosure(Closure):
 def cached_propagate(propagate):
     @functools.wraps(propagate)
     def _cached_propagate(self,towards,concrete_only=False):
+        assert False
         if concrete_only: # its fast enough to just do it directly and not have to deal with cache craziness
             return propagate(self, towards, concrete_only=concrete_only)
 
@@ -305,11 +307,19 @@ class Examplewise:
             if self.concrete is not None:
                 self.abstract = sing.model.abstraction_fn.encode_concrete_exwise(self)
             elif self.closure is not None:
-                args = EWContext.get_placeholders(self.argc)
-                self.abstract = self.closure.beval_with_args(args).get_abstract()
+                args = EWContext.get_placeholders(self.closure.argc)
+                self.abstract = self.closure(*args).get_abstract()
             else:
                 assert False
         return self.abstract
+    
+    def encode_placeholder(self,i):
+        """
+        We don't cache this since it can actually change.
+        And it's not part of get_abstract() bc it's dependent on the index
+        """
+        assert self.placeholder
+        return sing.model.abstract_transformers.lambda_index_nms[i]().expand(sing.num_exs,-1)
     
     def split(self):
         """
@@ -368,11 +378,11 @@ class Examplewise:
             else:
                 raise NotImplementedError(f"Unrecognized value: {val}")
     def __repr__(self):
-        if self.concrete:
-            return f'EW(c={compressed_str(repr(self.concrete))})'
-        if self.closure:
+        if self.concrete is not None:
+            return f'EW(c={compressed_str(repr(self.concrete[0]))},...)'
+        if self.closure is not None:
             return f'EW({self.closure})'
-        if self.abstract:
+        if self.abstract is not None:
             return 'EW(abstract)'
         if self.placeholder:
             return 'EW(placeholder)'
@@ -653,7 +663,7 @@ class PNode:
         else:
             raise TypeError
     def __repr__(self):
-        return f'{self.ntype.name} {self.marked_str()} | {self.tp}'
+        return f'{self.ntype.name}({self.tp}): {self.marked_str()}'
     def marked_repr(self,marked_node):
         """
         A recursive repr() function like repr() but if it encounters 'marked_node' that node
@@ -677,6 +687,7 @@ class PNode:
     def in_HOF_lambda(self):
         return len(self.ctx) > len(self.task.inputs)
     def propagate_upward(self, concrete_only=False):
+        assert False
         """
         BAS-style upward-only propagation
         """
@@ -685,6 +696,7 @@ class PNode:
         """
         MBAS-style propagation to hole
         """
+        assert False
         assert self.ntype.hole
         return self.propagate(self)
 
@@ -697,16 +709,12 @@ class PNode:
         get a python lambda you can feed args into.
         """
 
-        sing.scratch.beval_depth += 1
-        indent = '  '*sing.scratch.beval_depth
+        sing.scratch.beval_print(f'beval_single {self} with ctx={ctx}', indent=True)
+
         def printed(res):
-            print(f'{indent} {mlb.mk_green("->")} {res}')
-            sing.scratch.beval_depth -= 1
+            sing.scratch.beval_print(f'{mlb.mk_green("->")} {res}', dedent=True)
             return res
 
-
-        #indent = count_frames('beval') + count_frames('beval_single_concrete')-1
-        print(f'{indent}beval_single {self} with ctx={ctx}')
 
         assert not self.has_holes
 
@@ -741,15 +749,10 @@ class PNode:
         """
         call like root.beval(ctx=None) and the output node will fill the right ctx for you.
         """
-        sing.scratch.beval_depth += 1
-        indent = '  '*sing.scratch.beval_depth
-
-        #indent = '  ' * (count_frames('beval')-1)
-        print(f'{indent}{mlb.mk_blue("beval")}({self.ntype}) {self} with ctx={ctx}')
+        sing.scratch.beval_print(f'{mlb.mk_blue("beval")}({self.ntype}) {self} with ctx={ctx}', indent=True)
 
         def printed(res):
-            print(f'{indent} {mlb.mk_green("->")} {res}')
-            sing.scratch.beval_depth -= 1
+            sing.scratch.beval_print(f'{mlb.mk_green("->")} {short_repr(res)}', dedent=True)
             return res
 
         if self.ntype.output:
@@ -776,11 +779,11 @@ class PNode:
                 return printed(ew) # normal case
             else:
                 # encode a free var
-                return printed(Examplewise(abstract=sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1)))
+                return printed(Examplewise(abstract=ew.encode_placeholder()))
 
 
         elif self.ntype.hole:
-            return printed(Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp](ctx.encode())))
+            return printed(Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx.encode())))
 
         elif self.ntype.abs:
             return printed(Examplewise(closure=EWClosure(abs=self,enclosed_ctx=ctx)))
@@ -803,7 +806,8 @@ class PNode:
                     context was converted even tho we dont explicitly convert
                     it here).
                 """
-                print(f'{indent}[concrete apply]')
+                sing.scratch.beval_print(f'[concrete apply]')
+
                 singles_fns = fn.split()
                 singles_args = list(zip(*[ew.split() for ew in args])) # [argc,num_exs] -> [num_exs,argc]
                 assert len(singles_fns) == len(singles_args) == sing.num_exs
@@ -817,12 +821,12 @@ class PNode:
             Abstract the fn and args (they were already beval()'d) then label them and pass to apply_nn
             """
             ### * V1 * ###
-            print(f'{indent}[abstract apply]')
+            sing.scratch.beval_print(f'[abstract apply]')
             sing.stats.fn_called_abstractly += 1
             assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
             
-            fn_embed = fn.abstract() # gets the Parameter vec for that primitive fn
-            args_embed = [arg.abstract() for arg in args]
+            fn_embed = fn.get_abstract() # gets the Parameter vec for that primitive fn
+            args_embed = [arg.get_abstract() for arg in args]
             labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
 
             return printed(sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None))
@@ -848,12 +852,21 @@ class PNode:
             """
             follow `zipper` downward starting at `self` 
             """
+
+
+            sing.scratch.beval_print(f'inverse_beval {self} with zipper={zipper} and ctx={ctx}', indent=True)
+
+            def printed(res):
+                sing.scratch.beval_print(f'{mlb.mk_green("->")} {short_repr(res)}', dedent=True)
+                return res
+
             if len(zipper) == 0:
                 """
                 reached end of zipper so we can just return the embedding
                 without even looking at what node we're pointing to
                 """
-                return output_ew
+                sing.scratch.beval_print(f'[end of zipper]')
+                return printed(output_ew)
             
             if self.ntype.output:
                 """
@@ -870,11 +883,11 @@ class PNode:
                 assert all(x == 'body' for x in zipper[:i])
                 zipper = zipper[i:]
 
-                return body.inverse_beval(
+                return printed(body.inverse_beval(
                     ctx=self.task.ctx,
                     output_ew=self.task.outputs,
-                    zipper=zipper[1:]
-                    )
+                    zipper=zipper
+                    ))
 
             assert ctx is not None
             assert output_ew is not None
@@ -900,7 +913,7 @@ class PNode:
                 assert zipper[0] == 'body'
                 ctx = EWContext.get_placeholders(self.argc) + ctx
                 res = self.body.inverse_beval(ctx, output_ew, zipper[1:])
-                return res
+                return printed(res)
 
             elif self.ntype.app:
                 """
@@ -911,7 +924,7 @@ class PNode:
                     assert False, "not a v1 thing and cant ever show up in v1 anyways"
                 
                 assert isinstance(zipper[0],int)
-                assert 0 <= zipper[0] < len(self.args)
+                assert 0 <= zipper[0] < len(self.xs)
 
                 """
                 Abstract inversion! Bc theres no concrete inversion.
@@ -921,10 +934,10 @@ class PNode:
 
                 assert self.fn.ntype.prim, "feel free to remove post V1"
 
-                fn_embed = self.fn.beval(ctx).abstract()
-                labelled_args = [(i,arg.beval(ctx).abstract()) for i,arg in enumerate(self.xs) if i!=zipper[0]]
+                fn_embed = self.fn.beval(ctx).get_abstract()
+                labelled_args = [(i,arg.beval(ctx).get_abstract()) for i,arg in enumerate(self.xs) if i!=zipper[0]]
 
-                return sing.model.apply_nn(fn_embed, labelled_args, parent_vec=output_ew)
+                return printed(sing.model.apply_nn(fn_embed, labelled_args, parent_vec=output_ew.get_abstract()))
 
             else:
                 raise TypeError
@@ -933,6 +946,7 @@ class PNode:
     
     @cached_propagate
     def propagate(self, towards, concrete_only=False):
+        assert False
         """
         returns :: Examplewise
 
@@ -1064,6 +1078,7 @@ class PNode:
         when Abstractions are encountered).
 
         """
+        assert False
         if self.ntype.output:
             assert ctx_single == [] # why would you ever pass in anything else at top level
             return self.tree.execute_single(ctx_single)

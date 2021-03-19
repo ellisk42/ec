@@ -13,17 +13,6 @@ class MBAS(nn.Module):
   def __init__(self):
     super().__init__()
 
-    sing.stats.call_encode_known_ctx = 0
-    sing.stats.call_encode_exwise = 0
-    sing.stats.fn_called_concretely = 0
-    sing.stats.fn_called_abstractly = 0
-    sing.stats.cache_used = 0
-    sing.stats.cache_not_used = 0
-    sing.stats.cache_cleared = 0
-
-    sing.stats.cache_hit_rate = cache_hit_rate
-    sing.stats.concrete_rate = concrete_rate
-
     self.running_vloss = RunningFloat()
     self.running_ploss = RunningFloat()
 
@@ -32,14 +21,14 @@ class MBAS(nn.Module):
     submodules = set()
 
     submodules |= {
-      'repl': {aux_models.AbstractionFn, aux_models.AbstractTransformers, aux_models.AbstractComparer},
+      'repl': {aux_models.AbstractionFn, aux_models.AbstractTransformers, aux_models.AbstractComparer, aux_models.ApplyNN},
       'rnn': {aux_models.AbstractionFn, aux_models.ProgramRNN},
       'check_invalid': set(),
       'uniform': set(),
     }[sing.cfg.model.vhead]
 
     submodules |= {
-      'repl': {aux_models.AbstractionFn, aux_models.AbstractTransformers, aux_models.AbstractComparer},
+      'repl': {aux_models.AbstractionFn, aux_models.AbstractTransformers, aux_models.AbstractComparer, aux_models.ApplyNN},
       'rnn': {aux_models.AbstractionFn, aux_models.ProgramRNN},
       'uniform': set(),
     }[sing.cfg.model.phead]
@@ -51,6 +40,7 @@ class MBAS(nn.Module):
         aux_models.AbstractTransformers: 'abstract_transformers',
         aux_models.AbstractComparer: 'abstract_comparer',
         aux_models.ProgramRNN: 'program_rnn',
+        aux_models.ApplyNN: 'apply_nn',
       }[mod]
       setattr(self,name,mod())
 
@@ -184,13 +174,3 @@ class Robustfill(nn.Module):
 
 
 
-def concrete_rate(stats):
-  try:
-    return stats.fn_called_concretely / (stats.fn_called_concretely + stats.fn_called_abstractly)
-  except ZeroDivisionError:
-    return 0
-def cache_hit_rate(stats):
-  try:
-    return stats.cache_used / (stats.cache_used + stats.cache_not_used)
-  except ZeroDivisionError:
-    return 0

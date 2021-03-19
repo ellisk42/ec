@@ -18,6 +18,7 @@ import numpy as np
 import time
 from tqdm import tqdm
 import inspect
+import torch
 
 
 class InvalidSketchError(Exception): pass
@@ -64,6 +65,29 @@ def count_frames(name):
     """
     call_stack_fn_names = [x.function for x in inspect.stack()]
     return call_stack_fn_names.count(name)
+
+
+class DepthPrinter:
+    def __init__(self) -> None:
+        self.depth = 0
+    def __call__(self,*args,indent=False,dedent=False,**kwargs):
+        if indent:
+            self.indent()
+        print('  '*self.depth,*args,**kwargs)
+        if dedent:
+            self.dedent()
+    def indent(self):
+        self.depth += 1
+    def dedent(self):
+        self.depth -= 1
+    def reset(self):
+        self.depth = 0
+
+def short_repr(obj):
+    if torch.is_tensor(obj):
+        return f'Tensor({obj.shape})'
+    return repr(obj)
+
 
 def compressed_str(s):
     return s.replace('\n',' ').replace('\t',' ').replace(' ','')

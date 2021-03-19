@@ -222,7 +222,9 @@ class Sing(Saveable):
 
 class Scratch:
   def __init__(self):
-    self.beval_depth = 0
+    self.beval_print = DepthPrinter()
+
+  
 class Stats:
   """
   This is what `sing.stats` is.
@@ -231,11 +233,36 @@ class Stats:
   for example `sing.stats.concrete_count=0` then other places in the codebase
   can increment that value.
   """
+  def __init__(self):
+    self.call_encode_known_ctx = 0
+    self.call_encode_exwise = 0
+    self.fn_called_concretely = 0
+    self.fn_called_abstractly = 0
+    self.cache_used = 0
+    self.cache_not_used = 0
+    self.cache_cleared = 0
+    self.fns = [self.concrete_rate,self.cache_hit_rate]
+
+  def concrete_rate(self):
+    try:
+      return self.fn_called_concretely / (self.fn_called_concretely + self.fn_called_abstractly)
+    except ZeroDivisionError:
+      return 0
+  def cache_hit_rate(self):
+    try:
+      return self.cache_used / (self.cache_used + self.cache_not_used)
+    except ZeroDivisionError:
+      return 0
+
   def print_stats(self):
     print("Stats:")
     for k,v in self.__dict__.items():
-      if callable(v):
-        v = v(self)
+      if k == 'fns':
+        continue
+      print(f'\t{k}: {v}')
+    for fn in self.fns:
+      k = fn.__name__
+      v = fn()
       print(f'\t{k}: {v}')
 
 # note we must never overwrite this Sing. We should never do `matt.sing.sing = ...` 

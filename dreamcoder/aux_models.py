@@ -70,21 +70,24 @@ class AbstractionFn(nn.Module):
       its .concrete field and produce a .abstract field
       """
       sing.stats.call_encode_exwise += 1
-      assert exwise.concrete() is not None
-      return self.encoder.encodeValue(exwise.concrete())
+      assert exwise.concrete is not None
+      return self.encoder.encodeValue(exwise.concrete)
 
     def encode_ctx(self,ctx):
         """
-        Takes a list of Examplewise objects, abstracts them all, 
+        Takes a EWContext, abstracts them all, 
         cats on ctx_start and ctx_end vectors, and runs them thru
         the extractor's ctx_encoder GRU.
         """
+
+        # encode everyone
+        ctx = [(ew.encode_placeholder(i) if ew.placeholder else ew.get_abstract()) for i,ew in enumerate(ctx)]
 
         lex = self.encoder.lexicon_embedder
         start = lex(lex.ctx_start).expand(1,sing.num_exs,-1)
         end = lex(lex.ctx_end).expand(1,sing.num_exs,-1)
 
-        ctx = torch.cat([start] + [c.get_abstract().unsqueeze(0) for c in ctx] + [end])
+        ctx = torch.cat([start] + [vec.unsqueeze(0) for vec in ctx] + [end])
         _, res = self.encoder.ctx_encoder(ctx)
         res = res.sum(0) # sum bidir
         return res
@@ -157,8 +160,9 @@ class AbstractComparer(nn.Module):
 
 
 class ApplyNN(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self):
         super().__init__()
+        cfg = sing.cfg
         self.cfg = cfg
         self.apply_cfg = cfg.model.apply
 
@@ -176,14 +180,15 @@ class ApplyNN(nn.Module):
             raise NotImplementedError
         elif self.apply_cfg.type == 'rnn':
             self.gru = nn.GRU(
-                input_size=cfg.model.H,
+                input_size=cfg.model.H*2, # for indicator+vec
                 hidden_size=cfg.model.H,
                 num_layers=self.apply_cfg.gru_layers,
             )
         else:
             assert False
 
-    def bind(self, vec, indicator):
+    def bind(self, indicator, vec):
+        indicator = indicator.expand(sing.num_exs,-1)
         if self.apply_cfg.bind == 'sum':
             return vec+indicator
         elif self.apply_cfg.bind == 'cat':
@@ -218,10 +223,10 @@ class ApplyNN(nn.Module):
         args are of the form (int,vec) where the int indicates the argnum of this input.
         calls self.bind then self.apply_bound
         """
-        bound_func = self.bind(self.func_indicator, func_vec)
-        bound_args = [self.bind(self.arg_indicators[argi],arg) for argi, arg in labelled_arg_vecs]
+        bound_func = self.bind(self.func_indicator(), func_vec)
+        bound_args = [self.bind(self.arg_indicators[argi](),arg) for argi, arg in labelled_arg_vecs]
         if parent_vec is not None: # prepend parent vec if provided
-            bound_args = [self.bind(self.parent_indictor,parent_vec)] + bound_args
+            bound_args = [self.bind(self.parent_indictor(),parent_vec)] + bound_args
         res = self.apply_bound(bound_func,bound_args)
         return res
 
