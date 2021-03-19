@@ -222,7 +222,7 @@ class Sing(Saveable):
 
 class Scratch:
   def __init__(self):
-    self.beval_print = DepthPrinter()
+    self.beval_print = DepthPrinter(sing.cfg.printer.beval)
 
   
 class Stats:

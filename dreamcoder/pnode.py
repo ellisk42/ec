@@ -98,10 +98,10 @@ class UncurriedFn:
     like fn(a,b). I think you can still call it in the
     curried way but whatever it returns wont be an UncurriedFn for the record.
     """
-    def __init__(self,fn):
+    def __init__(self,fn,name=None):
         self.fn = fn
         assert callable(fn)
-        self.name = getattr(fn,'__name__',repr(fn))
+        self.name = name if name is not None else getattr(fn,'__name__',repr(fn))
     def __repr__(self):
         return self.name
     def __call__(self,*args):
@@ -486,7 +486,7 @@ class PNode:
                 self.fn = PNode(NType.PRIM, tp=prim.tp, parent=self, ctx=self.ctx)
                 self.fn.prim = prim
                 self.fn.name = prim.name
-                self.fn.value = UncurriedFn(prim.value)
+                self.fn.value = UncurriedFn(prim.value,name=prim.name)
                 # make holes for args
                 self.xs = [self.build_hole(arg_tp) for arg_tp in prim.tp.functionArguments()]
         else:
@@ -751,6 +751,9 @@ class PNode:
         """
         sing.scratch.beval_print(f'{mlb.mk_blue("beval")}({self.ntype}) {self} with ctx={ctx}', indent=True)
 
+        if hasattr(self,'needs_ctx'):
+            self.needs_ctx = ctx
+
         def printed(res):
             sing.scratch.beval_print(f'{mlb.mk_green("->")} {short_repr(res)}', dedent=True)
             return res
@@ -779,7 +782,7 @@ class PNode:
                 return printed(ew) # normal case
             else:
                 # encode a free var
-                return printed(Examplewise(abstract=ew.encode_placeholder()))
+                return printed(Examplewise(abstract=ew.encode_placeholder(self.i)))
 
 
         elif self.ntype.hole:
@@ -829,7 +832,7 @@ class PNode:
             args_embed = [arg.get_abstract() for arg in args]
             labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
 
-            return printed(sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None))
+            return printed(Examplewise(abstract=sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None)))
 
         else:
             raise TypeError
@@ -842,6 +845,8 @@ class PNode:
         Note that this does NOT include your type or your context (beyond the fact that
         context is used other places)
         """
+        sing.scratch.beval_print(f'embed_from_above {self.marked_str()} ')
+
         root = self.root()
         zipper = self.get_zipper()
         res = root.inverse_beval(ctx=None, output_ew=None, zipper=zipper)
@@ -852,9 +857,14 @@ class PNode:
             """
             follow `zipper` downward starting at `self` 
             """
-
-
             sing.scratch.beval_print(f'inverse_beval {self} with zipper={zipper} and ctx={ctx}', indent=True)
+
+            if hasattr(self,'needs_ctx'):
+                assert self.ntype.hole, "temp"
+                sing.scratch.beval_print('[hit needs_ctx]')
+                assert self.needs_ctx is None, "someone forgot to garbage collect"
+                self.needs_ctx = ctx
+
 
             def printed(res):
                 sing.scratch.beval_print(f'{mlb.mk_green("->")} {short_repr(res)}', dedent=True)
@@ -934,10 +944,15 @@ class PNode:
 
                 assert self.fn.ntype.prim, "feel free to remove post V1"
 
+                sing.scratch.beval_print(f'[inverting application]')
+                sing.scratch.beval_print(f'[beval fn]')
                 fn_embed = self.fn.beval(ctx).get_abstract()
+                sing.scratch.beval_print(f'[beval {len(self.xs)-1} args]')
                 labelled_args = [(i,arg.beval(ctx).get_abstract()) for i,arg in enumerate(self.xs) if i!=zipper[0]]
-
-                return printed(sing.model.apply_nn(fn_embed, labelled_args, parent_vec=output_ew.get_abstract()))
+                sing.scratch.beval_print(f'[apply_nn]')
+                new_output_ew = Examplewise(abstract=sing.model.apply_nn(fn_embed, labelled_args, parent_vec=output_ew.get_abstract()))
+                res = self.xs[zipper[0]].inverse_beval(ctx, output_ew=new_output_ew, zipper=zipper[1:])
+                return printed(res)
 
             else:
                 raise TypeError

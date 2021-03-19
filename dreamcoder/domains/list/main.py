@@ -20,7 +20,7 @@ from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, M
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 
-from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives
+from dreamcoder.domains.misc.deepcoderPrimitives import deepcoderPrimitives, deepcoderPrimitivesPlusPlus
 #from dreamcoder.domains.list.makeDeepcoderData import DeepcoderTaskloader
 
 
@@ -171,7 +171,7 @@ def isIntFunction(tp):
     except UnificationFailure:
         return False
 
-
+from dreamcoder.pnode import UncurriedFn
 class Lexicon(nn.Embedding):
     """
     roughly use like:
@@ -210,11 +210,14 @@ class Lexicon(nn.Embedding):
         # sanitize
         unk = 0
         for tok in tok_list:
+            if isinstance(tok,UncurriedFn):
+                tok = str(tok)
             if isinstance(tok,(list,tuple)):
                 res.append(self.idxs_of_toks(tok))
             elif isinstance(tok,bool):
                 res.append(self.idx_of_tok['<'+str(tok)+'>']) # True -> "<True>". Needed bc dictionaries can't tell the difference between 1 and True
             elif tok not in self.lexicon:
+                assert False
                 if unk == 0:
                     mlb.yellow(f"converting {tok} to <UNK>. suppressing future warnings")
                 unk += 1
@@ -273,9 +276,9 @@ class ListFeatureExtractor(RecurrentFeatureExtractor):
         else:
             self.lexicon = self.lexicon | set(range(-64,65))
         # add all non-arrow primitives ie things that should count as concrete values as opposed to arrows that are represented with NMs
-        self.lexicon = self.lexicon | {p.value for p in deepcoderPrimitives() if not p.tp.isArrow()}
+        self.lexicon = self.lexicon | {p.value for p in deepcoderPrimitivesPlusPlus() if not p.tp.isArrow()}
         # add all functions that take lambdas, used for encoding lambda ctxs
-        self.lexicon = self.lexicon | {p.name for p in deepcoderPrimitives() if p.tp.isArrow()}
+        self.lexicon = self.lexicon | {p.name for p in deepcoderPrimitivesPlusPlus() if p.tp.isArrow()}
 
         self.maximumLength = maximumLength
 

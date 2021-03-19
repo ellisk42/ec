@@ -68,9 +68,12 @@ def count_frames(name):
 
 
 class DepthPrinter:
-    def __init__(self) -> None:
+    def __init__(self,on=True) -> None:
         self.depth = 0
+        self.on = on
     def __call__(self,*args,indent=False,dedent=False,**kwargs):
+        if self.on is False:
+            return
         if indent:
             self.indent()
         print('  '*self.depth,*args,**kwargs)

@@ -23,9 +23,9 @@
                 "debug.no_cache=False",
                 "model.ordering=right",
 
-                "data.T=1",
-                "data.lambda_depth=2",
-                "loader.freeze=True",
+                "data.T=2",
+                "data.lambda_depth=3",
+                "loader.freeze=False",
 
                 "loader.buf_size=3",
 
@@ -33,6 +33,8 @@
                 "loop.save_every=100",
                 "loop.print_every=20",
                 "loop.search_valid_every=null",
+
+                "printer.beval=False",
 
                 "device=cpu",
                 "job_name=vscode",

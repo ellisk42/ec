@@ -130,6 +130,9 @@ class PolicyHead(nn.Module):
         return hole, prods,lls
 
     def train_loss(self, p, task):
+        """
+
+        """
         assert not p.hasHoles
 
         if sing.cfg.debug.pnode_concrete_check:
@@ -173,12 +176,16 @@ class PolicyHead(nn.Module):
         return loss
     
     def masked_distribution(self, hole, max_depth):
+        """
+        """
         mask = self.build_mask(hole, max_depth)
         processed_hole = self.process_hole(hole)
         dist = self.unmasked_distributions([processed_hole],hole.task).squeeze(0)
         return mask + dist
 
     def action_distribution(self, hole, max_depth):
+        """
+        """
         dist = self.masked_distribution(hole, max_depth)
         prod_ll = [(prod, dist[i].item()) for i, prod in self.index_to_prod.items() if dist[i].item() != -np.inf]
         prods,lls = list(zip(*prod_ll))
@@ -187,10 +194,14 @@ class PolicyHead(nn.Module):
 
 
     def build_target(self, hole):
+        """
+        """
         target = self.prod_to_index[hole.get_prod()]
         return torch.tensor(target, device=sing.device) # not a onehot
 
     def build_mask(self, hole, max_depth):
+        """
+        """
         g_use = sing.g.g_lambdas if hole.in_HOF_lambda else sing.g
 
         # tp.returns() is `self` if its a base type or the return type if its an arrow type
@@ -208,6 +219,8 @@ class PolicyHead(nn.Module):
         return mask
 
     def trace_and_process_holes(self, root):
+        """
+        """
         assert root.ntype.output
         root.hide(recursive=True)
 
@@ -415,6 +428,8 @@ class RNNPolicyHead(PolicyHead):
         dist = dist + mask
         return dist
 
+
+ReplProcessedHole = namedtuple('ReplProcessedHole','sk_rep ctx_rep')
 class ListREPLPolicyHead(PolicyHead):
     def __init__(self):
         cache_mode = None if sing.cfg.model.multidir else 'parents'
@@ -422,7 +437,7 @@ class ListREPLPolicyHead(PolicyHead):
         H = self.H
 
         self.output = nn.Sequential(
-                nn.Linear(H, H),
+                nn.Linear(H*2, H),
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
@@ -434,19 +449,38 @@ class ListREPLPolicyHead(PolicyHead):
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
     def process_hole(self,hole):
-        if sing.cfg.model.multidir:
-            # MBAS
-            return hole.embed_from_above()
-            #return hole.propagate_to_hole()
-        # BAS
-        return hole.root().beval()
+        """
+        Process hole always returns something that will not be affected by changes to
+        the tree that it came from
+
+        Take a hole (pnode) and return an embedding of it along with an embedding of its context
+        Note we call .get_abstract() because we dont want to return a closure that may depend on
+        the tree still
+        """
+
+        try:
+            hole.needs_ctx = None # mark hole to say it needs ctx
+            if sing.cfg.model.multidir:
+                # MBAS
+                sk_rep = hole.embed_from_above().get_abstract()
+                ctx_rep = hole.needs_ctx.encode()
+                return ReplProcessedHole(sk_rep,ctx_rep) 
+                #return hole.propagate_to_hole()
+            # BAS
+            hole_rep =  hole.root().beval().get_abstract()
+            ctx_rep = hole.needs_ctx.encode()
+            return ReplProcessedHole(hole_rep,ctx_rep) 
+        finally:
+            del hole.needs_ctx
         #return hole.root().propagate_upward()
 
     def unmasked_distributions(self, processed_holes, task):
+        """
+        """
         # assert all(h.task is processed_holes[0].task for h in processed_holes), "we assume everyone has the same task"
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
-        sk_reps = torch.stack([p.get_abstract() for p in processed_holes]) # [num_sks,num_exs,H]
+        sk_reps = torch.stack([torch.cat([p.sk_rep,p.ctx_rep],dim=-1) for p in processed_holes]) # [num_sks,num_exs,2H]
         if sing.cfg.debug.zero_sk:
             sk_reps = torch.zeros_like(sk_reps)
 
