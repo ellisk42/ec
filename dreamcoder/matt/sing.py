@@ -51,6 +51,7 @@ class Sing(Saveable):
         self.name = self.cfg.full_name
         self.device = torch.device(cfg.device)
         self.stats = Stats()
+        self.scratch = Scratch() # a scratch space. never gets deleted. Useful for whatever local data you wanna keep track of and sortof hide
 
         self.taskloader = {
           'deepcoder':loader.DeepcoderTaskloader
@@ -219,6 +220,9 @@ class Sing(Saveable):
 
 
 
+class Scratch:
+  def __init__(self):
+    self.beval_depth = 0
 class Stats:
   """
   This is what `sing.stats` is.

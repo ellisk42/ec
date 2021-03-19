@@ -17,6 +17,8 @@ import random
 import numpy as np
 import time
 from tqdm import tqdm
+import inspect
+
 
 class InvalidSketchError(Exception): pass
 
@@ -56,8 +58,10 @@ def count_frames(name):
     return number of frames in call stack (relative to
     this count_frames() function ie including the caller) corresponding
     to a function call with the given function name.
+
+    * THIS FUNCTION IS EXTREMELY SLOW
+
     """
-    import inspect
     call_stack_fn_names = [x.function for x in inspect.stack()]
     return call_stack_fn_names.count(name)
 

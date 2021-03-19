@@ -135,20 +135,20 @@ class PolicyHead(nn.Module):
         if sing.cfg.debug.pnode_concrete_check:
             if not isinstance(self,RNNPolicyHead) and sing.cfg.model.pnode.allow_concrete_eval:
                 _p = PNode.from_dreamcoder(p,task)
-                # make sure concrete part of propagate() works
+                """
+                Test all parts of our concrete eval system including
+                    beval()
+                    beval_single_concrete()
+                    {Examplewise,EWClosure,EWContext}.split()
+                """
 
                 #assert _p.propagate_upward().concrete == _p.task.outputs.concrete
                 assert _p.beval(ctx=None).concrete == _p.task.outputs.concrete
-                _p_closure = _p.beval_single_concrete(ctx=None) 
+                _p_closure = _p.beval_single_concrete(ctx=None)
+                for _inputs,_outputs in zip(_p.task.ctx.split(), _p.task.outputs.concrete):
+                    assert _p_closure(*_inputs) == _outputs
 
-
-                raise NotImplementedError # TODO test single stuff and maybe even the closure.split on _p.tree.beval()
-                _p.task.inputs
-                uncurry(_p_closure, _p.task.inputs)
-
-                # make sure execute_single() works
-                assert _p.execute_single([])(_p.task.inputs[0].concrete[0]) == _p.task.outputs.concrete[0]
-                del _p
+                del _p,_p_closure,_inputs,_outputs
         
         p = PNode.from_dreamcoder(p,task)
         task = p.task

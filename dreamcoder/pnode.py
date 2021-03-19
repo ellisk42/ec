@@ -34,6 +34,8 @@ class CachedTensor:
 
 class Context:
     vals = ()
+    def __init__(self):
+        raise NotImplementedError
     def __add__(self,other):
         assert isinstance(other,self.__class__)
         return self.__class__(self.vals + other.vals)
@@ -70,6 +72,15 @@ class EWContext(Context):
     @staticmethod
     def get_placeholders(argc):
         return EWContext([Examplewise(placeholder=True) for _ in argc])
+    def split(self):
+        """
+        Turn an exwise context into a list of single contexts
+        """
+        assert self.no_free, "singlescontexts are fully concrete and never have free vars"
+        list_of_ews = [ew.split() for ew in self.vals] # Examplewise.split()
+        list_of_ctxs = list(zip(*list_of_ews)) # [len_ctx,num_exs] -> [num_exs,len_ctx]
+        return [SinglesContext(ctx) for ctx in list_of_ctxs]
+
 
 class SinglesContext(Context):
     is_ew = False
@@ -80,7 +91,20 @@ class SinglesContext(Context):
         self.vals = tuple(vals)
 
 
-
+class UncurriedFn:
+    """
+    Takes a normal function callable like fn(a)(b) and makes it callable
+    like fn(a,b). I think you can still call it in the
+    curried way but whatever it returns wont be an UncurriedFn for the record.
+    """
+    def __init__(self,fn):
+        self.fn = fn
+        assert callable(fn)
+        self.name = getattr(fn,'__name__',repr(fn))
+    def __repr__(self):
+        return self.name
+    def __call__(self,*args):
+        return uncurry(self.fn,args)
 
 
 
@@ -149,12 +173,7 @@ class EWClosure(Closure):
         Turn an exwise closure into a list of single closures by turning the
         exwise based enclosed ctx into num_exs non-exwise contexts
         """
-        assert all(not ew.placeholder for ew in self.enclosed_ctx), "singlescontexts are fully concrete and never have free vars"
-        ctx_of_ews = [ew.split() for ew in self.enclosed_ctx] # Examplewise.split()
-        list_of_ctxs = list(zip(*ctx_of_ews)) # [len_enclosed_ctx,num_exs] -> [num_exs,len_enclosed_ctx]
-        
-        res = [SinglesClosure(self.abs,ctx) for ctx in list_of_ctxs]
-        return res
+        return [SinglesClosure(self.abs,ctx) for ctx in self.enclosed_ctx.split()]
 
 def cached_propagate(propagate):
     @functools.wraps(propagate)
@@ -232,7 +251,7 @@ class PTask:
             inputs[0] is the arg to the outermost lambda therefore
             It should be pushed onto the ctx stack first
             """
-            ctx = EWContext(exwise) + ctx
+            ctx = EWContext((exwise,)) + ctx
         self.ctx = ctx
 
 
@@ -457,7 +476,7 @@ class PNode:
                 self.fn = PNode(NType.PRIM, tp=prim.tp, parent=self, ctx=self.ctx)
                 self.fn.prim = prim
                 self.fn.name = prim.name
-                self.fn.value = prim.value
+                self.fn.value = UncurriedFn(prim.value)
                 # make holes for args
                 self.xs = [self.build_hole(arg_tp) for arg_tp in prim.tp.functionArguments()]
         else:
@@ -678,15 +697,23 @@ class PNode:
         get a python lambda you can feed args into.
         """
 
-        indent = count_frames('beval') + count_frames('beval_single_concrete')-1
-        print('  '*indent + f'beval_single {self} with ctx={ctx}')
+        sing.scratch.beval_depth += 1
+        indent = '  '*sing.scratch.beval_depth
+        def printed(res):
+            print(f'{indent} {mlb.mk_green("->")} {res}')
+            sing.scratch.beval_depth -= 1
+            return res
+
+
+        #indent = count_frames('beval') + count_frames('beval_single_concrete')-1
+        print(f'{indent}beval_single {self} with ctx={ctx}')
 
         assert not self.has_holes
 
 
         if self.ntype.output:
             assert ctx is None
-            return self.tree.beval_single_concrete(Context()) # this will just convert the toplevel ABS into a closure
+            return printed(self.tree.beval_single_concrete(SinglesContext())) # this will just convert the toplevel ABS into a closure
         
         assert ctx is not None
 
@@ -694,32 +721,35 @@ class PNode:
             """
             for both fn prims and other prims
             """
-            return self.value
+            return printed(self.value)
 
         elif self.ntype.var:
-            return ctx[self.i]
+            return printed(ctx[self.i])
 
         elif self.ntype.hole:
             assert False
 
         elif self.ntype.abs:
-            return SinglesClosure(abs=self,enclosed_ctx=ctx)
+            return printed(SinglesClosure(abs=self,enclosed_ctx=ctx))
 
         elif self.ntype.app:
             fn = self.fn.beval_single_concrete(ctx)
             args = [arg.beval_single_concrete(ctx) for arg in self.xs]
-            if isinstance(fn,Closure):
-                return fn(args)
-            return uncurry(fn,args) # for prim fns...
+            return printed(fn(*args))
+    
     def beval(self, ctx):
         """
         call like root.beval(ctx=None) and the output node will fill the right ctx for you.
         """
-        indent = '  ' * (count_frames('beval')-1)
+        sing.scratch.beval_depth += 1
+        indent = '  '*sing.scratch.beval_depth
+
+        #indent = '  ' * (count_frames('beval')-1)
         print(f'{indent}{mlb.mk_blue("beval")}({self.ntype}) {self} with ctx={ctx}')
 
         def printed(res):
             print(f'{indent} {mlb.mk_green("->")} {res}')
+            sing.scratch.beval_depth -= 1
             return res
 
         if self.ntype.output:
