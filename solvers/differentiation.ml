@@ -133,8 +133,8 @@ let update_variable v x =
 let (+&) =
   make_binary_variable (+.) (fun _ _ -> [1.;1.]) 
 
-let add_vector =
-  make_binary_list_variable (+.) (fun _ _ -> [1.;1.])
+let add_vector u v =
+  List.map2_exn ~f:(+&) u v
 
 let (-&) =
   make_binary_variable (-.) (fun _ _ -> [1.;-1.]) 
