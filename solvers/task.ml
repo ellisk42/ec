@@ -165,12 +165,9 @@ register_special_task "differentiable"
                                          
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
-  let examples = examples |> List.map ~f:(fun (xs,y) ->
-      (List.map2_exn argument_types xs ~f:placeholder_data,
-      placeholder_data return_type y))
-  in
-    
-  let loss = polymorphic_sse ~clipOutput ~clipLoss return_type in
+
+  (* loss is a function that acts on the variablized-versions of predicted value p and the real value y*)  
+  let loss_fun = polymorphic_sse ~clipOutput ~clipLoss return_type in
   { name = name    ;
     task_type = ty ;
     log_likelihood =
@@ -179,52 +176,50 @@ register_special_task "differentiable"
          assert (List.length parameters <= maxParameters);
         if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else 
           let p = analyze_lazy_evaluation p in
-          (* let predictions = examples |> List.map ~f:(fun (xs,_) -> *)
-          (*     run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs)) *)
-          (* in *)
-          (* if List.exists predictions ~f:is_none then 0. else *)
-          (*   let predictions = predictions |> List.map ~f:get_some in *)
-        (* Returns loss *)
-        let rec loop : 'a list -> Differentiation.variable option = function
-          | [] -> Some(~$ 0.)
+        (* Returns loss as a float *)
+        let rec loop examples p =
+          match examples with
+          | [] -> Some(0.)
           | (xs,y) :: e ->
             try
               match run_for_interval
                       timeout
+                      (* compute prediction *)
                       (fun () -> run_lazy_analyzed_with_arguments p xs) with
               | None -> None
               | Some (prediction) ->
                 match loop e with
                 | None -> None
                 | Some(later_loss) ->
-                  try Some(loss prediction y +& later_loss)
+                  try Some(loss_fun prediction y +. later_loss)
                   with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | EnumerationTimeout  -> raise EnumerationTimeout
                  | _                   -> None
-        in
-        match loop examples with
-        | None -> log 0.0
-        | Some(l) ->
-          let n = List.length examples |> Int.to_float in
-          let d = List.length parameters |> Int.to_float in
-          let l = if proportional && List.length parameters > 0 then begin 
-              assert (List.length parameters = 1);
-              parameters |> List.iter ~f:(fun p -> update_variable p 1.);
-              assert (false)
-            end else 
-                let l = l *& (~$ (1. /. n)) in
-                let l = restarting_optimize (rprop ~lr ~decay ~grow)
-                    ~attempts:restarts
-                    ~update:0
-                    ~iterations:(if List.length parameters = 0 then 0 else steps)
-                    parameters l
-                in l
+        in        
+        let backprop p parameters examples ?lr:(lr=0.1) =
+          (* Compute loss *)
+          let loss = match loop examples p with
+          | None -> log 0.0
+          | Some(l) -> begin
+            let n = List.length examples |> Int.to_float in
+            let d = List.length parameters |> Int.to_float in
+            l *. (1. /. n) 
+          end 
           in
-          match lossThreshold with
-          | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
-          | Some(t) ->
-            if l < t then 0. -. d*.parameterPenalty else log 0.)
+          (* backward pass on loss *)
+          reverse_prop (F 1.) loss;
+          (* update the placeholders with grad and return a new program and placeholders*)
+          loss, n, d, update_placeholders p (List.rev parameters) ~lr 
+        in 
+        let iterations = (if List.length parameters = 0 then 0 else steps) in
+        for i = 1 to iterations do
+          l, n, d, (p, parameters) = backprop p parameters examples ~lr;
+        done;
+        match lossThreshold with
+        | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
+        | Some(t) ->
+          if l < t then 0. -. d*.parameterPenalty else log 0.)
   });;
 
 register_special_task "stringConstant" (fun extras

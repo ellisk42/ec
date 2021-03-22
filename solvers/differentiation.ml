@@ -3,6 +3,9 @@ open Core
 open Type
 open Program
 open Utils
+
+open Owl
+open AD
     
 type variable = {mutable gradient : float option;
                  mutable data : float option;
@@ -176,6 +179,8 @@ let exponential =
 let square =
   make_unitary_variable (fun a -> a*.a) (fun a -> [2.*.a])
 
+let square_float = fun a -> a*.a
+
 let square_root =
   make_unitary_variable sqrt (fun a -> [0.5/.(sqrt a)])
 
@@ -187,6 +192,11 @@ let clamp ~l ~u =
     (fun a ->
        if a > u || a < l then [0.] else [1.])
     
+let clamp_float ~l ~u = 
+  fun a ->
+      if a > u then u else
+      if a < l then l else 
+      a
 
 let log_soft_max xs =
   make_variable (fun vs -> 
@@ -367,33 +377,50 @@ let replace_placeholders program =
     | Apply(f,x) -> Apply(r f, r x)
     | Invented(t,b) -> Invented(t,r b)
     | Primitive(t,"REAL",_) -> begin
-        let v = random_variable() in
-        (* update_variable v 0.; *)
-        placeholders := v :: !placeholders;
-        Primitive(t,"REAL", ref v |> magical)
-      end
-    | Primitive(t,"real",v') -> begin
-        let v = random_variable() in
-        update_variable v (!(magical v'));
-        (* update_variable v 0.; *)
-        placeholders := v :: !placeholders;
-        Primitive(t,"REAL", ref v |> magical)
+        let x = Mat.uniform 1 1 in
+        let x' = make_reverse x (tag ()) in
+        placeholders := x' :: !placeholders;
+        Primitive(t,"REAL", ref x' |> magical)
       end
     | Primitive(t,"REAL_VECTOR",_) -> begin
-        (* create and append 3 random variables instead of 1 *)
-        let rec aux acc1 acc2 i =
-          if i < 3 then
-            let v = random_variable() in
-            aux (v::acc1) (v::acc2) (i+1)
-          else acc2
-        in
-        let var_list = aux !placeholders [] 0 in
-        Primitive(t,"REAL_VECTOR", ref var_list |> magical)
+        let x = Mat.uniform 1 3 in
+        let x' = make_reverse x (tag ()) in
+        placeholders := x' :: !placeholders;
+        Primitive(t,"REAL_VECTOR", ref x' |> magical)
       end
     | p -> p
   in
   let program = r program in
   (program, !placeholders)
+
+(* reverse the parameters list *)
+(* should mutate the parameters list *)
+let update_placeholders program parameters ?lr:(lr=0.1) =
+  let new_placeholders = ref [] in
+  let rec r program parameters = 
+    match program with
+    | Index(j) -> Index(j)
+    | Abstraction(b) -> Abstraction(r b parameters)
+    | Apply(f,x) -> Apply(r f parameters, r x parameters)
+    | Invented(t,b) -> Invented(t,r b parameters)
+    | Primitive(t,"REAL",_) -> begin
+        let x = parameters.hd - (eta * (adjval (List.hd parameters))) in
+        let x' = make_reverse x (tag ()) in
+        new_placeholders := x' :: !new_placeholders;
+        parameters := List.tl parameters;
+        Primitive(t,"REAL", ref x' |> magical)
+      end
+    | Primitive(t,"REAL_VECTOR",_) -> begin
+        let x = parameters.hd - (eta * (adjval (List.hd parameters))) in
+        let x' = make_reverse x (tag ()) in
+        new_placeholders := x' :: !new_placeholders;
+        parameters := List.tl parameters;
+        Primitive(t,"REAL_VECTOR", ref x' |> magical)
+      end
+    | p -> p
+  in
+  let program = r program parameters in
+  (program, !new_placeholders)
 
 let rec placeholder_data t x =
   match t with
@@ -407,7 +434,7 @@ exception DifferentiableBadShape
 
 (* Takes as input a type *)
 (* Returns a function from (prediction, target) to [(prediction_variable, target_variable)] *)
-let rec polymorphic_loss_pairs : tp -> 'a -> 'b -> (variable*variable) list = function
+let rec polymorphic_loss_pairs : tp -> 'a -> 'b -> (float*float) list = function
   | TCon("vector",_,_) -> polymorphic_loss_pairs (tlist treal)
   | TCon("real",_,_) -> magical (fun p y -> [(p,y)])
   | TCon("list",[tp],_) ->
@@ -426,13 +453,13 @@ let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) 
     loss_pairs |> List.map ~f:(fun (p,y) ->
         let p = match clipOutput with
           | None -> p
-          | Some(clip) -> clamp ~l:(-.clip) ~u:clip p
+          | Some(clip) -> clamp_float ~l:(-.clip) ~u:clip p
         in
-        let l = square (p -& y) in
+        let l = square_float (p -. y) in
         match clipLoss with
         | None -> l
-        | Some(clip) -> clamp ~l:0. ~u:clip l) |>
-    List.reduce_exn ~f:(+&)
+        | Some(clip) -> clamp_float ~l:0. ~u:clip l) |>
+    List.reduce_exn ~f:(+.)
 (* let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) = function *)
 (*   | TCon("vector",_,_) -> polymorphic_sse ~clipOutput ~clipLoss (tlist treal) *)
 (*   | TCon("real",_,_) -> magical (fun p y -> *)
@@ -459,10 +486,9 @@ let test_program_differentiation() =
   let (p, parameters) = replace_placeholders p in
   let p = analyze_lazy_evaluation p in
 
-  let g = run_lazy_analyzed_with_arguments p [~$ 0.] in
+  let g = run_lazy_analyzed_with_arguments p [] in
 
   Printf.printf "%f" (update_network g);;
-
 
 
 
