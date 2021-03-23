@@ -189,6 +189,7 @@ def ecIterator(grammar, tasks,
                language_encoder=None,
                featureExtractor=None,
                languageDataset=None,
+               condition_independently_on_language_descriptions=False,
                recognitionEpochs=None,
                recognitionTimeout=None,
                recognitionSteps=None,
@@ -319,6 +320,7 @@ def ecIterator(grammar, tasks,
             "interactiveTasks",
             "parser",
             "print_recognition_model_summary",
+            "condition_independently_on_language_descriptions",
             "solver"} and v is not None}
     if not recognition_0:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
@@ -446,6 +448,18 @@ def ecIterator(grammar, tasks,
                           taskLanguage={
                               t.name: [] for t in tasks + testingTasks},
                           tasksAttempted=set())
+                          
+    # Preload language dataset if avaiable.
+    if languageDataset is not None:
+        result.languageDatasetPath = languageDatasetDir
+        # TODO: figure out how to specify which tasks to load for.
+        # May need to separately specify train and test.
+        result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
+        if condition_independently_on_language_descriptions:
+            tasks, testingTasks = generate_independent_tasks_for_language_descriptions(result, tasks, testingTasks)
+        eprint("Loaded language dataset from ", languageDataset)
+        if test_task_language: 
+            yield result # Integration test outpoint.
     
     if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
@@ -500,16 +514,6 @@ def ecIterator(grammar, tasks,
         if recognition_0: ECResult.clearRecognitionModel(path)
             
         sys.exit(0)
-    
-    # Preload language dataset if avaiable.
-    if languageDataset is not None:
-        result.languageDatasetPath = languageDatasetDir
-        # TODO: figure out how to specify which tasks to load for.
-        # May need to separately specify train and test.
-        result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
-        eprint("Loaded language dataset from ", languageDataset)
-        if test_task_language: 
-            yield result # Integration test outpoint.
         
     # Preload any supervision if available into the all frontiers.
     print(f"Found n={len([t for t in tasks if t.add_as_supervised])} supervised tasks; initializing frontiers.")
@@ -1333,7 +1337,10 @@ def commandlineArguments(_=None,
                         nargs="+",
                         default=None,
                         type=str)
-
+    parser.add_argument("--condition_independently_on_language_descriptions",
+                        action='store_true',
+                        help="If true, treats each linguistic description provided as a separate task and searches separately on it.")
+                        
     ### Algorithm training details.
     parser.add_argument("--max_mem_per_enumeration_thread",	
                         default=1000000000,	

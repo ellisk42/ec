@@ -1,3 +1,48 @@
+from dreamcoder.frontier import *
+from copy import deepcopy
+def generate_independent_tasks_for_language_descriptions(result, tasks, testingTasks):
+    """
+    Updates the ECResult object so that the tasks themselves are different depending on each description. There will be only one description per task.
+    
+    Mutates: result.taskLanguage; result.taskSolutions; result.allFrontiers; 
+    Returns tasks, testingTasks
+    """
+    print(f"Generating independent tasks for each language description. Initial tasks are {len(tasks)} train | {len(testingTasks)} test.")
+    
+    all_new_task_names = set()
+    new_tasks = {
+        "train" : [],
+        "test" : []
+    }
+    new_train_tasks, new_test_tasks = [], []
+    for (split, tasks) in [("train", tasks), ("test", testingTasks)]:
+        for original_task in tasks:
+            if original_task.name not in result.taskLanguage:
+                all_new_task_names.add(original_task.name)
+                new_tasks[split].append(original_task)
+            else:
+                for description in result.taskLanguage[original_task.name]:
+                    singular_description = [description] # Singleton array for description.
+                    new_task_name = f"{original_task.name}_{description}"
+                    if new_task_name not in all_new_task_names:
+                        new_task = deepcopy(original_task)
+                        new_task.name = new_task_name
+                    # Add the new task description.
+                    result.taskLanguage[new_task_name] = singular_description
+                    all_new_task_names.add(new_task_name)
+                    new_tasks[split].append(new_task)
+    # Update the task language.
+    result.taskLanguage = {
+        task_name : result.taskLanguage[task_name] for task_name in result.taskLanguage if task_name in all_new_task_names
+    }
+    
+    result.taskSolutions={t: Frontier([],task=t) for t in new_tasks["train"]}
+    result.numTestingTasks=len(new_tasks["test"])
+    result.allFrontiers={t: Frontier([],task=t) for t in  new_tasks["train"]}
+
+    print(f"Generated new independent tasks: {len(new_tasks['train'])} train | {len(new_tasks['test'])} test.")
+    import pdb; pdb.set_trace()
+    return new_tasks["train"],  new_tasks["test"]
 
 def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     """
