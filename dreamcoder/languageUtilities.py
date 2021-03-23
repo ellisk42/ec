@@ -41,7 +41,6 @@ def generate_independent_tasks_for_language_descriptions(result, tasks, testingT
     result.allFrontiers={t: Frontier([],task=t) for t in  new_tasks["train"]}
 
     print(f"Generated new independent tasks: {len(new_tasks['train'])} train | {len(new_tasks['test'])} test.")
-    import pdb; pdb.set_trace()
     return new_tasks["train"],  new_tasks["test"]
 
 def languageForTasks(languageDataset, languageDatasetDir, taskDict):
