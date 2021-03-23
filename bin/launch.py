@@ -12,10 +12,11 @@ ZONE = None
 AMAZON_TO_AZURE_SIZING = {
     "n1-standard-64" : "Standard_E64_v3",
     "n1-highmem-64" : "Standard_E64_v4",
-    "n1-megamem-96" : "Standard_M128s"
+    "n1-highmem-96" : "Standard_E64_v4",
+    "n1-standard-20" : "Standard_E16_v3"
 }
 AZURE_DEFAULT_RESOURCE_GROUP = "ec2_resource_group_0"
-AZURE_DEFAULT_REGION = "centralus"
+AZURE_DEFAULT_REGION = "eastus"
 AZURE_DEFAULT_BASE_IMAGE = "/subscriptions/655f1464-5d1f-48ef-9ed3-dca83e60bdd5/resourceGroups/ec2_resource_group_0/providers/Microsoft.Compute/galleries/cocosci/images/ec_base_image_1"
 AZURE_DEFAULT_USERNAME = "azureuser"
 
@@ -28,7 +29,7 @@ def branch():
     return subprocess.check_output(
         ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode("utf-8").strip()
 
-def launchAzureCloud(size,name):
+def launchAzureCloud(size,name,region):
     """
     Provisions an Azure VM. Requires Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli. Users must be added to the Computational Cognitive Science Azure account with login credentials.
     > az account set --subscription "Computational Cognitive Science Lab" to use the default subscription.
@@ -36,7 +37,7 @@ def launchAzureCloud(size,name):
     print("#######Launching on Azure cloud...")
     if size in AMAZON_TO_AZURE_SIZING: size = AMAZON_TO_AZURE_SIZING[size]
     name = name.replace('_','-').replace('.','-').lower()
-    azure_command = f"az vm create --size {size} --name {name} --generate-ssh-keys --data-disk-sizes-gb 64 --location {AZURE_DEFAULT_REGION} --image {AZURE_DEFAULT_BASE_IMAGE} --resource-group {AZURE_DEFAULT_RESOURCE_GROUP}"
+    azure_command = f"az vm create --size {size} --name {name} --generate-ssh-keys --data-disk-sizes-gb 64 --location {region} --image {AZURE_DEFAULT_BASE_IMAGE} --resource-group {AZURE_DEFAULT_RESOURCE_GROUP}"
     
     output = subprocess.check_output(["/bin/bash", "-c", azure_command])
     output = json.loads(output)
@@ -115,7 +116,7 @@ def ssh(address, command, pipeIn=None):
             command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa {login_name}@{address} '{command}'"
         else: # AWS
             login_name = "ubuntu"
-        command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {login_name}@{address} '{command}'"
+            command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {login_name}@{address} '{command}'"
     if pipeIn:
         command = f"{pipeIn} | {command}"
     print(command)
@@ -266,7 +267,8 @@ def launchExperiment(
         ssh_key="id_rsa",
         tar=False,
         shutdown=True,
-        size="t2.micro"):
+        size="t2.micro",
+        seed=None):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
     if upload is None and shutdown:
@@ -287,13 +289,24 @@ def launchExperiment(
 %s > jobs/%s 2>&1
 """ % (command, job_id)
 
-    print(f"###########Now launching job: {name}\nCommand: {command}. \nOutputs will be uploaded to {upload}.")
+    def get_seed(command):
+        try:
+            seed = command.split("seed")[-1].strip()
+            return seed
+        except:
+            return None
+    
+    seed = get_seed(command)
+    tag = "" if seed is None else seed
+    name = f"{name}_{tag}" # Distinguish replications.
+
+    print(f"###########Now launching job: {name}\nCommand: {command} \nOutputs will be uploaded to {upload}.")
 
     if arguments.google:
         name = job_id
         instance, address = launchGoogleCloud(size, name)
     elif arguments.azure:
-        instance, address = launchAzureCloud(size, name=name)
+        instance, address = launchAzureCloud(size, name=name,region=arguments.azure_region)
     else:
         instance, address = launchAmazonCloud(size, name=name)
     time.sleep(120)
@@ -343,6 +356,9 @@ if __name__ == "__main__":
     parser.add_argument('-c', "--google",
                         default=False,
                         action="store_true")
+    parser.add_argument("--azure_region",
+                        default=AZURE_DEFAULT_REGION,
+                        help="Which region to launch in.")
     parser.add_argument("--azure",
                         default=False,
                         action="store_true")
@@ -357,6 +373,7 @@ if __name__ == "__main__":
     parser.add_argument("name")
     parser.add_argument("command")
     arguments = parser.parse_args()
+    
 
     launchExperiment(arguments.name,
                      arguments.command,
