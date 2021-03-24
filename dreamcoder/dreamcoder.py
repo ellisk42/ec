@@ -231,6 +231,10 @@ def ecIterator(grammar, tasks,
                test_sleep_recognition_0=False, # Integration test for the examples-only recognizer.
                test_sleep_recognition_1=False, # Integration test for the language-based recognizer.
                test_next_iteration_settings=False, # Integration test for the second iteration.
+               
+               # Entrypoint flags for analysis. If these are set, we return early at breakpoints.
+               language_data_analysis_label_noisy_data=False, # Analysis launcher to label noisy data in the language dataset.
+               language_data_analysis_for_noisy_data=False, # Analysis launcher to correlate noisy data with results in the language dataset.
                ):
     if enumerationTimeout is None:
         eprint(
@@ -370,7 +374,9 @@ def ecIterator(grammar, tasks,
             "n_models",
             "test_dsl_only",
             "initialTimeout",
-            "initialTimeoutIterations"
+            "initialTimeoutIterations",
+            "language_data_analysis_for_noisy_data",
+            "language_data_analysis_label_noisy_data"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path and not k.startswith('test_')]
@@ -458,8 +464,14 @@ def ecIterator(grammar, tasks,
         if condition_independently_on_language_descriptions:
             tasks, testingTasks = generate_independent_tasks_for_language_descriptions(result, tasks, testingTasks)
         eprint("Loaded language dataset from ", languageDataset)
+        ## Integration test outpoint.
         if test_task_language: 
-            yield result # Integration test outpoint.
+            yield result 
+        ## Language data analyses.
+        if language_data_analysis_label_noisy_data:
+            run_language_data_analysis_label_noisy_data(result, languageDataset, languageDatasetDir)
+        if language_data_analysis_for_noisy_data:
+            run_language_data_analysis_for_noisy_data(result, tasks, testingTasks, languageDataset, languageDatasetDir)
     
     if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
@@ -1340,6 +1352,13 @@ def commandlineArguments(_=None,
     parser.add_argument("--condition_independently_on_language_descriptions",
                         action='store_true',
                         help="If true, treats each linguistic description provided as a separate task and searches separately on it.")
+    parser.add_argument("--language_data_analysis_label_noisy_data",
+                        action="store_true",
+                        help="If true, launches an interactive script for reading and writing out data on the correctness of language labels.")
+    parser.add_argument("--language_data_analysis_for_noisy_data",
+                        action="store_true",
+                        help="If true, reads in the noisy data labeled file and runs analyses correlating labels with checkpoint results.")
+    
                         
     ### Algorithm training details.
     parser.add_argument("--max_mem_per_enumeration_thread",	

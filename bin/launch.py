@@ -7,6 +7,19 @@ import sys
 
 ZONE = None
 
+## Azure configuration flags.
+# Approximate conversion between similar VMs on Amazon and Azure.
+AMAZON_TO_AZURE_SIZING = {
+    "n1-standard-64" : "Standard_E64_v3",
+    "n1-highmem-64" : "Standard_E64_v4",
+    "n1-highmem-96" : "Standard_E64_v4",
+    "n1-standard-20" : "Standard_E16_v3"
+}
+AZURE_DEFAULT_RESOURCE_GROUP = "zyzzyva-clevr-0"
+AZURE_DEFAULT_REGION = "westcentralus"
+AZURE_DEFAULT_BASE_IMAGE = "/subscriptions/655f1464-5d1f-48ef-9ed3-dca83e60bdd5/resourceGroups/zyzzyva-clevr-0/providers/Microsoft.Compute/galleries/myGallery/images/zyzzyva-icml-rebuttal-0"
+AZURE_DEFAULT_USERNAME = "azureuser"
+
 def user():
     import getpass
     return getpass.getuser()
@@ -15,6 +28,23 @@ def user():
 def branch():
     return subprocess.check_output(
         ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode("utf-8").strip()
+
+def launchAzureCloud(size,name,region):
+    """
+    Provisions an Azure VM. Requires Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli. Users must be added to the Computational Cognitive Science Azure account with login credentials.
+    > az account set --subscription "Computational Cognitive Science Lab" to use the default subscription.
+    """
+    print("#######Launching on Azure cloud...")
+    if size in AMAZON_TO_AZURE_SIZING: size = AMAZON_TO_AZURE_SIZING[size]
+    name = name.replace('_','-').replace('.','-').lower()
+    azure_command = f"az vm create --size {size} --name {name} --generate-ssh-keys --data-disk-sizes-gb 64 --location {region} --image {AZURE_DEFAULT_BASE_IMAGE} --resource-group {AZURE_DEFAULT_RESOURCE_GROUP}"
+    
+    output = subprocess.check_output(["/bin/bash", "-c", azure_command])
+    output = json.loads(output)
+    ip_address = output['publicIpAddress']
+    print(f"Launched to: {name} | {AZURE_DEFAULT_USERNAME}@{ip_address}")
+    return name, ip_address
+     
 
 def launchGoogleCloud(size, name):
     name = name.replace('_','-').replace('.','-').lower()
@@ -67,7 +97,12 @@ def scp(address, localFile, remoteFile):
     if arguments.google:
         command = f"gcloud compute scp --zone={ZONE} {localFile} {address}:{remoteFile}"
     else:
-        command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} ubuntu@{address}:{remoteFile}"
+        if arguments.azure:
+            login_name = "azureuser"
+            command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa {localFile} {login_name}@{address}:{remoteFile}"
+        else: # AWS
+            login_name = "ubuntu"
+            command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} {login_name}@{address}:{remoteFile}"
     print(command)
     os.system(command)
 
@@ -76,7 +111,12 @@ def ssh(address, command, pipeIn=None):
     if arguments.google:
         command = f"gcloud compute ssh --zone={ZONE} {address} --command='{command}'"
     else:
-        command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@{address} '{command}'"
+        if arguments.azure:
+            login_name = "azureuser"
+            command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa {login_name}@{address} '{command}'"
+        else: # AWS
+            login_name = "ubuntu"
+            command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {login_name}@{address} '{command}'"
     if pipeIn:
         command = f"{pipeIn} | {command}"
     print(command)
@@ -111,10 +151,10 @@ def sendCommand(
     preamble = f"""#!/bin/bash
 cd ~/ec
 {copyCheckpoint}
-touch compressor_dummy
-git fetch
-git checkout {br}
-git pull
+# touch compressor_dummy
+# git fetch
+# git checkout {br}
+# git pull
 """
     #hack for non-kevin users ...
     if user() != "ellisk":
@@ -128,11 +168,13 @@ cp -r ../ellisk/ec ~/ec
         scp(address, resume, "~/ec/")
         preamble += "tar xf {}\n".format(os.path.basename(resume))
     else:
-        preamble += "mv ~/patch ~/ec/patch\n"
-        preamble += "git apply patch ; mkdir jobs\n"
-        if not arguments.google:
-            # Google image already has these modules loaded
-            preamble += "git submodule update --init --recursive\n"
+        preamble += "mkdir jobs\n"
+        pass
+        # preamble += "mv ~/patch ~/ec/patch\n"
+        # preamble += "git apply patch ; mkdir jobs\n"
+        # if not arguments.google or arguments.azure:
+        #     # Google image already has these modules loaded
+        #     preamble += "git submodule update --init --recursive\n"
 
     if upload:
         # This is probably a terribly insecure idea...
@@ -206,17 +248,17 @@ sudo shutdown -h now
         scp(address, f"~/.ssh/{ssh_key}.pub", f"~/.ssh/{ssh_key}.pub")
 
     # Send git patch
-    print("Sending git patch over to", address)
-    os.system("git diff --stat")
-    ssh(address, "cat > ~/patch",
-        pipeIn=f"""(echo "Base-Ref: $(git rev-parse origin/{br})" ; echo ; git diff --binary origin/{br})""")
+    # Don't patch.
+    # print("Sending git patch over to", address)
+    # os.system("git diff --stat")
+    # ssh(address, "cat > ~/patch",
+    #     pipeIn=f"""(echo "Base-Ref: $(git rev-parse origin/{br})" ; echo ; git diff --binary origin/{br})""")
 
     # Execute the script
     # For some reason you need to pipe the output to /dev/null in order to get
     # it to detach
     ssh(address, "bash ./script.sh > /dev/null 2>&1 &")
     print("Executing script on remote host.")
-
 
 def launchExperiment(
         name,
@@ -228,7 +270,8 @@ def launchExperiment(
         ssh_key="id_rsa",
         tar=False,
         shutdown=True,
-        size="t2.micro"):
+        size="t2.micro",
+        seed=None):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
     if upload is None and shutdown:
@@ -249,9 +292,24 @@ def launchExperiment(
 %s > jobs/%s 2>&1
 """ % (command, job_id)
 
+    def get_seed(command):
+        try:
+            seed = command.split("seed")[-1].strip()
+            return seed
+        except:
+            return None
+    
+    seed = get_seed(command)
+    tag = "" if seed is None else seed
+    name = f"{name}_{tag}" # Distinguish replications.
+
+    print(f"###########Now launching job: {name}\nCommand: {command} \nOutputs will be uploaded to {upload}.")
+
     if arguments.google:
         name = job_id
         instance, address = launchGoogleCloud(size, name)
+    elif arguments.azure:
+        instance, address = launchAzureCloud(size, name=name,region=arguments.azure_region)
     else:
         instance, address = launchAmazonCloud(size, name=name)
     time.sleep(120)
@@ -301,6 +359,12 @@ if __name__ == "__main__":
     parser.add_argument('-c', "--google",
                         default=False,
                         action="store_true")
+    parser.add_argument("--azure_region",
+                        default=AZURE_DEFAULT_REGION,
+                        help="Which region to launch in.")
+    parser.add_argument("--azure",
+                        default=False,
+                        action="store_true")
     parser.add_argument('-g', "--gpuImage", default=False, action='store_true')
     parser.add_argument(
         '-t',
@@ -312,6 +376,7 @@ if __name__ == "__main__":
     parser.add_argument("name")
     parser.add_argument("command")
     arguments = parser.parse_args()
+    
 
     launchExperiment(arguments.name,
                      arguments.command,

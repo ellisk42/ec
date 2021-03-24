@@ -39,4 +39,5 @@ ec-language-venv
 tests/out/
 moses_compiled/
 .word_vectors_cache
+clevrSolver
 .DS_Store
