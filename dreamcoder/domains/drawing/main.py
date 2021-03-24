@@ -78,9 +78,10 @@ def main(args):
     run_unit_tests(args)
     
     # Load the train and testing schedule. Generates and caches the dataset if an uncached taskDatasetDir is provided.
-    task_and_language_schedule = loadAllTaskAndLanguageDatasets(args)
+    task_and_language_schedule = makeDrawingTasks.loadAllTaskAndLanguageDatasets(args)
     train_test_schedules = task_and_language_schedule.train_test_schedules
     language_dataset = task_and_language_schedule.language_dataset
+    
     
     # Load the initial grammar.
     initial_grammar = drawingPrimitives.load_initial_grammar(args)
@@ -94,5 +95,3 @@ def main(args):
     # Run the integration test immediately before we remove all domain-specific arguments.
     
     # Utility to pop off any additional arguments that are specific to this domain.
-    
-    # Run the experiments in the task dataset schedule.

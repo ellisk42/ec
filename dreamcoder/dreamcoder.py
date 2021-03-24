@@ -13,6 +13,8 @@ from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 from dreamcoder.parser import *
 from dreamcoder.languageUtilities import *
 from dreamcoder.translation import *
+import dreamcoder.test_joint_models as test_joint_models
+from dreamcoder.joint_models import *
 
 class ECResult():
     def __init__(self, _=None,
@@ -218,6 +220,7 @@ def ecIterator(grammar, tasks,
                languageDatasetDir=None,
                useWakeLanguage=False,
                debug=False,
+               joint_language_program_model=None,
                synchronous_grammar=False,
                language_compression=False,
                lc_score=False,
@@ -229,7 +232,8 @@ def ecIterator(grammar, tasks,
                test_wake_generative_enumeration=False, # Integration test for enumeration.
                test_sleep_recognition_0=False, # Integration test for the examples-only recognizer.
                test_sleep_recognition_1=False, # Integration test for the language-based recognizer.
-               test_next_iteration_settings=False, # Integration test for the second iteration.
+               test_next_iteration_settings=False, # Integration test for the second iteration.,
+               test_joint_language_program_model=False, # Integration test for the new joint language model.
                ):
     if enumerationTimeout is None:
         eprint(
@@ -319,6 +323,7 @@ def ecIterator(grammar, tasks,
             "interactiveTasks",
             "parser",
             "print_recognition_model_summary",
+            "test_joint_language_program_model",
             "solver"} and v is not None}
     if not recognition_0:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
@@ -368,7 +373,9 @@ def ecIterator(grammar, tasks,
             "n_models",
             "test_dsl_only",
             "initialTimeout",
-            "initialTimeoutIterations"
+            "initialTimeoutIterations",
+            "test_joint_language_program_model",
+            "joint_language_program_model"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path and not k.startswith('test_')]
@@ -511,6 +518,12 @@ def ecIterator(grammar, tasks,
         eprint("Loaded language dataset from ", languageDataset)
         if test_task_language: 
             yield result # Integration test outpoint.
+    
+    
+    ## TODO (catwong): change this to a more graceful entrypoint for the joint language data.
+    if test_joint_language_program_model:
+        test_joint_models.test_joint_language_program_model(result, tasks, testingTasks)
+    
         
     # Preload any supervision if available into the all frontiers.
     print(f"Found n={len([t for t in tasks if t.add_as_supervised])} supervised tasks; initializing frontiers.")

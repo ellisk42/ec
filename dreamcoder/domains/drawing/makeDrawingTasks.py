@@ -46,7 +46,7 @@ def loadAllTaskAndLanguageDatasets(args):
             language_dataset : [array of string names for the task classes used that will be used to load the corresponding natural language.]
         }
     """
-    top_level_data_dir, task_dataset_tag, train_test_schedules = loadAllTrainTaskSchedules(args)
+    task_dataset_tag, top_level_data_dir, train_test_schedules = loadAllTrainTaskSchedules(args)
     language_dataset = checkAndLoadAllLanguageDatasets(top_level_data_dir, task_dataset_tag, args)
     return SimpleNamespace(
             train_test_schedules=train_test_schedules,
@@ -68,6 +68,7 @@ def checkAndLoadAllLanguageDatasets(top_level_data_dir, task_dataset_tag, args):
             full_language_split_dir = os.path.join(full_language_dir, split)
             for language_file in LANGUAGE_JSON_FILES:
                 full_language_file_path = os.path.join(full_language_split_dir, language_file)
+                print(full_language_file_path)
                 assert os.path.exists(full_language_file_path)
         return [full_language_dir]
             
