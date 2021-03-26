@@ -174,5 +174,5 @@ let estimate_categorized_fragment_grammar (fg : fragment_grammar) (frontiers : f
               |> fold1 (+&) in
   let parameters = g.logVariables @ (g.productionProbabilities |> List.map ~f:(List.map ~f:(fun (_,_,q) -> q))
                                     |> List.concat) in
-  ignore(gradient_descent (~$0. -& joint) parameters);
+  let ignore1 = gradient_descent (~$0. -& joint) parameters in
   Printf.printf "%s\n" (string_of_categorized_grammar g);

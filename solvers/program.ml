@@ -78,7 +78,7 @@ let primitive_name = function | Primitive(_,n,_) -> n
                               | e -> raise (Failure ("primitive_name: "^string_of_program e^"not a primitive"))
 
 let rec program_equal p1 p2 = match (p1,p2) with
-  | (Primitive(_,n1,_),Primitive(_,n2,_)) -> n1 = n2
+  | (Primitive(_,n1,_),Primitive(_,n2,_)) -> Poly.(=) n1 n2
   | (Abstraction(a),Abstraction(b)) -> program_equal a b
   | (Invented(_,a),Invented(_,b)) -> program_equal a b
   | (Index(a),Index(b)) -> a = b
@@ -323,7 +323,7 @@ let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
   in
   let p = Primitive(t,name, ref (magical x)) in
   assert (not (Hashtbl.mem every_primitive name));
-  ignore(Hashtbl.add every_primitive name p);
+  let ignore1 = Hashtbl.add every_primitive name p in
   p
 
 (* let primitive_empty_string = primitive "emptyString" tstring "";; *)
@@ -576,20 +576,20 @@ let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x 
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
 
-ignore(primitive "take-word" (tcharacter @> tstring @> tstring) (fun c s ->
+let ignore2 = (primitive "take-word" (tcharacter @> tstring @> tstring) (fun c s ->
     List.take_while s ~f:(fun c' -> not (c = c'))));;
-ignore(primitive "drop-word" (tcharacter @> tstring @> tstring) (fun c s ->
+let ignore3 = (primitive "drop-word" (tcharacter @> tstring @> tstring) (fun c s ->
     List.drop_while s ~f:(fun c' -> not (c = c')) |> List.tl |> get_some));;
-ignore(primitive "abbreviate" (tstring @> tstring) (fun s ->
+let ignore4 = (primitive "abbreviate" (tstring @> tstring) (fun s ->
     let rec f = function
       | [] -> []
       | ' ' :: cs -> f cs
-      | c :: cs -> c :: f (List.drop_while cs ~f:(fun c' -> not (c' = ' ')))
+      | c :: cs -> c :: f (List.drop_while cs ~f:(fun c' -> not (Poly.(=) c' ' ')))
     in f s));;
-ignore(primitive "last-word" (tcharacter @> tstring @> tstring)
+let ignore5 = (primitive "last-word" (tcharacter @> tstring @> tstring)
          (fun c s ->
             List.rev s |> List.take_while ~f:(fun c' -> not (c = c')) |> List.rev));;
-ignore(primitive "replace-character" (tcharacter @> tcharacter @> tstring @> tstring) (fun c1 c2 s ->
+let ignore6 = (primitive "replace-character" (tcharacter @> tcharacter @> tstring @> tstring) (fun c1 c2 s ->
     s |> List.map ~f:(fun c -> if c = c1 then c2 else c)));;
 
 
@@ -678,7 +678,7 @@ let logo_PD  = primitive "logo_PD"
                            LogoLib.LogoInterpreter.logo_SEQ
                              LogoLib.LogoInterpreter.logo_PD
                              x);;
-primitive "logo_PT"
+let ignore14 = primitive "logo_PT"
   ((turtle @> turtle) @> (turtle @> turtle))
   (fun body continuation ->
      LogoLib.LogoInterpreter.logo_GET (fun state ->
@@ -766,10 +766,10 @@ let logo_SUBA = primitive "logo_SUBA" (tangle @> tangle @> tangle) ( -. )
 let logo_ADDL = primitive "logo_ADDL" (tlength @> tlength @> tlength) ( +. )
 let logo_SUBL = primitive "logo_SUBL" (tlength @> tlength @> tlength) ( -. )
 
-let _ = primitive "logo_forLoop"
+let ignore7 = primitive "logo_forLoop"
                    (tint @> (tint @> turtle @> turtle) @> turtle @> turtle)
                    (fun i f z -> List.fold_right (0 -- (i-1)) ~f ~init:z)
-let _ = primitive "logo_forLoopM"
+let ignore8 = primitive "logo_forLoopM"
                    (tint @> (tint @> turtle) @> turtle @> turtle)
                    (fun n body k0 ->
                      ((List.map (0 -- (n-1)) ~f:body))
@@ -844,7 +844,7 @@ let primitive_recursion2 =
 
 
 let is_recursion_of_arity a = function
-  | Primitive(_,n,_) -> ("fix"^(Int.to_string a)) = n
+  | Primitive(_,n,_) -> Poly.(=) ("fix"^(Int.to_string a)) n
   | _ -> false
 
 let is_recursion_primitive = function
@@ -854,7 +854,7 @@ let is_recursion_primitive = function
 
 
 let program_parser : program parsing =
-  let token = token_parser (fun c -> Char.is_alphanum c || List.mem ~equal:( = )
+  let token = token_parser (fun c -> Char.is_alphanum c || List.mem ~equal:( Poly.(=) )
                                        ['_';'-';'?';'/';'.';'*';'\'';'+';',';
                                         '>';'<';'@';'|';] c) in
   let whitespace = token_parser ~can_be_empty:true Char.is_whitespace in
@@ -949,7 +949,7 @@ let parsing_test_case s =
   program_parser (s,0) |> List.iter ~f:(fun (p,n) ->
       if n = String.length s then
         (Printf.printf "Parsed into the program: %s\n" (string_of_program p);
-         assert (s = (string_of_program p));
+         assert (Poly.(=) s (string_of_program p));
         flush_everything())
       else
         (Printf.printf "With the suffix %n, we get the program %s\n" n (string_of_program p);
@@ -983,14 +983,14 @@ let [@warning "-20"] performance_test_case() =
           if j = n then
             Printf.printf "%s\n" (evaluate [] e xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else
-            ignore (evaluate [] e xs)));
+            evaluate [] e xs));
   let c = analyze_evaluation e [] in
   time_it "evaluate analyzed program many times" (fun () -> 
       (0--n) |> List.iter ~f:(fun j ->
           if j = n then
             Printf.printf "%s\n" (c xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else 
-            ignore(c xs)))
+            c xs))
 ;;
 
 
@@ -1112,31 +1112,31 @@ let t_model_p = make_ground "t_model_p";;
 
 (* Puddleworld Primitive Definitions *)
 
-ignore(primitive "true_p" (t_boolean_p) (fun x -> x));;
-ignore(primitive "left_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "right_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "up_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "down_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "1_p" (t_int_p) (fun x -> x));;
-ignore(primitive "2_p" (t_int_p) (fun x -> x));;
-ignore(primitive "move_p" (t_object_p @> t_action_p) (fun x -> x));;
-ignore(primitive "relate_p" (t_object_p @> t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "relate_n_p" (t_object_p @> t_object_p @> t_direction_p @> t_int_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "in_half_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "apply_p" ((t_object_p @> t_boolean_p) @> t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "and__p" (t_boolean_p @> t_boolean_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "max_in_dir_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "is_edge_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "grass_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "puddle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "star_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "circle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "triangle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "heart_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "spade_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "diamond_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "rock_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;
+let ignore18 = (primitive "true_p" (t_boolean_p) (fun x -> x));;
+let ignore19 = (primitive "left_p" (t_direction_p) (fun x -> x));;
+let ignore20 = (primitive "right_p" (t_direction_p) (fun x -> x));;
+let ignore21 = (primitive "up_p" (t_direction_p) (fun x -> x));;
+let ignore22 = (primitive "down_p" (t_direction_p) (fun x -> x));;
+let ignore23 = (primitive "1_p" (t_int_p) (fun x -> x));;
+let ignore24 = (primitive "2_p" (t_int_p) (fun x -> x));;
+let ignore25 = (primitive "move_p" (t_object_p @> t_action_p) (fun x -> x));;
+let ignore26 = (primitive "relate_p" (t_object_p @> t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
+let ignore27 = (primitive "relate_n_p" (t_object_p @> t_object_p @> t_direction_p @> t_int_p @> t_boolean_p) (fun x -> x));;
+let ignore28 = (primitive "in_half_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
+let ignore29 = (primitive "apply_p" ((t_object_p @> t_boolean_p) @> t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore30 = (primitive "and__p" (t_boolean_p @> t_boolean_p @> t_boolean_p) (fun x -> x));;
+let ignore31 = (primitive "max_in_dir_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
+let ignore32 = (primitive "is_edge_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore33 = (primitive "grass_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore34 = (primitive "puddle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore35 = (primitive "star_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore36 = (primitive "circle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore37 = (primitive "triangle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore38 = (primitive "heart_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore39 = (primitive "spade_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore40 = (primitive "diamond_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore41 = (primitive "rock_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore42 = (primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore43 = (primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore44 = (primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+let ignore45 = (primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;

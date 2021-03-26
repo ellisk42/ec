@@ -24,9 +24,9 @@ let smooth_logo_wrapper t2t k s0 =
   (p |> List.map  ~f:smooth_path |> List.concat, s)
 
 
-let _ =
+let ignore1 =
   let open Yojson.Basic.Util in
-  let j = Yojson.Basic.from_channel Pervasives.stdin in
+  let j = Yojson.Basic.from_channel Stdlib.stdin in
   let open Yojson.Basic in
   let open Utils in
   let open Timeout in

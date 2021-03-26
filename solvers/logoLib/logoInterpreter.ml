@@ -20,8 +20,8 @@ let logo_NOP : turtle = fun s -> ([], s)
 let init_state () = {x = d_from_origin; y = d_from_origin; t = 0.; p = true}
 
 let flush_everything () =
-  Pervasives.flush stdout;
-  Pervasives.flush stderr
+  Stdlib.flush stdout;
+  Stdlib.flush stderr
 
 let center_logo_list (l : logo_instruction list) : logo_instruction list =
   let rec minimum = function

@@ -2,7 +2,7 @@ open Unix
 
 open Program
 
-let _ =
+let ignore1 =
   let idRef = Sys.argv.(1)
   and p    = Sys.argv.(2) in
   let s_in, s_out =

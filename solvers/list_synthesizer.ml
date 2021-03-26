@@ -63,7 +63,7 @@ let list_grammar =
                       primitive_is_square;
                       primitive_greater_than;]
 
-let _ =
+let ignore1 =
   let t = supervised_task "filter-squares" (tlist tint @> tlist tint)
       [([1;2;1;9;4;3;2],[1;1;9;4])] 
   in

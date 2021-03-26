@@ -7,7 +7,7 @@ open Lexing
 
 exception MalformedProgram of string
 
-let _ = Random.self_init ()
+let ignore1 = Random.self_init ()
 
 let print_pos lexbuf = 
   let pos = lexbuf.lex_curr_p in
@@ -36,7 +36,7 @@ let file_to_string filename =
   close_in ic ;
   s
 
-let _ =
+let ignore2 =
   if (Array.length Sys.argv != 2) then failwith "You need to provide exactly one argument, namely the name of the .LoG file you want to parse and execute, and this program will output a .png file accordingly." ;
   let program_string = file_to_string  Sys.argv.(1) in
   (try

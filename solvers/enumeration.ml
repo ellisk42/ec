@@ -7,6 +7,7 @@ open Utils
 open Type
 open Program
 open Grammar
+module Heap = Pairing_heap
 
 type frontier = {
   programs: (program*float) list;
@@ -29,7 +30,7 @@ let deserialize_frontier j =
 
 let serialize_frontier f =
   let open Yojson.Basic in
-  let j : json =
+  let j : t =
     `Assoc(["request",serialize_type f.request;
             "programs",`List(f.programs |> List.map ~f:(fun (p,l) ->
                 `Assoc(["program",`String(string_of_program p);
@@ -108,7 +109,7 @@ let string_of_state {skeleton;context;path;cost} =
 let state_finished {path;skeleton;} =
   match skeleton with
   | Primitive(_,"??",_) -> false
-  | _ -> path = []
+  | _ -> Poly.(=) path []
 
 let initial_best_first_state request (g : grammar) =
   {skeleton = primitive_unknown request g;
@@ -220,7 +221,7 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
   Heap.create
       ~cmp:(fun s1 s2 ->
               let c = s1.cost -. s2.cost in
-              if c < 0. then -1 else if c > 0. then 1 else 0) ()
+              if Poly.(<) c 0. then -1 else if Poly.(>) c 0. then 1 else 0) ()
   in
   Heap.add pq (initial_best_first_state request cg.no_context);
 
@@ -231,9 +232,9 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
     state_successors ~maxFreeParameters:maxFreeParameters cg best |> List.iter ~f:(fun child ->
         if state_finished child
         then
-          (if lower_bound <= child.cost && child.cost < upper_bound then completed := child :: !completed else ())
+          (if Poly.(<=) lower_bound child.cost && Poly.(<) child.cost upper_bound then completed := child :: !completed else ())
         else
-          (if child.cost < upper_bound then Heap.add pq child else ()))
+          (if Poly.(<) child.cost upper_bound then Heap.add pq child else ()))
   done;
 
   (!completed,
@@ -242,7 +243,7 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
       
 (* Depth first enumeration *)
 let enumeration_timeout = ref Float.max_value;;
-let enumeration_timed_out() = Unix.time() > !enumeration_timeout;;
+let enumeration_timed_out() = Poly.(>) (Unix.time ()) !enumeration_timeout;;
 let set_enumeration_timeout dt =
   enumeration_timeout := Unix.time() +. dt;;
 
@@ -257,7 +258,7 @@ let rec enumerate_programs' (cg : contextual_grammar) (g: grammar) (context: tCo
     (callBack: program -> tContext -> float -> int -> unit) : unit =
   (* Enumerates programs satisfying: lowerBound <= MDL < upperBound *)
   (* INVARIANT: request always has the current context applied to it already *)
-  if enumeration_timed_out() || maximumDepth < 1 || upper_bound < 0.0 then () else
+  if enumeration_timed_out() || maximumDepth < 1 || Poly.(<) upper_bound 0.0 then () else
     match request with
     | TCon("->",[argument_type;return_type],_) ->
       let newEnvironment = argument_type :: environment in
@@ -273,7 +274,7 @@ let rec enumerate_programs' (cg : contextual_grammar) (g: grammar) (context: tCo
       candidates |>
       List.iter ~f:(fun (candidate, argument_types, context, ll) ->
           let mdl = 0.-.ll in
-          if mdl >= upper_bound ||
+          if Poly.(>=) mdl upper_bound ||
              (match parent with
               | None -> false
               | Some((p,j)) -> violates_symmetry p candidate j)
@@ -305,11 +306,11 @@ and
     (callBack: program -> tContext -> float -> int -> unit) : unit =
   (* Enumerates application chains satisfying: lowerBound <= MDL < upperBound *)
   (* returns the log likelihood of the arguments! not the log likelihood of the application! *)
-  if enumeration_timed_out() || maximumDepth < 1 || upper_bound < 0.0 then () else
+  if enumeration_timed_out() || maximumDepth < 1 || Poly.(<) upper_bound 0.0 then () else
     match argument_requests with
     | [] -> (* not a function so we don't need any applications *)
       begin
-        if lower_bound <= 0. && 0. < upper_bound then
+        if Poly.(<=) lower_bound 0. && Poly.(<) 0. upper_bound then
           (* match f with
            * | Apply(Apply(Primitive(_,function_name,_),first_argument),second_argument)
            *   when violates_commutative function_name first_argument second_argument -> ()
@@ -425,7 +426,7 @@ let multicore_enumeration ?extraQuiet:(extraQuiet=false) ?final:(final=fun () ->
   let fringe = fringe |>
                List.sort ~compare:(fun s1 s2 ->
                    let d = s1.cost -. s2.cost in
-                   if d > 0. then 1 else if d < 0. then -1 else 0)
+                   if Poly.(>) d 0. then 1 else if Poly.(<) d 0. then -1 else 0)
   in
 
   if cores > 1 then
@@ -502,7 +503,7 @@ let test_recursive_enumeration () =
          l;
        flush_everything();
        let t = infer_program_type empty_context [] p |> snd in
-       ignore(unify empty_context t request);
+       unify empty_context t request;
     Printf.printf "%s\n" (t |> string_of_type))
 ;;
 

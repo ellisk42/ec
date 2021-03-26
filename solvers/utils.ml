@@ -21,7 +21,7 @@ let float_of_bool = function
   | true -> 1.
   | false -> 0.
 
-let round f = floor (f+.0.5)
+let round f = Float.round_down (f+.0.5)
   
 let join ?separator:(separator = " ") elements= String.concat ~sep:separator elements
 
@@ -71,15 +71,15 @@ let sum = List.fold_left ~f:(+) ~init:0
 
 let minimum l = List.reduce_exn l ~f:min
 ;;
-let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if f x < f y then x else y)
+let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if Poly.(<) (f x) (f y) then x else y)
 ;;
-let maximum_by f l = List.reduce_exn l ~f:(fun x y -> if f x > f y then x else y)
+let maximum_by f l = List.reduce_exn l ~f:(fun x y -> if Poly.(>) (f x) (f y) then x else y)
 ;;
 let sort_by f l = List.sort ~compare:(fun x y ->
     let x = f x in
     let y = f y in
-    if x = y then 0 else
-      if x > y then 1 else -1) l
+    if Poly.(=) x y then 0 else
+      if Poly.(>) x y then 1 else -1) l
 
 
 let memorize f = 
@@ -89,19 +89,19 @@ let memorize f =
     | Some(y) -> y
     | None -> 
       let y = f x in
-      ignore(Hashtbl.Poly.add table x y);
+      let ignore2 = Hashtbl.Poly.add table x y in
       y
 
 let maximum_by ~cmp l = 
   List.fold_left ~init:(List.hd_exn l) (List.tl_exn l) ~f:(fun a b -> 
-      if cmp a b > 0
+      if Poly.(>) (cmp a b) 0
       then a else b)
 
 let rec map_list f = function
   | [] -> [f []]
   | (x :: xs) -> (f (x :: xs)) :: (map_list f xs)
 
-let is_invalid (x : float) = x <> x || x = Float.infinity || x = Float.neg_infinity;;
+let is_invalid (x : float) = (Poly.(<>) x x) || (Poly.(=) x Float.infinity) || (Poly.(=) x Float.neg_infinity);;
 let is_valid = compose not is_invalid;;
 
 let rec last_one = function
@@ -113,7 +113,7 @@ let index_of l x =
   let rec loop a r = 
     match r with
       [] -> raise (Failure "index_of: not found")
-    | (y::ys) -> if y = x then a else loop (a+1) ys
+    | (y::ys) -> if Poly.(=) y x then a else loop (a+1) ys
   in loop 0 l
 
 let set_equal c x y = 
@@ -126,7 +126,7 @@ let log2 = log 2.
 
 let lse x y = 
   if is_invalid x then y else if is_invalid y then x else
-  if x > y
+  if (Poly.(>) x y)
   then x +. log (1.0 +. exp (y-.x))
   else y +. log (1.0 +. exp (x-.y))
 
@@ -138,7 +138,7 @@ let lse_list (l : float list) : float =
 
 (* log difference exponential: log(e^x - e^y) = x+log(1-e^(y-x)) *)
 let lde x y = 
-  assert(x >= y);
+  assert(Poly.(>=) x y);
   x +. log (1. -. exp (y-.x))
 
 
@@ -154,7 +154,7 @@ let merge_a_list ls ~f:c =
           try
             let old_value = Hashtbl.find_exn merged tag in
             Hashtbl.set merged ~key:tag ~data:(c value old_value)
-          with Not_found -> ignore (Hashtbl.add merged tag value)
+          with raise_s -> let ignore1 = Hashtbl.add merged tag value in ()
         )
     );
   Hashtbl.to_alist merged
@@ -170,7 +170,7 @@ let flip f x y = f y x
 
 let (--) i j = 
   let rec aux n acc =
-    if n < i then acc else aux (n-1) (n :: acc)
+    if Poly.(<) n i then acc else aux (n-1) (n :: acc)
   in aux j []
 
 let range n = 0 -- (n-1);;
@@ -178,7 +178,7 @@ let range n = 0 -- (n-1);;
 
 let float_interval (i : float) (s : float) (j : float) : float list = 
   let rec aux n acc =
-    if n < i then acc else aux (n-.s) (n :: acc)
+    if (Poly.(<) n i) then acc else aux (n-.s) (n :: acc)
   in aux j []
 
 (* let time () = *)
@@ -186,8 +186,8 @@ let float_interval (i : float) (s : float) (j : float) : float list =
 (*   Core.Time. *)
 (*   Core.Time.to_float @@ Time.now () *)
 let flush_everything () =
-  Pervasives.flush stdout;
-  Pervasives.flush stderr
+  Stdlib.flush stdout;
+  Stdlib.flush stderr
 
 
 let time_it ?verbose:(verbose=true) description callback = 
@@ -199,10 +199,14 @@ let time_it ?verbose:(verbose=true) description callback =
   end;
   return_value
 
+let compare_fst t1 t2 = 
+  match t1, t2 with 
+  | (fst1, _), (fst2, _) -> compare fst1 fst2
+
 let shuffle d = begin
     Random.self_init ();
     let nd = List.map ~f:(fun c -> (Random.bits (), c)) d in
-    let sond = List.sort compare nd in
+    let sond = List.sort nd compare_fst in
     List.map ~f:snd sond
   end
 
@@ -232,21 +236,21 @@ let cpu_count () =
     | "Win32" -> int_of_string (safe_get_some "CPU_count" @@ Sys.getenv "NUMBER_OF_PROCESSORS") 
     | _ ->
       let i = Unix.open_process_in "getconf _NPROCESSORS_ONLN" in
-      let close () = ignore (Unix.close_process_in i) in
+      let close () = Unix.close_process_in i in
       try Scanf.bscanf (Scanf.Scanning.from_channel i)
                        "%d"
-                       (fun n -> close (); n)
+                       (fun n -> let ignore1 = close () in (); n)
       with e ->
-        (close () ; raise e)
+        (let ignore2 = close () in (); raise e)
   with
-    | Not_found | Sys_error _ | Failure _ | Scanf.Scan_failure _ 
+    | Not_found_s _ | Sys_error _ | Failure _ | Scanf.Scan_failure _ 
     | End_of_file | Unix.Unix_error (_, _, _) -> 1
 
 
 let string_proper_prefix p s = 
   let rec loop n = 
     (n >= String.length p) ||
-    (p.[n] = s.[n] && loop (n+1))
+    (Poly.(=) p.[n] s.[n] && loop (n+1))
   in 
   String.length p < String.length s && loop 0
 
@@ -294,22 +298,22 @@ let normal_matrix s m =
   aux [] 0
 
 let print_arguments () = 
-  Array.iter Sys.argv ~f:(fun a -> Printf.printf "%s " a);
+  Array.iter (Sys.get_argv ()) ~f:(fun a -> Printf.printf "%s " a);
   Out_channel.newline stdout
 
 (* samplers adapted from gsl *)
 let rec uniform_positive () = 
   let u = Random.float 1.0 in
-  if u > 0.0 then u else uniform_positive ()
+  if Poly.(>) u 0.0 then u else uniform_positive ()
 
 let uniform_interval ~l ~u =
-  assert (u > l);
+  assert (Poly.(>) u l);
   let x = uniform_positive() in
   (l+.u)/.2. +. (u-.l)*.x
 
 
 let rec sample_gamma a b = 
-  if a < 1.0
+  if (Poly.(<) a 1.0)
   then
     let u = uniform_positive () in
     (sample_gamma (1.0 +. a) b) *. (u ** (1.0 /. a))
@@ -320,13 +324,13 @@ let rec sample_gamma a b =
       let rec inner_loop () = 
         let x = normal 1.0 0.0 in
         let v = 1.0 +. c *. x in
-        if v > 0.0 then (v,x) else inner_loop ()
+        if Poly.(>) v 0.0 then (v,x) else inner_loop ()
       in
       let (v,x) = inner_loop () in
       let v = v*.v*.v in
       let u = uniform_positive () in
-      if (u < 1.0 -. 0.0331 *. x *. x *. x *. x) ||
-         (log u < 0.5 *. x *. x +. d *. (1.0 -. v +. log v)) 
+      if (Poly.(<) u (1.0 -. 0.0331 *. x *. x *. x *. x)) ||
+         (Poly.(<) (log u) (0.5 *. x *. x +. d *. (1.0 -. v +. log v))) 
       then b *. d *. v
       else loop ()
     in loop ()
@@ -362,14 +366,14 @@ let () =
 
 let command_output cmd =
   let ic, oc = Unix.open_process cmd in
-  let buf = Buffer.create 16 in
+  let buf = Stdlib.Buffer.create 16 in
   (try
      while true do
-       Buffer.add_channel buf ic 1
+       Stdlib.Buffer.add_channel buf ic 1
      done
    with End_of_file -> ());
-  let _ = Unix.close_process (ic, oc) in
-  (Buffer.contents buf)
+  let ignore3 = Unix.close_process (ic, oc) in
+  (Stdlib.Buffer.contents buf)
 
 let slice s e l =
   (*  we might want to make this always be safe *)

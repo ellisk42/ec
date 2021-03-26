@@ -3,7 +3,7 @@ open Versions
 open Program
 open Utils
 
-let _ =
+let ignore1 =
   let t = new_version_table() in
   let p = "(#(lambda (lambda (* $2 (+ (lambda $2) $0)))) $0 2)" |> parse_program |> get_some in
   p |> incorporate t |> inline t |> extract t |> List.iter ~f:(fun p' ->
@@ -13,7 +13,7 @@ let _ =
 ;;
 
 
-let _ =
+let ignore2 =
   List.range 0 6 |> List.iter ~f:(fun sz ->
       let p0 = List.range 0 sz |>
                List.fold_right ~init:"(+ 1 1)" ~f:(fun _ -> Printf.sprintf "(+ 1 %s)") |>

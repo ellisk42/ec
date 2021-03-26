@@ -45,7 +45,7 @@ let run_job channel =
   in
   let k = match k with
     | None -> default_hash
-    | Some(name) -> match Hashtbl.find special_helmholtz name with
+    | Some(name) -> match Hashtbl.find (Hashtbl.Poly.create()) name with
       | Some(special) -> special
       | None -> (Printf.eprintf "Could not find special Helmholtz enumerator: %s\n" name; assert (false))
   in
@@ -59,9 +59,9 @@ let output_job ?maxExamples:(maxExamples=50000) result =
     let l = List.length result in
     if l < maxExamples then result else
       let p = (maxExamples |> Float.of_int)/.(l |> Float.of_int) in
-      result |> List.filter ~f:(fun _ -> Random.float 1. < p)
+      result |> List.filter ~f:(fun _ -> Poly.(<) (Random.float 1.) p)
   in
-  let message : json = 
+  let message : t = 
     `List(results |> List.map ~f:(fun (behavior, (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
@@ -69,5 +69,5 @@ let output_job ?maxExamples:(maxExamples=50000) result =
   in 
   message
 
-let _ = 
-  run_job Pervasives.stdin |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout
+let x = 
+  run_job Stdlib.stdin |> remove_bad_dreams |> output_job |> to_channel Stdlib.stdout

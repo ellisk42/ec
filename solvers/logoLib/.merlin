@@ -1,0 +1,11 @@
+B ../_build/default/logoLib/.logoLib.objs
+B /home/saishaa/.opam/4.10.1+flambda/lib/cairo2
+B /home/saishaa/.opam/4.10.1+flambda/lib/gg
+B /home/saishaa/.opam/4.10.1+flambda/lib/ocaml
+B /home/saishaa/.opam/4.10.1+flambda/lib/vg
+FLG -open LogoLib -w -40
+S .
+S /home/saishaa/.opam/4.10.1+flambda/lib/cairo2
+S /home/saishaa/.opam/4.10.1+flambda/lib/gg
+S /home/saishaa/.opam/4.10.1+flambda/lib/ocaml
+S /home/saishaa/.opam/4.10.1+flambda/lib/vg

@@ -27,7 +27,7 @@ let parallel_do nc actions =
 
     (* wait for something to die *)
     let (p,_) = Unix.wait `My_group in
-    children := List.filter !children ~f:(fun p' -> not (p = p'));
+    children := List.filter !children ~f:(fun p' -> not (Poly.(=) p p'));
     (* Printf.printf "DEATH\n";
      *   flush_everything(); *)
     incr finished_actions
@@ -80,14 +80,14 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
         ~write:[] ~except:[] ~timeout:`Never () in
     List.iter ~f:(fun descr ->
         let chan = Unix.in_channel_of_descr descr in
-        let pid = List.Assoc.find_exn ~equal:(=) !in_streams descr
+        let pid = List.Assoc.find_exn ~equal:(Poly.(=)) !in_streams descr
         and start_idx, answer = Marshal.from_channel chan in
-        ignore (Unix.waitpid pid);
+        let ignore1 = Unix.waitpid pid in
         In_channel.close chan;
         Array.blit answer 0 output start_idx (Array.length answer);
         total_computed := Array.length answer + !total_computed)
       recvs.read;
-    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:(=) recvs.read stream)) !in_streams;
+    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:(Poly.(=)) recvs.read stream)) !in_streams;
   done;
   output
 
@@ -155,13 +155,13 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
         ~write:[] ~except:[] ~timeout:`Never () in
     List.iter ~f:(fun descr ->
         let chan = Unix.in_channel_of_descr descr in
-        let pid = List.Assoc.find_exn ~equal:(=) !in_streams descr
+        let pid = List.Assoc.find_exn ~equal:(Poly.(=)) !in_streams descr
         and (newly_completed, answer) = Marshal.from_channel chan in
-        ignore (Unix.waitpid pid);
+        let ignore2 = Unix.waitpid pid in
         In_channel.close chan;
         finished_actions := !finished_actions + newly_completed;
         outputs := answer :: !outputs)
       recvs.read;
-    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:(=) recvs.read stream)) !in_streams;
+    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:(Poly.(=)) recvs.read stream)) !in_streams;
   done;
   !outputs

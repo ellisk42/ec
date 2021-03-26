@@ -21,10 +21,10 @@ let canonical_command_list : 'a Core.List.t -> 'a Core.List.t =
   fun l ->
     let l2 =
       List.dedup_and_sort
-      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      ~compare:(fun c1 c2 -> if Poly.(>) c1 c2 then 1 else if Poly.(=) c1 c2 then 0 else -1)
       l in
     List.sort
-      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      ~compare:(fun c1 c2 -> if Poly.(>) c1 c2 then 1 else if Poly.(=) c1 c2 then 0 else -1)
       l2
 
 type cid = C|R|L
@@ -203,7 +203,7 @@ let score_latex output =
       if List.exists (0--100) ~f:(fun _ ->
           let p = random_instantiation ~x:false ~i:C program in
           let v : command list = evaluate [] p |> magical |> canonical_command_list in
-          v = output)
+          Poly.(=) v output)
       then begin Printf.eprintf "PROGRAM: %s\n" (string_of_program program);
         10.*. likelihood_penalty program
       end else log 0.

@@ -4,18 +4,13 @@ all:
 	  jbuilder build solver.exe && \
 	  jbuilder build versionDemo.exe && \
 	  jbuilder build helmholtz.exe && \
-	  jbuilder build logoDrawString.exe && \
 	  jbuilder build protonet-tester.exe && \
 	  jbuilder build compression.exe && \
 	  cp _build/default/compression.exe ../compression && \
 	  cp _build/default/versionDemo.exe ../versionDemo && \
 	  cp _build/default/solver.exe ../solver && \
 	  cp _build/default/helmholtz.exe ../helmholtz && \
-	  cp _build/default/protonet-tester.exe ../protonet-tester && \
-	  cp _build/default/logoDrawString.exe \
-	    ../logoDrawString && \
-	  ln -s ../../logoDrawString \
-	    ../data/geom/logoDrawString
+	  cp _build/default/protonet-tester.exe ../protonet-tester
 
 clean:
 	cd solvers && jbuilder clean

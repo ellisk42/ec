@@ -18,7 +18,7 @@ type physics_field =
   | VelocityField
 ;;
 
-primitive "get-field" (tobject @> tfield @> tvector)
+(*primitive "get-field" (tobject @> tfield @> tvector)
   (fun o f -> match f with
      | PositionField -> o.position
      | VelocityField -> o.velocity);;
@@ -50,11 +50,11 @@ primitive "dp" (tvector @> tvector @> treal)
   (fun a b -> List.map2_exn a b ~f:( *&) |> List.reduce_exn ~f:(+&));;
 primitive "vector-length" (tvector @> treal)
   (fun v -> v |> List.map ~f:(fun x -> x *& x) |> List.reduce_exn ~f:(+&) |> square_root);;
-
+*)
   
       
                        
-register_special_task "physics"
+let ignore1 = register_special_task "physics"
   (fun extra ?timeout:(timeout=0.01) name request _ ->
 
      let open Yojson.Basic.Util in
@@ -90,9 +90,9 @@ register_special_task "physics"
      in
 
      let unpack t =
-       if t = tvector then unpack_vector else
-       if t = tobject then unpack_object else
-       if t = treal then unpack_real else assert (false)
+       if Poly.(=) t tvector then unpack_vector else
+       if Poly.(=) t tobject then unpack_object else
+       if Poly.(=) t treal then unpack_real else assert (false)
      in
 
      let arguments, return = arguments_and_return_of_type request in
@@ -122,9 +122,9 @@ register_special_task "physics"
               | Some (prediction) ->
                 match loop e with
                 | None -> None
-                | Some(later_loss) ->
-                  try Some(loss prediction y :: later_loss)
-                  with DifferentiableBadShape -> None
+                | Some(later_loss) -> None
+                  (*try Some(loss prediction y :: later_loss)
+                  with DifferentiableBadShape -> None*)
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | _                   -> None
         in
@@ -143,9 +143,10 @@ register_special_task "physics"
           match lossThreshold with
           | None -> 0. -. d*.parameterPenalty -. n *. average_loss /. temperature
           | Some(t) ->
-            if List.for_all l ~f:(fun {data=Some(this_loss)} -> this_loss < t)
+            if List.for_all l ~f:(fun {data=Some(this_loss)} -> Poly.(<) this_loss t)
             then 0. -. d*.parameterPenalty
             else log 0.)})
+            ;;
           
 
      

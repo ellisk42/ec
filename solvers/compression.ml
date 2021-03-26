@@ -445,7 +445,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
     | _ -> ()
   in
 
-  if !verbose_compression then ignore(Unix.system "ps aux|grep compression 1>&2");
+  if !verbose_compression then (let ignore46 = (Unix.system "ps aux|grep compression 1>&2") in ());
 
   let divide_work_fairly nc xs =
     let nt = List.length xs in
@@ -453,7 +453,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
     let residual = nt - base_count*nc in
     let rec partition residual xs =
       let this_count =
-        base_count + (if residual > 0 then 1 else 0)
+        base_count + (if Poly.(>) residual 0 then 1 else 0)
       in
       match xs with
       | [] -> []
@@ -531,7 +531,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
     time_it "Rewrote topK" (fun () ->
         sockets |> List.map ~f:receive |> List.transpose_exn |> List.map ~f:List.concat)
   in
-  assert (List.length new_frontiers = List.length candidates);
+  assert (Poly.(=) (List.length new_frontiers) (List.length candidates));
   
   let score frontiers candidate =
     let new_grammar = uniform_grammar (normalize_invention candidate :: grammar_primitives g) in
@@ -556,7 +556,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
       List.map2_exn candidates new_frontiers ~f:(fun candidate frontiers ->
           (score frontiers candidate, candidate)) |> minimum_by (fun ((_,s),_) -> -.s))
   in
-  if best_score < initial_score then
+  if Poly.(<) best_score initial_score then
       (Printf.eprintf "No improvement possible.\n"; finish(); None)
     else
       (let new_primitive = grammar_primitives g' |> List.hd_exn in
@@ -618,7 +618,7 @@ let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=
   in
   let candidates = candidates |> List.filter ~f:(fun candidate ->
       let candidate = List.hd_exn (extract v candidate) in
-      try (ignore(normalize_invention candidate); nontrivial candidate)
+      try (let ignore47 = (normalize_invention candidate) in (); nontrivial candidate)
       with UnificationFailure -> false)
   in 
   Printf.eprintf "Got %d candidates.\n" (List.length candidates);
@@ -690,7 +690,7 @@ let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=
           (s,g',frontiers',i))
       |> minimum_by (fun (s,_,_,_) -> -.s)) in
 
-    if best_score < initial_score then
+    if Poly.(<) best_score initial_score then
       (Printf.eprintf "No improvement possible.\n"; None)
     else
       (let new_primitive = grammar_primitives g' |> List.hd_exn in
@@ -714,7 +714,7 @@ let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
 
-  let j : json =
+  let j : t =
     `Assoc(["DSL", serialize_grammar g;
             "topK", `Int(topK);
             "topI", `Int(topI);
@@ -754,7 +754,7 @@ let compression_loop
     illustrations |> List.iter ~f:(fun program -> Printf.eprintf "  %s\n" (string_of_program program))
   in 
 
-  let step = if nc = 1 then compression_step else compression_step_master ~nc in 
+  let step = if Poly.(=) nc 1 then compression_step else compression_step_master ~nc in 
 
   let rec loop ~iterations g frontiers =
     if iterations < 1 then
@@ -766,7 +766,7 @@ let compression_loop
       | None -> g, frontiers
       | Some(g',frontiers') ->
         illustrate_new_primitive g' (find_new_primitive g g') frontiers';
-        if !verbose_compression && iterations > 1 then
+        if !verbose_compression && Poly.(>) iterations 1 then
           export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts ~arity ~bs ~topI g' frontiers';
         flush_everything();
         loop (iterations - 1) g' frontiers'
@@ -787,11 +787,11 @@ let () =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
   let j =
-    if Array.length Sys.argv > 1 then
-      (assert (Array.length Sys.argv = 2);
-       Yojson.Basic.from_file Sys.argv.(1))
+    if (Array.length (Sys.get_argv ())) > 1 then
+      (assert (Array.length (Sys.get_argv ()) = 2);
+       Yojson.Basic.from_file (Sys.get_argv ()).(1))
     else 
-      Yojson.Basic.from_channel Pervasives.stdin
+      Yojson.Basic.from_channel Stdlib.stdin
   in
   let g = j |> member "DSL" |> deserialize_grammar |> strip_grammar in
   let topK = j |> member "topK" |> to_int in
@@ -838,7 +838,7 @@ let () =
   let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
   
   let g, frontiers =
-    if aic > 500. then
+    if Poly.(>) aic 500. then
       (Printf.eprintf "AIC is very large (over 500), assuming you don't actually want to do DSL learning!";
        g, frontiers)
     else compression_loop ~inline ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 

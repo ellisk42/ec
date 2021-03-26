@@ -84,7 +84,7 @@ let load_problems channel =
     with _ -> false
   in
   
-  let _ = try
+  let ignore1 = try
       shatter_factor := (j |> member "shatter" |> to_int)
     with _ -> ()
   in
@@ -119,7 +119,7 @@ let load_problems channel =
 let export_frontiers number_enumerated tf solutions : string =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
-  let serialization : Yojson.Basic.json =
+  let serialization : Yojson.Basic.t =
     `Assoc(("number_enumerated",`Int(number_enumerated)) ::
            List.map2_exn tf solutions ~f:(fun (t,_) ss ->
         (t.name, `List(ss |> List.map ~f:(fun s ->
@@ -131,13 +131,13 @@ let export_frontiers number_enumerated tf solutions : string =
 ;;
 
 
-let _ =
+let ignore2 =
 
   let (tf,g,
        lowerBound,upperBound,budgetIncrement,
        mfp,
      nc,timeout, verbose) =
-    load_problems Pervasives.stdin in
+    load_problems Stdlib.stdin in
   let solutions, number_enumerated =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
@@ -149,7 +149,7 @@ let _ =
 (*        lowerBound,upperBound,budgetIncrement, *)
 (*        mfp, *)
 (*      nc,timeout, verbose) = *)
-(*     load_problems  Pervasives.stdin in *)
+(*     load_problems  Stdlib.stdin in *)
 (*   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else (); *)
 (*   (\* "(-6.8x + 4.7)/[(x + 4.5)]" *\) *)
 (*   let p = parse_program "(lambda (/. (+. REAL (\*. REAL $0)) (+. $0 REAL)))" |> get_some in *)

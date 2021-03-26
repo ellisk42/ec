@@ -35,7 +35,7 @@ module PolyValue = struct
     | Character(c) -> Printf.sprintf "'%c'" c
     | None -> "None"
 
-  let rec of_json (j : Yojson.Basic.json) : t = match j with
+  let rec of_json (j : Yojson.Basic.t) : t = match j with
     | `List(l) -> List(l |> List.map ~f:of_json)
     | `Int(i) -> Integer(i)
     | `Bool(b) -> Boolean(b)

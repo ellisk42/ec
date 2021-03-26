@@ -5,7 +5,7 @@ open Printf
 open Images
 open Generator
 
-let _ = Random.self_init ()
+let ignore1 = Random.self_init ()
 
 
 let gen_name () =

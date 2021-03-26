@@ -45,7 +45,7 @@ let close_socket_connections() =
 (*   let response = Zmq.Socket.recv socket in *)
 (*   assert (response = message); *)
 (*   Printf.printf "Client received %s\n" response; *)
-(*   Pervasives.flush stdout; *)
+(*   Stdlib.flush stdout; *)
 (*   test socket;; *)
 (* let () = *)
   (* let socket = Zmq.Socket.create context Zmq.Socket.req in *)

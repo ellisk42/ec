@@ -70,7 +70,7 @@ let primitive_string_join = primitive "join" (tstring @> tlist tstring @> tstrin
 
 
 
-let _ =
+let ignore1 =
   let n = "stringTransformation.json" in
   let n = "syntheticString.json" in
   let tasks = load_tasks n in

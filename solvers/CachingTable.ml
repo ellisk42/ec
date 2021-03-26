@@ -24,7 +24,7 @@ module CachingTable = struct
 
   let refresh m n =
     match m.newest_key with
-    | Some(newest) when newest == n -> ()
+    | Some(newest) when phys_equal newest n -> ()
     | _ ->
 
       (* Remove n from doubly linked list *)
@@ -32,7 +32,7 @@ module CachingTable = struct
        | None ->
          (match m.oldest_key with
           | Some(n') ->
-            assert (n == n');
+            assert (phys_equal n n');
             m.oldest_key <- n.next
           | None -> assert (false))
        | Some(p) -> p.next <- n.next);
@@ -41,10 +41,10 @@ module CachingTable = struct
        | Some(successor) -> successor.previous <- n.previous);
 
       (match m.oldest_key with
-       | Some(o) when o == n -> assert (false)
+       | Some(o) when phys_equal o n -> assert (false)
        | None | Some(_) -> ());
       (match m.newest_key with
-       | Some(newest) when newest == n -> assert (false)
+       | Some(newest) when phys_equal newest n -> assert (false)
        | None | Some(_) -> ());
 
       (* insert at the front of list *)
@@ -96,7 +96,7 @@ module CachingTable = struct
       (match m.oldest_key with
        | None -> m.oldest_key <- Some(entry)
        | Some(_) -> ());
-      assert (Hashtbl.add m.mapping ~key:k ~data:(v, entry) = `Ok);
+      assert (Poly.(=) (Hashtbl.add m.mapping ~key:k ~data:(v, entry)) `Ok);
       collect m
 
     | Some((_,entry)) ->
@@ -110,13 +110,13 @@ module CachingTable = struct
         (match successor.previous with
          | None -> assert (false)
          | Some(this) ->
-           assert (this == e);
+           assert (phys_equal this e);
            forward successor)
       | None ->
         match m.newest_key with
         | None -> assert (false)
         | Some(this) ->
-          assert (this.node_key == e.node_key)
+          assert (phys_equal this.node_key e.node_key)
 
     in
 
@@ -126,19 +126,19 @@ module CachingTable = struct
         (match predecessor.next with
          | None -> assert (false)
          | Some(this) ->
-           assert (this == e);
+           assert (phys_equal this e);
            backward predecessor)
       | None ->
         match m.oldest_key with
-        | Some(this) -> assert (this == e)
+        | Some(this) -> assert (phys_equal this e)
         | None -> assert (false)
     in
 
     (match m.newest_key, m.oldest_key with
      | None, None -> ()
      | Some(newest), Some(oldest) ->
-       (assert (oldest.previous = None);
-        assert (newest.next = None);
+       (assert (Poly.(=) oldest.previous None);
+        assert (Poly.(=) newest.next None);
         forward oldest;
         backward newest)
      | None, Some(_) -> assert (false)
@@ -153,13 +153,13 @@ module CachingTable = struct
     entries |> List.iter ~f:(fun entry ->
         match Hashtbl.find m.mapping entry.node_key with
         | None -> assert (false)
-        | Some(_,entry') -> assert (entry == entry'));
+        | Some(_,entry') -> assert (phys_equal entry entry'));
 
     Hashtbl.iteri m.mapping ~f:(fun ~key ~data:(_,entry) ->
         assert (1 =
                 (entries |> List.filter ~f:(fun entry' ->
-                     if entry' == entry then
-                       (assert (entry'.node_key == key);
+                     if phys_equal entry' entry then
+                       (assert (phys_equal entry'.node_key key);
                         true)
                      else false) |> List.length)))
 
@@ -178,7 +178,7 @@ module CachingTable = struct
       check_consistency m;
       match find m k with
       | None -> assert (false)
-      | Some(v') -> assert (v = v'); assert (v = Hashtbl.find_exn ground_truth k);  check_consistency m
+      | Some(v') -> assert (Poly.(=) v v'); assert (Poly.(=) v (Hashtbl.find_exn ground_truth k));  check_consistency m
     in
 
     for i = 1 to 100 do

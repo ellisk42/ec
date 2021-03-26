@@ -5,7 +5,7 @@ open Program
 open Utils
 
 open Owl
-open AD
+(*open AD*)
     
 type variable = {mutable gradient : float option;
                  mutable data : float option;
@@ -129,7 +129,7 @@ let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 
   in s*)
 
 let update_variable v x =
-  assert (v.arguments = []);
+  assert (Poly.(=) v.arguments []);
   v.data <- Some(x)
 
 
@@ -162,9 +162,9 @@ let tanh =
 
 let relu = 
   make_unitary_variable (fun x -> 
-    if (x > 0.) then x else 0.)
+    if (Poly.(>) x 0.) then x else 0.)
   (fun x -> 
-    if (x > 0.) then [1.] else [0.])
+    if (Poly.(>) x 0.) then [1.] else [0.])
 
 let power =
   make_binary_variable ( ** ) (fun a b -> [b*.(a**(b-.1.));
@@ -186,25 +186,25 @@ let square_root =
 
 let clamp ~l ~u =
   make_unitary_variable (fun a ->
-      if a > u then u else
-      if a < l then l else
+      if Poly.(>) a u then u else
+      if Poly.(<) a l then l else
         a)
     (fun a ->
-       if a > u || a < l then [0.] else [1.])
+       if Poly.(>) a u || Poly.(<) a l then [0.] else [1.])
     
 let clamp_float ~l ~u = 
   fun a ->
-      if a > u then u else
-      if a < l then l else 
+      if Poly.(>) a u then u else
+      if Poly.(<) a l then l else 
       a
 
 let log_soft_max xs =
   make_variable (fun vs -> 
-      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in
+      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:Float.max in
       let zm = List.fold_right ~init:0. ~f:(fun x a -> exp (x -. m) +. a) vs in
       m+. (log zm))
     (fun vs -> 
-      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in
+      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:Float.max in
       let zm = List.fold_right ~init:0. ~f:(fun x a -> exp (x -. m) +. a) vs in
       List.map vs ~f:(fun x -> (exp (x-.m)) /. zm))
     xs
@@ -225,7 +225,7 @@ let rec zero_gradients z =
       List.iter z.arguments ~f:(fun a -> zero_gradients a);
       z.gradient <- None;
       z.descendents <- [];
-      if z.arguments = [] then () else z.data <- None
+      if Poly.(=) z.arguments [] then () else z.data <- None
     end
 
 let rec forward z =
@@ -243,7 +243,7 @@ let rec forward z =
 let backward z =
   z.gradient <- Some(1.0);
   let rec b v =
-    ignore(differentiate v);
+    let x = differentiate v in
     List.iter ~f:b v.arguments
   in b z
 
@@ -278,7 +278,7 @@ let restarting_optimize opt ?update:(update = 1000)
       parameters |> List.iter ~f:(fun parameter ->
           update_variable parameter (uniform_interval ~l:(-5.) ~u:5.));
       run_optimizer opt ~update:update ~iterations:iterations parameters loss) |>
-  fold1 min
+  fold1 Float.min
 
 let gradient_descent ?lr:(lr = 0.001) =
   List.map ~f:(fun dx -> ~-. (lr*.dx))
@@ -289,7 +289,7 @@ let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
   let individual_rates = ref [] in
 
   fun dxs ->
-    let new_signs = dxs |> List.map ~f:(fun dx -> dx > 0.) in
+    let new_signs = dxs |> List.map ~f:(fun dx -> Poly.(>) dx 0.) in
     if !first_iteration then begin
       first_iteration := false;
       (* First iteration: ignore the previous signs, which have not yet been recorded *)
@@ -302,15 +302,15 @@ let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
     end else begin 
       individual_rates := List.map3_exn !individual_rates !previous_signs new_signs
           ~f:(fun individual_rate previous_sign new_sign ->
-              if previous_sign = new_sign
+              if Poly.(=) previous_sign new_sign
               then individual_rate*.grow
               else individual_rate*.decay);
       
       let updates = List.map2_exn !individual_rates dxs
           ~f:(fun individual_rate dx ->
-              if dx > 0.
+              if Poly.(>) dx 0.
               then ~-. individual_rate
-              else if dx < 0. then individual_rate else 0.)
+              else if Poly.(<) dx 0. then individual_rate else 0.)
       in
       previous_signs := new_signs;
       updates
@@ -334,23 +334,22 @@ let test_differentiation () =
   update_variable x 2.;
   update_variable y 10.;
 
-  ignore(update_network z);
+  let ignore = update_network z in
 
   Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);  
 
   update_variable x 2.;
   update_variable y 2.;
 
-  ignore(update_network z);
+  let ignore2 = update_network z in
 
   Printf.printf "z = %f\n" (z.data |> get_some);
 
   Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);
 
-  let l = ((~$ 0.) -& z) in
-  ignore(run_optimizer (gradient_descent ~lr:0.001) [x;y] l)
-
-;;
+  (*let l = ((~$ 0.) -& z) in
+  ignore(run_optimizer (gradient_descent ~lr:0.001) [x;y] l))*)
+  ;;
 
 (* Integration with programs *)
 let differentiable_zero = primitive "0." treal (~$ 0.);;
@@ -376,7 +375,7 @@ let replace_placeholders program =
     | Abstraction(b) -> Abstraction(r b)
     | Apply(f,x) -> Apply(r f, r x)
     | Invented(t,b) -> Invented(t,r b)
-    | Primitive(t,"REAL",_) -> begin
+    (*| Primitive(t,"REAL",_) -> begin
         let x = Mat.uniform 1 1 in
         let x' = make_reverse x (tag ()) in
         placeholders := x' :: !placeholders;
@@ -387,7 +386,7 @@ let replace_placeholders program =
         let x' = make_reverse x (tag ()) in
         placeholders := x' :: !placeholders;
         Primitive(t,"REAL_VECTOR", ref x' |> magical)
-      end
+      end*)
     | p -> p
   in
   let program = r program in
@@ -395,7 +394,7 @@ let replace_placeholders program =
 
 (* reverse the parameters list *)
 (* should mutate the parameters list *)
-let update_placeholders program parameters ?lr:(lr=0.1) =
+(*let update_placeholders program parameters ?lr:(lr=0.1) =
   let new_placeholders = ref [] in
   let rec r program parameters = 
     match program with
@@ -420,7 +419,7 @@ let update_placeholders program parameters ?lr:(lr=0.1) =
     | p -> p
   in
   let program = r program parameters in
-  (program, !new_placeholders)
+  (program, !new_placeholders)*)
 
 let rec placeholder_data t x =
   match t with

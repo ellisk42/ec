@@ -12,7 +12,7 @@ let npp data =
   print_int (data.{((Bigarray.Array1.dim data) - 1)}) ;
   print_newline ()
 
-let _ =
+let ignore1 =
   let str      = Sys.argv.(1)
   and folder   = Sys.argv.(2) in
   try

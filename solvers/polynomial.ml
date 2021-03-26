@@ -38,5 +38,5 @@ let polynomial_grammar =
 
 
                                                              
-let _ =
+let ignore1 =
   exploration_compression polynomial_tasks polynomial_grammar ~keepTheBest:3 10000 1 ~alpha:10.
