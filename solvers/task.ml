@@ -10,6 +10,9 @@ open Enumeration
 open Grammar
 open Differentiation
 
+open Owl
+module AD = Algodiff.D
+
 type task =
   { name: string; task_type: tp;
     log_likelihood: program -> float;
@@ -167,50 +170,51 @@ let ignore16 = register_special_task "differentiable"
   let (argument_types, return_type) = arguments_and_return_of_type ty in
 
   (* loss is a function that acts on the variablized-versions of predicted value p and the real value y*)  
-  (*let loss_fun = polymorphic_sse ~clipOutput ~clipLoss return_type in*)
+  let loss_fun = polymorphic_sse ~clipOutput ~clipLoss return_type in
   { name = name    ;
     task_type = ty ;
-    log_likelihood = fun expression -> 1.0 (*
+    log_likelihood =
       (fun expression ->
          let (p,parameters) = replace_placeholders expression in
          assert (List.length parameters <= maxParameters);
         if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else 
-          let p = analyze_lazy_evaluation p in
         (* Returns loss as a float *)
-        let rec loop examples p =
+        let rec loop examples p_lazy =
           match examples with
-          | [] -> Some(0.)
+          | [] -> Some(AD.F 0.)
           | (xs,y) :: e ->
             try
               match run_for_interval
                       timeout
                       (* compute prediction *)
-                      (fun () -> run_lazy_analyzed_with_arguments p xs) with
+                      (fun () -> run_lazy_analyzed_with_arguments p_lazy xs) with
               | None -> None
               | Some (prediction) ->
-                match loop e with
+                match loop e p_lazy with
                 | None -> None
                 | Some(later_loss) ->
-                  try Some(loss_fun prediction y +. later_loss)
+                  try Some(AD.Maths.(loss_fun prediction y + later_loss))
                   with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | EnumerationTimeout  -> raise EnumerationTimeout
                  | _                   -> None
-        in        
-        let backprop p parameters examples ?lr:(lr=0.1) =
+        in 
+        (* backprop maps program p, AD.t list parameters, examples, and learning rate
+           to loss, number of examples, number of parameters, new program, and new placeholders *)       
+        let backprop p parameters examples ?lr:(lr= AD.F 0.1) =
+          let p_lazy = analyze_lazy_evaluation p in
           (* Compute loss *)
-          let loss = match loop examples p with
-          | None -> log 0.0
-          | Some(l) -> begin
-            let n = List.length examples |> Int.to_float in
-            let d = List.length parameters |> Int.to_float in
-            l *. (1. /. n) 
-          end 
+          let loss, n, d = match loop examples p_lazy with
+          | None -> AD.Maths.(log 0.0), None, None
+          | Some(l) -> 
+            let n = List.length examples |> Int.to_float |> Some in
+            let d = List.length parameters |> Int.to_float |> Some in
+            AD.Maths.(l * (F 1. / (n |> get_some |> F))), n, d 
           in
           (* backward pass on loss *)
-          reverse_prop (F 1.) loss;
+          AD.reverse_prop (AD.F 1.) (loss);
           (* update the placeholders with grad and return a new program and placeholders*)
-          loss, n, d, update_placeholders p (List.rev parameters) ~lr 
+          loss, n, d, (update_placeholders p (ref (List.rev parameters)) ~lr) 
         in 
         let iterations = (if List.length parameters = 0 then 0 else steps) in
         for i = 1 to iterations do
@@ -219,8 +223,8 @@ let ignore16 = register_special_task "differentiable"
         match lossThreshold with
         | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
         | Some(t) ->
-          if l < t then 0. -. d*.parameterPenalty else log 0.)
-  *)});;
+          if Poly.(<) l t then 0. -. d*.parameterPenalty else log 0.)
+  });;
 
 let ignore17 = register_special_task "stringConstant" (fun extras
     (* ?parameterPenalty:(parameterPenalty=0.) *)
