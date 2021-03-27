@@ -166,8 +166,12 @@ let ignore16 = register_special_task "differentiable"
     in
     
                                          
-  (* Process the examples and wrap them inside of placeholders *)
+  (* Process the examples and convert them to AD.t type *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
+  let examples = examples |> List.map ~f:(fun (xs,y) ->
+      (List.map2_exn argument_types xs ~f:get_AD_t,
+      get_AD_t return_type y))
+  in
 
   (* loss is a function that acts on the variablized-versions of predicted value p and the real value y*)  
   let loss_fun = polymorphic_sse ~clipOutput ~clipLoss return_type in
@@ -178,7 +182,7 @@ let ignore16 = register_special_task "differentiable"
          let (p,parameters) = replace_placeholders expression in
          assert (List.length parameters <= maxParameters);
         if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else 
-        (* Returns loss as a float *)
+        (* Returns loss as a AD.F *)
         let rec loop examples p_lazy =
           match examples with
           | [] -> Some(AD.F 0.)
@@ -201,29 +205,40 @@ let ignore16 = register_special_task "differentiable"
         in 
         (* backprop maps program p, AD.t list parameters, examples, and learning rate
            to loss, number of examples, number of parameters, new program, and new placeholders *)       
-        let backprop p parameters examples ?lr:(lr= AD.F 0.1) =
+        let backprop p parameters examples ?lr:(lr=0.1) =
           let p_lazy = analyze_lazy_evaluation p in
           (* Compute loss *)
           let loss, n, d = match loop examples p_lazy with
-          | None -> AD.Maths.(log 0.0), None, None
+          | None -> AD.Maths.(log (AD.F 0.0)), None, None
           | Some(l) -> 
             let n = List.length examples |> Int.to_float |> Some in
             let d = List.length parameters |> Int.to_float |> Some in
-            AD.Maths.(l * (F 1. / (n |> get_some |> F))), n, d 
+            AD.Maths.(l * (AD.F 1. / (n |> get_some |> AD.F))), n, d 
           in
           (* backward pass on loss *)
           AD.reverse_prop (AD.F 1.) (loss);
           (* update the placeholders with grad and return a new program and placeholders*)
-          loss, n, d, (update_placeholders p (ref (List.rev parameters)) ~lr) 
+          loss, n, d, (update_placeholders p (ref (List.rev parameters)) ~lr:lr) 
         in 
         let iterations = (if List.length parameters = 0 then 0 else steps) in
-        for i = 1 to iterations do
-          l, n, d, (p, parameters) = backprop p parameters examples ~lr;
-        done;
+        let train start_l start_n start_d start_p start_params =
+          let rec aux i l n d p params =
+            if i < iterations then
+              let new_l, new_n, new_d, (new_p, new_params) = backprop p params examples ~lr:(lr) in
+              aux (i+1) new_l new_n new_d new_p new_params
+            else (l, n, d, (p, params))
+          in
+          aux 0 start_l start_n start_d start_p start_params in
+        let l, n, d, _ = train AD.Maths.(log (AD.F 0.0)) None None p parameters in
+        match n, d with
+        | None, _ 
+        | _, None -> log 0.
+        | Some(n_val), Some(d_val) ->
+        let l_val = l |> AD.unpack_flt in
         match lossThreshold with
-        | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
+        | None -> 0. -. d_val*.parameterPenalty -. n_val *. l_val /. temperature
         | Some(t) ->
-          if Poly.(<) l t then 0. -. d*.parameterPenalty else log 0.)
+          if Poly.(<) l_val t then 0. -. d_val*.parameterPenalty else log 0.)
   });;
 
 let ignore17 = register_special_task "stringConstant" (fun extras

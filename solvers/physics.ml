@@ -53,7 +53,7 @@ primitive "vector-length" (tvector @> treal)
 *)
   
       
-                       
+(*                       
 let ignore1 = register_special_task "physics"
   (fun extra ?timeout:(timeout=0.01) name request _ ->
 
@@ -147,6 +147,7 @@ let ignore1 = register_special_task "physics"
             then 0. -. d*.parameterPenalty
             else log 0.)})
             ;;
+            *)
           
 
      

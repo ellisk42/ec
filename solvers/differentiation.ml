@@ -378,14 +378,17 @@ let replace_placeholders program =
     | Primitive(t,"REAL",_) -> begin
         let x = AD.Mat.uniform 1 1 in
         let x' = AD.make_reverse x (AD.tag ()) in
+        (* Append x' so adval can be called *)
         placeholders := x' :: !placeholders;
-        Primitive(t,"REAL", ref (x |> AD.unpack_flt) |> magical) (* ref (x |> unpack_flt instead of ref x' so !x returns value, not container *)
+        (* considered ref (x |> unpack_flt instead of ref x' so !x returns value, not container *)
+        (* but AD.t version needs to be inputted to the program, so should be in container *)
+        Primitive(t,"REAL", ref x' |> magical)
       end
     | Primitive(t,"REAL_VECTOR",_) -> begin
         let x = AD.Mat.uniform 1 3 in
         let x' = AD.make_reverse x (AD.tag ()) in
         placeholders := x' :: !placeholders;
-        Primitive(t,"REAL_VECTOR", ref (x |> AD.unpack_arr) |> magical)
+        Primitive(t,"REAL_VECTOR", ref x' |> magical)
       end
     | p -> p
   in
@@ -394,7 +397,7 @@ let replace_placeholders program =
 
 (* reverse the parameters list *)
 (* should mutate the parameters list *)
-let update_placeholders program (parameters : AD.t list Core.ref) ?lr:(lr=0.1) =
+let update_placeholders program parameters ?lr:(lr=0.1) =
   let new_placeholders = ref [] in
   let rec r program (parameters : AD.t list Core.ref) = 
     match program with
@@ -403,30 +406,30 @@ let update_placeholders program (parameters : AD.t list Core.ref) ?lr:(lr=0.1) =
     | Apply(f,x) -> Apply(r f parameters, r x parameters)
     | Invented(t,b) -> Invented(t,r b parameters)
     | Primitive(t,"REAL",_) -> begin
-        let x = (List.hd_exn !parameters) -. (lr *. (List.hd_exn !parameters |> AD.adjval |> AD.unpack_flt)) in
+        let x = ((List.hd_exn !parameters) |> AD.unpack_flt) -. (lr *. (List.hd_exn !parameters |> AD.adjval |> AD.unpack_flt)) in
         let x' = AD.make_reverse (AD.F x) (AD.tag ()) in
         new_placeholders := x' :: !new_placeholders;
         parameters := List.tl_exn !parameters;
-        Primitive(t,"REAL", ref x |> magical)
+        Primitive(t,"REAL", ref x' |> magical)
       end
     | Primitive(t,"REAL_VECTOR",_) -> begin
-        let x = (List.hd_exn !parameters) -. (lr *. (List.hd_exn !parameters |> AD.adjval |> AD.unpack_arr)) in
+        let x = AD.A.sub ((List.hd_exn !parameters) |> AD.unpack_arr) (AD.A.scalar_mul lr (List.hd_exn !parameters |> AD.adjval |> AD.unpack_arr)) in
         let x' = AD.make_reverse (AD.Arr x) (AD.tag ()) in
         new_placeholders := x' :: !new_placeholders;
         parameters := List.tl_exn !parameters;
-        Primitive(t,"REAL_VECTOR", ref x |> magical)
+        Primitive(t,"REAL_VECTOR", ref x' |> magical)
       end
     | p -> p
   in
   let program = r program parameters in
   (program, !new_placeholders)
 
-let rec placeholder_data t x =
+let rec get_AD_t t x =
   match t with
-  | TCon("real",_,_) -> magical (~$ (magical x))
-  | TCon("list",[tp],_) ->
-    magical x |> List.map ~f:(placeholder_data tp) |> magical
-  | _ -> raise (Failure ("placeholder_data: bad type "^(string_of_type t)))
+  | TCon("real",_,_) -> magical x |> AD.F
+  | TCon("list",[tp],_) -> magical x |> AD.Arr
+    (* magical x |> List.map ~f:(get_AD_t tp) |> magical *)
+  | _ -> raise (Failure ("get_AD_t: bad type "^(string_of_type t)))
 
 
 exception DifferentiableBadShape
@@ -435,14 +438,14 @@ exception DifferentiableBadShape
 (* Returns a function from (prediction, target) to [(prediction_variable, target_variable)] *)
 let rec polymorphic_loss_pairs : tp -> 'a -> 'b = function
   | TCon("vector",_,_) -> polymorphic_loss_pairs (tlist treal)
-  | TCon("real",_,_) -> magical (fun p y -> [(AD.F p, AD.F y)])
+  | TCon("real",_,_) -> magical (fun p y -> [(p, y)]) (* p and y should already be AD.t type *)
   | TCon("list",[tp],_) ->
     let e = polymorphic_loss_pairs tp in
     magical (fun p y ->
         try
           List.fold2_exn p y ~init:[] ~f:(fun a _p _y -> a @ (e _p _y))
         with _ -> raise DifferentiableBadShape)
-  | t -> raise (Failure ("placeholder_data: bad type "^(string_of_type t)))
+  | t -> raise (Failure ("polymorphic_loss_pairs: bad type "^(string_of_type t)))
 
 
 let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) t =
