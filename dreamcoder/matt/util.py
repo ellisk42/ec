@@ -19,6 +19,7 @@ import time
 from tqdm import tqdm
 import inspect
 import torch
+import omegaconf
 
 
 class InvalidSketchError(Exception): pass
@@ -65,6 +66,30 @@ def count_frames(name):
     """
     call_stack_fn_names = [x.function for x in inspect.stack()]
     return call_stack_fn_names.count(name)
+
+class AttrDict(dict):
+    def __getattr__(self,k):
+        if k in self:
+            return self[k]
+        raise AttributeError(k)
+    def __setattr__(self, k, v):
+        if k not in self and not isinstance(v,AttrDictOverride):
+            raise Exception(f"cant add new field `{k}` to {self}")
+        if isinstance(v,AttrDictOverride):
+            v = v.val
+        self[k] = v
+class AttrDictOverride:
+    def __init__(self,val):
+        self.val=val
+
+def omeconf_to_attrdict(cfg):
+    if not isinstance(cfg,omegaconf.dictconfig.DictConfig):
+        return cfg
+    return AttrDict({k:omeconf_to_attrdict(v) for k,v in cfg.items()})
+def attrdict_to_dict(cfg):
+    if not isinstance(cfg,AttrDict):
+        return cfg
+    return {k:attrdict_to_dict(v) for k,v in cfg.items()}
 
 
 class DepthPrinter:
@@ -114,7 +139,7 @@ curr time: {timestamp()}
     '''.strip()
 
 def yaml(cfg):
-    return OmegaConf.to_yaml(cfg)
+    return OmegaConf.to_yaml(OmegaConf.create(attrdict_to_dict(cfg)))
 
 def timestamp():
     return datetime.now()

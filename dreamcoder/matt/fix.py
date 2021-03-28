@@ -1,17 +1,14 @@
 
-from omegaconf import DictConfig,OmegaConf,open_dict
+from dreamcoder.matt.util import *
+
 
 def fix_cfg(cfg):
-
-    with open_dict(cfg):
-        # feb 7
-        if 'is_dirty' not in cfg:
-            cfg.is_dirty = True
-        # feb 9
-        if 'check_overrides' not in cfg:
-            cfg.check_overrides = True
-
-
+    # feb 7
+    if 'is_dirty' not in cfg:
+        cfg.is_dirty = AttrDictOverride(True)
+    # feb 9
+    if 'check_overrides' not in cfg:
+        cfg.check_overrides = AttrDictOverride(True)
 
 
 
@@ -29,8 +26,7 @@ def fix_state_testmode(state):
         lex.list_start = lex.idx_of_tok['LIST_START']
         lex.list_end = lex.idx_of_tok['LIST_END']
     if not hasattr(state.cfg.model,'ctxful_lambdas'):
-        with  open_dict(state.cfg.model):
-            state.cfg.model.ctxful_lambdas = False
+        state.cfg.model.ctxful_lambdas = AttrDictOverride(False)
     return state
 
 

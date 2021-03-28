@@ -14,6 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 import shutil
 from mlb.mail import email_me,text_me
 from dreamcoder.matt import fix
+import dill
 
 class Sing(Saveable):
   no_save = ('w',)
@@ -98,7 +99,7 @@ class Sing(Saveable):
 
         green(f'loading from {path}')
 
-        _sing = torch.load(path,map_location=new_device) # `None` means stay on original device
+        _sing = torch.load(path,map_location=new_device, pickle_module=dill) # `None` means stay on original device
         self.clone_from(_sing) # will even copy over stuff like SummaryWriter object so no need for post_load()
         del _sing
         if new_device is not None:
@@ -160,7 +161,7 @@ class Sing(Saveable):
   def save(self, name):
       path = with_ext(saves_path() / name, 'sing')
       print(f"saving Sing to {path}...")
-      torch.save(self, f'{path}.tmp')
+      torch.save(self, f'{path}.tmp', pickle_module=dill)
       shutil.move(f'{path}.tmp',path)
       print("done")
   def post_load(self):

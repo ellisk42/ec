@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import git
 import traceback
-
+import omegaconf
 
 import pdoc
 context = pdoc.Context()
@@ -35,7 +35,7 @@ for name,pdoc_mod in docs.items():
     with open(f'pdocs/{name}.html','w') as f:
         f.write(pdoc_mod.html())
 
-import signal
+
 
 
 
@@ -48,6 +48,10 @@ def hydra_main(cfg):
     #     print(i)
     #     #print(signal.getitimer(signal.ITIMER_PROF))
     # return
+
+
+    cfg = omeconf_to_attrdict(cfg)
+
 
     try:
         Path('.lock').mkdir(exist_ok=False)
