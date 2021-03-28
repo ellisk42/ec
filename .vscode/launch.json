@@ -15,13 +15,14 @@
                 "model.vhead=uniform",
                 "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
-                "model.multidir=True",
+                "model.multidir=False",
 
                 "solver=astar",
 
             
                 "debug.validate_cache=True",
                 "debug.no_cache=False",
+                "debug.p_check_abstract=0.",
                 "model.ordering=random",
 
                 "data.T=2",
@@ -31,10 +32,10 @@
 
                 "loader.buf_size=3",
 
-                "loop.search_valid_num_tasks=10",
+                "loop.search_valid_num_tasks=3",
                 "loop.save_every=100",
                 "loop.print_every=20",
-                "loop.search_valid_every=null",
+                "loop.search_valid_every=10",
 
                 "printer.beval=False",
 

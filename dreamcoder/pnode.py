@@ -423,7 +423,7 @@ class PTask:
         _argwise = list(zip(*_exwise)) # outer list = args, inner list = examples
         assert len(_argwise) == self.argc
         self.inputs = [Examplewise(concrete=arg) for arg in _argwise]
-        self.cached_input_features = Cached()
+        # self.cached_input_features = Cached()
 
         ctx = EWContext()
         for exwise in self.inputs:
@@ -442,9 +442,11 @@ class PTask:
     def input_features(self):
         # honestly i like this setup more than a decorator bc it means i get
         # my Cached object which makes garbage collection less opaque
-        return self.cached_input_features.get(self._input_features)
-    def _input_features(self):
-        return sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs])
+        return self.ctx.encode()
+        #return self.cached_input_features.get(self._input_features)
+    # def _input_features(self):
+    #     return self.ctx.encode()
+    #     #return sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs])
 
 
 class Examplewise:
@@ -1530,6 +1532,12 @@ class PNode:
             self.root().clear_cache('children')
         else:
             raise ValueError
+    def reset_cache(self,recursive=True):
+        self.pnode_cache.reset()
+        if recursive:
+            for c in self.children():
+                c.reset_cache(recursive=True)
+
     def get_zipper(self):
         """
         Get a zipper to yourself from your self.root()
