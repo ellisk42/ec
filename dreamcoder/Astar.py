@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from dreamcoder.matt.plot import SearchTry
 from dreamcoder.matt.util import *
 from dreamcoder.matt.sing import sing
+from dreamcoder.grammar import NoCandidates
 
 from typing import Any
 @dataclass(order=True)
@@ -34,6 +35,20 @@ def astar_search(root, phead, vhead, timeout):
     next = root.root()
     prev_pcost = 0
 
+    def get_next():
+        # pop a hole off the heap, clone it, fill it in w the production from the heap (this is lazy for efficiency)
+        # and we done.
+        heap_item = q.pop_min()
+        hole = heap_item.hole
+        assert hole.ntype.hole
+        prod = heap_item.prod
+        prev_pcost = heap_item.pcost
+        assert heap_item.verify_str == hole.root_str(), "the hole seems to have been modified while in the heapitem"
+        next = hole.clone() # duplicates by cloning every pnode to make a fully independent tree, but with shared cache
+        next.expand_to(prod) # this is our new guy!
+        next = next.root()
+        return next,prev_pcost
+
     while True:
         if time.time() - tstart > timeout:
             return SearchTry(time=timeout, nodes_expanded=nodes_expanded, soln=None)
@@ -41,7 +56,11 @@ def astar_search(root, phead, vhead, timeout):
         verify_str = next.root_str()
 
         # enumerate cand actions
-        hole, prods, pcost_lls = phead.enumerate_actions(next, sing.cfg.solver.max_depth)
+        try:
+            hole, prods, pcost_lls = phead.enumerate_actions(next, sing.cfg.solver.max_depth)
+        except NoCandidates:
+            next, prev_pcost = get_next()
+            continue
 
         # value costs on that whole batch of actions
         try:
@@ -81,14 +100,6 @@ def astar_search(root, phead, vhead, timeout):
                 continue
             seen.add((hashed_hole,prod))
 
-        # pop a hole off the heap, clone it, fill it in w the production from the heap (this is lazy for efficiency)
-        # and we done.
-        heap_item = q.pop_min()
-        hole = heap_item.hole
-        assert hole.ntype.hole
-        prod = heap_item.prod
-        prev_pcost = heap_item.pcost
-        assert heap_item.verify_str == hole.root_str(), "the hole seems to have been modified while in the heapitem"
-        next = hole.clone() # duplicates by cloning every pnode to make a fully independent tree, but with shared cache
-        next.expand_to(prod) # this is our new guy!
-        next = next.root()
+        next, prev_pcost = get_next()
+
+
