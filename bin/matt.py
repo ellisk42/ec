@@ -1,3 +1,6 @@
+
+
+
 from dreamcoder.matt.unthread import unthread, set_deterministic
 unthread()
 try:
@@ -32,10 +35,19 @@ for name,pdoc_mod in docs.items():
     with open(f'pdocs/{name}.html','w') as f:
         f.write(pdoc_mod.html())
 
+import signal
+
+
+
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
     # foo=bar
     # cfg.foo = bar
+
+    # for i in range(100000):
+    #     print(i)
+    #     #print(signal.getitimer(signal.ITIMER_PROF))
+    # return
 
     try:
         Path('.lock').mkdir(exist_ok=False)
@@ -67,7 +79,6 @@ def hydra_main(cfg):
     assert cfg.notify_done in (None,'email','text')
     del repo
 
-
     def notify_done():
         # important to use `sing` and not local `cfg` so that we closure the true `sing` which
         # `load` will modify
@@ -98,7 +109,8 @@ def hydra_main(cfg):
 
     def ctrlc():
         print(sing.which(no_yaml=True))
-         
+
+  
     with mlb.debug(debug=cfg.debug.mlb_debug, ctrlc=ctrlc, crash=notify_crash):
 
         sing.from_cfg(cfg) # initialize the singleton
@@ -112,12 +124,12 @@ def hydra_main(cfg):
         # PLOT
         elif cfg.mode == 'plot':
             plot.main()
-            sys.exit(0)
+            return
 
         # TESTGEN
         elif cfg.mode == 'testgen':
             testgen.main()
-            sys.exit(0)
+            return
 
         # TEST
         elif cfg.mode == 'test':
@@ -125,12 +137,12 @@ def hydra_main(cfg):
             test.main(test_cfg=cfg)
             notify_done()
             mlb.yellow("===TEST DONE===")
-            sys.exit(0)
+            return
 
         # CMD
         elif cfg.mode == 'cmd':
             command.main()
-            sys.exit(0)
+            return
 
         # TRAIN
         elif cfg.mode == 'train':
@@ -139,12 +151,12 @@ def hydra_main(cfg):
             train.main()
             notify_done()
             mlb.yellow("===TRAINING DONE===")
-            sys.exit(0)
+            return
 
         # PROFILE
-        elif cfg.mode == 'profile':
-            profile.main()
-            sys.exit(0)
+        # elif cfg.mode == 'profile':
+        #     profile.main()
+        #     return
 
         # INSPECT
         elif cfg.mode == 'inspect':
@@ -157,9 +169,9 @@ def hydra_main(cfg):
         else:
             mlb.die(f"Mode not recognized: {cfg.mode}")
 
-
+"""
         sys.exit(0)
-
+ 
         # PLOT
         if cfg.mode == 'plot':
             if '___' in cfg.load:
@@ -289,7 +301,7 @@ def hydra_main(cfg):
                     savefile = 'autosave.'+str(max([int(x.name.split('.')[1])
                                         for x in (get_datetime_path(path) / 'saves').glob('autosave.*')]))
                 path = get_datetime_path(path) / 'saves' / savefile
-            
+
             assert all(['=' in arg for arg in sys.argv[1:]])
             overrides = [arg.split('=')[0] for arg in sys.argv[1:]]
 
@@ -305,6 +317,7 @@ def hydra_main(cfg):
             if cfg.mode == 'device':
                 mlb.green(f"DEVICE: {state.cfg.device}")
             print("loaded")
+
             for override in overrides:
                 try:
                     # eg override = 'data.T'
@@ -323,6 +336,7 @@ def hydra_main(cfg):
                 except Exception as e:
                     mlb.red(e)
                     pass
+
         print()
         print(which(state.cfg))
 
@@ -433,6 +447,10 @@ def hydra_main(cfg):
         #hydra.core.hydra_config.HydraConfig.set_config(cfg)
         mlb.yellow("===END===")
         print(which(state.cfg))
+"""
 
 if __name__ == '__main__':
     hydra_main()
+
+        #print(signal.getitimer(signal.ITIMER_PROF))
+    pass
