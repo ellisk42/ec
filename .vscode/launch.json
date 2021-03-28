@@ -13,7 +13,7 @@
             "args":[
                 "model=mbas",
                 "model.vhead=uniform",
-                "model.phead=repl",
+                "model.phead=rnn",
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=False",
 
