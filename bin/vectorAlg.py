@@ -109,37 +109,37 @@ def makeTasks():
         ts.append(makeTask(n, arrow(treal, treal), f))
     tasks += ts
 
-    ts = []
-    while len(ts) < tasksPerType:
-        n, f = randomRealVector()
-        if makeTask(n, arrow(tvector, tvector), f) is None:
-            continue
-        ts.append(makeTask(n, arrow(tvector, tvector), f))
-    tasks += ts
-
-    ts = []
-    while len(ts) < tasksPerType:
-        n, f = randomRealMatrix()
-        if makeTask(n, arrow(tlist(tvector), tlist(tvector)), f) is None:
-            continue
-        ts.append(makeTask(n, arrow(tlist(tvector), tlist(tvector)), f))
-    tasks += ts
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomRealVector()
+    #     if makeTask(n, arrow(tvector, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector), f))
+    # tasks += ts
 
     # ts = []
     # while len(ts) < tasksPerType:
-    #     n, f = randomRealAddition2Arg()
-    #     if makeTask(n, arrow(treal, treal, treal), f) is None:
+    #     n, f = randomRealMatrix()
+    #     if makeTask(n, arrow(tlist(tvector), tlist(tvector)), f) is None:
     #         continue
-    #     ts.append(makeTask(n, arrow(treal, treal, treal), f))
+    #     ts.append(makeTask(n, arrow(tlist(tvector), tlist(tvector)), f))
     # tasks += ts
 
     ts = []
     while len(ts) < tasksPerType:
-        n, f = randomVectorAddition()
-        if makeTask(n, arrow(tvector, tvector), f) is None:
+        n, f = randomRealAddition2Arg()
+        if makeTask(n, arrow(treal, treal, treal), f) is None:
             continue
-        ts.append(makeTask(n, arrow(tvector, tvector), f))
+        ts.append(makeTask(n, arrow(treal, treal, treal), f))
     tasks += ts
+
+    # ts = []
+    # while len(ts) < tasksPerType:
+    #     n, f = randomVectorAddition()
+    #     if makeTask(n, arrow(tvector, tvector), f) is None:
+    #         continue
+    #     ts.append(makeTask(n, arrow(tvector, tvector), f))
+    # tasks += ts
 
     # ts = []
     # while len(ts) < tasksPerType:
@@ -149,13 +149,13 @@ def makeTasks():
     #     ts.append(makeTask(n, arrow(tvector, tvector, tvector), f))
     # tasks += ts
 
-    # ts = []
-    # while len(ts) < tasksPerType:
-    #     n, f = randomRealMultiplication()
-    #     if makeTask(n, arrow(treal, treal), f) is None:
-    #         continue
-    #     ts.append(makeTask(n, arrow(treal, treal), f))
-    # tasks += ts
+    ts = []
+    while len(ts) < tasksPerType:
+        n, f = randomRealMultiplication()
+        if makeTask(n, arrow(treal, treal), f) is None:
+            continue
+        ts.append(makeTask(n, arrow(treal, treal), f))
+    tasks += ts
 
     # ts = []
     # while len(ts) < tasksPerType:
@@ -509,45 +509,45 @@ if __name__ == "__main__":
 
     tasks = makeTasks() # placeholder tasks
     ts = [              # non-placeholder tasks
-        makeTask("vector addition (2)",
-                 arrow(tvector, tvector, tvector),
-                 vectorAddition),
-        makeTask("vector addition (3)",
-                 arrow(tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3: vectorAddition(v3, vectorAddition(v1, v2))),
-        makeTask("vector addition (4)",
-                 arrow(tvector, tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3, v4: vectorAddition(v4, vectorAddition(v3, vectorAddition(v1, v2)))),
-        makeTask("vector addition (2) |> sigmoid",
-                 arrow(tvector, tvector, tvector),
-                 lambda v1, v2: applySigmoid(vectorAddition(v1, v2))),
-        makeTask("vector addition (3) |> tanh",
-                 arrow(tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3: applyTanh(vectorAddition(v3, vectorAddition(v1, v2)))),
-        makeTask("vector multiplication (2)",
-                 arrow(tvector, tvector, tvector),
-                 vectorMultiplication),
-        makeTask("vector multiplication (2) |> tanh",
-                 arrow(tvector, tvector, tvector),
-                 lambda v1, v2: applyTanh(vectorMultiplication(v1, v2))),
-        makeTask("vector sum",
-                 arrow(tvector, treal),
-                 vectorSum),
-        makeTask("dot product",
-                 arrow(tvector, tvector, treal),
-                 dotProduct),
-        makeTask("scale vector",
-                 arrow(treal, tvector, tvector),
-                 scaleVector),
-        makeTask("scale vector |> sigmoid",
-                 arrow(treal, tvector, tvector),
-                 lambda r, v: applySigmoid(scaleVector(r, v))),
+        # makeTask("vector addition (2)",
+        #          arrow(tvector, tvector, tvector),
+        #          vectorAddition),
+        # makeTask("vector addition (3)",
+        #          arrow(tvector, tvector, tvector, tvector),
+        #          lambda v1, v2, v3: vectorAddition(v3, vectorAddition(v1, v2))),
+        # makeTask("vector addition (4)",
+        #          arrow(tvector, tvector, tvector, tvector, tvector),
+        #          lambda v1, v2, v3, v4: vectorAddition(v4, vectorAddition(v3, vectorAddition(v1, v2)))),
+        # makeTask("vector addition (2) |> sigmoid",
+        #          arrow(tvector, tvector, tvector),
+        #          lambda v1, v2: applySigmoid(vectorAddition(v1, v2))),
+        # makeTask("vector addition (3) |> tanh",
+        #          arrow(tvector, tvector, tvector, tvector),
+        #          lambda v1, v2, v3: applyTanh(vectorAddition(v3, vectorAddition(v1, v2)))),
+        # makeTask("vector multiplication (2)",
+        #          arrow(tvector, tvector, tvector),
+        #          vectorMultiplication),
+        # makeTask("vector multiplication (2) |> tanh",
+        #          arrow(tvector, tvector, tvector),
+        #          lambda v1, v2: applyTanh(vectorMultiplication(v1, v2))),
+        # makeTask("vector sum",
+        #          arrow(tvector, treal),
+        #          vectorSum),
+        # makeTask("dot product",
+        #          arrow(tvector, tvector, treal),
+        #          dotProduct),
+        # makeTask("scale vector",
+        #          arrow(treal, tvector, tvector),
+        #          scaleVector),
+        # makeTask("scale vector |> sigmoid",
+        #          arrow(treal, tvector, tvector),
+        #          lambda r, v: applySigmoid(scaleVector(r, v))),
         makeTask("sigmoid",
                 arrow(treal, treal),
                 _sigmoid),
-        makeTask("vector of vector sums",
-                 arrow(tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3: [vectorSum(v1), vectorSum(v2), vectorSum(v3)]),
+        # makeTask("vector of vector sums",
+        #          arrow(tvector, tvector, tvector, tvector),
+        #          lambda v1, v2, v3: [vectorSum(v1), vectorSum(v2), vectorSum(v3)]),
         # makeTask("singleton",
         #          arrow(treal, tvector),
         #          lambda x: [x]),
@@ -560,9 +560,9 @@ if __name__ == "__main__":
         # makeTask("adding vector 1 and vector 3",
         #          arrow(tvector, tvector, tvector, tvector),
         #          lambda v1, v2, v3: vectorAddition(v1, v3)),
-        makeTask("adding vector 2 and vector 3 |> sigmoid",
-                 arrow(tvector, tvector, tvector, tvector),
-                 lambda v1, v2, v3: applySigmoid(vectorAddition(v2, v3)))
+        #makeTask("adding vector 2 and vector 3 |> sigmoid",
+        #         arrow(tvector, tvector, tvector, tvector),
+        #         lambda v1, v2, v3: applySigmoid(vectorAddition(v2, v3)))
         # makeTask("sum matrix rows", 
         #          arrow(tlist(tvector), tvector),
         #          sum_matrix_rows, triple=True),
@@ -671,26 +671,28 @@ if __name__ == "__main__":
     real = Primitive("REAL", treal, None)
     real_vector = Primitive("REAL_VECTOR", tvector, None)
     #real_matrix = Primitive("REAL_MATRIX", tlist(tvector), None)
-    vector_addition = Primitive("add_vector",
-                       arrow(tvector, tvector, tvector),
-                       vectorAddition)
     bootstrapTarget()
     equationPrimitives = [
         real,
-        real_vector,           # comment out to remove grammar.py error
+        real_vector,          
         #real_matrix,
         f0,
         f1,
         real_addition,
-        vector_addition,       # comment out to remove grammar.py error
         real_multiplication,
         prim_tanh,
         prim_sigmoid] + [
             Program.parse(n)
             for n in ["map","fold",
                       "empty","cons",#"car","cdr",
-                      "zip", "reduce"]]
+                      "zip", "reduce" ]]
+                      #"#(cons (REAL) (cons (REAL) (cons (REAL) (empty))))",
+                      #"#(lambda (lambda (zip $1 $0 (lambda (lambda (+. $0 $1))))))",
+                      #"#(lambda (lambda (add_vector $0 $1)))"]]
     baseGrammar = Grammar.uniform(equationPrimitives)
+
+    #p = Program.parse("#(cons (REAL) (cons (REAL) (cons (REAL) (empty))))")
+    #print(p.infer()) 
 
     eprint("Got %d equation discovery tasks..." % len(tasks))
 

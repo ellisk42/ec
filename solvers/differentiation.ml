@@ -356,7 +356,6 @@ let differentiable_zero = primitive "0." treal (AD.F 0.);;
 let differentiable_one = primitive "1." treal (AD.F 1.);;
 let differentiable_pi = primitive "pi" treal (AD.F 3.14);;
 let differentiable_add = primitive "+." (treal @> treal @> treal) (Maths.(add));;
-let differentiable_vector_add = primitive "add_vector" (tlist treal @> tlist treal @> tlist treal) (add_vector);;
 let differentiable_subtract = primitive "-." (treal @> treal @> treal) (Maths.(sub));;
 let differentiable_multiply = primitive "*." (treal @> treal @> treal) (Maths.(mul));;
 let differentiable_division = primitive "/." (treal @> treal @> treal) (Maths.(div));;
@@ -366,7 +365,6 @@ let differentiable_placeholder_vector = primitive "REAL_VECTOR" (tlist treal) ()
 (*let differentiable_placeholder_matrix = primitive "REAL_MATRIX" (tlist (tlist treal)) ();;*)
 let differentiable_sigmoid = primitive "sigmoid" (treal @> treal) (Maths.(sigmoid));;
 let differentiable_tanh = primitive "tanh" (treal @> treal) (Maths.(tanh));;
-let differentiable_relu = primitive "relu" (treal @> treal) (relu);;
 
 let replace_placeholders program =
   let placeholders = ref [] in
@@ -406,15 +404,17 @@ let update_placeholders program parameters ?lr:(lr=0.1) =
     | Apply(f,x) -> Apply(r f parameters, r x parameters)
     | Invented(t,b) -> Invented(t,r b parameters)
     | Primitive(t,"REAL",_) -> begin
-        let x = ((List.hd_exn !parameters) |> AD.unpack_flt) -. (lr *. (List.hd_exn !parameters |> AD.adjval |> AD.unpack_flt)) in
-        let x' = AD.make_reverse (AD.F x) (AD.tag ()) in
+        (* let x = ((List.hd_exn !parameters) |> AD.primal |> AD.unpack_flt) -. (lr *. (List.hd_exn !parameters |> AD.adjval |> AD.unpack_flt)) in *)
+        (* l.w <- Maths.((primal l.w) - (eta * (adjval l.w))) |> primal; *)
+        let x = AD.Maths.((List.hd_exn !parameters |> AD.primal) - (AD.F lr * (List.hd_exn !parameters |> AD.adjval))) |> AD.primal in
+        let x' = AD.make_reverse (x) (AD.tag ()) in
         new_placeholders := x' :: !new_placeholders;
         parameters := List.tl_exn !parameters;
         Primitive(t,"REAL", ref x' |> magical)
       end
     | Primitive(t,"REAL_VECTOR",_) -> begin
-        let x = AD.A.sub ((List.hd_exn !parameters) |> AD.unpack_arr) (AD.A.scalar_mul lr (List.hd_exn !parameters |> AD.adjval |> AD.unpack_arr)) in
-        let x' = AD.make_reverse (AD.Arr x) (AD.tag ()) in
+        let x = AD.Maths.((List.hd_exn !parameters |> AD.primal) - (AD.F lr * (List.hd_exn !parameters |> AD.adjval))) |> AD.primal in
+        let x' = AD.make_reverse (x) (AD.tag ()) in
         new_placeholders := x' :: !new_placeholders;
         parameters := List.tl_exn !parameters;
         Primitive(t,"REAL_VECTOR", ref x' |> magical)

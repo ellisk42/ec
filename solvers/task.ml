@@ -196,7 +196,7 @@ let ignore16 = register_special_task "differentiable"
               | Some (prediction) ->
                 match loop e p_lazy with
                 | None -> None
-                | Some(later_loss) ->
+                | Some(later_loss) -> let ignore =(AD.unpack_flt prediction) in
                   try Some(AD.Maths.(loss_fun prediction y + later_loss))
                   with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
@@ -210,7 +210,7 @@ let ignore16 = register_special_task "differentiable"
           (* Compute loss *)
           let loss, n, d = match loop examples p_lazy with
           | None -> AD.Maths.(log (AD.F 0.0)), None, None
-          | Some(l) -> 
+          | Some(l) -> let ignore = (AD.unpack_flt l) in
             let n = List.length examples |> Int.to_float |> Some in
             let d = List.length parameters |> Int.to_float |> Some in
             AD.Maths.(l * (AD.F 1. / (n |> get_some |> AD.F))), n, d 
