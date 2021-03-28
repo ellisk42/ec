@@ -1533,7 +1533,7 @@ class PNode:
         else:
             raise ValueError
     def reset_cache(self,recursive=True):
-        self.pnode_cache.reset()
+        self.pnode_cache.clear()
         if recursive:
             for c in self.children():
                 c.reset_cache(recursive=True)
