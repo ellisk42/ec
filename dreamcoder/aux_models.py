@@ -168,7 +168,7 @@ class ApplyNN(nn.Module):
 
         self.func_indicator = NM(0)
         self.parent_indictor = NM(0)
-        self.arg_indicators = [NM(0) for _ in range(3)]
+        self.arg_indicators = nn.ModuleList([NM(0) for _ in range(3)])
 
         self.H = cfg.model.H
         self.bound_H = {

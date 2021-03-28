@@ -146,7 +146,8 @@ class PolicyHead(nn.Module):
                 """
 
                 #assert _p.propagate_upward().concrete == _p.task.outputs.concrete
-                assert _p.beval(ctx=None).concrete == _p.task.outputs.concrete
+                assert (tmp:=_p.beval(ctx=None).concrete) == _p.task.outputs.concrete
+                del tmp
                 _p_closure = _p.beval_single_concrete(ctx=None)
                 for _inputs,_outputs in zip(_p.task.ctx.split(), _p.task.outputs.concrete):
                     assert _p_closure(*_inputs) == _outputs
@@ -207,7 +208,7 @@ class PolicyHead(nn.Module):
         # tp.returns() is `self` if its a base type or the return type if its an arrow type
         indices = [self.prod_to_index[p] for p in g_use.primitives if p.tp.returns() == hole.tp]
         # we gotta include variables too
-        indices += [self.prod_to_index[Index(i)] for i,(tp,exwise) in enumerate(hole.ctx) if tp == hole.tp]
+        indices += [self.prod_to_index[Index(i)] for i,tp in enumerate(hole.ctx_tps) if tp == hole.tp]
 
         if hole.depth() >= max_depth:
             # force leaf (ie an index or a non-arrow primitive)
@@ -238,7 +239,7 @@ class PolicyHead(nn.Module):
             strings.append(str(root))
             processed_holes.append(self.process_hole(hole))
             hole.unhide()
-            hole.clear_cache(self.cache_mode)
+            # hole.clear_cache(self.cache_mode)
         assert False
 class UniformPolicyHead(PolicyHead):
     def __init__(self):
@@ -459,17 +460,22 @@ class ListREPLPolicyHead(PolicyHead):
         """
 
         try:
-            hole.needs_ctx = None # mark hole to say it needs ctx
+            hole.needs_ctx = None # mark that we need the ctx
             if sing.cfg.model.multidir:
                 # MBAS
                 sk_rep = hole.embed_from_above().get_abstract()
-                ctx_rep = hole.needs_ctx.encode()
-                return ReplProcessedHole(sk_rep,ctx_rep) 
-                #return hole.propagate_to_hole()
-            # BAS
-            hole_rep =  hole.root().beval().get_abstract()
-            ctx_rep = hole.needs_ctx.encode()
-            return ReplProcessedHole(hole_rep,ctx_rep) 
+            else:
+                # BAS
+                sk_rep =  hole.root().beval(None).get_abstract()
+            
+            # could make less hacky lol
+            ctx = hole.needs_ctx
+            if ctx is None:
+                ctx = hole.pnode_cache.ctx
+                assert ctx is not None
+            ctx_rep = ctx.encode()
+            return ReplProcessedHole(sk_rep,ctx_rep) 
+
         finally:
             del hole.needs_ctx
         #return hole.root().propagate_upward()
@@ -480,14 +486,17 @@ class ListREPLPolicyHead(PolicyHead):
         # assert all(h.task is processed_holes[0].task for h in processed_holes), "we assume everyone has the same task"
         num_sks = len(processed_holes)
         # stack and possibly zero out sketches
-        sk_reps = torch.stack([torch.cat([p.sk_rep,p.ctx_rep],dim=-1) for p in processed_holes]) # [num_sks,num_exs,2H]
+        sk_reps = torch.stack([p.sk_rep for p in processed_holes]) # [num_sks,num_exs,H]
+        ctx_reps = torch.stack([p.ctx_rep for p in processed_holes]) # [num_sks,num_exs,H]
+
         if sing.cfg.debug.zero_sk:
             sk_reps = torch.zeros_like(sk_reps)
 
         if sing.cfg.model.multidir:
             # MBAS
-            sk_reps = sk_reps.max(1).values # max over examples to yield [num_sks,H]
-            return self.output(sk_reps)
+            input = torch.cat([sk_reps,ctx_reps],dim=-1)
+            input = input.max(1).values # max over examples to yield [num_sks,H]
+            return self.output(input)
         else:
             # BAS
             output_feats = task.output_features().expand(num_sks,-1,-1) # [num_sks,num_exs,H]
@@ -495,9 +504,9 @@ class ListREPLPolicyHead(PolicyHead):
                 output_feats = torch.zeros_like(output_feats)
             
             compared = sing.model.abstract_comparer(sk_reps,output_feats) # [num_sketches,num_exs,H]
-            compared = compared.max(1).values # max over examples to yield [num_sks,H]
-
-            return self.output(compared)
+            input = torch.cat([compared,ctx_reps],dim=-1)
+            input = input.max(1).values # max over examples to yield [num_sks,H]
+            return self.output(input)
 
 
     def old_distribution(self, sks, zippers, task, g):

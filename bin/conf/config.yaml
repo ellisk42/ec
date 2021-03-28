@@ -57,6 +57,7 @@ debug:
   zero_concrete_eval: False # Take the result of encodeValue(rep) and turn it to all zeros
   zero_sk: False # Take the result of rep(sk) and turn it to all zeros so _compare(all_zeros,outputFeatures) is run
   validate_cache: False # double check that the cache is identical to the non-cache verison. Also applies to PTask.input_feats()
+  p_check_abstract: 1.0 # (only if validate_cache=True) probability (out of 1.0) of checking .get_abstract() on all cache things are the same (quite intensive)
   pnode_concrete_check: True # cheap check to make sure both concrete-mode propagate() is working (equivalent to actual outputs) and execute_single() as well
   no_cache: False # disables caching altogether
 

@@ -225,6 +225,27 @@ class Scratch:
     self.beval_print = DepthPrinter(sing.cfg.printer.beval)
 
   
+
+
+
+class HitRate:
+  def __init__(self):
+    self.hits = 0
+    self.misses = 0
+  def hit(self,n=1):
+    self.hits += 1
+  def miss(self,n=1):
+    self.misses += n
+  @property
+  def rate(self):
+    try:
+      return self.hits / (self.hits+self.misses)
+    except ZeroDivisionError:
+      return 0
+  def __repr__(self):
+    return f'{self.rate} ({self.hits}/{self.hits+self.misses})'
+
+
 class Stats:
   """
   This is what `sing.stats` is.
@@ -238,6 +259,9 @@ class Stats:
     self.call_encode_exwise = 0
     self.fn_called_concretely = 0
     self.fn_called_abstractly = 0
+    self.cache_beval = HitRate()
+    self.cache_inverse_abs = HitRate()
+    self.cache_inverse_app = HitRate()
     self.cache_used = 0
     self.cache_not_used = 0
     self.cache_cleared = 0

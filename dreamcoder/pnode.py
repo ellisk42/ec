@@ -14,22 +14,189 @@ from dreamcoder.domains.list.makeDeepcoderData import InvalidSketchError
 from dreamcoder.matt.sing import sing
 from dreamcoder.matt.util import *
 
-Ctx = namedtuple('Ctx','tp exwise')
-Cache = namedtuple('Cache','towards exwise string')
+#Ctx = namedtuple('Ctx','tp exwise')
+#Cache = namedtuple('Cache','towards exwise string')
 class FoundSolution(Exception):
     def __init__(self,p):
         self.p = p
 
-class CachedTensor:
+
+from collections import defaultdict
+
+class PNodeCache:
+    def __init__(self):
+        self.clear()
+    def clear(self):
+        # ctx: used for beval, inverse abs, inverse app
+        self.ctx = None # actually used by process_hole as well!
+        
+        # used by beval
+        self.beval_cache_str = None
+
+        # used by inverse abs, inverse app
+        self.output_ew = None
+
+        # used by inverse app
+        self.fn_ew = None # EW
+        self.labelled_arg_ews = {} # zipper0 -> [EW]
+
+        # cached results
+        self.res_beval = None # EW
+        self.res_inverse_abs = None # ctx to use for recursive call
+        self.res_inverse_app = defaultdict(lambda:None) # zipper0 -> new output EW to use for recursive call
+    
+    def try_ctx_change(self,ctx):
+        if ctx is self.ctx:
+            return
+        self.ctx = ctx
+        self.res_beval = None
+        self.res_inverse_abs = None
+        # dont need to wipe the inverse app bc it doesnt use ctx except via beval of args/fn which will invalidate cache anyways
+    
+    def try_output_ew_change(self,output_ew):
+        if output_ew is self.output_ew:
+            return
+        self.output_ew = output_ew
+        self.res_inverse_abs = None
+        self.res_inverse_app = defaultdict(lambda:None)
+
+    def beval(self, pnode, no_cache, ctx):
+        if sing.cfg.debug.no_cache:
+            return no_cache()
+        def check_in_cache():
+            if self.res_beval is None:
+                return False
+            if ctx is not self.ctx:
+                return False
+            if pnode.beval_cache_str() != self.beval_cache_str:
+                return False
+            return True
+        
+        in_cache = check_in_cache()
+        if in_cache:
+            sing.stats.cache_beval.hit()
+            if sing.cfg.debug.validate_cache:
+                validate_ew_equal(self.res_beval, no_cache()), "Invalid cache"
+            return self.res_beval
+        sing.stats.cache_beval.miss()
+        self.try_ctx_change(ctx)
+        self.beval_cache_str = pnode.beval_cache_str()
+        self.res_beval = no_cache()
+        return self.res_beval
+
+    def inverse_abs(self, pnode, no_cache, ctx, output_ew):
+        if sing.cfg.debug.no_cache:
+            return no_cache()
+        assert pnode.ntype.abs
+        def check_in_cache():
+            if self.res_inverse_abs is None:
+                return False
+            if ctx is not self.ctx:
+                return False
+            if output_ew is not self.output_ew:
+                return False
+            return True
+        
+        in_cache = check_in_cache()
+        if in_cache:
+            sing.stats.cache_inverse_abs.hit()
+
+            if sing.cfg.debug.validate_cache:
+                new_ctx = no_cache()
+                assert len(self.res_inverse_abs) == len(new_ctx)
+                for ew1,ew2 in zip(new_ctx, self.res_inverse_abs):
+                    validate_ew_equal(ew1,ew2), "Invalid cache"
+            return self.res_inverse_abs
+
+        sing.stats.cache_inverse_abs.miss()
+        self.try_ctx_change(ctx)
+        self.try_output_ew_change(output_ew)
+        self.res_inverse_abs = no_cache()
+        return self.res_inverse_abs
+
+    def inverse_app(self, pnode, no_cache, output_ew, fn_ew, labelled_arg_ews, zipper0):
+        if sing.cfg.debug.no_cache:
+            return no_cache()
+        assert pnode.ntype.app
+        assert isinstance(zipper0,int)
+        def check_in_cache():
+            if self.res_inverse_app[zipper0] is None:
+                return False
+            # dont need to check ctx for app actually :)
+            if output_ew is not self.output_ew:
+                return False
+            if fn_ew is not self.fn_ew:
+                return False
+            assert len(labelled_arg_ews) == len(self.labelled_arg_ews[zipper0]), "num args is changing???"
+            for (i1,ew1),(i2,ew2) in zip(labelled_arg_ews,self.labelled_arg_ews[zipper0]):
+                assert i1 == i2, "somethings strange"
+                if ew1 is not ew2:
+                    return False
+            return True
+        
+        in_cache = check_in_cache()
+        if in_cache:
+            sing.stats.cache_inverse_app.hit()
+            if sing.cfg.debug.validate_cache:
+                validate_ew_equal(self.res_inverse_app[zipper0], no_cache()), "Invalid cache"
+            return self.res_inverse_app[zipper0]
+        sing.stats.cache_inverse_app.miss()
+
+        if self.fn_ew is not fn_ew:
+            self.fn_ew = fn_ew
+            # change affects all inverses so we gotta wipe them all
+            self.res_inverse_app = defaultdict(lambda:None)
+        self.try_output_ew_change(output_ew)
+        self.labelled_arg_ews[zipper0] = labelled_arg_ews
+        self.res_inverse_app[zipper0] = no_cache()
+        return self.res_inverse_app[zipper0]
+        
+
+        
+def validate_ew_equal(cached_ew, new_ew):
+    """
+    for cache validation. Note that this will actually recurse
+    since when we manually call propagate here then that inner
+    call will call self.propagate (which is _cached_propagate) internally so
+    it'll end up verifying the entire cache since validate_cache will be true
+    for all these cases.
+    """
+    assert cached_ew.placeholder == new_ew.placeholder
+    if cached_ew.placeholder:
+        return # nothing to check for placeholders
+
+    assert (cached_ew.concrete is None) == (new_ew.concrete is None)
+    assert (cached_ew.closure is None) == (new_ew.closure is None)
+    
+    if cached_ew.concrete:
+        assert cached_ew.concrete == new_ew.concrete
+    
+    if cached_ew.closure:
+        pass # not sure what checks to do here
+    
+    if (cached_ew.abstract is not None
+        or new_ew.abstract is not None
+        or random.random() < sing.cfg.debug.p_check_abstract):
+        # this check is pretty thorough but also will massively slow everything down hence the probability thing
+        assert torch.allclose(cached_ew.get_abstract(), new_ew.get_abstract())
+
+
+
+class Cached:
     def __init__(self):
         self.val = self # sentinel
     def get(self, func):
         if sing.cfg.debug.validate_cache and self.val is not self:
             new_val = func()
-            assert torch.allclose(self.val,new_val)
+            if torch.is_tensor(self.val) and torch.is_tensor(new_val):
+                assert torch.allclose(self.val,new_val)
+            else:
+                assert self.val == new_val
         if self.val is self: # empty cache
             self.val = func()
         return self.val
+    def clear(self):
+        self.val = self
 
 
 class Context:
@@ -64,7 +231,7 @@ class EWContext(Context):
         assert all(isinstance(ew,Examplewise) for ew in ews)
         self.vals = tuple(ews)
         self.no_free = all(not ew.placeholder for ew in self.vals)
-        self.cached_encode = CachedTensor()
+        self.cached_encode = Cached()
     def encode(self):
         """
         used in places like beval() for Hole as well as by the policy
@@ -244,8 +411,8 @@ class PTask:
         _exwise = [i for i,o in task.examples] # outer list = examples, inner list = args
         _argwise = list(zip(*_exwise)) # outer list = args, inner list = examples
         assert len(_argwise) == self.argc
-        self.inputs = [Examplewise(arg) for arg in _argwise]
-        self.cached_input_features = CachedTensor()
+        self.inputs = [Examplewise(concrete=arg) for arg in _argwise]
+        self.cached_input_features = Cached()
 
         ctx = EWContext()
         for exwise in self.inputs:
@@ -263,7 +430,7 @@ class PTask:
         return self.outputs.get_abstract()
     def input_features(self):
         # honestly i like this setup more than a decorator bc it means i get
-        # my CachedTensor object which makes garbage collection less opaque
+        # my Cached object which makes garbage collection less opaque
         return self.cached_input_features.get(self._input_features)
     def _input_features(self):
         return sing.model.abstraction_fn.encode_known_ctx([Ctx(None,i) for i in self.inputs])
@@ -281,7 +448,7 @@ class Examplewise:
             before itll just return you the same Tensor result as before, so no worries about
             overusing it
     """
-    def __init__(self,concrete=None,abstract=None,closure=None,placeholder=False) -> None:
+    def __init__(self,/,concrete=None,abstract=None,closure=None,placeholder=False) -> None:
         super().__init__()
         assert (concrete,abstract,closure).count(None) + (placeholder is False) == 3
         self.concrete = concrete
@@ -341,13 +508,13 @@ class Examplewise:
     @property
     def can_be_concrete(self):
         """
-        return a len=num_exs list of concrete values or python functions (which return other concrete values).
-        returns None if can't turn it into python (eg if abstract or closure w holes)
+        True if this can be used in fully concrete computation
         """
         if self.concrete is not None:
             return True
         elif self.closure is not None and not self.closure.abs.has_holes:
             return True
+        return False
 
 
     def _check_in_range(self):
@@ -398,18 +565,14 @@ class PNode:
     lambda abstractions are still used bc many things operating over
     PNodes will want to be aware that the EWContext is changing
 
-    pnode.ctx is a stack representing the context, it gets updated
-    on entering an abstraction's body. 
-
-
     create a new one of these from a program like so:
-        node = PNode(p=some_program, parent=PNode(PTask(task)), ctx=[])
+        node = PNode(p=some_program, parent=PNode(PTask(task)))
     then run it with
         node.evaluate(output_node=None)
 
     """
     
-    def __init__(self, ntype, tp, parent, ctx:list):
+    def __init__(self, ntype, tp, parent, ctx_tps):
         super().__init__()
 
         if isinstance(parent,PTask):
@@ -422,9 +585,12 @@ class PNode:
         self.ntype = ntype
         self.phantom_ntype = None
         self.tp = tp
-        self.ctx = ctx
+        self.ctx_tps = ctx_tps
+        #self.ctx = ctx
 
-        self.cache = Cache(None, None, None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
+        self.pnode_cache = PNodeCache()
+
+        #self.cache = Cache(None, None, None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
     def root_str(self):
         """
         Useful for when you wanna ensure that the whole program hasnt been inplace
@@ -461,14 +627,14 @@ class PNode:
 
 
         """
-        if cache_mode is not None:
-            self.clear_cache(cache_mode) # ok to do this here bc we wont be editing cache at all during expand_to
+        # if cache_mode is not None:
+        #     self.clear_cache(cache_mode) # ok to do this here bc we wont be editing cache at all during expand_to
         self = self.unwrap_abstractions()
         assert self.ntype.hole
         assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
         
         if prim.isIndex:
-            assert self.ctx[prim.i].tp == self.tp # the Ctx.tp is the same as our tp
+            assert self.ctx_tps[prim.i] == self.tp # the ctx tp is the same as our tp
             self.i = prim.i
             self.ntype = NType.VAR
         elif prim.isPrimitive:
@@ -483,7 +649,7 @@ class PNode:
                 # APP case
                 self.ntype = NType.APP
                 # make self.fn as a PRIM 
-                self.fn = PNode(NType.PRIM, tp=prim.tp, parent=self, ctx=self.ctx)
+                self.fn = PNode(NType.PRIM, tp=prim.tp, parent=self, ctx_tps=self.ctx_tps)
                 self.fn.prim = prim
                 self.fn.name = prim.name
                 self.fn.value = UncurriedFn(prim.value,name=prim.name)
@@ -498,24 +664,26 @@ class PNode:
         This also handles expanding into Abstractions if tp.isArrow()
         """
         if not tp.isArrow():
-            return PNode(NType.HOLE, tp, parent=self, ctx=self.ctx)
+            return PNode(NType.HOLE, tp, parent=self, ctx_tps=self.ctx_tps)
+        
         # Introduce a lambda
-
-        which_toplevel_arg = len(self.ctx) # ie if we're just entering the first level of lambda this will be 0
+        
+        #which_toplevel_arg = len(self.ctx) # ie if we're just entering the first level of lambda this will be 0
 
         # now if this arg is one of our inputs we grab that input, otherwise we just return None
         # (so for non toplevel lambdas this is always None)
-        exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
+        #exwise = self.task.inputs[which_toplevel_arg] if len(self.task.inputs) > which_toplevel_arg else None
 
         arg_tp = tp.arguments[0] # the input arg to this arrow
         res_tp = tp.arguments[1] # the return arg (which may be an arrow)
 
         # push it onto the ctx stack
-        abs = PNode(NType.ABS, tp, parent=self, ctx=(Ctx(arg_tp,exwise),*self.ctx))
+        # abs = PNode(NType.ABS, tp, parent=self, ctx=(Ctx(arg_tp,exwise),*self.ctx))
         # now make an inner hole (which may itself be an abstraction ofc)
+        abs = PNode(NType.ABS, tp, parent=self, ctx_tps=(arg_tp,*self.ctx_tps))
         inner_hole = abs.build_hole(res_tp)
         abs.body = inner_hole
-        abs.argc = 1
+        abs.argc = 1  # TODO can change
 
         return abs # and return our abstraction
 
@@ -530,7 +698,7 @@ class PNode:
         for attr in ('prim','name','value','fn','xs','i','body','tree'):
             if hasattr(self,attr):
                 delattr(self,attr) # not super important but eh why not
-        self.clear_cache(cache_mode)
+        # self.clear_cache(cache_mode)
         self.ntype = NType.HOLE
 
     def expand_from(self, other, recursive=True):
@@ -593,13 +761,12 @@ class PNode:
         Or however many abstractions make sense for the given ptask
         Returns the root of the tree (the output node)
         """
-        root = PNode(NType.OUTPUT, tp=None, parent=ptask, ctx=())
+        root = PNode(NType.OUTPUT, tp=None, parent=ptask, ctx_tps=())
         root.tree = root.build_hole(ptask.request)
 
         # do some sanity checks
         hole, num_abs = root.tree.unwrap_abstractions(count=True)
         assert ptask.argc == num_abs, "task argc doesnt match number of toplevel abstraction"
-        assert all(ctx.exwise is not None for ctx in hole.ctx), "toplevel ctx was somehow not populated"
         return root
 
     @staticmethod
@@ -662,6 +829,8 @@ class PNode:
             return f'{self.tree}'
         else:
             raise TypeError
+    def beval_cache_str(self):
+        return str(self) # ideally this should change iff beval() will cahnge
     def __repr__(self):
         return f'{self.ntype.name}({self.tp}): {self.marked_str()}'
     def marked_repr(self,marked_node):
@@ -684,8 +853,9 @@ class PNode:
             return f'[[{res}]]'
         return res
     @property
-    def in_HOF_lambda(self):
-        return len(self.ctx) > len(self.task.inputs)
+    def in_HOF_lambda(self): # TODO worth changing, p specific to this dsl
+        return self.get_zipper().count('body') > len(self.task.inputs)
+
     def propagate_upward(self, concrete_only=False):
         assert False
         """
@@ -712,6 +882,7 @@ class PNode:
         sing.scratch.beval_print(f'beval_single {self} with ctx={ctx}', indent=True)
 
         def printed(res):
+            assert res is not None
             sing.scratch.beval_print(f'{mlb.mk_green("->")} {res}', dedent=True)
             return res
 
@@ -753,89 +924,95 @@ class PNode:
 
         if hasattr(self,'needs_ctx'):
             self.needs_ctx = ctx
+            sing.scratch.beval_print('[hit beval needs ctx]')
 
         def printed(res):
+            assert res is not None
             sing.scratch.beval_print(f'{mlb.mk_green("->")} {short_repr(res)}', dedent=True)
             return res
+                
+        def no_cache():
+            if self.ntype.output:
+                """
+                beval on the output sets up the ctx properly and skips over the abstractions into their bodies and
+                executes the bodies in the proper context.
+                """
+                assert ctx is None
+                body,i = self.tree.unwrap_abstractions(count=True)
+                assert len(self.task.ctx) == i
+                return body.beval(self.task.ctx)
+            
+            assert ctx is not None
 
-        if self.ntype.output:
-            """
-            beval on the output sets up the ctx properly and skips over the abstractions into their bodies and
-            executes the bodies in the proper context.
-            """
-            assert ctx is None
-            body,i = self.tree.unwrap_abstractions(count=True)
-            assert len(self.task.ctx) == i
-            return printed(body.beval(self.task.ctx))
-        
-        assert ctx is not None
+            if self.ntype.prim:
+                """
+                even for fn primitives, just always return an EW(concrete=...)
+                """
+                return Examplewise(concrete=[self.value for _ in range(sing.num_exs)])
 
-        if self.ntype.prim:
-            """
-            even for fn primitives, just always return an EW(concrete=...)
-            """
-            return printed(Examplewise(concrete=[self.value for _ in range(sing.num_exs)]))
+            elif self.ntype.var:
+                ew = ctx[self.i]
+                if not ew.placeholder:
+                    return ew # normal case
+                else:
+                    # encode a free var
+                    return Examplewise(abstract=ew.encode_placeholder(self.i))
 
-        elif self.ntype.var:
-            ew = ctx[self.i]
-            if not ew.placeholder:
-                return printed(ew) # normal case
+
+            elif self.ntype.hole:
+                return Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx.encode()))
+
+            elif self.ntype.abs:
+                return Examplewise(closure=EWClosure(abs=self,enclosed_ctx=ctx))
+
+            elif self.ntype.app:
+                fn = self.fn.beval(ctx)
+                args = [arg.beval(ctx) for arg in self.xs]
+                
+
+                if (ctx.no_free and # no free vars
+                    fn.can_be_concrete and # fn can be concrete
+                    all(x.can_be_concrete for x in args) # args can be concrete
+                    ):
+                    """
+                    Concrete application!
+                    This uses beval_single_concrete implicitly since it
+                        does ew.split() on all args as well as the fn which
+                        means even if the fn was a closure it became a list of
+                        SinglesClosures with SinglesContexts (so even our current
+                        context was converted even tho we dont explicitly convert
+                        it here).
+                    """
+                    sing.scratch.beval_print(f'[concrete apply]')
+
+                    singles_fns = fn.split()
+                    singles_args = list(zip(*[ew.split() for ew in args])) # [argc,num_exs] -> [num_exs,argc]
+                    assert len(singles_fns) == len(singles_args) == sing.num_exs
+                    res = [fn(*args) for fn,args in zip(singles_fns,singles_args)]
+                    return Examplewise(concrete=res)
+
+
+
+                """
+                Abstract call!
+                Abstract the fn and args (they were already beval()'d) then label them and pass to apply_nn
+                """
+                ### * V1 * ###
+                sing.scratch.beval_print(f'[abstract apply]')
+                sing.stats.fn_called_abstractly += 1
+                assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
+                
+                fn_embed = fn.get_abstract() # gets the Parameter vec for that primitive fn
+                args_embed = [arg.get_abstract() for arg in args]
+                labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
+
+                return Examplewise(abstract=sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None))
+
             else:
-                # encode a free var
-                return printed(Examplewise(abstract=ew.encode_placeholder(self.i)))
-
-
-        elif self.ntype.hole:
-            return printed(Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx.encode())))
-
-        elif self.ntype.abs:
-            return printed(Examplewise(closure=EWClosure(abs=self,enclosed_ctx=ctx)))
-
-        elif self.ntype.app:
-            fn = self.fn.beval(ctx)
-            args = [arg.beval(ctx) for arg in self.xs]
-            
-
-            if (ctx.no_free and # no free vars
-                fn.can_be_concrete and # fn can be concrete
-                all(x.can_be_concrete for x in args) # args can be concrete
-                ):
-                """
-                Concrete application!
-                This uses beval_single_concrete implicitly since it
-                    does ew.split() on all args as well as the fn which
-                    means even if the fn was a closure it became a list of
-                    SinglesClosures with SinglesContexts (so even our current
-                    context was converted even tho we dont explicitly convert
-                    it here).
-                """
-                sing.scratch.beval_print(f'[concrete apply]')
-
-                singles_fns = fn.split()
-                singles_args = list(zip(*[ew.split() for ew in args])) # [argc,num_exs] -> [num_exs,argc]
-                assert len(singles_fns) == len(singles_args) == sing.num_exs
-                res = [fn(*args) for fn,args in zip(singles_fns,singles_args)]
-                return printed(Examplewise(concrete=res))
-
-
-
-            """
-            Abstract call!
-            Abstract the fn and args (they were already beval()'d) then label them and pass to apply_nn
-            """
-            ### * V1 * ###
-            sing.scratch.beval_print(f'[abstract apply]')
-            sing.stats.fn_called_abstractly += 1
-            assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
-            
-            fn_embed = fn.get_abstract() # gets the Parameter vec for that primitive fn
-            args_embed = [arg.get_abstract() for arg in args]
-            labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
-
-            return printed(Examplewise(abstract=sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None)))
-
-        else:
-            raise TypeError
+                raise TypeError
+        
+        res = self.pnode_cache.beval(self,no_cache,ctx)
+        return printed(res)
 
 
     def embed_from_above(self):
@@ -851,22 +1028,26 @@ class PNode:
         zipper = self.get_zipper()
         res = root.inverse_beval(ctx=None, output_ew=None, zipper=zipper)
         return res
-
-
+    def __eq__(self,other):
+        return self is other
     def inverse_beval(self, ctx, output_ew, zipper):
             """
             follow `zipper` downward starting at `self` 
             """
             sing.scratch.beval_print(f'inverse_beval {self} with zipper={zipper} and ctx={ctx}', indent=True)
-
+        
             if hasattr(self,'needs_ctx'):
                 assert self.ntype.hole, "temp"
                 sing.scratch.beval_print('[hit needs_ctx]')
                 assert self.needs_ctx is None, "someone forgot to garbage collect"
                 self.needs_ctx = ctx
 
+            # if (res:=self.pnode_cache.try_beval_cache(self,ctx)) is not None:
+            #     sing.scratch.beval_print('[cache hit]')
+            #     return printed(res) # doesnt hurt to call update_beval_cache() really anyways
 
             def printed(res):
+                assert res is not None
                 sing.scratch.beval_print(f'{mlb.mk_green("->")} {short_repr(res)}', dedent=True)
                 return res
 
@@ -881,6 +1062,8 @@ class PNode:
             if self.ntype.output:
                 """
                 set up the ctx right, set output_ew to task.outputs, and strip off the abstractions
+                
+                caching: no need. No new Context or EW objects get created here
                 """
                 assert zipper[0] == 'tree'
                 zipper = zipper[1:]
@@ -919,10 +1102,21 @@ class PNode:
                 We will add placeholders for the lambda args to our context so they can be encoded
                     and referenced by anyone.
                 Then we simply do the inverse of the body
+
+                caching: yes, since a new Context is created this will invalidate everyones cache if we dont reuse our existing Context instead
                 """
                 assert zipper[0] == 'body'
-                ctx = EWContext.get_placeholders(self.argc) + ctx
-                res = self.body.inverse_beval(ctx, output_ew, zipper[1:])
+
+                    # sing.scratch.beval_print(f'[trivial abs cache hit]')
+
+                def no_cache():
+                    # no cache hit
+                    return EWContext.get_placeholders(self.argc) + ctx
+                
+                new_ctx = self.pnode_cache.inverse_abs(self, no_cache, ctx, output_ew)
+                
+                res = self.body.inverse_beval(new_ctx, output_ew, zipper[1:])
+                
                 return printed(res)
 
             elif self.ntype.app:
@@ -945,12 +1139,25 @@ class PNode:
                 assert self.fn.ntype.prim, "feel free to remove post V1"
 
                 sing.scratch.beval_print(f'[inverting application]')
+
                 sing.scratch.beval_print(f'[beval fn]')
-                fn_embed = self.fn.beval(ctx).get_abstract()
+                fn_embed = self.fn.beval(ctx)
+                
                 sing.scratch.beval_print(f'[beval {len(self.xs)-1} args]')
-                labelled_args = [(i,arg.beval(ctx).get_abstract()) for i,arg in enumerate(self.xs) if i!=zipper[0]]
-                sing.scratch.beval_print(f'[apply_nn]')
-                new_output_ew = Examplewise(abstract=sing.model.apply_nn(fn_embed, labelled_args, parent_vec=output_ew.get_abstract()))
+                labelled_args = [(i,arg.beval(ctx)) for i,arg in enumerate(self.xs) if i!=zipper[0]]
+
+                
+                def no_cache():
+                    sing.scratch.beval_print(f'[get_abstract calls]') # these dont come until here bc of caching
+                    fn_embed_vec = fn_embed.get_abstract()
+                    labelled_args_vecs = [(i,arg.get_abstract()) for i,arg in labelled_args]
+                    output_ew_vec = output_ew.get_abstract()
+
+                    sing.scratch.beval_print(f'[apply_nn]')
+                    return Examplewise(abstract=sing.model.apply_nn(fn_embed_vec, labelled_args_vecs, parent_vec=output_ew_vec))
+                
+                new_output_ew = self.pnode_cache.inverse_app(self,no_cache,output_ew,fn_embed,labelled_args,zipper[0])
+
                 res = self.xs[zipper[0]].inverse_beval(ctx, output_ew=new_output_ew, zipper=zipper[1:])
                 return printed(res)
 
@@ -1279,6 +1486,7 @@ class PNode:
             - children: you, all your children, and all their children recursively
             - tree: the whole tree from the .root() downward
         """
+        assert False
         if mode is None:
             return
         self.cache = Cache(None,None,None)
@@ -1339,6 +1547,7 @@ class PNode:
             raise TypeError
 
     def clone(self, cache_mode=None, no_cache_copy=False):
+        assert False
         """
         Clone the tree from self.root() down, and return the node corresponding to `self` thats in
         the newly cloned tree.
@@ -1368,6 +1577,7 @@ class PNode:
         return cloned_self
 
     def copy_cache_from(self, other, recursive=True):
+        assert False
         assert self.ntype == other.ntype
         assert self.marked_str() == other.marked_str(), "maaaaybe you can relax this but be careful. Esp given that cache.string is getting copied (tho u could change that)"
         cache = other.cache
@@ -1433,7 +1643,7 @@ class PNode:
                 c.unhide(recursive=True)
 
     def pause_cache(self, children=True):
-        raise NotImplementedError
+        assert False
         """
         pauses the cache for us and our children (unless children=False)
             - note that this makes the whole system ignore the cache and itll stay
