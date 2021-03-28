@@ -1926,7 +1926,7 @@ class RecurrentFeatureExtractor(nn.Module):
         # This is an optimization hack
         self.MAXINPUTS = 100
 
-        if cuda: self.cuda()
+        #if cuda: self.cuda()
 
     @property
     def outputDimensionality(self): return self.H
