@@ -26,6 +26,13 @@ from collections import defaultdict
 class PNodeCache:
     def __init__(self):
         self.clear()
+    def clone(self):
+        new = PNodeCache()
+        new.__dict__.update(self.__dict__)
+        # shallow duplicate the dicts
+        new.labelled_arg_ews = new.labelled_arg_ews.copy()
+        new.res_inverse_app = new.res_inverse_app.copy()
+        return new
     def clear(self):
         # ctx: used for beval, inverse abs, inverse app
         self.ctx = None # actually used by process_hole as well!
@@ -264,6 +271,8 @@ class UncurriedFn:
     Takes a normal function callable like fn(a)(b) and makes it callable
     like fn(a,b). I think you can still call it in the
     curried way but whatever it returns wont be an UncurriedFn for the record.
+
+    equality compares by name btw
     """
     def __init__(self,fn,name=None):
         self.fn = fn
@@ -273,6 +282,8 @@ class UncurriedFn:
         return self.name
     def __call__(self,*args):
         return uncurry(self.fn,args)
+    def __eq__(self,other):
+        return isinstance(other,UncurriedFn) and self.name == other.name and self.fn == other.fn
 
 
 
@@ -741,7 +752,9 @@ class PNode:
         if self.root().has_holes:
             return False
         try:
-            return self.root().propagate_upward(concrete_only=True).concrete == self.task.outputs.concrete
+            res = self.root().beval(None).concrete
+            assert res is not None
+            return res == self.task.outputs.concrete
         except InvalidSketchError:
             return False
 
@@ -1164,7 +1177,21 @@ class PNode:
             else:
                 raise TypeError
 
-
+    # def get_concrete_subtrees(self):
+    #     if self.ntype.output:
+            
+    #     elif self.ntype.abs:
+    #         assert False
+    #     elif self.ntype.prim:
+    #         assert False
+    #     elif self.ntype.var:
+    #         assert False
+    #     elif self.ntype.hole:
+    #         assert False
+    #     elif self.ntype.app:
+    #         assert False
+    #     else:
+    #         raise TypeError
     
     @cached_propagate
     def propagate(self, towards, concrete_only=False):
@@ -1546,9 +1573,11 @@ class PNode:
         else:
             raise TypeError
 
-    def clone(self, cache_mode=None, no_cache_copy=False):
-        assert False
+    def clone(self, no_cache_copy=False):
         """
+
+        [description out of date]
+
         Clone the tree from self.root() down, and return the node corresponding to `self` thats in
         the newly cloned tree.
             * no pointers in the newly cloned tree will point to PNodes in the old tree
@@ -1566,39 +1595,43 @@ class PNode:
         root = self.root()
         assert root.ntype.output
 
-        cloned_root = PNode.from_ptask(root.task) # share same ptask
+        cloned_root = PNode.from_ptask(root.task) # share same ptask (includes cache)
         cloned_root.expand_from(root)
         if not no_cache_copy:
             cloned_root.copy_cache_from(root, recursive=True)
 
         cloned_self = cloned_root.apply_zipper(zipper)
         assert self.marked_str() == cloned_self.marked_str()
-        cloned_self.clear_cache(cache_mode)
         return cloned_self
 
     def copy_cache_from(self, other, recursive=True):
-        assert False
-        assert self.ntype == other.ntype
-        assert self.marked_str() == other.marked_str(), "maaaaybe you can relax this but be careful. Esp given that cache.string is getting copied (tho u could change that)"
-        cache = other.cache
-        if cache.towards is None:
-            self.cache = Cache(None,None,None)
-            return
-
-        new_towards = None
-        if cache.towards is other:
-            new_towards = self
-        elif cache.towards is other.parent:
-            new_towards = self.parent
-        else:
-            for i,c in enumerate(other.children()):
-                if cache.towards is c:
-                    new_towards = self.children()[i]
-        assert new_towards is not None
-        self.cache = Cache(new_towards,cache.exwise,cache.string)
+        self.pnode_cache = other.pnode_cache.clone()
         if recursive:
             for c,o in zip(self.children(),other.children()):
                 c.copy_cache_from(o,recursive=True)
+
+        # assert False
+        # assert self.ntype == other.ntype
+        # assert self.marked_str() == other.marked_str(), "maaaaybe you can relax this but be careful. Esp given that cache.string is getting copied (tho u could change that)"
+        # cache = other.cache
+        # if cache.towards is None:
+        #     self.cache = Cache(None,None,None)
+        #     return
+
+        # new_towards = None
+        # if cache.towards is other:
+        #     new_towards = self
+        # elif cache.towards is other.parent:
+        #     new_towards = self.parent
+        # else:
+        #     for i,c in enumerate(other.children()):
+        #         if cache.towards is c:
+        #             new_towards = self.children()[i]
+        # assert new_towards is not None
+        # self.cache = Cache(new_towards,cache.exwise,cache.string)
+        # if recursive:
+        #     for c,o in zip(self.children(),other.children()):
+        #         c.copy_cache_from(o,recursive=True)
             
     def hide(self,recursive=False):
         """

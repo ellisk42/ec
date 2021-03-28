@@ -134,15 +134,27 @@ class ValueHead(nn.Module):
     def train_loss(self, p, task):
         raise NotImplementedError
     def values(self, hole, prods):
-        raise NotImplementedError
+            """
+            Try out all the prods in the hole (preferably without much cloning) and return the list of value()s for each            
+            """
+            root = hole.root()
+            vcosts = []
+            for prod in prods:
+                hole.expand_to(prod) # as long as our vhead propagates upwards all cache clears will happen naturally
+                if hole.check_solve():
+                    raise FoundSolution(root)
+                vcost = self.value(root) if root.has_holes else -np.inf # infinite cost if concrete and not soln
+                vcosts.append(vcost)
+                hole.into_hole() # revert to hole
+            return vcosts
 
 class UniformValueHead(ValueHead):
     def __init__(self):
         super().__init__()
-    def computeValue(self, sketch, task):
-        return 0.
-    def valueLossFromFrontier(self, frontier, g):
+    def train_loss(self, p, task):
         return torch.tensor([0.], device=sing.device)
+    def value(self, root):
+        return 0.
 
 class RNNValueHead(ValueHead):
 
@@ -651,23 +663,23 @@ class InvalidIntermediatesValueHead(ValueHead):
             # print(f"vhead.value() caught an invalid sketch {e}")
             return -np.inf
         return 0
-    def values(self, hole:PNode, prods):
-        """
-        Try out all the prods in the hole (preferably without much cloning) and return the list of value()s for each
+    # def values(self, hole:PNode, prods):
+    #     """
+    #     Try out all the prods in the hole (preferably without much cloning) and return the list of value()s for each
         
-        I think this method can really go in ValueHead in general? Other than some cache_mode question i guess. Just need a self.cache_mode for vhead ig?
-        """
-        root = hole.root()
-        vcosts = []
-        for prod in prods:
-            hole.expand_to(prod) # as long as our vhead propagates upwards all cache clears will happen naturally
-            if hole.check_solve():
-                raise FoundSolution(hole)
-            vcost = self.value(root) if root.has_holes else -np.inf # infinite cost if concrete and not soln
-            vcosts.append(vcost)
-            hole.into_hole(cache_mode='parents') # upwards-only style cache mode
+    #     I think this method can really go in ValueHead in general? Other than some cache_mode question i guess. Just need a self.cache_mode for vhead ig?
+    #     """
+    #     root = hole.root()
+    #     vcosts = []
+    #     for prod in prods:
+    #         hole.expand_to(prod) # as long as our vhead propagates upwards all cache clears will happen naturally
+    #         if hole.check_solve():
+    #             raise FoundSolution(hole)
+    #         vcost = self.value(root) if root.has_holes else -np.inf # infinite cost if concrete and not soln
+    #         vcosts.append(vcost)
+    #         hole.into_hole(cache_mode='parents') # upwards-only style cache mode
 
-        return vcosts
+    #     return vcosts
 
 
 

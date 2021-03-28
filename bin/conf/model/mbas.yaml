@@ -18,7 +18,7 @@ abstraction_fn: # AbstractionFn class
   bidir_int: True 
 pnode: # anything to do with pnodes, neural execution, blended execution, etc
   ctxful_lambdas: False
-  encode_index_as: constant # inputs | constant
+  encode_index_as: inputs # inputs | constant
   allow_concrete_eval: True
 apply:
   type: rnn # transformer | rnn

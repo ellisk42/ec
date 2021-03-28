@@ -12,31 +12,33 @@
             "program": "bin/matt.py",
             "args":[
                 "model=mbas",
-                "model.vhead=check_invalid",
+                "model.vhead=uniform",
                 "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=True",
 
-                
+                "solver=astar",
 
-                "debug.validate_cache=False",
+            
+                "debug.validate_cache=True",
                 "debug.no_cache=False",
-                "model.ordering=right",
+                "model.ordering=random",
 
                 "data.T=2",
                 "data.lambda_depth=3",
                 "loader.freeze=True",
+                "data.allow_complex_requests=True",
 
                 "loader.buf_size=3",
 
-                "loop.search_valid_num_tasks=2",
+                "loop.search_valid_num_tasks=10",
                 "loop.save_every=100",
                 "loop.print_every=20",
                 "loop.search_valid_every=null",
 
                 "printer.beval=False",
 
-                "device=6",
+                "device=cpu",
                 "job_name=vscode",
                 "run_name=vscode",
                 "debug.mlb_debug=False",

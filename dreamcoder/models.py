@@ -130,7 +130,7 @@ class MBAS(nn.Module):
     for (soln, task) in fs:
       assert soln.depth() <= sing.cfg.solver.max_depth
       if hasattr(sing.cfg.solver,'max_size'):
-        assert soln.size() <= sing.cfg.solver.cfg.max_size
+        assert soln.size() <= sing.cfg.solver.max_size
 
     search_tries = []
     self.eval()
