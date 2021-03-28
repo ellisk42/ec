@@ -2,6 +2,9 @@ open Core
 open Parser
 open Utils
 open Type
+open Owl
+module AD = Algodiff.D
+module Lazy = Core_kernel.Lazy
 
 type program =
   | Index of int
@@ -196,7 +199,7 @@ let [@warning "-20"] rec lazy_evaluate (environment: ('b Lazy.t) list) (p:progra
   | Index(j) -> magical @@ List.nth_exn environment j
   | Apply(f,x) ->
     lazy ((Lazy.force @@ magical @@ lazy_evaluate environment f) (magical @@ lazy_evaluate environment x))
-  | Primitive(_,_,v) -> lazy (magical (!v))
+  | Primitive(_,_,v) -> lazy (magical (!v) |> AD.primal)
   | Invented(_,i) -> lazy_evaluate [] i
 
 let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
@@ -215,7 +218,7 @@ let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list
     in
     fun environment -> 
     lazy ((Lazy.force @@ magical @@ analyzed_function environment) (magical @@ analyzed_argument environment))
-  | Primitive(_,_,v) -> fun _ -> lazy (magical (!v))
+  | Primitive(_,_,v) -> fun _ -> lazy (magical (!v) |> AD.primal)
   | Invented(_,i) ->
     let analyzed_body = analyze_lazy_evaluation i in
     fun _ -> analyzed_body []
