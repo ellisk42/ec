@@ -47,21 +47,49 @@ def test_loadAllTaskAndLanguageDatasets_synth_language(args):
     languageDatasetSubdir="synthetic",
     trainTestSchedule=None,
     generateTaskDataset=None)
+    mock_args = vars(mock_args)
+    task_and_language_object = to_test.loadAllTaskAndLanguageDatasets(mock_args)
+    
+    train_task_schedule = task_and_language_object.train_test_schedules
+    assert len(train_task_schedule) == 1
+    for (train_tasks, test_tasks) in train_task_schedule:
+        assert len(train_tasks) > 0
+        assert len(test_tasks) > 0
+        assert type(train_tasks[0]) == Task
+    assert len(task_and_language_object.language_dataset) > 0
+    
+    language_dataset = task_and_language_object.language_dataset
+    for dataset in language_dataset:
+        assert os.path.exists(dataset)
 
 def test_loadAllTaskAndLanguageDatasets_human_language(args):
     mock_args = MockArgs(taskDatasetDir=DEFAULT_COMPOSITIONAL_LOGO_DATASET,
     languageDatasetSubdir="human",
     trainTestSchedule=None,
     generateTaskDataset=None)
+    mock_args = vars(mock_args)
+    task_and_language_object = to_test.loadAllTaskAndLanguageDatasets(mock_args)
+    
+    train_task_schedule = task_and_language_object.train_test_schedules
+    assert len(train_task_schedule) == 1
+    for (train_tasks, test_tasks) in train_task_schedule:
+        assert len(train_tasks) > 0
+        assert len(test_tasks) > 0
+        assert type(train_tasks[0]) == Task
+    assert len(task_and_language_object.language_dataset) > 0
+    
+    language_dataset = task_and_language_object.language_dataset
+    for dataset in language_dataset:
+        assert os.path.exists(dataset)
     
 def test_loadAllTrainTaskSchedules_no_schedule(args):
     mock_args = MockArgs(taskDatasetDir=DEFAULT_COMPOSITIONAL_LOGO_DATASET,
     trainTestSchedule=None,
     generateTaskDataset=None)
     mock_args = vars(mock_args)
-    task_dataset_tag, train_task_schedule = to_test.loadAllTrainTaskSchedules(mock_args)
-    assert len(train_task_schedule) == 1
-    for (train_tasks, test_tasks) in train_task_schedule:
+    task_dataset_tag, top_level_data_dir, train_test_schedules = to_test.loadAllTrainTaskSchedules(mock_args)
+    assert len(train_test_schedules) == 1
+    for (train_tasks, test_tasks) in train_test_schedules:
         assert len(train_tasks) > 0
         assert len(test_tasks) > 0
         assert type(train_tasks[0]) == Task
@@ -106,7 +134,11 @@ def test_all(args):
     print("Running tests for makeDrawingTasks....")
     run_test(test_buildDefaultDrawingTasksRegistry, args)
     run_test(test_loadAllTaskAndLanguageDatasets_no_language, args)
-    # run_test(test_loadAllTrainTaskSchedules_no_schedule, args)
-    # run_test(test_loadAllTrainTaskSchedules_generate_logo_compositional, args)
-    # run_test(test_loadAllTrainTaskSchedules_generate_logo_original, args)
+    run_test(test_loadAllTaskAndLanguageDatasets_synth_language, args)
+    run_test(test_loadAllTaskAndLanguageDatasets_human_language, args)
+    
+    run_test(test_loadAllTrainTaskSchedules_no_schedule, args)
+    
+    run_test(test_loadAllTrainTaskSchedules_generate_logo_compositional, args)
+    run_test(test_loadAllTrainTaskSchedules_generate_logo_original, args)
     print("....all tests passed!\n")

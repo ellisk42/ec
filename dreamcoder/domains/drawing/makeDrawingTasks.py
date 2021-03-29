@@ -68,7 +68,6 @@ def checkAndLoadAllLanguageDatasets(top_level_data_dir, task_dataset_tag, args):
             full_language_split_dir = os.path.join(full_language_dir, split)
             for language_file in LANGUAGE_JSON_FILES:
                 full_language_file_path = os.path.join(full_language_split_dir, language_file)
-                print(full_language_file_path)
                 assert os.path.exists(full_language_file_path)
         return [full_language_dir]
             
@@ -158,14 +157,16 @@ def generateAndLoadDrawingTaskDataset(args):
     if generated_dataset_class == GENERATE_COMPOSITIONAL_LOGO_TAG:
         task_dataset_dir = os.path.join(DEFAULT_COMPOSITIONAL_LOGO_DIR, TASKS_SUBDIR)
         top_level_data_dir = DEFAULT_COMPOSITIONAL_LOGO_DIR
-        return task_dataset_tag,top_level_data_dir, makeLogoTasks.generateCompositionalLogoDataset(task_dataset_dir=task_dataset_dir,
+        train, test = makeLogoTasks.generateCompositionalLogoDataset(task_dataset_dir=task_dataset_dir,
                                          task_dataset=task_dataset_tag,
                                          n_tasks=n_tasks)
+        return task_dataset_tag,top_level_data_dir, train, test
     elif generated_dataset_class == GENERATE_ORIGINAL_LOGO_TAG:
         task_dataset_dir = os.path.join(DEFAULT_COMPOSITIONAL_LOGO_DIR, TASKS_SUBDIR)
         top_level_data_dir = DEFAULT_COMPOSITIONAL_LOGO_DIR
-        return task_dataset_tag, top_level_data_dir, makeLogoTasks.generateOriginalLogoDataset(task_dataset_dir=task_dataset_dir,
+        train, test = makeLogoTasks.generateOriginalLogoDataset(task_dataset_dir=task_dataset_dir,
                                     task_dataset=task_dataset_tag)
+        return task_dataset_tag, top_level_data_dir, train, test
     else:
         print(f"Not yet supported: {task_dataset_class}")
         assert False
