@@ -135,6 +135,8 @@ class MBAS(nn.Module):
     search_tries = []
     self.eval()
 
+    hits = 0
+
     with torch.no_grad():
       for i,(true_soln,task) in enumerate(fs):
 
@@ -153,11 +155,12 @@ class MBAS(nn.Module):
 
         if verbose:
           if search_try.hit:
-            green(f"[{i+1}/{len(fs)}] solved in {search_try.time:.2f}s (searched {search_try.nodes_expanded} programs)")
+            hits += 1
+            green(f"[{i+1}/{len(fs)}][acc:{int(hits/(i+1)*100)}%] solved in {search_try.time:.2f}s (searched {search_try.nodes_expanded} programs)")
             print(f"\t-> found: [T?d{search_try.soln.depth()}s{search_try.soln.size()}] {search_try.soln}")
             print(f"\t-> orig:  [T?d{true_soln.depth()}s{true_soln.size()}] {true_soln}")
           else:
-            red(f"[{i+1}/{len(fs)}] failed to solve {true_soln} (searched {search_try.nodes_expanded} programs)")
+            red(f"[{i+1}/{len(fs)}][acc:{int(hits/(i+1)*100)}%] failed to solve {true_soln} (searched {search_try.nodes_expanded} programs)")
 
     # build final model result
     model_result = plot.ModelResult(search_tries,timeout)
