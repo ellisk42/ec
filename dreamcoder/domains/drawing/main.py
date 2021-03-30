@@ -4,14 +4,15 @@ from dreamcoder.dreamcoder import ecIterator, default_wake_generative
 import dreamcoder.domains.drawing.makeDrawingTasks as makeDrawingTasks
 import dreamcoder.domains.drawing.test_makeDrawingTasks as test_makeDrawingTasks
 
-import dreamcoder.domains.drawing.drawingPrimitives
+import dreamcoder.domains.drawing.drawingPrimitives as drawingPrimitives
 import dreamcoder.domains.drawing.test_drawingPrimitives as test_drawingPrimitives
+import dreamcoder.domains.drawing.test_drawingIntegration as test_drawingIntegration
+
 """
 main.py (drawing)  | Author: Catherine Wong.
-This is the main file for compositional graphics tasks that require generating programs which draw images. (It is usually launched via the bin/drawing.py convenience file.)
+This is the main file for compositional graphics tasks that require generating programs which draw images -- it supports both the LOGO tasks (from Ellis et. al 2020) and the tasks from (Tian et. al 2020). (It is usually launched via the bin/drawing.py convenience file.)
 
 This dataset was introduced for a series of cognitive and computational experiments for language and drawing related tasks.
-It contains convenience arguments for using both the LOGO graphics-related domain (also in logo.py) and the human experiment stimuli in Tian et. al 2020.
 
 Example usage: 
     python bin/drawing.py 
@@ -19,9 +20,13 @@ Example usage:
         --languageDatasetDir synthetic
         --primitives logo
 
-Example tests: TODO
+Example tests: 
+    --run_makeDrawingTasks_test
+    --run_drawingPrimitives_test
 """
 
+EMPTY_DIR = "/"
+DEFAULT_DRAWING_EVALUATION_TIMEOUT = 0.01
 DEFAULT_DRAWING_DOMAIN_NAME_PREFIX = "drawing"
 DOMAIN_SPECIFIC_ARGS = {
     "grammar" : None,
@@ -35,27 +40,32 @@ def drawing_options(parser):
     ## Dataset loading options.
     parser.add_argument("--taskDatasetDir", type=str,
                         choices=makeDrawingTasks.getDefaultCachedDrawingDatasets(),
-                        help="Sub directory name for the task dataset. Recovers the top-level tasks dataset dir based on the unique subdirectory. Must be a cached dataset.")
+                        default="logo_unlimited_200",
+                        help="Sub directory name for the task dataset. Recovers the top-level tasks dataset dir based on the unique subdirectory. Must be a cached dataset. [logo_unlimited_200]")
     parser.add_argument("--languageDatasetSubdir",
-                        help="Language dataset subdirectory. Expects the subdirectory to exist within the task dataset subdirectory, e.g. {taskDatasetDir}/language/{languageSubdir}")
+                        default="synthetic",
+                        help="Language dataset subdirectory. Expects the subdirectory to exist within the task dataset subdirectory, e.g. {taskDatasetDir}/language/{languageSubdir} eg. human, synthetic")
     parser.add_argument("--trainTestSchedule", type=str,
-                        help="[Currently unimplemented] Optional file for building subschedules of train and testing stimuli -- for instance, if replicating the behavior of multiple subjects on the same smaller schedule of tasks. If not included, generates a single schedule of the full dataset.")
+                        help="[Currently unimplemented] Optional file for building subschedules of train and testing stimuli, consisting of multiple 'train/test' splits that can be run in a single experiment. If not included, generates a single schedule of the full dataset.")
     parser.add_argument("--topLevelOutputDirectory",
                         default=DEFAULT_OUTPUT_DIRECTORY, # Defined in utilities.py
                         help="Top level directory in which to store outputs. By default, this is the experimentOutputs directory.")
+    
+    # Experiment iteration parameters.
+    parser.add_argument("--primitives",
+                        nargs="*",
+                        help="Which primitives to use. Choose from: [logo, tian_{library_version}].")
+    parser.add_argument("--evaluationTimeout",
+                        default=DEFAULT_DRAWING_EVALUATION_TIMEOUT,
+                        help="How long to spend evaluating a given drawing tasks.")
+                        
+    # Task generation arguments.
     parser.add_argument("--generateTaskDataset", type=str,
                         choices=makeDrawingTasks.GENERATED_TASK_DATASETS,
                         help="If provided, generates a task dataset from scratch. Must specify nGeneratedTasks.")
     parser.add_argument("--nGeneratedTasks",
                         type=int,
                         help="If {taskDatasetDir} is not a cached directory, generates n tasks or {-1} to generate all takss from that generator.")
-    
-    # Experiment iteration parameters.
-    parser.add_argument("--primitives",
-                        nargs="*",
-                        help="Which primitives to use. Choose from: [logo, tian_{library_version}].")
-                        
-    
     # Test functionalities.
     parser.add_argument("--run_makeDrawingTasks_test",
                         action='store_true',
@@ -63,6 +73,8 @@ def drawing_options(parser):
     parser.add_argument("--run_drawingPrimitives_test",
                         action='store_true',
                         help='Runs tests for drawingPrimitives.py, which controls initial primitives for the drawing domain.')
+    parser.add_argument("--run_drawingIntegration_test",
+                        action='store_true')
 
 def run_unit_tests(args):
     # Runs all unit tests for this domain.
@@ -71,6 +83,11 @@ def run_unit_tests(args):
         exit(0)
     if args.pop("run_drawingPrimitives_test"):
         test_drawingPrimitives.test_all(args)
+        exit(0)
+
+def run_integration_test(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules):
+    if args.pop("run_drawingIntegration_test"):
+        test_drawingIntegration.test_all(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules)
         exit(0)
 
 def main(args):
@@ -83,7 +100,6 @@ def main(args):
     train_test_schedules = task_and_language_schedule.train_test_schedules
     language_dataset = task_and_language_schedule.language_dataset
     
-    
     # Load the initial grammar.
     initial_grammar = drawingPrimitives.load_initial_grammar(args)
     
@@ -91,8 +107,24 @@ def main(args):
     top_level_output_dir = args.pop("topLevelOutputDirectory")
     checkpoint_output_prefix = get_timestamped_output_directory_for_checkpoints(top_level_output_dir=top_level_output_dir, domain_name=DEFAULT_DRAWING_DOMAIN_NAME_PREFIX)
     
-    # Set all of the domain specific arguments.
+    # Set all of the global domain-specific arguments.
+    args["languageDataset"] = language_dataset
+    DOMAIN_SPECIFIC_ARGS["grammar"] = initial_grammar
+    DOMAIN_SPECIFIC_ARGS["outputPrefix"] = checkpoint_output_prefix
     
-    # Run the integration test immediately before we remove all domain-specific arguments.
+    # Run the integration test immediately before we remove all domain-specific arguments
+    # and run the iterator itself.
+    run_integration_test(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules)
     
     # Utility to pop off any additional arguments that are specific to this domain.
+    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
+    
+    # Run the train and test schedules as separate iterable experiments.
+    for schedule_idx, (train_tasks, test_tasks) in enumerate(train_test_schedules):
+        print(f"Train-test schedules: [{schedule_idx}/{len(train_test_schedules)}]. Using {len(train_tasks)} train / {len(test_tasks)} test tasks.")
+        DOMAIN_SPECIFIC_ARGS["tasks"] = train_tasks
+        DOMAIN_SPECIFIC_ARGS["testingTasks"] = test_tasks
+        generator = ecIterator(**DOMAIN_SPECIFIC_ARGS,
+                               **args)
+        for result in generator:
+            pass

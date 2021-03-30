@@ -20,7 +20,10 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     vocabularies = {"train": set(), "test": set()}
     from pathlib import Path
     for dataset in languageDataset:
-        dataset_path = os.path.join(languageDatasetDir, dataset)
+        if languageDatasetDir is not None:
+            dataset_path = os.path.join(languageDatasetDir, dataset)
+        else:
+            dataset_path = dataset
         for split in ("train", "test"):
             try:
                 split_path = os.path.join(dataset_path, split)

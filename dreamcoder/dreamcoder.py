@@ -227,6 +227,7 @@ def ecIterator(grammar, tasks,
                max_compression=0,
                max_mem_per_enumeration_thread=1000000,
                # Entrypoint flags for integration tests. If these are set, we return early at semantic breakpoints in the iteration.
+               test_tasks=False, # Integration test on loaded tasks.
                test_task_language=False, # Integration test on the language we add to tasks.
                test_background_helmholtz=False, # Integration test for enumerating Helmholtz frontiers in the background.
                test_wake_generative_enumeration=False, # Integration test for enumeration.
@@ -453,6 +454,9 @@ def ecIterator(grammar, tasks,
                           taskLanguage={
                               t.name: [] for t in tasks + testingTasks},
                           tasksAttempted=set())
+    
+    if test_tasks: # Integration test entrypoint for testing the number of tasks
+        yield result
     
     if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
