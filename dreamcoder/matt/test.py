@@ -28,7 +28,7 @@ def main(test_cfg):
     path = with_ext(testgen_path() / test.from_file, 'tgen')
     if not path.exists():
         die(f'Error: cant find testgen file: {path}')
-    tgen = torch.load(path)
+    tgen = torch.load(path, pickle_module=dill)
 
     fs = tgen.fs
     if test.max_tasks is not None:

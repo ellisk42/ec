@@ -23,6 +23,8 @@ class FoundSolution(Exception):
 
 from collections import defaultdict
 
+def return_none(): return None
+
 class PNodeCache:
     def __init__(self):
         self.clear()
@@ -50,7 +52,7 @@ class PNodeCache:
         # cached results
         self.res_beval = None # EW
         self.res_inverse_abs = None # ctx to use for recursive call
-        self.res_inverse_app = defaultdict(lambda:None) # zipper0 -> new output EW to use for recursive call
+        self.res_inverse_app = defaultdict(return_none) # zipper0 -> new output EW to use for recursive call
     
     def try_ctx_change(self,ctx):
         if ctx is self.ctx:
@@ -65,7 +67,7 @@ class PNodeCache:
             return
         self.output_ew = output_ew
         self.res_inverse_abs = None
-        self.res_inverse_app = defaultdict(lambda:None)
+        self.res_inverse_app = defaultdict(return_none)
 
     def beval(self, pnode, no_cache, ctx):
         if sing.cfg.debug.no_cache:
@@ -152,7 +154,7 @@ class PNodeCache:
         if self.fn_ew is not fn_ew:
             self.fn_ew = fn_ew
             # change affects all inverses so we gotta wipe them all
-            self.res_inverse_app = defaultdict(lambda:None)
+            self.res_inverse_app = defaultdict(return_none)
         self.try_output_ew_change(output_ew)
         self.labelled_arg_ews[zipper0] = labelled_arg_ews
         self.res_inverse_app[zipper0] = no_cache()

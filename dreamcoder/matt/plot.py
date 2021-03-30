@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dreamcoder.matt.sing import sing
 from copy import deepcopy
+import dill
 
 class SearchTry:
   def __init__(self, time, nodes_expanded, soln):
@@ -58,7 +59,7 @@ class ModelResult:
         # if our target file already exists, move it. We never wanna accidentally overwrite this file
         path = with_ext(model_results_path() / file, 'res')
         move_existing(path)
-        torch.save(self,path)
+        torch.save(self,path, pickle_module=dill)
         print(f"saved model result to {path.relative_to(outputs_path())}")
 
 def load_model_results(load):
@@ -68,7 +69,7 @@ def load_model_results(load):
         * will maintain the ordering of the list of load regexes in case you're relying on that eg in order to make it align with a plot legend
     """
     paths = path_search(train_path(), load, sort=False, ext='res')
-    model_results = [torch.load(p) for p in paths]
+    model_results = [torch.load(p,pickle_module=dill) for p in paths]
     print(f"Loaded {len(paths)} model results:")
     for p,m in zip(paths,model_results):
 

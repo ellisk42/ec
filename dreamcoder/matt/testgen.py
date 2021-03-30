@@ -3,7 +3,7 @@ from dreamcoder.matt.util import *
 import torch
 from dreamcoder.matt.sing import sing
 from dreamcoder import loader
-
+dill
 
 def main():
 
@@ -40,7 +40,7 @@ class SavedTest:
     path = with_ext(testgen_path() / name, 'tgen')
     if move_existing(path):
         red("WARNING: MOVED EXISTING TESTGEN FILE")
-    torch.save(self,path)
+    torch.save(self,path, pickle_module=dill)
     print(f"saved testgen with name {path}")
 
 
