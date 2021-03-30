@@ -61,10 +61,38 @@ def test_train_test_schedules(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules):
             num_train_tasks = len(current_ec_result.allFrontiers)
             break
         
-        assert num_test_tasks == len(test_tasks)
+        assert num_test_tasks == len(set(test_tasks))
         assert num_train_tasks == len(set(train_tasks))
+
+def test_integration_task_language_synthetic(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules):
+    """Test that we correctly load all synthetic language for a schedule of LOGO tasks"""
+    assert len(train_test_schedules) > 0
+    set_default_args(args)
+    for schedule_idx, (train_tasks, test_tasks) in enumerate(train_test_schedules):
+        DOMAIN_SPECIFIC_ARGS["tasks"] = train_tasks
+        DOMAIN_SPECIFIC_ARGS["testingTasks"] = test_tasks
+        generator = ecIterator(**DOMAIN_SPECIFIC_ARGS,
+                               **args,
+                               test_task_language=True)
+        for current_ec_result in generator:
+            language_for_tasks, vocabularies = current_ec_result.taskLanguage, current_ec_result.vocabularies
+            break
+            
+        assert len(vocabularies['train']) > 0
+        assert len(vocabularies['test']) > 0
+        
+        # Check that all of the tasks have language.
+        for task in DOMAIN_SPECIFIC_ARGS['tasks']:
+            assert task.name in language_for_tasks
+            assert len(language_for_tasks) > 0
+            
+        for task in DOMAIN_SPECIFIC_ARGS['testingTasks']:
+            assert task.name in language_for_tasks
+            assert len(language_for_tasks) > 0
+    
 
 def test_all(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules):
     print("Running tests for clevrIntegration.py...")
     run_test(test_drawing_specific_command_line_args, DOMAIN_SPECIFIC_ARGS, args)
     run_test(test_train_test_schedules, DOMAIN_SPECIFIC_ARGS, args, train_test_schedules)
+    run_test(test_integration_task_language_synthetic, DOMAIN_SPECIFIC_ARGS, args, train_test_schedules)
