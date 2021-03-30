@@ -29,8 +29,12 @@ def main(test_cfg):
     if not path.exists():
         die(f'Error: cant find testgen file: {path}')
     tgen = torch.load(path)
+
+    fs = tgen.fs
+    if test.max_tasks is not None:
+        fs = fs[:test.max_tasks]
     
-    model_result = sing.model.search(tgen.fs, test.timeout, verbose=True)
+    model_result = sing.model.search(fs, test.timeout, verbose=True)
     model_result.save(test.out)
 
 
