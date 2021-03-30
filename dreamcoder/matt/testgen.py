@@ -3,7 +3,7 @@ from dreamcoder.matt.util import *
 import torch
 from dreamcoder.matt.sing import sing
 from dreamcoder import loader
-dill
+import dill
 
 def main():
 
