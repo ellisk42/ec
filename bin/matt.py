@@ -41,17 +41,8 @@ for name,pdoc_mod in docs.items():
 
 @hydra.main(config_path="conf", config_name='config')
 def hydra_main(cfg):
-    # foo=bar
-    # cfg.foo = bar
-
-    # for i in range(100000):
-    #     print(i)
-    #     #print(signal.getitimer(signal.ITIMER_PROF))
-    # return
-
 
     cfg = omeconf_to_attrdict(cfg)
-
 
     try:
         Path('.lock').mkdir(exist_ok=False)

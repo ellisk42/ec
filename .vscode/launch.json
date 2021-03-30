@@ -40,8 +40,6 @@
                 "printer.beval=False",
 
                 "device=cpu",
-                "job_name=vscode",
-                "run_name=vscode",
                 "debug.mlb_debug=False",
                 "dirty=True",
 
