@@ -54,15 +54,13 @@
             "program": "bin/matt.py",
             "args":[
                 "mode=test",
-                "load=2021-02-09/12-30-30.feb9_mbas_train.rnn",
-                "test.from_file=foo",
+                "load=19-19-05.mar28_mbas_train_fun.rnn.random.allow_concrete",
+                "test.from_file=mar29_t2d3_500",
                 "test.timeout=3",
 
                 "check_overrides=False",
                 
                 "device=cpu",
-                "job_name=vscode",
-                "run_name=vscode",
                 "debug.mlb_debug=False",
                 "dirty=True",
             ],
