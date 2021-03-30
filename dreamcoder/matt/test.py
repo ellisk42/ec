@@ -5,7 +5,7 @@ import torch
 
 from dreamcoder.matt.sing import sing
 from fastcore.basics import ifnone
-
+import dill
 
 def main(test_cfg):
     """
