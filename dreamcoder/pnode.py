@@ -1443,7 +1443,7 @@ class PNode:
             # check for a depth based tie in which case use tiebreaker
             depths = [h.depth_of_node for h in holes]
             if all(depth==depths[0] for depth in depths):
-                return options[tiebreaker]
+                return options[tiebreaking]
 
             # normal depth based ones
             if ordering == 'deep':
