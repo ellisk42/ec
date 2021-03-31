@@ -99,7 +99,7 @@ class PolicyHead(nn.Module):
         """
         assert root.has_holes
         verify_str = root.root_str()
-        hole = root.get_hole(sing.model.cfg.ordering,sing.model.cfg.tiebreaking)
+        hole = root.get_hole(sing.cfg.model.ordering,sing.cfg.model.tiebreaking)
         try:
             prods,lls = self.action_distribution(hole,max_depth)
         except InvalidSketchError as e:
@@ -119,7 +119,7 @@ class PolicyHead(nn.Module):
         """
         assert root.has_holes
         verify_str = root.root_str()
-        hole = root.get_hole(sing.model.cfg.ordering,sing.model.cfg.tiebreaking)
+        hole = root.get_hole(sing.cfg.model.ordering,sing.cfg.model.tiebreaking)
         try:
             prods,lls = self.action_distribution(hole,max_depth)
         except InvalidSketchError as e:
@@ -231,7 +231,7 @@ class PolicyHead(nn.Module):
         strings = []
 
         while True:
-            hole = root.get_hole(sing.model.cfg.ordering,sing.model.cfg.tiebreaking)
+            hole = root.get_hole(sing.cfg.model.ordering,sing.cfg.model.tiebreaking)
             if hole is None:
                 return processed_holes, masks, targets, strings
             masks.append(self.build_mask(hole,sing.cfg.data.max_depth))
