@@ -139,6 +139,7 @@ class MBAS(nn.Module):
 
     with torch.no_grad():
       for i,(true_soln,task) in enumerate(fs):
+        mlb.freezer('pause')
 
         # prep the task
         root = PNode.from_ptask(task)
