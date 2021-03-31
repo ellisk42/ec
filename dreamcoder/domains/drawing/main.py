@@ -7,7 +7,8 @@ import dreamcoder.domains.drawing.test_makeDrawingTasks as test_makeDrawingTasks
 import dreamcoder.domains.drawing.drawingPrimitives as drawingPrimitives
 import dreamcoder.domains.drawing.test_drawingPrimitives as test_drawingPrimitives
 import dreamcoder.domains.drawing.test_drawingIntegration as test_drawingIntegration
-
+import dreamcoder.experimentUtilities as experimentUtilities
+import dreamcoder.configlib as configlib
 """
 main.py (drawing)  | Author: Catherine Wong.
 This is the main file for compositional graphics tasks that require generating programs which draw images -- it supports both the LOGO tasks (from Ellis et. al 2020) and the tasks from (Tian et. al 2020). (It is usually launched via the bin/drawing.py convenience file.)
@@ -24,7 +25,6 @@ Example tests:
     --run_makeDrawingTasks_test
     --run_drawingPrimitives_test
 """
-
 EMPTY_DIR = "/"
 DEFAULT_DRAWING_EVALUATION_TIMEOUT = 0.01
 DEFAULT_DRAWING_DOMAIN_NAME_PREFIX = "drawing"
@@ -116,15 +116,5 @@ def main(args):
     # and run the iterator itself.
     run_integration_test(DOMAIN_SPECIFIC_ARGS, args, train_test_schedules)
     
-    # Utility to pop off any additional arguments that are specific to this domain.
-    pop_all_domain_specific_args(args_dict=args, iterator_fn=ecIterator)
-    
     # Run the train and test schedules as separate iterable experiments.
-    for schedule_idx, (train_tasks, test_tasks) in enumerate(train_test_schedules):
-        print(f"Train-test schedules: [{schedule_idx}/{len(train_test_schedules)}]. Using {len(train_tasks)} train / {len(test_tasks)} test tasks.")
-        DOMAIN_SPECIFIC_ARGS["tasks"] = train_tasks
-        DOMAIN_SPECIFIC_ARGS["testingTasks"] = test_tasks
-        generator = ecIterator(**DOMAIN_SPECIFIC_ARGS,
-                               **args)
-        for result in generator:
-            pass
+    experimentUtilities.run_scheduled_iterative_experiment(args, DOMAIN_SPECIFIC_ARGS, train_test_schedules)

@@ -14,9 +14,13 @@ from dreamcoder.parser import *
 from dreamcoder.languageUtilities import *
 from dreamcoder.translation import *
 import dreamcoder.test_joint_models as test_joint_models
-from dreamcoder.joint_models import *
+
+import dreamcoder.checkpoint as checkpoint
+import dreamcoder.configlib as configlib 
+from dreamcoder.configlib import config as C
 
 class ECResult():
+    """ECResult: checkpoint object saved during experiment runs."""
     def __init__(self, _=None,
                  frontiersOverTime=None,
                  testingSearchTime=None,
@@ -152,7 +156,7 @@ def explorationCompression(*arguments, **keywords):
         pass
     return r
 
-
+"""ecIterator: Iterator object for a single experiment loop iteration."""
 def ecIterator(grammar, tasks,
                _=None,
                useDSL=True,
@@ -1250,8 +1254,8 @@ def commandlineArguments(_=None,
         cuda = torch.cuda.is_available()
     print("CUDA is available?:", torch.cuda.is_available())
     print("using cuda?:", cuda)
-    import argparse
-    parser = argparse.ArgumentParser(description="")
+    # import argparse
+    parser = configlib.add_parser("dreamcoder")
     ## Recognition models.
     parser.add_argument("--recognition_0",
                         dest="recognition_0", 
@@ -1259,6 +1263,7 @@ def commandlineArguments(_=None,
                         nargs="*",
                         help="""0th recognition model. Specify a list of features to use. Choices: ["examples"]
                         Default: %s""" % recognition_0)
+    configlib.add_abbreviation('recognition_0', 'rec')
     parser.add_argument("--recognition_1",
                         dest="recognition_1", 
                         default=[],
@@ -1274,6 +1279,7 @@ def commandlineArguments(_=None,
                         nargs="*",
                         help="List of number of epochs to train the recognition model at each round. Can be specified instead of train time or gradient steps.",
                         type=int)
+    configlib.add_abbreviation('recognitionEpochs', 'RE')
     parser.add_argument("-r",
                         "--Helmholtz",
                         dest="helmholtzRatio",
@@ -1281,17 +1287,21 @@ def commandlineArguments(_=None,
                         helmholtzRatio,
                         default=helmholtzRatio,
                         type=float)
+    configlib.add_abbreviation('helmholtzRatio', 'HR')
     parser.add_argument("--biasOptimal",
                         help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
                         default=False, action="store_true")
+    configlib.add_abbreviation('biasOptimal', 'BO')
     parser.add_argument("--contextual",
                         help="bigram recognition model (default is unigram model)",
                         default=False, action="store_true")
+    configlib.add_abbreviation('contextual', 'CO')
     parser.add_argument("--ensembleSize",
                         dest="ensembleSize",
                         default=1,
                         help="Number of recognition models to train and enumerate from at each iteration.",
                         type=int)
+    configlib.add_abbreviation('ensembleSize', 'ES')
     parser.add_argument(
         "--activation",
         choices=[
@@ -1302,6 +1312,7 @@ def commandlineArguments(_=None,
         help="""Activation function for neural recognition model.
                         Default: %s""" %
         activation)
+    configlib.add_abbreviation('activation', 'act')
     
     ### Joint generative model training.
     parser.add_argument("--joint_language_program_model",
@@ -1352,6 +1363,7 @@ def commandlineArguments(_=None,
                                 "recurrent"],
                         default=None,
                         type=str)
+    configlib.add_abbreviation("language_encoder", 'lang_ft')
     parser.add_argument("--languageDataset",
                         dest="languageDataset",
                         help="Name of language dataset or datasets if using language features.",
@@ -1389,6 +1401,7 @@ def commandlineArguments(_=None,
                         help="default: %d" % iterations,
                         default=iterations,
                         type=int)
+    configlib.add_abbreviation('iterations', 'it')
     parser.add_argument("--initialTimeout",
                         default=None,
                         help="In seconds.",
@@ -1401,14 +1414,17 @@ def commandlineArguments(_=None,
                         default=enumerationTimeout,
                         help="In seconds. default: %s" % enumerationTimeout,
                         type=int)
+    configlib.add_abbreviation('enumerationTimeout', 'ET')
     parser.add_argument("-R", "--recognitionTimeout",
                         default=recognitionTimeout,
                         help="In seconds. Amount of time to train the recognition model on each iteration. Defaults to enumeration timeout.",
                         type=int)
+    configlib.add_abbreviation('recognitionTimeout', 'RT')
     parser.add_argument("-RS", "--recognitionSteps",
                         default=None,
                         help="Number of gradient steps to train the recognition model. Can be specified instead of train time or epochs.",
                         type=int)
+    configlib.add_abbreviation('recognitionSteps', 'RS')
     parser.add_argument(
         "-k",
         "--topK",
@@ -1416,6 +1432,7 @@ def commandlineArguments(_=None,
         help="When training generative and discriminative models, we train them to fit the top K programs. Ideally we would train them to fit the entire frontier, but this is often intractable. default: %d" %
         topK,
         type=int)
+    configlib.add_abbreviation('topK', 'K')
     parser.add_argument("-p", "--pseudoCounts",
                         default=pseudoCounts,
                         help="default: %f" % pseudoCounts,
@@ -1452,10 +1469,12 @@ def commandlineArguments(_=None,
                         help="""Should we initialize recognition model weights to be what they were at the previous DreamCoder iteration? Default: %s""" % reuseRecognition,
                         default=reuseRecognition,
                         action="store_true")
+    configlib.add_abbreviation('reuseRecognition', 'RR')
     parser.add_argument("-d", "--no-dsl",
                         dest="useDSL",
                         action="store_false",
                         help="""Disable DSL enumeration and updating.""")
+    configlib.add_abbreviation('useDSL', 'DSL')
     parser.add_argument("--no-consolidation",
                         dest="noConsolidation",
                         action="store_true",
@@ -1497,6 +1516,7 @@ def commandlineArguments(_=None,
         help="Maximum rank of bigram transition matrix for contextual recognition model. Defaults to full rank.",
         default=None,
         type=int)
+    configlib.add_abbreviation('matrixRank', 'MR')
     parser.add_argument(
         "--mask",
         help="Unconditional bigram masking",
@@ -1588,7 +1608,7 @@ def commandlineArguments(_=None,
                         cuda=cuda)
     if extras is not None:
         extras(parser)
-    v = vars(parser.parse_args())
+    v = configlib.parse()
     if v["clear-recognition"] is not None:
         ECResult.clearRecognitionModel(v["clear-recognition"])
         sys.exit(0)
