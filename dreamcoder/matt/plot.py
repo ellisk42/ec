@@ -86,7 +86,7 @@ def main():
     if plot.file is None:
         plot.file = f'{sing.cfg.start_time_filename}.{plot.filetype}'
     if plot.title is None:
-        plot.title = plot.file
+        plot.title = f'{plot.file}\nload={sing.cfg.load}'
     
     fig = evals_plot(
         model_results,
@@ -170,7 +170,7 @@ def evals_plot(
     plt.ylim(bottom=0., top=100.)
     plt.xlim(left=0., right=x_max)
     for i,m in enumerate(model_results):
-        label = legend[i] if legend else m.cfg.full_name
+        label = legend[i] if legend else m.cfg.job_info
         xs = list(range(m.cropped_x_max_evals)) # 0..earliest_failure
         ys = [m.percent(lambda search_try: search_try.hit and search_try.nodes_expanded <= x) for x in xs]
         plt.plot(

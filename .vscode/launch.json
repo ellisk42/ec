@@ -74,7 +74,7 @@
             "program": "bin/matt.py",
             "args":[
                 "mode=plot",
-                "load=18-04-34.vscode.vscode.res",
+                "load=mar31_test_mbas1*",
 
                 "job_name=vscode",
                 "run_name=vscode",

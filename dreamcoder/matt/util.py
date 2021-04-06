@@ -313,9 +313,9 @@ def path_search(top_dir, regexes, sort=True, ext=None, expand=False, rundirs=Fal
     if isinstance(regexes,str):
         regexes = [regexes]
 
+    
     # glob all the paths, dedup using OrderedDict.fromkeys() (like set() but preserves order)
     paths = list(OrderedDict.fromkeys(itertools.chain.from_iterable([list(top_dir.glob(f'**/*{regex}')) for regex in regexes])))
-
     assert not any(len(p.parts) == 0 for p in paths), "you seem to have regexed the entire directory"
 
     if expand:
