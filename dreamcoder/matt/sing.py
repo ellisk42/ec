@@ -144,7 +144,7 @@ class Sing(Saveable):
       in stone when you first create a new run
     """
     whitelisted_keypaths = ('device', 'load', 'dirty', 'mode', 'check_overrides')
-    whitelisted_keypaths_startswith = ()
+    whitelisted_keypaths_startswith = ('loop')
     for keypath in overrided:
       if cfg_get(cfg,keypath) == cfg_get(self.cfg,keypath):
         continue # if theyre already equal then no worries
