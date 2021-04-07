@@ -984,8 +984,10 @@ class PNode:
         zipper = self.get_zipper()
         res = root.inverse_beval(ctx=None, output_ew=None, zipper=zipper)
         return res
+
     def __eq__(self,other):
         return self is other
+
     def inverse_beval(self, ctx, output_ew, zipper):
             """
             follow `zipper` downward starting at `self` 
@@ -997,10 +999,6 @@ class PNode:
                 sing.scratch.beval_print('[hit needs_ctx]')
                 assert self.needs_ctx is None, "someone forgot to garbage collect"
                 self.needs_ctx = ctx
-
-            # if (res:=self.pnode_cache.try_beval_cache(self,ctx)) is not None:
-            #     sing.scratch.beval_print('[cache hit]')
-            #     return printed(res) # doesnt hurt to call update_beval_cache() really anyways
 
             def printed(res):
                 assert res is not None
@@ -1221,21 +1219,25 @@ class PNode:
             raise ValueError(ordering)
         else:
             raise TypeError
-    def children(self):
+    def children(self,recursive=False):
         """
         returns a list of any nodes immediately below this one in the tree (empty list if leaf)
         note that this doesnt recursively get everyone, just your immediate children.
         """
         if self.ntype.output:
-            return [self.tree]
+            res = [self.tree]
         elif self.ntype.abs:
-            return [self.body]
+            res =  [self.body]
         elif self.ntype.app:
-            return [self.fn,*self.xs]
+            res = [self.fn,*self.xs]
         elif self.ntype.var or self.ntype.hole or self.ntype.prim:
-            return []
+            res =  []
         else:
             raise TypeError
+
+        if recursive:
+            res += list(itertools.chain.from_iterable(x.children(recursive) for x in res))
+        return res
     def get_prod(self):
         self = self.unwrap_abstractions()
 
@@ -1404,6 +1406,31 @@ class PNode:
         if recursive: # must come after setting our own ntype otherwise we dont have any children if we're a hole
             for c in self.children():
                 c.unhide(recursive=True)
+
+    def annotate_concrete_values(self):
+        """
+        Recursively annotate self and all children with results of concrete execution!
+        sets PNode.annotate_concrete = EW(concrete=...) or None
+        """
+        assert self.ntype.output
+        assert not sing.cfg.debug.no_cache
+        assert not self.has_holes, "not a huge deal but for now ill assume this"
+        self.beval(ctx=None) # populate cache
+
+        nodes = [self] + self.children(recursive=True)
+        caches = [p.pnode_cache for p in nodes]
+
+        # extra step needed to make sure our HOF lambdas get beval'd too
+        for cache in caches:
+            if cache.res_beval is not None and cache.res_beval.closure is not None:
+                cache.res_beval.get_abstract() # trigger the closure to execute so we get concrete labels on any variable-less subtrees of this closure
+        
+        # copy from pnode_cace.res_beval to p.annotate_concrete
+        for p,cache in zip(nodes,caches):
+            if cache.res_beval is not None and cache.res_beval.concrete is not None:
+                p.annotate_concrete = cache.res_beval
+            else:
+                p.annotate_concrete = None
 
 
 
