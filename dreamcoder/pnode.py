@@ -187,7 +187,16 @@ def validate_ew_equal(cached_ew, new_ew):
         or new_ew.abstract is not None
         or random.random() < sing.cfg.debug.p_check_abstract):
         # this check is pretty thorough but also will massively slow everything down hence the probability thing
-        assert torch.allclose(cached_ew.get_abstract(), new_ew.get_abstract())
+        if not torch.allclose(cached_ew.get_abstract(), new_ew.get_abstract()):
+            red("ERROR in validating cache")
+            green(f'should be: {new_ew=}')
+            red(f'cache has: {cached_ew=}')
+            green(f'should be: {new_ew.get_abstract()=}')
+            red(f'cache has: {cached_ew.get_abstract()=}')
+            blue('==example 0==')
+            green(f'should be: {new_ew.get_abstract()[0]=}')
+            red(f'cache has: {cached_ew.get_abstract()[0]=}')
+            assert False
 
 
 
@@ -960,9 +969,10 @@ class PNode:
                 
                 fn_embed = fn.get_abstract() # gets the Parameter vec for that primitive fn
                 args_embed = [arg.get_abstract() for arg in args]
-                labelled_args = list(enumerate(args_embed)) # TODO important to change this line once you switch to multidir bc this line to labels the args in order
-
-                return Examplewise(abstract=sing.model.apply_nn(fn_embed, labelled_args, parent_vec=None))
+                labelled_args = list(enumerate(args_embed))
+                known = [('fn',fn_embed)] + labelled_args
+                #assert torch.allclose(sing.model.apply_nn(known, target='out'),sing.model.apply_nn(known, target='out')) # TODO remove
+                return Examplewise(abstract=sing.model.apply_nn(known, target='out'))
 
             else:
                 raise TypeError
@@ -1106,9 +1116,10 @@ class PNode:
                     fn_embed_vec = fn_embed.get_abstract()
                     labelled_args_vecs = [(i,arg.get_abstract()) for i,arg in labelled_args]
                     output_ew_vec = output_ew.get_abstract()
+                    known = [('fn',fn_embed_vec), ('out',output_ew_vec)] + labelled_args_vecs
 
                     sing.scratch.beval_print(f'[apply_nn]')
-                    return Examplewise(abstract=sing.model.apply_nn(fn_embed_vec, labelled_args_vecs, parent_vec=output_ew_vec))
+                    return Examplewise(abstract=sing.model.apply_nn(known, target=zipper[0]))
                 
                 new_output_ew = self.pnode_cache.inverse_app(self,no_cache,output_ew,fn_embed,labelled_args,zipper[0])
 

@@ -4,6 +4,14 @@ import torch
 from dreamcoder.type import tlist,tbool,tint
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 from dreamcoder.pnode import PNode,PTask,Examplewise
+from einops import rearrange, reduce, repeat
+
+
+def new_embedding(H=None):
+    if H is None:
+        H = sing.cfg.model.H
+    return nn.Parameter(torch.randn(1, H))
+
 
 # TODO I duplicated this from valuehead.py so delete that other copy
 class NM(nn.Module):
@@ -13,9 +21,9 @@ class NM(nn.Module):
             H = sing.cfg.model.H
         self.argc = argc
         if argc > 0:
-            self.params = nn.Sequential(nn.Linear(argc*H, H), nn.ReLU())
+            self.params = nn.Sequential(nn.Linear(argc*H, H), nn.ReLU(True))
         else:
-            self.params = nn.Parameter(torch.randn(1, H))
+            self.params = new_embedding(H)
         
     def forward(self, *args):
         assert len(args) == self.argc
@@ -23,6 +31,7 @@ class NM(nn.Module):
             return self.params
         args = torch.cat(args,dim=1) # cat along example dimension. Harmless if only one thing in args anyways
         return self.params(args)
+
 
 class ProgramRNN(nn.Module):
     def __init__(self):
@@ -166,45 +175,106 @@ class ApplyNN(nn.Module):
         self.cfg = cfg
         self.apply_cfg = cfg.model.apply
 
-        self.func_indicator = NM(0)
-        self.parent_indictor = NM(0)
-        self.arg_indicators = nn.ModuleList([NM(0) for _ in range(3)])
+
+        # self.func_indicator = NM(0)
+        # self.out_indicator = NM(0)
+        # self.arg_indicators = nn.ModuleList([NM(0) for _ in range(3)])
+        self.indicators = nn.ParameterDict({
+            'fn': new_embedding(),
+            'out': new_embedding(),
+            '0': new_embedding(),
+            '1': new_embedding(),
+            '2': new_embedding(),
+            '3': new_embedding(),
+        })
+        self.get_indicator = lambda label: self.indicators[str(label)]
+
+        self.PREDICT_MASK = new_embedding()
 
         self.H = cfg.model.H
-        self.bound_H = {
+        self.bindH = {
             'sum': self.H,
             'cat': self.H*2,
         }[self.apply_cfg.bind]
 
         if self.apply_cfg.type == 'transformer':
-            raise NotImplementedError
+            self.readout_from = cfg.model.apply.transformer.readout_from
+            self.readout_by =   cfg.model.apply.transformer.readout_by
+
+            self.transformer = nn.TransformerEncoder(
+                encoder_layer=nn.TransformerEncoderLayer(
+                    d_model=self.bindH,
+                    nhead=cfg.model.apply.transformer.nhead, # vary this
+                    dim_feedforward=cfg.model.H*4, # vary this
+                    dropout=(0 if sing.cfg.debug.validate_cache else .1)
+                ),
+                num_layers=cfg.model.apply.transformer.num_layers, # vary this
+            )
+            if self.readout_by == 'linear':
+                self.readout = nn.Sequential(nn.ReLU(),nn.Linear(self.bindH,cfg.model.H))
+
         elif self.apply_cfg.type == 'rnn':
             self.gru = nn.GRU(
-                input_size=cfg.model.H*2, # for indicator+vec
+                input_size=self.bindH, # for indicator+vec
                 hidden_size=cfg.model.H,
-                num_layers=self.apply_cfg.gru_layers,
+                num_layers=cfg.model.apply.gru.num_layers,
             )
         else:
             assert False
 
-    def bind(self, indicator, vec):
+    def bind(self, label, vec):
+        indicator = self.get_indicator(label)
         indicator = indicator.expand(sing.num_exs,-1)
         if self.apply_cfg.bind == 'sum':
             return vec+indicator
         elif self.apply_cfg.bind == 'cat':
-            return torch.cat([vec,indicator],dim=-1)
+            return torch.cat([indicator,vec],dim=-1)
         assert False
     
-    def apply_bound(self,bound_func,bound_args):
+    def apply_bound(self,known,target):
         return {
             'rnn': self.gru_apply,
             'transformer': self.transformer_apply,
-        }[self.apply_cfg.type](bound_func,bound_args)
+        }[self.apply_cfg.type](known,target)
         
-    def transformer_apply(self,bound_func,bound_args):
-        raise NotImplementedError
+    def transformer_apply(self,known,target):
+        """
+        known :: list of [num_exs, bindH] of length ~ argc+1
+        target :: bindH   (from bind(target_label,PREDICT))
 
-    def gru_apply(self,bound_func,bound_args):
+        returns [num_exs, H] 
+        """
+
+        input = rearrange(known+[target], 'seq exs bindH -> seq exs bindH') # stack
+
+
+        hidden = self.transformer(input) # seq exs bindH -> seq exs bindH
+
+        # readout step 1 to go from 'seq exs bindH -> exs bindH'
+        if self.readout_from == 'sum':
+            hidden = reduce(hidden, 'seq exs bindH -> exs bindH','sum')
+        elif self.readout_from == 'mask': # take the hidden at the last elem of sequence (ie the PREDICT token location)
+            hidden = hidden[-1] # seq exs bindH -> exs bindH
+        else:
+            assert False
+        
+
+        # readout step 2 to go from 'exs bindH -> exs H'
+        if self.readout_by == 'linear':
+            self.apply_cfg.bind == 'cat'
+            res = self.readout(hidden)
+        elif self.readout_by == 'cut': # cut out at precisely the place that PREDICT_MASK used to be (ie ignore the indicator)
+            assert self.apply_cfg.bind == 'cat'
+            res = hidden[:,:-self.H]
+        elif self.readout_by == 'identity':
+            assert self.apply_cfg.bind == 'sum'
+            res = hidden # noop
+        else:
+            assert False
+
+        return res
+
+    def gru_apply(self,known,target):
         """
         bound_func :: T[num_exs,H]
         bound_args :: list of T[num_exs,H]
@@ -212,22 +282,26 @@ class ApplyNN(nn.Module):
         gru wants (argc+1,num_exs,H) as input
         gru gives (argc+1,num_exs,H),(num_layers,num_exs,H) as tuple of outputs. We care about the second tuple (hidden not output) 
         """
-        gru_input = torch.stack([bound_func,*bound_args])
-        _, hidden = self.gru(gru_input)
-        hidden = hidden.sum(0) # sum over layers to yield [num_exs,H]
+        input = rearrange(known+[target], 'seq exs bindH -> seq exs bindH') # stack
+        _, hidden = self.gru(input)
+        hidden = reduce(hidden, 'seq exs bindH -> exs bindH','sum')
         return hidden
 
 
-    def forward(self, func_vec, labelled_arg_vecs=[], parent_vec=None):
+    #def forward(self, func_vec, labelled_arg_vecs=[], parent_vec=None, target_label=None):
+    def forward(self, known, target):
         """
-        args are of the form (int,vec) where the int indicates the argnum of this input.
-        calls self.bind then self.apply_bound
+        known :: [(label,vec)] where a "label" is 0 | 1 | 2 | 'fn' | 'out'
+        target :: label
         """
-        bound_func = self.bind(self.func_indicator(), func_vec)
-        bound_args = [self.bind(self.arg_indicators[argi](),arg) for argi, arg in labelled_arg_vecs]
-        if parent_vec is not None: # prepend parent vec if provided
-            bound_args = [self.bind(self.parent_indictor(),parent_vec)] + bound_args
-        res = self.apply_bound(bound_func,bound_args)
+        target = self.bind(target, self.PREDICT_MASK.expand(sing.num_exs,-1))
+        known = [self.bind(label,vec) for label,vec in known]
+
+        # bound_func = self.bind(self.func_indicator(), func_vec)
+        # bound_args = [self.bind(self.arg_indicators[argi](),arg) for argi, arg in labelled_arg_vecs]
+        # if parent_vec is not None: # prepend parent vec if provided
+        #     bound_args = [self.bind(self.parent_indictor(),parent_vec)] + bound_args
+        res = self.apply_bound(known, target)
         return res
 
 

@@ -21,10 +21,15 @@ pnode: # anything to do with pnodes, neural execution, blended execution, etc
   encode_index_as: inputs # inputs | constant
   allow_concrete_eval: True
 apply:
-  type: rnn # transformer | rnn
+  type: transformer # transformer | rnn
   bind: cat # cat | sum
-  readout: first # first | sum
-  gru_layers: 1
+  transformer:
+    readout_from: mask # mask | sum
+    readout_by: linear # linear | cut | identity
+    num_layers: 1
+    nhead: 2
+  gru:
+    num_layers: 1
 
 
 

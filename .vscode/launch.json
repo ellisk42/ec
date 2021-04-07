@@ -17,6 +17,11 @@
                 "model.pnode.allow_concrete_eval=True",
                 "model.multidir=True",
 
+                "model.apply.type=transformer",
+                "model.apply.transformer.readout_from=sum",
+                "model.apply.transformer.readout_by=linear",
+                "model.apply.transformer.nhead=2",
+
                 "solver=astar",
 
             
@@ -35,7 +40,7 @@
                 "loop.search_valid_num_tasks=3",
                 "loop.save_every=100",
                 "loop.print_every=20",
-                "loop.search_valid_every=10",
+                "loop.search_valid_every=null",
 
                 "printer.beval=False",
 

@@ -32,6 +32,14 @@ class InvalidSketchError(Exception): pass
 def print(*args,**kwargs):
     s = ''.join([str(arg) for arg in args])
     tqdm.write(s,**kwargs)
+
+
+old_tensor_repr = torch.Tensor.__repr__
+def tensor_repr(tensor):
+    old_repr = old_tensor_repr(tensor)
+    return f'T{list(tensor.shape)} {old_repr}'
+torch.Tensor.__repr__ = tensor_repr
+
 def die(s):
     red(s)
     sys.exit(1)
