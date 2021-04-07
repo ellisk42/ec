@@ -288,9 +288,6 @@ class UncurriedFn:
         return isinstance(other,UncurriedFn) and self.name == other.name and self.fn == other.fn
 
 
-
-
-
 class Closure:
     def __init__(self, abs, enclosed_ctx):
         """
@@ -356,47 +353,6 @@ class EWClosure(Closure):
         """
         return [SinglesClosure(self.abs,ctx) for ctx in self.enclosed_ctx.split()]
 
-def cached_propagate(propagate):
-    @functools.wraps(propagate)
-    def _cached_propagate(self,towards,concrete_only=False):
-        assert False
-        if concrete_only: # its fast enough to just do it directly and not have to deal with cache craziness
-            return propagate(self, towards, concrete_only=concrete_only)
-
-        if self.cache.towards is not towards or sing.cfg.debug.no_cache:
-            exwise = propagate(self, towards, concrete_only=concrete_only)
-            self.cache = Cache(towards,exwise,self.subtree_str())
-            sing.stats.cache_not_used += 1
-        else:
-            sing.stats.cache_used += 1
-            if sing.cfg.debug.validate_cache:
-                """
-                for cache validation. Note that this will actually recurse
-                since when we manually call propagate here then that inner
-                call will call self.propagate (which is _cached_propagate) internally so
-                it'll end up verifying the entire cache since validate_cache will be true
-                for all these cases.
-                """
-                if towards is self.parent: # if we're passing upwards and trying to use our cache, our str(self) better not have changed bc that indicates something below us changing
-                    assert str(self) == self.cache.string
-                exwise = propagate(self, towards, concrete_only=concrete_only)
-                if not self.cache.exwise.has_abstract:
-                    assert not exwise.has_abstract # programs shd be getting strictly more concrete
-                if self.cache.exwise.has_abstract:
-                    """
-                    We're in a weird position. The caller of propagate() is the one who often then calls
-                    .abstract(), so we don't actually know if we're about to be abstracted or not. However,
-                    we know that if our cache did NOT have abstract then we definitely wont be abstract
-                    (programs get strictly more concrete). So here by calling .abstract() below in the case
-                    where the cache was abstract, we may be doing something unnecessary but thats why
-                    this is a debugging thing. If the cache hasn't been invalidated then its .abstract()
-                    better be the same as our .abstract(), I think that's fair enough.
-                    """
-                    if not (exwise.has_concrete and callable(exwise.concrete[0])): # dont try to encode callables eg with the weird rare cases of ABS
-                        assert torch.allclose(self.cache.exwise.abstract(),exwise.abstract())
-
-        return self.cache.exwise
-    return _cached_propagate
 
 class PTask:
     """
@@ -873,23 +829,6 @@ class PNode:
     def in_HOF_lambda(self): # TODO worth changing, p specific to this dsl
         return self.get_zipper().count('body') > len(self.task.inputs)
 
-    def propagate_upward(self, concrete_only=False):
-        assert False
-        """
-        BAS-style upward-only propagation
-        """
-        return self.propagate(self.parent, concrete_only=concrete_only)
-    def propagate_to_hole(self):
-        """
-        MBAS-style propagation to hole
-        """
-        assert False
-        assert self.ntype.hole
-        return self.propagate(self)
-
-
-
-
     def beval_single_concrete(self, ctx):
         """
         non-exwise beval. If you call it on an output node or an abs node youll
@@ -1181,179 +1120,7 @@ class PNode:
             else:
                 raise TypeError
 
-    # def get_concrete_subtrees(self):
-    #     if self.ntype.output:
-            
-    #     elif self.ntype.abs:
-    #         assert False
-    #     elif self.ntype.prim:
-    #         assert False
-    #     elif self.ntype.var:
-    #         assert False
-    #     elif self.ntype.hole:
-    #         assert False
-    #     elif self.ntype.app:
-    #         assert False
-    #     else:
-    #         raise TypeError
-    
-    @cached_propagate
-    def propagate(self, towards, concrete_only=False):
-        assert False
-        """
-        returns :: Examplewise
 
-        Evaluates this subtree relative to the PNode towards.
-        set towards=None and call this on the ntype.output node if you want to eval the whole tree with BAS semantics
-
-        Note the towards field can be safely ignored by all leaves of the tree since theyre always propagated
-        towards their parent
-
-        With concrete_only turned on this doesnt call any neural networks it just returns None
-        in those cases. So if your program has holes then evaluating it will definitely
-        return None. Why is this useful? It's good for the InvalidIntermediatesValueHead
-        where you want to pull out all the concrete portions of trees and evaluate them so
-        that you construct Examplewises (which automatically throw InvalidSketch errors at
-        invalid values). I implemented that in here instead of as a traversal bc
-        it's fairly straightforward and it guarantees that itll follow propagation semantics
-        precisely
-        
-
-        """
-
-        if self.ntype.output:
-            if towards is self:
-                # propagate upwards: evaluate the whole tree
-                return self.tree.propagate(self,concrete_only=concrete_only)
-            else:
-                assert towards is self.tree
-                # propagate downward
-                return self.task.outputs
-
-        elif self.ntype.prim:
-            return Examplewise([self.value for _ in range(sing.num_exs)])
-
-        elif self.ntype.var:
-            # if the index is bound to something return that
-            # otherwise return self.index_nm[self.i]()
-            exwise = self.ctx[self.i].exwise
-            if exwise is not None:
-                # this branch is taken for all references to toplevel args
-                return exwise
-            # this branch is taken for all lambdas that arent actually applied (ie theyre HOF inputs)
-            assert self.in_HOF_lambda
-            if concrete_only: return None
-            return Examplewise(sing.model.abstract_transformers.lambda_index_nms[self.i]().expand(sing.num_exs,-1))
-
-        elif self.ntype.hole:
-            if towards is self:
-                return self.parent.propagate(self, concrete_only=concrete_only)
-            if concrete_only: return None
-            if self.in_HOF_lambda:
-                # contextless hole as in BAS
-                return Examplewise(sing.model.abstract_transformers.lambda_hole_nms[self.tp.show(True)]().expand(sing.num_exs,-1))
-            # not in lambda
-            ctx = sing.model.abstraction_fn.encode_known_ctx(self.ctx)
-            return  Examplewise(sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx))
-
-        elif self.ntype.abs:
-            # in terms of evaluation, abstractions do nothing but pass along data
-            if towards is self.parent: # evaluate self.body
-                # this handles the case where our parent is an HOF who's about to do concrete application
-                # and we're the HOF so it needs us to return a python lambda that it can feed to its HOF
-                # primitive function. We use execute_single() to get that python lambda version of ourselves
-                # oh and if our parent is an abstraction too and they chose not to do execute_single() then clearly we shouldnt
-                if self.body.in_HOF_lambda and not self.parent.ntype.abs and not self.has_holes and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
-                    assert self.parent.ntype.app
-                    if not self.parent.has_holes:
-                        fn = self.execute_single([])
-                        return Examplewise([fn for _ in range(sing.num_exs)])
-                return self.body.propagate(self,concrete_only=concrete_only)
-            elif towards is self.body: # evaluate self.parent
-                return self.parent.propagate(self,concrete_only=concrete_only)
-            else:
-                raise ValueError
-
-        elif self.ntype.app:
-            possible_args = [self.parent, *self.xs]
-            mask =  [x is towards for x in possible_args]
-            assert sum(mask) == 1
-            propagation_direction = mask.index(True)
-            # propagation_direction == 0 is how computation normally happens (output is upward)
-            # propagation_direction == 1 is when the output is arg0, ==2 is when output is arg1, etc
-
-            evaluated_args = [node.propagate(self,concrete_only=concrete_only) for node in possible_args if node is not towards]
-
-            if concrete_only and None in evaluated_args: return None # one of our chilren was abstract
-
-            if towards is self.parent and all(arg.has_concrete for arg in evaluated_args) and (sing.cfg.model.pnode.allow_concrete_eval or concrete_only):
-                ## CONCRETE EVAL
-                # calls evaluate() on self.fn which should return a concrete callable primitive
-                # wrapped in an Examplewise then we just use Examplewise.as_concrete_function
-                # to apply it to other examplewise arguments
-                if not concrete_only: sing.stats.fn_called_concretely += 1
-                return self.fn.propagate(self, concrete_only=concrete_only).as_concrete_fn(*evaluated_args)
-            ## ABSTRACT EVAL
-            assert not concrete_only # the earlier check would have caught this
-            sing.stats.fn_called_abstractly += 1
-
-
-            if sing.model.cfg.apply_mode == 'nmns':
-                assert self.fn.ntype.prim, "Limitation, was there in old abstract repl too, can improve upon when it matters"
-                nm = sing.model.abstract_transformers.fn_nms[self.fn.name][propagation_direction]
-                return Examplewise(nm(*[arg.abstract() for arg in evaluated_args]))
-            elif sing.model.apply_mode == 'apply_nn':
-                # get the direction numbers
-                directions = [dir for dir,node in enumerate(possible_args) if node is not towards]
-                directed_args = [(exwise.abstract(),dir) for exwise,dir in zip(evaluated_args,directions)]
-                # TODO you gotta actually have a way of embedding a functino
-                self.fn.propagate(self).abstract()
-            else:
-                assert False
-
-
-
-        else:
-            raise TypeError
-    def execute_single(self,ctx_single):
-        """
-        if you call this on an abstraction youll get out a callable version of it. If you call
-        this on something fully concrete youll get the actual value.
-        
-        you can call this on ntype.output and itll just return the result of calling it on 
-        its child, so thats safe.
-
-        It only goes upward, everything must be concrete, and it works over
-        individual values instead of Examplewise sets of values.
-
-        Calling code should always set ctx_single to `[]` because it should
-        only ever get populated by recursive calls within this function (ie
-        when Abstractions are encountered).
-
-        """
-        assert False
-        if self.ntype.output:
-            assert ctx_single == [] # why would you ever pass in anything else at top level
-            return self.tree.execute_single(ctx_single)
-
-        elif self.ntype.prim:
-            return self.value
-
-        elif self.ntype.var:
-            return ctx_single[self.i]
-
-        elif self.ntype.hole:
-            assert False
-
-        elif self.ntype.abs:
-            return lambda x: self.body.execute_single([x] + ctx_single)
-
-        elif self.ntype.app:
-            # execute self, execute args, apply self to args
-            return uncurry(self.fn.execute_single(ctx_single), [x.execute_single(ctx_single) for x in self.xs])
-
-        else:
-            raise TypeError
     def size(self):
         """
         gets size of tree below this node
@@ -1509,31 +1276,6 @@ class PNode:
         if self.parent is self:
             return self
         return self.parent.root()
-    def clear_cache(self, mode):
-        """
-        Clear your own cache and if the mode is...
-            - single: nobody, just your own
-            - parents: you, your parent, and all their parents to the root
-            - children: you, all your children, and all their children recursively
-            - tree: the whole tree from the .root() downward
-        """
-        assert False
-        if mode is None:
-            return
-        self.cache = Cache(None,None,None)
-        sing.stats.cache_cleared += 1
-        if mode == 'single':
-            pass # nothing more to od
-        elif mode == 'parents':
-            if self.parent is not self: # ie not root
-                self.parent.clear_cache('parents')
-        elif mode == 'children':
-            for c in self.children():
-                c.clear_cache('children')
-        elif mode == 'tree':
-            self.root().clear_cache('children')
-        else:
-            raise ValueError
     def reset_cache(self,recursive=True):
         self.pnode_cache.clear()
         if recursive:
@@ -1620,28 +1362,6 @@ class PNode:
             for c,o in zip(self.children(),other.children()):
                 c.copy_cache_from(o,recursive=True)
 
-        # assert False
-        # assert self.ntype == other.ntype
-        # assert self.marked_str() == other.marked_str(), "maaaaybe you can relax this but be careful. Esp given that cache.string is getting copied (tho u could change that)"
-        # cache = other.cache
-        # if cache.towards is None:
-        #     self.cache = Cache(None,None,None)
-        #     return
-
-        # new_towards = None
-        # if cache.towards is other:
-        #     new_towards = self
-        # elif cache.towards is other.parent:
-        #     new_towards = self.parent
-        # else:
-        #     for i,c in enumerate(other.children()):
-        #         if cache.towards is c:
-        #             new_towards = self.children()[i]
-        # assert new_towards is not None
-        # self.cache = Cache(new_towards,cache.exwise,cache.string)
-        # if recursive:
-        #     for c,o in zip(self.children(),other.children()):
-        #         c.copy_cache_from(o,recursive=True)
             
     def hide(self,recursive=False):
         """
@@ -1685,18 +1405,7 @@ class PNode:
             for c in self.children():
                 c.unhide(recursive=True)
 
-    def pause_cache(self, children=True):
-        assert False
-        """
-        pauses the cache for us and our children (unless children=False)
-            - note that this makes the whole system ignore the cache and itll stay
-              in whatever state you left it (it will NOT clear the cache)
-        """
-        self.cache_paused = True
-        self.cache = Cache(None,None)
-        if children:
-            for c in self.children():
-                c.pause_cache(children=True)
+
 
 
 

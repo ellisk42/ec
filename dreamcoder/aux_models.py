@@ -231,3 +231,8 @@ class ApplyNN(nn.Module):
         return res
 
 
+def distance(target_vec, cand_vec):
+    raise NotImplementedError # dot prod
+
+def batch_distance(target_vec, cand_vecs):
+    raise NotImplementedError # mat*vec mul
