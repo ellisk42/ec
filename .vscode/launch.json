@@ -15,7 +15,7 @@
                 "model.vhead=uniform",
                 "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
-                "model.multidir=True",
+                "model.multidir=False",
 
                 "model.apply.type=transformer",
                 "model.apply.transformer.readout_from=sum",

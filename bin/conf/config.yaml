@@ -38,7 +38,7 @@ loop:
   search_valid_timeout: 3
   search_valid_num_tasks: 50
   round_j: False
-  j_multiplier: 1
+  j_multiplier: 2
 
 loader:
   buf_size: 1000 # size of buffer

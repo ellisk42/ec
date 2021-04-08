@@ -11,7 +11,7 @@ from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 from dreamcoder.valueHead import RNNValueHead, AbstractREPLValueHead, UniformValueHead, TowerREPLValueHead, SemiOracleValueHead
-from dreamcoder.policyHead import PolicyHead, RNNPolicyHead,RBREPLPolicyHead
+from dreamcoder.policyHead import PolicyHead, RNNPolicyHead
 
 from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
 import sys

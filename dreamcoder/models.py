@@ -68,13 +68,13 @@ class MBAS(nn.Module):
     # TODO run more tests here!
 
   def train_step(self,fs):
-    assert len(fs) == 1
-    [f] = fs
+    ps = [f.p for f in fs]
+    tasks = [f.t for f in fs]
     self.train()
     self.zero_grad()
 
-    vloss = self.vhead.train_loss(f.p, f.t)
-    ploss = self.phead.train_loss(f.p, f.t)
+    vloss = self.vhead.train_loss(ps,tasks)
+    ploss = self.phead.train_loss(ps,tasks)
 
     self.running_vloss.add(vloss)
     self.running_ploss.add(ploss)
@@ -97,14 +97,16 @@ class MBAS(nn.Module):
     sing.stats.print_stats()
 
   def valid_step(self,fs):
+    ps = [f.p for f in fs]
+    tasks = [f.t for f in fs]
     self.eval()
     with torch.no_grad():
       running_loss = RunningFloat()
       running_vloss = RunningFloat()
       running_ploss = RunningFloat()
       for f in fs:
-        vloss = self.vhead.train_loss(f.p,f.t)
-        ploss = self.phead.train_loss(f.p,f.t)
+        vloss = self.vhead.train_loss(ps,tasks)
+        ploss = self.phead.train_loss(ps,tasks)
         running_vloss.add(vloss)
         running_ploss.add(ploss)
         running_loss.add(vloss+ploss)
