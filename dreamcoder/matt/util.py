@@ -21,6 +21,47 @@ import inspect
 import torch
 import omegaconf
 
+from dreamcoder.matt.sing import sing
+
+
+
+# making these public to `from util import *` modules!
+from einops import rearrange, reduce, repeat
+from torch import cat,stack
+
+def flatten(list_of_lists):
+    return itertools.chain.from_iterable(list_of_lists)
+
+def group_by(iter, key):
+  res = defaultdict(list)
+  for v in iter:
+    res[key(v)].append(v)
+  return res
+
+def pad_list_list_tensor(list_list_tensor):
+    """
+    takes a list of list of same-dimensionality tensors and pads them all to be
+    equal in inner list length so that they can all be stacked. Pads with zero tensors.
+    No sequences can have zero length.
+    Actually works with multidimensional inner tensors too
+
+
+    list_list_tensor :: [BATCH, RAGGED_SEQ, H] where BATCH and RAGGED_SEQ are list dimensions and RAGGED_SEQ is ragged (varies between instances)
+    returns res,mask where
+        res :: [BATCH,MAX_SEQ,H] where MAX_SEQ is the maximum sequence length in among all the RAGGED_SEQs
+        mask :: [BATCH,MAX_SEQ] is a booltensor useful as a key_padding_mask or attn_mask with 0 at padding locations and 1 elsewhere
+
+    """
+    longest = max(len(l) for l in list_list_tensor)
+    H = list_list_tensor[0][0].shape
+
+    mask = torch.zeros(len(list_list_tensor), longest,     device=sing.device, dtype=bool)
+    res =  torch.zeros(len(list_list_tensor), longest, *H, device=sing.device, dtype=bool)
+    for list_tensor,submask,subres in zip(list_list_tensor,mask,res):
+        submask[len(list_tensor):] = True
+        subres[len(list_tensor):] = list_tensor
+    
+    return res,mask
 
 class InvalidSketchError(Exception): pass
 

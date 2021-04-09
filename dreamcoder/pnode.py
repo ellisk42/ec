@@ -571,6 +571,8 @@ class PNode:
         self.pnode_cache = PNodeCache()
 
         #self.cache = Cache(None, None, None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
+    def is_root(self):
+        return self.parent == self
     def root_str(self):
         """
         Useful for when you wanna ensure that the whole program hasnt been inplace

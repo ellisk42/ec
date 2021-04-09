@@ -4,7 +4,8 @@ import torch
 from dreamcoder.type import tlist,tbool,tint
 from dreamcoder.domains.misc.deepcoderPrimitives import int_to_int, int_to_bool, int_to_int_to_int
 from dreamcoder.pnode import PNode,PTask,Examplewise
-from einops import rearrange, reduce, repeat
+from dreamcoder.matt.util import *
+
 
 
 def new_embedding(H=None):
@@ -211,7 +212,7 @@ class ApplyNN(nn.Module):
                 num_layers=cfg.model.apply.transformer.num_layers, # vary this
             )
             if self.readout_by == 'linear':
-                self.readout = nn.Sequential(nn.ReLU(),nn.Linear(self.bindH,cfg.model.H))
+                self.readout = nn.Linear(self.bindH,cfg.model.H)
 
         elif self.apply_cfg.type == 'rnn':
             self.gru = nn.GRU(
@@ -231,6 +232,20 @@ class ApplyNN(nn.Module):
             return torch.cat([indicator,vec],dim=-1)
         assert False
     
+    def batch_bind(self, labels, vecs):
+        """
+        take list of labels and vec :: T[BATCH,exs,H]
+        returns T[BATCH,exs,bindH]
+        (labels get expanded over the examples dimension)
+        """
+        inds = stack([self.get_indicator(label).expand(sing.num_exs,-1) for label in labels])
+        assert inds.shape == vecs.shape
+        if self.apply_cfg.bind == 'sum':
+            return vecs+inds
+        elif self.apply_cfg.bind == 'cat':
+            return cat([inds,vecs],dim=-1)
+        assert False
+
     def apply_bound(self,known,target):
         return {
             'rnn': self.gru_apply,
@@ -247,7 +262,6 @@ class ApplyNN(nn.Module):
 
         input = rearrange(known+[target], 'seq exs bindH -> seq exs bindH') # stack
 
-
         hidden = self.transformer(input) # seq exs bindH -> seq exs bindH
 
         # readout step 1 to go from 'seq exs bindH -> exs bindH'
@@ -258,7 +272,6 @@ class ApplyNN(nn.Module):
         else:
             assert False
         
-
         # readout step 2 to go from 'exs bindH -> exs H'
         if self.readout_by == 'linear':
             self.apply_cfg.bind == 'cat'
@@ -266,6 +279,47 @@ class ApplyNN(nn.Module):
         elif self.readout_by == 'cut': # cut out at precisely the place that PREDICT_MASK used to be (ie ignore the indicator)
             assert self.apply_cfg.bind == 'cat'
             res = hidden[:,:-self.H]
+        elif self.readout_by == 'identity':
+            assert self.apply_cfg.bind == 'sum'
+            res = hidden # noop
+        else:
+            assert False
+
+        return res
+
+    def batch_transformer_apply(self,known,target,known_pad_mask):
+        """
+        known :: 'batch seq exs bindH'
+        known_pad_mask :: 'batch seq' says to ignore places in `known` where this mask is 0
+        target :: 'batch exs bindH'
+        returns :: 'batch exs H'
+        """
+        # add target on as first element of sequence
+        target = rearrange(target, 'batch exs bindH -> batch 1 exs bindH')
+        input = cat((target,known),dim=1)
+        # also add a corresponding column of `True`s as the first column of the mask
+        pad_mask = cat((torch.ones(known.shape[0],1,dtype=bool,device=sing.device),known_pad_mask),dim=1)
+
+        # transformer expects 'seq BATCH H' as shape
+        input = rearrange(input, 'batch seq exs bindH -> seq (batch exs) bindH')
+        hidden = self.transformer(input, mask=pad_mask, src_key_padding_mask=pad_mask) # seq (batch exs) bindH -> seq (batch exs) H
+        hidden = rearrange(hidden, 'seq (batch exs) H -> batch seq exs bindH',exs=sing.num_exs)
+
+        # readout step 1 to go from 'batch seq exs bindH -> batch exs bindH'
+        if self.readout_from == 'sum':
+            hidden = reduce(hidden, 'batch seq exs bindH -> batch exs bindH','sum')
+        elif self.readout_from == 'mask': # take the hidden at the last elem of sequence (ie the PREDICT token location)
+            hidden = hidden[:,0,:,:] # batch seq exs bindH -> batch exs bindH
+        else:
+            assert False
+        
+        # readout step 2 to go from 'batch exs bindH -> batch exs H'
+        if self.readout_by == 'linear':
+            self.apply_cfg.bind == 'cat'
+            res = self.readout(hidden)
+        elif self.readout_by == 'cut': # cut out at precisely the place that PREDICT_MASK used to be (ie ignore the indicator)
+            assert self.apply_cfg.bind == 'cat'
+            res = hidden[:,:,:-self.H]
         elif self.readout_by == 'identity':
             assert self.apply_cfg.bind == 'sum'
             res = hidden # noop
@@ -297,12 +351,37 @@ class ApplyNN(nn.Module):
         target = self.bind(target, self.PREDICT_MASK.expand(sing.num_exs,-1))
         known = [self.bind(label,vec) for label,vec in known]
 
-        # bound_func = self.bind(self.func_indicator(), func_vec)
-        # bound_args = [self.bind(self.arg_indicators[argi](),arg) for argi, arg in labelled_arg_vecs]
-        # if parent_vec is not None: # prepend parent vec if provided
-        #     bound_args = [self.bind(self.parent_indictor(),parent_vec)] + bound_args
         res = self.apply_bound(known, target)
         return res
+
+    def batch_forward(self, batch_known, batch_known_labels, batch_target):
+        """
+        batch_known ::  [BATCH, RAGGED_SEQ, exs, H] with lists as outer two dimensions (and RAGGED_SEQ dim is ragged)
+        batch_known_labels ::  [BATCH, RAGGED_SEQ] list of list of labels
+        batch_target :: list of labels (len=BATCH)
+        """
+
+        # prep target
+        mask = repeat(self.PREDICT_MASK, 'H -> batch exs H',batch=len(batch_target),exs=sing.num_exs)
+        # mask = self.PREDICT_MASK.expand(len(batch_target),sing.num_exs,-1) # [BATCH, exs, H]
+        batch_target = self.batch_bind(batch_target, mask) # -> 'batch exs bindH'
+
+        # prep known
+        batch_known,pad_mask = pad_list_list_tensor(batch_known) # batch_known :: [BATCH, SEQ, exs, H]
+        # pad the labels to [BATCH, SEQ] list of lists
+        longest_seq = pad_mask.shape[1]
+        batch_known_labels = [labels + ['out']*(longest_seq-len(labels)) for labels in batch_known_labels] # 'out' is a garbage label here just for padding
+        # flatten so batch_bind can bind over the sequence and batch dimension both at once
+        batch_known_labels = flatten(batch_known_labels)
+        batch_known = rearrange(batch_known,'batch seq exs H -> (batch seq) exs H')
+        # batch bind
+        batch_known = self.batch_bind(batch_known,batch_known_labels)
+        # unflatten
+        batch_known = rearrange(batch_known,'(batch seq) exs bindH -> batch seq exs bindH',seq=longest_seq)
+
+        assert sing.cfg.apply.type == 'transformer', "gru not yet implemented for batching"
+        return self.batch_transformer_apply(batch_known, batch_target, pad_mask)
+        
 
 
 def distance(target_vec, cand_vec):
