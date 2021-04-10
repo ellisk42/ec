@@ -573,6 +573,8 @@ class PNode:
         #self.cache = Cache(None, None, None) # can't use `None` as the cleared cache since that's a legit direciton for the output node
     def is_root(self):
         return self.parent == self
+    def all_nodes(self):
+        return [self] + self.children(recursive=True)
     def root_str(self):
         """
         Useful for when you wanna ensure that the whole program hasnt been inplace
@@ -590,7 +592,7 @@ class PNode:
         A unique little string that shows the whole program but with `self` marked clearly with double brackets [[]]
         """
         return self.root().marked_repr(self)
-    def expand_to(self, prim, cache_mode=None):
+    def expand_to(self, prim):
         """
         Call this on a hole to transform it inplace into something else.
          - prim :: Primitive | Index
@@ -751,6 +753,46 @@ class PNode:
         # do some sanity checks
         hole, num_abs = root.tree.unwrap_abstractions(count=True)
         assert ptask.argc == num_abs, "task argc doesnt match number of toplevel abstraction"
+        return root
+
+    @staticmethod
+    def from_ptask2(ptask: PTask):
+        """
+        Create a tree shaped like:
+                PNode(OUTPUT)
+                     |
+                 PNode(APP)
+                   /    \                  
+           PNode(ABS)    PNode(EXWISE: input[0]) 
+                |
+                |
+           PNode(HOLE)
+        
+        Or however many abstractions make sense for the given ptask
+        Returns the root of the tree (the output node)
+        """
+        root = PNode(NType.OUTPUT, tp=ptask.request.returns(), parent=ptask, ctx_tps=())
+        app = PNode(NType.APP, tp=ptask.request.returns(), parent=root, ctx_tps=())
+        root.tree = app
+        app.fn = app.build_hole(ptask.request) # build an ABS
+        app.xs = []
+        for input_ew,tp in zip(ptask.inputs, ptask.request.functionArguments()):
+            arg = PNode(NType.EXWISE, tp=tp, parent=app, ctx_tps=())
+            arg.ew = input_ew
+            app.xs.append(arg)
+        return root
+    
+    @staticmethod
+    def from_dreamcoder2(p: Program, task:Task):
+        """
+        Given a dreamcoder Program and Task, make an equivalent PNode
+        and associated PTask. Returns the root (an output node).
+        """
+        # create a full program from the top level task and program
+        # meaning this will be our ntype.output node
+        root = PNode.from_ptask(PTask(task))
+        root.tree.abs.expand_from_dreamcoder(p)
+        assert str(root.tree) == str(p), "these must be the same for the sake of the RNN which does str() of the pnode"
         return root
 
     @staticmethod
@@ -1458,6 +1500,7 @@ class NType(enum.Enum):
     PRIM = 3
     HOLE = 4
     OUTPUT = 5
+    EXWISE = 6
     @staticmethod
     def from_program(p):
         if p.isAbstraction:
@@ -1489,3 +1532,6 @@ class NType(enum.Enum):
     @property
     def output(self):
         return self == NType.OUTPUT
+    @property
+    def exwise(self):
+        return self == NType.EW

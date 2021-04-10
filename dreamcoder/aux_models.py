@@ -102,6 +102,8 @@ class AbstractionFn(nn.Module):
         res = res.sum(0) # sum bidir
         return res
 
+
+
     # def encode_known_ctx(self,ctx):
     #   """
     #   Takes a list of Examplewise objects, abstracts them all, 

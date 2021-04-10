@@ -5,9 +5,8 @@ import mlb
 from collections import OrderedDict
 import hydra
 import itertools
-from omegaconf import DictConfig,OmegaConf,open_dict
+from omegaconf import OmegaConf
 from datetime import datetime
-import pathlib
 from pathlib import Path
 import heapq
 from torch.utils.tensorboard import SummaryWriter
@@ -27,7 +26,9 @@ from dreamcoder.matt.sing import sing
 
 # making these public to `from util import *` modules!
 from einops import rearrange, reduce, repeat
-from torch import cat,stack
+from torch import cat,stack,zeros,ones
+from collections import defaultdict
+
 
 def flatten(list_of_lists):
     return itertools.chain.from_iterable(list_of_lists)
