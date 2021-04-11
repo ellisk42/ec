@@ -75,8 +75,11 @@ def fast(ps,tasks):
 
   # lets show that this is equivalent to inverse_beval and beval. Throw out z=None which are concrete
 
-  def beval_vec(node):
+  def beval_vec(node): # vec going from node -> node.parent
       edge = (node.id,node.parent.id)
+      return edge_done_results[edges.index(edge)]
+  def inverse_vec(node): # vec going from node.parent -> node
+      edge = (node.parent.id,node.id)
       return edge_done_results[edges.index(edge)]
 
   for root,hzip in zip(roots,holezippers):
@@ -84,10 +87,16 @@ def fast(ps,tasks):
         continue
     hole = root.apply_zipper(hzip)
     inside = root.tree.fn.unwrap_abstractions()
-    vec1 = inside.beval(ctx=root.task.ctx).get_abstract()
+    vec1 = inside.beval(ctx=inside.ctx).get_abstract()
     vec2 = beval_vec(inside)
-    # TODO what does it mean for beavl to have this toplevel application? Since you updated the ctx of everyone shouldnt you actually remove it?
     assert torch.allclose(vec1,vec2,atol=1e-6)
+
+    vec1 = hole.embed_from_above()
+    vec2 = inverse_vec(hole)
+    assert torch.allclose(vec1,vec2,atol=1e-6)
+    print("hell yes")
+    # TODO what does it mean for beavl to have this toplevel application? Since you updated the ctx of everyone shouldnt you actually remove it?
+    
     # [torch.allclose(beval_vec(c),c.beval(ctx=root.task.ctx).get_abstract()) for c in inside.children()]
 
 
