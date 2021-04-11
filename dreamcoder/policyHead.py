@@ -68,6 +68,7 @@ from dreamcoder.grammar import NoCandidates
 from dreamcoder.domains.misc.deepcoderPrimitives import get_lambdas
 from dreamcoder.pnode import PNode,PTask
 from dreamcoder.matt.sing import sing
+from dreamcoder import pnode_fast
 
 from einops import reduce,rearrange
 
@@ -134,6 +135,8 @@ class PolicyHead(nn.Module):
         """
 
         """
+        pnode_fast.fast(ps,tasks)
+        assert False
 
         assert all(not p.hasHoles for p in ps)
 

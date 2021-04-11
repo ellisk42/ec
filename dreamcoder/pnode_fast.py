@@ -6,33 +6,201 @@ from dreamcoder.matt.util import *
 import functools
 
 
-def fast(roots):
+
+"""
+Template:
+
+if self.is_prim:
+    pass
+elif self.is_var:
+    pass
+elif self.is_exwise:
+    pass
+elif self.is_hole:
+    pass
+elif self.is_output:
+    pass
+elif self.is_abs:
+    pass
+elif self.is_app:
+    pass
+else:
+    assert False
+"""
+
+# duplicated from policyHead
+ReplProcessedHole = namedtuple('ReplProcessedHole','sk_rep ctx_rep')
+
+def get_traces(orig_root):
+    
+    p = FPNode.from_ptask(orig_root.task)
+    trace = [p]
+    holes_expanded = []
+
+    while p.has_holes:
+        p = p.clone()
+        hole = p.get_hole(sing.cfg.model.ordering,sing.cfg.model.tiebreaking)
+        assert hole is not None
+        zipper = hole.get_zipper()
+        holes_expanded.append(zipper)
+        target = orig_root.apply_zipper(zipper)
+        hole.expand_from(target,recursive=False)
+        trace.append(p)
+        assert not p.is_exwise, "its impossible to produce one of these from a policy so they shouldnt in the trace"
+    holes_expanded.append(None)
+    assert len(trace) == len(holes_expanded)
+    return list(zip(trace, holes_expanded))
+
+
+def fast(ps,tasks):
+  ps = [FPNode.from_dreamcoder(p,t) for p,t in zip(ps,tasks)]
+  roots_holezippers = flatten(get_traces(p) for p in ps)
+  roots,holezippers = zip(*roots_holezippers)
   for node in roots:
-    rewrite(node)
     label_ctxs(node)
-    batched_ctx_encode([n.ctx for n in node.all_nodes()])
+    label_concrete(node)
     fold_concrete(node)
+    batched_ctx_encode([n.ctx for n in node.all_nodes()])
   batcher = Batcher(roots)
   batcher.saturate()
-  return batcher.nodes, batcher.edges, batcher.edges_done_results
-
-
-
-def fold_concrete(p:FPNode):
-  """
-  folds all concrete subtrees including variables into EXWISE nodes
-  """
-
-def label_ctxs(p:FPNode):
-  """
-  label every node with a .ctx EWContext thats all concrete or placeholders
-  """
+  nodes, edges, edge_done_results = batcher.nodes, batcher.edges_done, batcher.edges_done_results
   
 
-def label_concrete(p:FPNode):
+  # lets make sure folding worked well
+#   roots_zips_concrete = [r for r,z in zip(roots,holezippers) if z is None]
+  roots_zips_concrete = filterr(roots, lambda r: not r.has_holes)
+  for root in roots_zips_concrete:
+      assert root.task.outputs.concrete == root.tree.ew.concrete
+  
+
+  # lets show that this is equivalent to inverse_beval and beval. Throw out z=None which are concrete
+
+  def beval_vec(node):
+      edge = (node.id,node.parent.id)
+      return edge_done_results[edges.index(edge)]
+
+  for root,hzip in zip(roots,holezippers):
+    if not root.has_holes:
+        continue
+    hole = root.apply_zipper(hzip)
+    inside = root.tree.fn.unwrap_abstractions()
+    vec1 = inside.beval(ctx=root.task.ctx).get_abstract()
+    vec2 = beval_vec(inside)
+    # TODO what does it mean for beavl to have this toplevel application? Since you updated the ctx of everyone shouldnt you actually remove it?
+    assert torch.allclose(vec1,vec2,atol=1e-6)
+    # [torch.allclose(beval_vec(c),c.beval(ctx=root.task.ctx).get_abstract()) for c in inside.children()]
+
+
+
+
+  
+  # Context objects for each hole along the trace
+  tr_ctxs = [r.apply_zipper(z).ctx for r,z in zip(roots,holezippers) if z is not None]
+  # downward edges going into each hole along the trace (should be save as inverse_beval)
+  tr_hole_edges = [(r.apply_zipper(z).parent.id,r.apply_zipper(z).id) for r,z in zip(roots,holezippers) if z is not None]
+  # upward edges going from toplevel abs.body to abs in the trace (should be same as beval)
+  tr_beval_edges= [(r.tree.fn.unwrap_abstractions().id,r.tree.fn.unwrap_abstractions().parent.id) for r,z in zip(roots,holezippers) if z is not None]
+
+  # TODO honestly we should beval right here!
+
+  return
+
+
+
+def label_ctxs(self,ctx=None):
+    """
+    label every node with a .ctx : EWContext thats all EW(concrete) or EW(placeholder)
+    Note that it treats APP(ABS(...),EXWISE(...)) as a special case specifically where
+    it can actually update the context with an EW(concrete) instead of EW(placeholder)
+    """
+    if ctx is None:
+        ctx = EWContext()
+    self.ctx = ctx
+    if self.is_leaf:
+        pass
+    elif self.is_output:
+        label_ctxs(self.tree,ctx)
+    elif self.is_abs:
+        body_ctx = EWContext.get_placeholders(self.argc) + ctx
+        label_ctxs(self.body,body_ctx)
+    elif self.is_app:
+        [label_ctxs(x,ctx) for x in self.xs]
+        self.fn.ctx = ctx # manually label to avoid recursion of label_ctxs()
+        if self.fn.is_abs:
+            assert all([x.is_exwise for x in self.xs]), "rn this shouldnt happen, but leaving this assert here so im careful if i do change things"
+            body_ctx = EWContext(tuple(x.ew for x in self.xs)) + ctx
+            label_ctxs(self.fn.body,body_ctx)
+    else:
+        assert False
+
+
+def label_concrete(self):
+    """
+    Label every node with a .concrete which is None if the subtree cant be concretely
+    executed into an EW(concrete) and is an EW(concrete) otherwise.
+    ABS: these become None if has_holes else EW(closure). Be careful, you may or may
+    not want to supervise on these later
+
+    call label_ctxs first
+    """
+    if self.is_prim:
+        self.concrete = Examplewise(concrete=[self.value for _ in range(sing.num_exs)])
+    elif self.is_var:
+        ew = self.ctx[self.i]
+        if ew.placeholder:
+            self.concrete = None
+        else:
+            assert ew.concrete
+            self.concrete = ew
+    elif self.is_exwise:
+        assert self.ew.concrete # this has to be true for is_exwise anyways
+        self.concrete = self.ew
+    elif self.is_hole:
+        self.concrete = None
+    elif self.is_output:
+        label_concrete(self.tree)
+        self.concrete = None
+    elif self.is_abs:
+        label_concrete(self.body)
+        if self.has_holes:
+            self.concrete = None
+        else:
+            self.concrete = Examplewise(closure=EWClosure(abs=self,enclosed_ctx=self.ctx))
+    elif self.is_app:
+        fn = label_concrete(self.fn)
+        xs = [label_concrete(x) for x in self.xs]
+        if any(x is None for x in (fn,*xs)):
+            self.concrete = None
+        else:
+            # concrete apply
+            singles_fns = fn.split()
+            singles_args = list(zip(*[ew.split() for ew in xs])) # [argc,num_exs] -> [num_exs,argc]
+            assert len(singles_fns) == len(singles_args) == sing.num_exs
+            res = [fn(*args) for fn,args in zip(singles_fns,singles_args)]
+            self.concrete = Examplewise(concrete=res)
+    else:
+        assert False
+    return self.concrete
+
+
+
+def fold_concrete(self):
   """
-  label every node with a .ctx EWContext thats all concrete or placeholders
+  folds all concrete subtrees including variables into EXWISE nodes,
+  Does not fold ABS into EW(closure).
+
+  call label_concrete first
   """
+  if self.concrete is not None and not self.is_abs:
+      history = str(self)
+      self.into_hole() # wipe all data from self
+      self.expand_to(self.concrete) # expand to EXWISE
+      self.history = history
+  else:
+      [fold_concrete(c) for c in self.children()]
+
+
+
 
 
 def batched_ctx_encode(ctxs):
@@ -48,12 +216,12 @@ def batched_ctx_encode(ctxs):
 def up_edge(edge):
   return edge[1] < edge[0]
 
-def get_nodes_edges(node):
+def get_nodes_edges(node,start_id):
   """
   if higher in tree, you should have a lower number.
   So this is a BFS of the tree
   """
-  id=0
+  id = start_id
   nodes = []
   edges = []
   worklist = [node]
@@ -61,7 +229,7 @@ def get_nodes_edges(node):
     nodes += worklist
     for node in worklist:
       node.id = id
-      if not node.is_root():
+      if not node.is_root:
         edges.append((node.id,node.parent.id))
       id += 1
     # move worklist to be one step deeper in tree
@@ -79,7 +247,7 @@ class Batcher:
     self.nodes = []
     self.edges = []
     for root in roots:
-     nodes,edges = get_nodes_edges(root)
+     nodes,edges = get_nodes_edges(root,start_id=len(self.nodes))
      self.nodes += nodes
      self.edges += edges
     
@@ -95,7 +263,7 @@ class Batcher:
     while len(self.edges_todo) > 0:
       worklist = []
       for src,dst in self.edges_todo:
-        if all(edge in self.edges_done for edge in self.necessary_edges(src)):
+        if all(edge in self.edges_done for edge in self.necessary_edges(src,dst)):
           worklist.append((src,dst))
       assert len(worklist) > 0
 
@@ -108,9 +276,20 @@ class Batcher:
     """
     returns whatever edges it cant find in the cache, .finish()es the others directly
     """
+    return edges # TODO implement
 
-    # self.finish_edge(edge,vec)
-    
+  def split_by_cache(self,edges):
+    """
+    return (edges_to_compute,edges_to_try_cache)
+    these two lists together form the original `edges` list, but the key is if you
+    were to compute all the edges in edges_to_compute you could then use your cache
+    to retrieve everything in edges_to_try_cache
+
+    Note that this takes into account boht the current cache + deduping the `edges` list
+    """
+    return edges,[] # TODO implement
+
+
   def finish_edge(self,edge,vec):
       assert vec.dim() == 2
       self.edges_todo.remove(edge)
@@ -125,15 +304,6 @@ class Batcher:
     for edge,vec in zip(edges,vecs):
       self.finish_edge(edge,vec)
       
-  def split_by_cache(self,edges):
-    """
-    return (edges_to_compute,edges_to_try_cache)
-    these two lists together form the original `edges` list, but the key is if you
-    were to compute all the edges in edges_to_compute you could then use your cache
-    to retrieve everything in edges_to_try_cache
-
-    Note that this takes into account boht the current cache + deduping the `edges` list
-    """
 
   def compute_edges(self,edges):
     """
@@ -155,8 +325,19 @@ class Batcher:
       NType.OUTPUT : self.compute_edges_output,
       NType.ABS : self.compute_edges_abs,
       NType.APP : self.compute_edges_app,
+      NType.EXWISE : self.compute_edges_exwise,
     }[ntype](edges)
-      
+  def compute_edges_exwise(self, edges):
+      """
+      EXWISE
+      """
+      by_type = group_by(edges, lambda e: self.nodes[e[0]].tp.show(True))
+      for ty,edges in by_type.items():
+        values = [self.nodes[src].ew.concrete for (src,dst) in edges]
+        values = flatten(values)
+        res = sing.model.abstraction_fn.encoder.encodeValue(values)
+        res = rearrange(res,'(batch exs) H -> batch exs H',exs=sing.num_exs)
+        self.finish_edges(edges,res)
   def compute_edges_prim(self, edges):
     """
     PRIM
@@ -166,13 +347,17 @@ class Batcher:
 
     sadly our current encodeValue can only batch together values of the same type since it takes
     different paths for list vs nonlist.
+
+    * this code probably never runs thanks to EW folding
+
     """
-    by_type = group_by(edges, lambda e: type(self.nodes[e[0]].value))
+    by_type = group_by(edges, lambda e: self.nodes[e[0]].tp.show(True))
     for ty,edges in by_type.items():
       values = [self.nodes[src].value for (src,dst) in edges]
-      values = flatten([[v]*sing.num_exs for v in values])
+    #   values = flatten([[v]*sing.num_exs for v in values])
       res = sing.model.abstraction_fn.encoder.encodeValue(values)
-      res = rearrange(res,'(batch exs) H -> batch exs H',batch=len(edges),exs=sing.num_exs)
+      res = repeat(res,'batch H -> batch exs H',exs=sing.num_exs)
+    #   res = rearrange(res,'(batch exs) H -> batch exs H',batch=len(edges),exs=sing.num_exs)
       self.finish_edges(edges,res)
 
   def compute_edges_var(self, edges):
@@ -213,22 +398,24 @@ class Batcher:
     # grab the one incoming edge that we already know
     input_vecs = []
     for e in edges:
-      input_edge = self.necessary_edges(*e)[0] # grab the one necessary edge
+      input_edge = list(self.necessary_edges(*e))[0] # grab the one necessary edge
       input_vecs.append(self.get_done_vec(*input_edge))
 
     by_dir = group_by(zip(edges,input_vecs), lambda edge_invec: up_edge(edge_invec[0]))
 
     ### UP
-    edges, input_vecs = zip(*by_dir[True]) # [(edge,invec)] -> (edges,invecs)
-    #TODO stack input_vecs and run thru a lam_up() NM for prettier semantics
-    res = input_vecs
-    self.finish_edges(edges,res)
+    if len(by_dir[True]) > 0:
+        edges, input_vecs = zip(*by_dir[True]) # [(edge,invec)] -> (edges,invecs)
+        #TODO stack input_vecs and run thru a lam_up() NM for prettier semantics
+        res = input_vecs
+        self.finish_edges(edges,res)
 
     ### DOWN
-    edges, input_vecs = zip(*by_dir[False]) # [(edge,invec)] -> (edges,invecs)
-    #TODO add a lam_down() NM for prettier semantics
-    res = input_vecs
-    self.finish_edges(edges,res)
+    if len(by_dir[False]) > 0:
+        edges, input_vecs = zip(*by_dir[False]) # [(edge,invec)] -> (edges,invecs)
+        #TODO add a lam_down() NM for prettier semantics
+        res = input_vecs
+        self.finish_edges(edges,res)
 
   def compute_edges_app(self, edges):
     """
@@ -239,7 +426,6 @@ class Batcher:
     batch_target = []
     for (src,dst) in edges:
       neis = sorted(self.neighbors(src)) # take advantage that out < f < arg0 < arg1 < arg2 < arg3
-      neis = list() # now this is [(nei_id,label)]
       labels = []
       known = []
       target = None
@@ -249,11 +435,41 @@ class Batcher:
           continue
         labels.append(label)
         known.append(self.get_done_vec(nei,src))
+      assert target is not None
       batch_known.append(known)
       batch_known_labels.append(labels)
       batch_target.append(target)
 
+    
     res = sing.model.apply_nn.batch_forward(batch_known, batch_known_labels, batch_target)
+
+    # TODO debugging
+    """
+    for i,(known,labels,target) in enumerate(zip(batch_known, batch_known_labels, batch_target)):
+        node = self.nodes[edges[i][0]]
+        labelled = zipp(labels,known)
+
+        
+        known = torch.rand(1,3,5,128)
+        target = torch.rand(1,5,128)
+        mask = torch.zeros(1,3).bool()
+
+        res1 = sing.model.apply_nn.transformer_apply(list(known[0]),target[0])
+        res2 = sing.model.apply_nn.batch_transformer_apply(known,target,mask)
+        
+
+        
+        rr = sing.model.apply_nn.batch_forward([known],[labels],[target])[0]
+        r = sing.model.apply_nn(labelled,target)
+        # [c.beval(ctx=c.ctx).get_abstract() for c in node.children()]
+        # assert torch.allclose(r,rr,atol=1e-6)
+        assert allclose(r,rr,atol=1e-6)
+        assert allclose(r,res[i],atol=1e-6)
+        print("YAY")
+
+    """
+
+
     self.finish_edges(edges,res)      
 
     
@@ -285,9 +501,33 @@ class FPNode:
         self.ntype = ntype
         self.tp = tp
         self.ctx_tps = ctx_tps
-
+    @property
+    def is_leaf(self):
+        return len(self.children()) == 0
+    @property
     def is_root(self):
         return self.parent == self
+    @property
+    def is_app(self):
+        return self.ntype.app
+    @property
+    def is_abs(self):
+        return self.ntype.abs
+    @property
+    def is_var(self):
+        return self.ntype.var
+    @property
+    def is_exwise(self):
+        return self.ntype.exwise
+    @property
+    def is_output(self):
+        return self.ntype.output
+    @property 
+    def is_prim(self):
+        return self.ntype.prim
+    @property 
+    def is_hole(self):
+        return self.ntype.hole
     def all_nodes(self):
         return [self] + self.children(recursive=True)
     def root_str(self):
@@ -324,7 +564,7 @@ class FPNode:
         """
         self = self.unwrap_abstractions()
         assert self.ntype.hole
-        assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
+        #assert not self.tp.isArrow(), "We should never have an arrow for a hole bc it'll instantly get replaced by abstractions with an inner hole"
         if isinstance(prim,Examplewise):
           self.ew = prim
           self.ntype = NType.EXWISE
@@ -466,8 +706,8 @@ class FPNode:
         # create a full program from the top level task and program
         # meaning this will be our ntype.output node
         root = FPNode.from_ptask(PTask(task))
-        root.tree.abs.expand_from_dreamcoder(p)
-        assert str(root.tree) == str(p), "these must be the same for the sake of the RNN which does str() of the pnode"
+        root.tree.fn.expand_from_dreamcoder(p)
+        assert str(root.tree.fn) == str(p), "these must be the same for the sake of the RNN which does str() of the pnode"
         return root
 
     def expand_from_dreamcoder(self, p: Program):
@@ -635,6 +875,9 @@ class FPNode:
 
             elif self.ntype.hole:
                 return Examplewise(abstract=sing.model.abstract_transformers.hole_nms[self.tp.show(True)](ctx.encode()))
+            
+            elif self.ntype.exwise:
+                return self.ew
 
             elif self.ntype.abs:
                 return Examplewise(closure=EWClosure(abs=self,enclosed_ctx=ctx))
@@ -674,7 +917,7 @@ class FPNode:
                 ### * V1 * ###
                 sing.scratch.beval_print(f'[abstract apply]')
                 sing.stats.fn_called_abstractly += 1
-                assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
+                # assert self.fn.ntype.prim, "would work even if this wasnt a prim, but for v1 im leaving this here as a warning"
                 
                 fn_embed = fn.get_abstract() # gets the Parameter vec for that primitive fn
                 args_embed = [arg.get_abstract() for arg in args]
@@ -686,7 +929,8 @@ class FPNode:
             else:
                 raise TypeError
         
-        res = self.pnode_cache.beval(self,no_cache,ctx)
+        # res = self.pnode_cache.beval(self,no_cache,ctx)
+        res = no_cache()
         return printed(res)
 
 
@@ -786,8 +1030,8 @@ class FPNode:
                     # no cache hit
                     return EWContext.get_placeholders(self.argc) + ctx
                 
-                new_ctx = self.pnode_cache.inverse_abs(self, no_cache, ctx, output_ew)
-                
+                # new_ctx = self.pnode_cache.inverse_abs(self, no_cache, ctx, output_ew)
+                new_ctx = no_cache()
                 res = self.body.inverse_beval(new_ctx, output_ew, zipper[1:])
                 
                 return printed(res)
@@ -830,7 +1074,8 @@ class FPNode:
                     sing.scratch.beval_print(f'[apply_nn]')
                     return Examplewise(abstract=sing.model.apply_nn(known, target=zipper[0]))
                 
-                new_output_ew = self.pnode_cache.inverse_app(self,no_cache,output_ew,fn_embed,labelled_args,zipper[0])
+                # new_output_ew = self.pnode_cache.inverse_app(self,no_cache,output_ew,fn_embed,labelled_args,zipper[0])
+                new_output_ew = no_cache()
 
                 res = self.xs[zipper[0]].inverse_beval(ctx, output_ew=new_output_ew, zipper=zipper[1:])
                 return printed(res)
@@ -962,9 +1207,6 @@ class FPNode:
         self = self.unwrap_abstractions()
 
         ntype = self.ntype
-        if ntype.hole and self.phantom_ntype is not None:
-            ntype = self.phantom_ntype
-
         if ntype.output:
             raise TypeError
         elif ntype.hole:
@@ -1051,7 +1293,7 @@ class FPNode:
         root = self.root()
 
         cloned_root = FPNode.from_ptask(root.task) # share same ptask (includes cache)
-        cloned_root.expand_from(root)
+        cloned_root.tree.fn.expand_from(root.tree.fn)
 
         cloned_self = cloned_root.apply_zipper(zipper)
         assert self.marked_str() == cloned_self.marked_str()

@@ -24,16 +24,17 @@ import omegaconf
 import pdoc
 context = pdoc.Context()
 
-docs = {
-    'pnode': pdoc.Module('dreamcoder.pnode',context=context),
-    'util': pdoc.Module('dreamcoder.matt.util',context=context),
-}
+# docs = {
+#     'pnode': pdoc.Module('dreamcoder.pnode',context=context),
+#     'util': pdoc.Module('dreamcoder.matt.util',context=context),
+# }
 
 pdoc.link_inheritance(context)
 
-for name,pdoc_mod in docs.items():
-    with open(f'pdocs/{name}.html','w') as f:
-        f.write(pdoc_mod.html())
+## todo fix this sometime. Rn it doesnt work bc of the repr() mod to Tensor I make in util.py
+# for name,pdoc_mod in docs.items():
+#     with open(f'pdocs/{name}.html','w') as f:
+#         f.write(pdoc_mod.html())
 
 
 

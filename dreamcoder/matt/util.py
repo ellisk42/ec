@@ -20,18 +20,35 @@ import inspect
 import torch
 import omegaconf
 
-from dreamcoder.matt.sing import sing
+
 
 
 
 # making these public to `from util import *` modules!
 from einops import rearrange, reduce, repeat
-from torch import cat,stack,zeros,ones
+from torch import cat,stack,zeros,ones, allclose
 from collections import defaultdict
+from fastcore.basics import Self, ifnone, chunked, argwhere
 
 
 def flatten(list_of_lists):
-    return itertools.chain.from_iterable(list_of_lists)
+    return list(itertools.chain.from_iterable(list_of_lists))
+
+def filterr(xs,fn):
+    return [x for x in xs if fn(x)]
+
+def has_nan(t):
+    return t.isnan().sum().item() > 0
+
+def mapp(xs,fn):
+    if isinstance(fn,int):
+        i = fn
+        fn = lambda x: x[i]
+    return [fn(x) for x in xs]
+
+def zipp(xs,ys):
+    assert len(list(xs)) == len(list(ys))
+    return list(zip(xs,ys))
 
 def group_by(iter, key):
   res = defaultdict(list)
@@ -40,6 +57,7 @@ def group_by(iter, key):
   return res
 
 def pad_list_list_tensor(list_list_tensor):
+    from dreamcoder.matt.sing import sing
     """
     takes a list of list of same-dimensionality tensors and pads them all to be
     equal in inner list length so that they can all be stacked. Pads with zero tensors.
@@ -50,17 +68,22 @@ def pad_list_list_tensor(list_list_tensor):
     list_list_tensor :: [BATCH, RAGGED_SEQ, H] where BATCH and RAGGED_SEQ are list dimensions and RAGGED_SEQ is ragged (varies between instances)
     returns res,mask where
         res :: [BATCH,MAX_SEQ,H] where MAX_SEQ is the maximum sequence length in among all the RAGGED_SEQs
-        mask :: [BATCH,MAX_SEQ] is a booltensor useful as a key_padding_mask or attn_mask with 0 at padding locations and 1 elsewhere
+        mask :: [BATCH,MAX_SEQ] is a booltensor useful as a key_padding_mask with 1 at padding locations and 0 elsewhere
 
     """
     longest = max(len(l) for l in list_list_tensor)
     H = list_list_tensor[0][0].shape
-
-    mask = torch.zeros(len(list_list_tensor), longest,     device=sing.device, dtype=bool)
-    res =  torch.zeros(len(list_list_tensor), longest, *H, device=sing.device, dtype=bool)
-    for list_tensor,submask,subres in zip(list_list_tensor,mask,res):
-        submask[len(list_tensor):] = True
-        subres[len(list_tensor):] = list_tensor
+    pad = zeros(*H)
+    mask = ones(len(list_list_tensor), longest,     device=sing.device, dtype=bool)
+    
+    # res =  torch.zeros(len(list_list_tensor), longest, *H, device=sing.device)
+    res = []
+    for list_tensor,submask in zip(list_list_tensor,mask):
+        submask[:len(list_tensor)] = False
+        padded = stack(list_tensor + [pad]*(longest-len(list_tensor)))
+        res.append(padded)
+        # subres[:len(list_tensor)] = stack(list_tensor)
+    res = stack(res)
     
     return res,mask
 
@@ -79,7 +102,7 @@ def print(*args,**kwargs):
 old_tensor_repr = torch.Tensor.__repr__
 def tensor_repr(tensor):
     old_repr = old_tensor_repr(tensor)
-    return f'T{list(tensor.shape)} {old_repr}'
+    return f'T{list(tensor.shape)} {old_repr} T{list(tensor.shape)}'
 torch.Tensor.__repr__ = tensor_repr
 
 def die(s):

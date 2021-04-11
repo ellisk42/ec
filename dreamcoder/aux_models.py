@@ -292,21 +292,23 @@ class ApplyNN(nn.Module):
     def batch_transformer_apply(self,known,target,known_pad_mask):
         """
         known :: 'batch seq exs bindH'
-        known_pad_mask :: 'batch seq' says to ignore places in `known` where this mask is 0
+        known_pad_mask :: 'batch seq' says to ignore places in `known` where this mask is 1
         target :: 'batch exs bindH'
         returns :: 'batch exs H'
         """
         # add target on as first element of sequence
         target = rearrange(target, 'batch exs bindH -> batch 1 exs bindH')
         input = cat((target,known),dim=1)
-        # also add a corresponding column of `True`s as the first column of the mask
-        pad_mask = cat((torch.ones(known.shape[0],1,dtype=bool,device=sing.device),known_pad_mask),dim=1)
-
+        # also add a corresponding column of `False`s as the first column of the mask
+        pad_mask = cat((torch.zeros(known_pad_mask.shape[0],1,dtype=bool,device=sing.device),known_pad_mask),dim=1)
+        
         # transformer expects 'seq BATCH H' as shape
         input = rearrange(input, 'batch seq exs bindH -> seq (batch exs) bindH')
-        hidden = self.transformer(input, mask=pad_mask, src_key_padding_mask=pad_mask) # seq (batch exs) bindH -> seq (batch exs) H
-        hidden = rearrange(hidden, 'seq (batch exs) H -> batch seq exs bindH',exs=sing.num_exs)
+        pad_mask_repeated = repeat(pad_mask, 'batch seq -> (batch exs) seq',exs=sing.num_exs) 
+        hidden = self.transformer(input, src_key_padding_mask=pad_mask_repeated) # seq (batch exs) bindH -> seq (batch exs) H
+        hidden = rearrange(hidden, 'seq (batch exs) H -> batch seq exs H',exs=sing.num_exs)
 
+        hidden[pad_mask] = 0 # wipe the masked ones to zero so they dont interfere with the sum
         # readout step 1 to go from 'batch seq exs bindH -> batch exs bindH'
         if self.readout_from == 'sum':
             hidden = reduce(hidden, 'batch seq exs bindH -> batch exs bindH','sum')
@@ -328,6 +330,7 @@ class ApplyNN(nn.Module):
         else:
             assert False
 
+        
         return res
 
     def gru_apply(self,known,target):
@@ -362,9 +365,10 @@ class ApplyNN(nn.Module):
         batch_known_labels ::  [BATCH, RAGGED_SEQ] list of list of labels
         batch_target :: list of labels (len=BATCH)
         """
+        inp = batch_known, batch_known_labels, batch_target
 
         # prep target
-        mask = repeat(self.PREDICT_MASK, 'H -> batch exs H',batch=len(batch_target),exs=sing.num_exs)
+        mask = repeat(self.PREDICT_MASK, '1 H -> batch exs H',batch=len(batch_target),exs=sing.num_exs)
         # mask = self.PREDICT_MASK.expand(len(batch_target),sing.num_exs,-1) # [BATCH, exs, H]
         batch_target = self.batch_bind(batch_target, mask) # -> 'batch exs bindH'
 
@@ -377,11 +381,12 @@ class ApplyNN(nn.Module):
         batch_known_labels = flatten(batch_known_labels)
         batch_known = rearrange(batch_known,'batch seq exs H -> (batch seq) exs H')
         # batch bind
-        batch_known = self.batch_bind(batch_known,batch_known_labels)
+        batch_known = self.batch_bind(batch_known_labels, batch_known)
         # unflatten
         batch_known = rearrange(batch_known,'(batch seq) exs bindH -> batch seq exs bindH',seq=longest_seq)
-
-        assert sing.cfg.apply.type == 'transformer', "gru not yet implemented for batching"
+        # allclose(stack([self.bind(inp[1][0][i],inp[0][0][i]) for i in range(3)]), batch_known[0])
+        
+        assert sing.cfg.model.apply.type == 'transformer', "gru not yet implemented for batching"
         return self.batch_transformer_apply(batch_known, batch_target, pad_mask)
         
 

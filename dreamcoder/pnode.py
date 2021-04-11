@@ -262,6 +262,8 @@ class EWContext(Context):
         """
         Turn an exwise context into a list of single contexts
         """
+        if len(self) == 0:
+            return [SinglesContext() for _ in range(sing.num_exs)]
         assert self.no_free, "singlescontexts are fully concrete and never have free vars"
         list_of_ews = [ew.split() for ew in self.vals] # Examplewise.split()
         list_of_ctxs = list(zip(*list_of_ews)) # [len_ctx,num_exs] -> [num_exs,len_ctx]
@@ -1534,4 +1536,4 @@ class NType(enum.Enum):
         return self == NType.OUTPUT
     @property
     def exwise(self):
-        return self == NType.EW
+        return self == NType.EXWISE
