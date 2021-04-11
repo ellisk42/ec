@@ -85,6 +85,10 @@ def fast(ps,tasks):
       edge = (node.parent.id,node.id)
       return edge_done_results[edges.index(edge)]
 
+
+  """
+  lets see if we get the same result as beval and inverse for all the expansion choices
+  """
   for root,hzip in zip(roots,holezippers):
     if not root.has_holes:
         continue
@@ -94,11 +98,28 @@ def fast(ps,tasks):
     vec2 = beval_vec(inside)
     assert torch.allclose(vec1,vec2,atol=1e-6)
 
-    vec1 = hole.embed_from_above()
+    vec1 = hole.embed_from_above().get_abstract()
     vec2 = inverse_vec(hole)
     assert torch.allclose(vec1,vec2,atol=1e-6)
     print("hell yes")
-    # TODO what does it mean for beavl to have this toplevel application? Since you updated the ctx of everyone shouldnt you actually remove it?
+
+  """
+  lets take it one step forward and try beval and inverse for EVERY node!
+  """
+  for root in roots:
+    if not root.has_holes:
+        continue
+    for node in root.children(recursive=True):
+        vec1 = node.beval(ctx=node.ctx).get_abstract()
+        vec2 = beval_vec(node)
+        assert torch.allclose(vec1,vec2,atol=1e-6)
+
+        if 'fn' in node.get_zipper():
+            continue # we dont try inverting into a .fn bc that hasnt been implemented (tho it wouldnt be hard to)
+        vec1 = node.embed_from_above().get_abstract()
+        vec2 = inverse_vec(node)
+        assert torch.allclose(vec1,vec2,atol=1e-6)
+        print("hell yes")
     
     # [torch.allclose(beval_vec(c),c.beval(ctx=root.task.ctx).get_abstract()) for c in inside.children()]
 
@@ -1079,7 +1100,7 @@ class FPNode:
                 label the args and run apply_nn with output_ew as the parent vector
                 """
 
-                assert self.fn.ntype.prim, "feel free to remove post V1"
+                # assert self.fn.ntype.prim, "feel free to remove post V1"
 
                 sing.scratch.beval_print(f'[inverting application]')
 
@@ -1282,7 +1303,7 @@ class FPNode:
             attr = 'tree'
         elif parent.ntype.abs:
             attr = 'body'
-        elif parent.ntype.hole or parent.ntype.prim or parent.ntype.var or self.ntype.exwise:
+        elif parent.ntype.hole or parent.ntype.prim or parent.ntype.var or parent.ntype.exwise:
             raise TypeError
         elif parent.ntype.app:
             if parent.fn is self:
