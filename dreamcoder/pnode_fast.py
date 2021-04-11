@@ -57,9 +57,12 @@ def fast(ps,tasks):
   roots_holezippers = flatten(get_traces(p) for p in ps)
   roots,holezippers = zip(*roots_holezippers)
   for node in roots:
-    label_ctxs(node)
-    label_concrete(node)
-    fold_concrete(node)
+    label_ctxs(node) # label each node with a `.ctx`
+    delete_app_abs(node.tree) # change to OUTPUT(body), cutting out the APP(ABS,EW)
+    holezippers = [('tree',*hz[3:]) if hz is not None else None for hz in holezippers] # cut out the .fn.body bit since we did delete_app_abs
+    # beta_reduce(node) # beta reduce (updates contexts but does no shifting of var indices) specifically for things of the form APP(ABS,EW) (optionally more than one EW)
+    label_concrete(node) # label everyone with their concrete value. Separate from folding in case we want to do only partial folding (or no folding but want supervision on concrete values)
+    fold_concrete(node) # fold concrete subtrees into EW nodes
     batched_ctx_encode([n.ctx for n in node.all_nodes()])
   batcher = Batcher(roots)
   batcher.saturate()
@@ -86,7 +89,7 @@ def fast(ps,tasks):
     if not root.has_holes:
         continue
     hole = root.apply_zipper(hzip)
-    inside = root.tree.fn.unwrap_abstractions()
+    inside = root.tree
     vec1 = inside.beval(ctx=inside.ctx).get_abstract()
     vec2 = beval_vec(inside)
     assert torch.allclose(vec1,vec2,atol=1e-6)
@@ -134,6 +137,7 @@ def label_ctxs(self,ctx=None):
         label_ctxs(self.body,body_ctx)
     elif self.is_app:
         [label_ctxs(x,ctx) for x in self.xs]
+        # label_ctxs(self.fn,ctx)
         self.fn.ctx = ctx # manually label to avoid recursion of label_ctxs()
         if self.fn.is_abs:
             assert all([x.is_exwise for x in self.xs]), "rn this shouldnt happen, but leaving this assert here so im careful if i do change things"
@@ -141,6 +145,19 @@ def label_ctxs(self,ctx=None):
             label_ctxs(self.fn.body,body_ctx)
     else:
         assert False
+
+def delete_app_abs(self):
+    """
+    OUT(APP(ABS(body), arg0, arg1, ...)) -> OUT(body)
+    inplace tree modification. Trashes the arguments so hopefully you already accounted for them thru contexts or something.
+    """
+    assert self.is_app
+    assert self.fn.is_abs
+    assert self.parent.is_output, "not necessary, but enough for now"
+    self.parent.tree = self.fn.body
+    self.fn.body.parent = self.parent
+
+
 
 
 def label_concrete(self):
@@ -992,20 +1009,20 @@ class FPNode:
                 caching: no need. No new Context or EW objects get created here
                 """
                 assert zipper[0] == 'tree'
-                zipper = zipper[1:]
+                # zipper = zipper[1:]
                 assert ctx is None
                 assert output_ew is None
 
-                body,i = self.tree.unwrap_abstractions(count=True)
-                assert len(self.task.ctx) == i
-                assert len(zipper) >= i, "zippers must pass all the way thru the toplevel abstraction"
-                assert all(x == 'body' for x in zipper[:i])
-                zipper = zipper[i:]
+                #body,i = self.tree.unwrap_abstractions(count=True)
+                #assert len(self.task.ctx) == i
+                #assert len(zipper) >= i, "zippers must pass all the way thru the toplevel abstraction"
+                #assert all(x == 'body' for x in zipper[:i])
+                #zipper = zipper[i:]
 
-                return printed(body.inverse_beval(
+                return printed(self.tree.inverse_beval(
                     ctx=self.task.ctx,
                     output_ew=self.task.outputs,
-                    zipper=zipper
+                    zipper=zipper[1:]
                     ))
 
             assert ctx is not None
