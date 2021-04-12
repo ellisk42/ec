@@ -59,11 +59,14 @@ def hydra_main(cfg):
     if isinstance(cfg.plot.legend,str):
         cfg.plot.legend = eval(cfg.plot.legend)
     
-    blue(cfg.load)
-    if isinstance(cfg.load,str) and cfg.load.strip().startswith('['):
-        cfg.load = eval(cfg.load)
+    blue(f"{type(cfg.load)} {cfg.load}")
+    if isinstance(cfg.load,str) and ',' in cfg.load:
+        cfg.load = [p.strip() for p in cfg.load.split(',')]
 
-    print(cfg.load)
+    blue(f"-> {type(cfg.load)} {cfg.load}")
+
+    if cfg.mode == 'plot':
+        cfg.dirty = True
 
     _time = timestamp()
     cfg.start_time = str(_time)

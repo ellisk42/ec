@@ -69,8 +69,16 @@ def load_model_results(load):
         * will maintain the ordering of the list of load regexes in case you're relying on that eg in order to make it align with a plot legend
     """
     paths = path_search(train_path(), load, sort=False, ext='res')
-    model_results = [torch.load(p,pickle_module=dill) for p in paths]
+    
+    model_results = []
+    for p in paths:
+        try:
+            model_results.append(torch.load(p,pickle_module=dill))
+        except RuntimeError as e:
+            yellow(f'[skipping] unable to load {p} because {e}. Likely corrupt.')
     print(f"Loaded {len(paths)} model results:")
+    if len(paths) == 0:
+        die('got no model results')
     for p,m in zip(paths,model_results):
 
         print(f"\t{m.cfg.job_name}.{m.cfg.run_name} from {p}")
