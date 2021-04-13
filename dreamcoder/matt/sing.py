@@ -121,7 +121,8 @@ class Sing(Saveable):
 
         print(f"chdir to {self.cwd}")
         os.chdir(self.cwd)
-        self.set_tensorboard()
+        if cfg.mode in ('train','profile'):
+          self.set_tensorboard() # we dont set this for test/inspect mode bc if a train process is running in the same directory that will mess with the logs (in a fixable way but annoying)
     elif cfg.mode in ('plot','testgen','cmd'):
       ######################################################################
       ### * BARE BONES SING: NO TRAIN_STATE, NO MODEL, NO LOADERS, ETC * ###
