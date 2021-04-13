@@ -32,8 +32,12 @@ else:
 ReplProcessedHole = namedtuple('ReplProcessedHole','sk_rep ctx_rep')
 
 def get_traces(orig_root):
+    p = orig_root.clone()
+    p.tree.into_hole()
+    # p = FPNode.from_ptask(orig_root.task,toplevel_app_abs=orig_root.toplevel_app_abs)
+    # p.ctx = orig_root.ctx
+    # p.concrete_member = orig_root.concrete_member
     
-    p = FPNode.from_ptask(orig_root.task)
     trace = [p]
     holes_expanded = []
 
@@ -47,6 +51,10 @@ def get_traces(orig_root):
         hole.expand_from(target,recursive=False)
         trace.append(p)
         assert not p.is_exwise, "its impossible to produce one of these from a policy so they shouldnt in the trace"
+    
+    for sk in trace:
+        transfer_attrs(orig_root,sk,('ctx','concrete_member'))
+    
     holes_expanded.append(None)
     assert len(trace) == len(holes_expanded)
     return list(zip(trace, holes_expanded))
@@ -54,24 +62,25 @@ def get_traces(orig_root):
 
 def fast(ps,tasks):
   ps = [FPNode.from_dreamcoder(p,t) for p,t in zip(ps,tasks)]
-  roots_holezippers = flatten(get_traces(p) for p in ps)
-  roots,holezippers = zip(*roots_holezippers)
-  for node in roots:
-    label_ctxs(node) # label each node with a `.ctx`
-    delete_app_abs(node.tree) # change to OUTPUT(body), cutting out the APP(ABS,EW)
-    holezippers = [('tree',*hz[3:]) if hz is not None else None for hz in holezippers] # cut out the .fn.body bit since we did delete_app_abs
+  for p in ps:
+      label_ctxs(p) # label each node with a `.ctx`
+      delete_app_abs(p) # change to OUTPUT(body), cutting out the APP(ABS,EW)
+      label_concrete_member(p) # label everyone with their concrete value. Separate from folding in case we want to do only partial folding (or no folding but want supervision on concrete values)
+
+  sks, holezippers = zip(*flatten(get_traces(p) for p in ps))
+  for sk in sks:
     # beta_reduce(node) # beta reduce (updates contexts but does no shifting of var indices) specifically for things of the form APP(ABS,EW) (optionally more than one EW)
-    label_concrete(node) # label everyone with their concrete value. Separate from folding in case we want to do only partial folding (or no folding but want supervision on concrete values)
-    fold_concrete(node) # fold concrete subtrees into EW nodes
-    batched_ctx_encode([n.ctx for n in node.all_nodes()])
-  batcher = Batcher(roots)
+    
+    fold_concrete(sk) # fold concrete subtrees into EW nodes
+    batched_ctx_encode([n.ctx for n in sk.all_nodes()])
+  batcher = Batcher(sks)
   batcher.saturate()
   nodes, edges, edge_done_results = batcher.nodes, batcher.edges_done, batcher.edges_done_results
   
 
   # lets make sure folding worked well
 #   roots_zips_concrete = [r for r,z in zip(roots,holezippers) if z is None]
-  roots_zips_concrete = filterr(roots, lambda r: not r.has_holes)
+  roots_zips_concrete = filterr(sks, lambda r: not r.has_holes)
   for root in roots_zips_concrete:
       assert root.task.outputs.concrete == root.tree.ew.concrete
   
@@ -89,7 +98,7 @@ def fast(ps,tasks):
   """
   lets see if we get the same result as beval and inverse for all the expansion choices
   """
-  for root,hzip in zip(roots,holezippers):
+  for root,hzip in zip(sks,holezippers):
     if not root.has_holes:
         continue
     hole = root.apply_zipper(hzip)
@@ -106,7 +115,7 @@ def fast(ps,tasks):
   """
   lets take it one step forward and try beval and inverse for EVERY node!
   """
-  for root in roots:
+  for root in sks:
     if not root.has_holes:
         continue
     for node in root.children(recursive=True):
@@ -119,7 +128,7 @@ def fast(ps,tasks):
         vec1 = node.embed_from_above().get_abstract()
         vec2 = inverse_vec(node)
         assert torch.allclose(vec1,vec2,atol=1e-6)
-        print("hell yes")
+        print("heck yes")
     
     # [torch.allclose(beval_vec(c),c.beval(ctx=root.task.ctx).get_abstract()) for c in inside.children()]
 
@@ -128,11 +137,11 @@ def fast(ps,tasks):
 
   
   # Context objects for each hole along the trace
-  tr_ctxs = [r.apply_zipper(z).ctx for r,z in zip(roots,holezippers) if z is not None]
+  tr_ctxs = [r.apply_zipper(z).ctx for r,z in zip(sks,holezippers) if z is not None]
   # downward edges going into each hole along the trace (should be save as inverse_beval)
-  tr_hole_edges = [(r.apply_zipper(z).parent.id,r.apply_zipper(z).id) for r,z in zip(roots,holezippers) if z is not None]
+  tr_hole_edges = [(r.apply_zipper(z).parent.id,r.apply_zipper(z).id) for r,z in zip(sketch_strs,holezippers) if z is not None]
   # upward edges going from toplevel abs.body to abs in the trace (should be same as beval)
-  tr_beval_edges= [(r.tree.fn.unwrap_abstractions().id,r.tree.fn.unwrap_abstractions().parent.id) for r,z in zip(roots,holezippers) if z is not None]
+  tr_beval_edges= [(r.tree.fn.unwrap_abstractions().id,r.tree.fn.unwrap_abstractions().parent.id) for r,z in zip(sks,holezippers) if z is not None]
 
   # TODO honestly we should beval right here!
 
@@ -172,18 +181,20 @@ def delete_app_abs(self):
     OUT(APP(ABS(body), arg0, arg1, ...)) -> OUT(body)
     inplace tree modification. Trashes the arguments so hopefully you already accounted for them thru contexts or something.
     """
-    assert self.is_app
-    assert self.fn.is_abs
-    assert self.parent.is_output, "not necessary, but enough for now"
-    self.parent.tree = self.fn.body
-    self.fn.body.parent = self.parent
+    assert self.is_output
+    assert self.toplevel_app_abs == True
+    assert self.tree.is_app
+    assert self.tree.fn.is_abs
+    self.toplevel_app_abs = False
+    self.tree.fn.body.parent = self # point body to output
+    self.tree = self.tree.fn.body # point output to body
 
 
 
 
-def label_concrete(self):
+def label_concrete_member(self):
     """
-    Label every node with a .concrete which is None if the subtree cant be concretely
+    Label every node with a .concrete_member which is None if the subtree cant be concretely
     executed into an EW(concrete) and is an EW(concrete) otherwise.
     ABS: these become None if has_holes else EW(closure). Be careful, you may or may
     not want to supervise on these later
@@ -191,43 +202,43 @@ def label_concrete(self):
     call label_ctxs first
     """
     if self.is_prim:
-        self.concrete = Examplewise(concrete=[self.value for _ in range(sing.num_exs)])
+        self.concrete_member = Examplewise(concrete=[self.value for _ in range(sing.num_exs)])
     elif self.is_var:
         ew = self.ctx[self.i]
         if ew.placeholder:
-            self.concrete = None
+            self.concrete_member = None
         else:
             assert ew.concrete
-            self.concrete = ew
+            self.concrete_member = ew
     elif self.is_exwise:
         assert self.ew.concrete # this has to be true for is_exwise anyways
-        self.concrete = self.ew
+        self.concrete_member = self.ew
     elif self.is_hole:
-        self.concrete = None
+        self.concrete_member = None
     elif self.is_output:
-        label_concrete(self.tree)
-        self.concrete = None
+        label_concrete_member(self.tree)
+        self.concrete_member = None
     elif self.is_abs:
-        label_concrete(self.body)
+        label_concrete_member(self.body)
         if self.has_holes:
-            self.concrete = None
+            self.concrete_member = None
         else:
-            self.concrete = Examplewise(closure=EWClosure(abs=self,enclosed_ctx=self.ctx))
+            self.concrete_member = Examplewise(closure=EWClosure(abs=self,enclosed_ctx=self.ctx))
     elif self.is_app:
-        fn = label_concrete(self.fn)
-        xs = [label_concrete(x) for x in self.xs]
+        fn = label_concrete_member(self.fn)
+        xs = [label_concrete_member(x) for x in self.xs]
         if any(x is None for x in (fn,*xs)):
-            self.concrete = None
+            self.concrete_member = None
         else:
             # concrete apply
             singles_fns = fn.split()
             singles_args = list(zip(*[ew.split() for ew in xs])) # [argc,num_exs] -> [num_exs,argc]
             assert len(singles_fns) == len(singles_args) == sing.num_exs
             res = [fn(*args) for fn,args in zip(singles_fns,singles_args)]
-            self.concrete = Examplewise(concrete=res)
+            self.concrete_member = Examplewise(concrete=res)
     else:
         assert False
-    return self.concrete
+    return self.concrete_member
 
 
 
@@ -236,12 +247,15 @@ def fold_concrete(self):
   folds all concrete subtrees including variables into EXWISE nodes,
   Does not fold ABS into EW(closure).
 
-  call label_concrete first
+  call label_concrete_member first
   """
-  if self.concrete is not None and not self.is_abs:
+  if (not self.has_holes and # only fold if no holes
+        self.concrete_member is not None and  # only fold if we know the concrete value ofc
+        not self.is_abs and # dont fold into EW(closures)
+        not self.is_exwise): # dont fold if already an EW
       history = str(self)
       self.into_hole() # wipe all data from self
-      self.expand_to(self.concrete) # expand to EXWISE
+      self.expand_to(self.concrete_member) # expand to EXWISE
       self.history = history
   else:
       [fold_concrete(c) for c in self.children()]
@@ -666,7 +680,7 @@ class FPNode:
         assert not self.ntype.hole
         assert not self.ntype.abs, "you never want an arrow shaped hole buddy"
         assert not self.ntype.output, "wat r u doin"
-        for attr in ('prim','name','value','fn','xs','i','body','tree','ew'):
+        for attr in ('prim','name','value','fn','xs','i','body','tree','ew','history'):
             if hasattr(self,attr):
                 delattr(self,attr) # not super important but eh why not
         self.ntype = NType.HOLE
@@ -717,8 +731,9 @@ class FPNode:
         except InvalidSketchError:
             return False
 
+
     @staticmethod
-    def from_ptask(ptask: PTask):
+    def from_ptask(ptask: PTask, toplevel_app_abs=True):
         """
         Create a tree shaped like:
                 FPNode(OUTPUT)
@@ -742,6 +757,9 @@ class FPNode:
             arg = FPNode(NType.EXWISE, tp=tp, parent=app, ctx_tps=())
             arg.ew = input_ew
             app.xs.append(arg)
+        root.toplevel_app_abs = True
+        if toplevel_app_abs is False:
+            delete_app_abs(root)
         return root
     
     @staticmethod
@@ -1188,6 +1206,10 @@ class FPNode:
             return max([x.depth() for x in (*self.xs,self.fn)]) # max among fn and args
         else:
             raise TypeError
+    def get_only_hole(self):
+        hole = self.get_hole('right','right')
+        assert hole is self.get_hole('left','left')
+        return hole
     def get_hole(self, ordering, tiebreaking):
         """
         returns a single hole or None if there are no holes in the subtree
@@ -1335,15 +1357,37 @@ class FPNode:
     def clone(self):
         """
         shallow clones but doesnt dup Exwise objects just shallow copies them.
+        
         """
         zipper = self.get_zipper() # so we can find our way back to this node in the new tree
         root = self.root()
 
-        cloned_root = FPNode.from_ptask(root.task) # share same ptask (includes cache)
-        cloned_root.tree.fn.expand_from(root.tree.fn)
+        cloned_root = FPNode.from_ptask(root.task, toplevel_app_abs=root.toplevel_app_abs) # share same ptask (includes cache)
+        hzip = cloned_root.get_only_hole().get_zipper()
+
+        cloned_root.apply_zipper(hzip).expand_from(root.apply_zipper(hzip))
 
         cloned_self = cloned_root.apply_zipper(zipper)
         assert self.marked_str() == cloned_self.marked_str()
         return cloned_self
 
-  
+def transfer_attrs(from_node,to_node,attrs):
+    """
+    assuming all nodes in the from_node tree have attribute `attr`,
+    copy all those attributes (shallow) to corresponding nodes in to_node.
+    This assumes from_node and to_node have identical structure except for possibly varying at the locations of holes.
+    """
+    for f,t in zip_nodes(from_node,to_node):
+        for attr in attrs:
+            setattr(t,attr,getattr(f,attr))
+
+def zip_nodes(p1,p2):
+    """
+    zip two trees together that have the same general structure but may differ only at holes
+    """
+    if p1.is_hole or p2.is_hole:
+        return [(p1,p2)] # stop trying to zip once one becomes a hole
+    assert p1.ntype == p2.ntype
+    return [(p1,p2)] + flatten([zip_nodes(a,b) for a,b in zipp(p1.children(),p2.children())]) # we enforce they must have same number of children
+
+
