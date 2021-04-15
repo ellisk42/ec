@@ -217,18 +217,17 @@ packages and build the binary.
 
 If for some reason you want to run something in pypy, install it from:
 ```
-https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux
+https://www.pypy.org/download.html
 ```
-Be sure to add `pypy3` to the path. Really though you should try to
+or your OS's package manager. Be sure to add `pypy3` to the path.
+Really though you should try to
 use the rust compressor and the ocaml solver. You will have to
 (annoyingly) install parallel libraries on the pypy side even if you
 have them installed on the Python side:
 
 ```
 pypy3 -m ensurepip
-pypy3 -m pip install --user vmprof
-pypy3 -m pip install --user dill
-pypy3 -m pip install --user psutil
+pypy3 -m pip install --user vmprof dill psutil
 ```
 
 ## Software Architecture
