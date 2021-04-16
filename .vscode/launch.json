@@ -15,7 +15,7 @@
                 "model.vhead=uniform",
                 "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
-                "model.multidir=False",
+                "model.multidir=True",
 
                 "model.apply.type=transformer",
                 "model.apply.transformer.readout_from=sum",
@@ -28,14 +28,16 @@
                 "debug.validate_cache=True",
                 "debug.no_cache=False",
                 "debug.p_check_abstract=0.",
+                "debug.validate_batcher_inside=True",
+                "debug.validate_batcher_full=True",
                 "model.ordering=right",
 
-                "data.T=1",
-                "data.lambda_depth=2",
+                "data.T=2",
+                "data.lambda_depth=3",
                 "loader.freeze=True",
                 "data.allow_complex_requests=True",
 
-                "loader.buf_size=3",
+                "loader.buf_size=100",
 
                 "loop.search_valid_num_tasks=3",
                 "loop.save_every=100",

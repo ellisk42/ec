@@ -74,9 +74,12 @@ class MBAS(nn.Module):
     self.zero_grad()
 
     vloss = self.vhead.train_loss(ps,tasks)
-    ploss = self.phead.train_loss(ps,tasks)
-    ploss_fast = self.phead.train_loss_fast(ps,tasks)
-    print('ploss:',ploss.item(),' fast:',ploss_fast.item())
+    ploss = self.phead.train_loss_fast(ps,tasks)
+    if sing.cfg.debug.validate_batcher_full: # btw if you re-enable this, you probably want to 
+      ploss_nobatch = self.phead.train_loss(ps,tasks)
+      print(f"batch:{ploss.item()} nobatch:{ploss_nobatch.item()}")
+      # assert allclose(ploss_nobatch,ploss)
+      # print("HECK yes")
 
     self.running_vloss.add(vloss)
     self.running_ploss.add(ploss)

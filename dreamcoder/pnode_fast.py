@@ -28,6 +28,9 @@ else:
     assert False
 """
 
+
+
+
 # duplicated from policyHead
 ReplProcessedHole = namedtuple('ReplProcessedHole','sk_rep ctx_rep')
 
@@ -74,11 +77,11 @@ def validate_along_trace(root_hole, batcher):
     inside = root.tree
     vec1 = inside.beval(ctx=inside.ctx).get_abstract()
     vec2 = batcher.beval_vec(inside)
-    assert torch.allclose(vec1,vec2,atol=1e-6)
+    assert torch.allclose(vec1,vec2,atol=1e-5)
 
     vec1 = hole.embed_from_above().get_abstract()
     vec2 = batcher.inverse_vec(hole)
-    assert torch.allclose(vec1,vec2,atol=1e-6)
+    assert torch.allclose(vec1,vec2,atol=1e-5)
   print("heck yes")
 
 

@@ -157,8 +157,9 @@ class PolicyHead(nn.Module):
         root_hole = [(root,root.apply_zipper(hzip)) for root,hzip in zip(sks,holezippers) if root.has_holes]
 
         # TODO this is very pricey validation
-        pnode_fast.validate_along_trace(root_hole,batcher)
-        pnode_fast.validate_all(root_hole,batcher)
+        if sing.cfg.debug.validate_batcher_inside:
+            pnode_fast.validate_along_trace(root_hole,batcher)
+            pnode_fast.validate_all(root_hole,batcher)
 
 
         ctx_reps = rearrange([hole.ctx.encode() for root,hole in root_hole], 'sks exs H -> sks exs H') # stack
@@ -175,7 +176,6 @@ class PolicyHead(nn.Module):
         dists = unmasked + mask
 
         targets = torch.tensor([self.prod_to_index[hole.orig_node.get_prod()] for _,hole in root_hole], device=sing.device) # shape: 'sks'. indices instead of onehots hence 1D
-        print(f"{targets=}")
         loss = self.lossFn(dists,targets)
 
         if loss.item() == np.inf:
@@ -239,8 +239,6 @@ class PolicyHead(nn.Module):
         assert dists.shape == masks.shape
 
         masked_dists = dists + masks
-
-        print(f"{targets=}")
 
         loss = self.lossFn(masked_dists, targets)
         
