@@ -54,87 +54,55 @@ def get_traces(orig_root):
     
     for sk in trace:
         transfer_attrs(orig_root,sk,('ctx','concrete_member'))
+        for orig_node,sk_node in zip_nodes(orig_root,sk):
+            sk_node.ctx = orig_node.ctx
+            sk_node.concrete_member = orig_node.concrete_member
+            sk_node.orig_node = orig_node
     
     holes_expanded.append(None)
     assert len(trace) == len(holes_expanded)
     return list(zip(trace, holes_expanded))
 
 
-def fast(ps,tasks):
-  ps = [FPNode.from_dreamcoder(p,t) for p,t in zip(ps,tasks)]
-  for p in ps:
-      label_ctxs(p) # label each node with a `.ctx`
-      delete_app_abs(p) # change to OUTPUT(body), cutting out the APP(ABS,EW)
-      label_concrete_member(p) # label everyone with their concrete value. Separate from folding in case we want to do only partial folding (or no folding but want supervision on concrete values)
 
-  sks, holezippers = zip(*flatten(get_traces(p) for p in ps))
-  for sk in sks:
-    # beta_reduce(node) # beta reduce (updates contexts but does no shifting of var indices) specifically for things of the form APP(ABS,EW) (optionally more than one EW)
-    
-    fold_concrete(sk) # fold concrete subtrees into EW nodes
-    batched_ctx_encode([n.ctx for n in sk.all_nodes()])
-  batcher = Batcher(sks)
-  batcher.saturate()
-  nodes, edges, edge_done_results = batcher.nodes, batcher.edges_done, batcher.edges_done_results
   
-
-  # lets make sure folding worked well
-#   roots_zips_concrete = [r for r,z in zip(roots,holezippers) if z is None]
-  roots_zips_concrete = filterr(sks, lambda r: not r.has_holes)
-  for root in roots_zips_concrete:
-      assert root.task.outputs.concrete == root.tree.ew.concrete
-  
-
-  # lets show that this is equivalent to inverse_beval and beval. Throw out z=None which are concrete
-
-  def beval_vec(node): # vec going from node -> node.parent
-      edge = (node.id,node.parent.id)
-      return edge_done_results[edges.index(edge)]
-  def inverse_vec(node): # vec going from node.parent -> node
-      edge = (node.parent.id,node.id)
-      return edge_done_results[edges.index(edge)]
-
-
+def validate_along_trace(root_hole, batcher):
   """
   lets see if we get the same result as beval and inverse for all the expansion choices
   """
-  for root,hzip in zip(sks,holezippers):
-    if not root.has_holes:
-        continue
-    hole = root.apply_zipper(hzip)
+  for root,hole in root_hole:
     inside = root.tree
     vec1 = inside.beval(ctx=inside.ctx).get_abstract()
-    vec2 = beval_vec(inside)
+    vec2 = batcher.beval_vec(inside)
     assert torch.allclose(vec1,vec2,atol=1e-6)
 
     vec1 = hole.embed_from_above().get_abstract()
-    vec2 = inverse_vec(hole)
+    vec2 = batcher.inverse_vec(hole)
     assert torch.allclose(vec1,vec2,atol=1e-6)
-    print("hell yes")
+  print("heck yes")
 
+
+def validate_all(root_hole, batcher):
   """
   lets take it one step forward and try beval and inverse for EVERY node!
   """
-  for root in sks:
-    if not root.has_holes:
-        continue
+  for root,_ in root_hole:
     for node in root.children(recursive=True):
         vec1 = node.beval(ctx=node.ctx).get_abstract()
-        vec2 = beval_vec(node)
-        assert torch.allclose(vec1,vec2,atol=1e-6)
+        vec2 = batcher.beval_vec(node)
+        assert torch.allclose(vec1,vec2,atol=1e-5)
 
         if 'fn' in node.get_zipper():
             continue # we dont try inverting into a .fn bc that hasnt been implemented (tho it wouldnt be hard to)
         vec1 = node.embed_from_above().get_abstract()
-        vec2 = inverse_vec(node)
-        assert torch.allclose(vec1,vec2,atol=1e-6)
-        print("heck yes")
+        vec2 = batcher.inverse_vec(node)
+        assert torch.allclose(vec1,vec2,atol=1e-5)
+  print("heck yes")
     
     # [torch.allclose(beval_vec(c),c.beval(ctx=root.task.ctx).get_abstract()) for c in inside.children()]
 
 
-
-
+def _():
   
   # Context objects for each hole along the trace
   tr_ctxs = [r.apply_zipper(z).ctx for r,z in zip(sks,holezippers) if z is not None]
@@ -188,7 +156,6 @@ def delete_app_abs(self):
     self.toplevel_app_abs = False
     self.tree.fn.body.parent = self # point body to output
     self.tree = self.tree.fn.body # point output to body
-
 
 
 
@@ -318,7 +285,15 @@ class Batcher:
 
     self.neighbors = functools.cache(self.neighbors) # do this instead of decorator so its a per-instance thing and also gets garbage collected
     self.necessary_edges = functools.cache(self.necessary_edges)
-  
+
+  def beval_vec(self,node): # vec going from node -> node.parent
+      edge = (node.id,node.parent.id)
+      return self.edges_done_results[self.edges_done.index(edge)]
+
+  def inverse_vec(self,node): # vec going from node.parent -> node
+      edge = (node.parent.id,node.id)
+      return self.edges_done_results[self.edges_done.index(edge)]
+
   def saturate(self):
     
     while len(self.edges_todo) > 0:

@@ -15,7 +15,7 @@
                 "model.vhead=uniform",
                 "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
-                "model.multidir=True",
+                "model.multidir=False",
 
                 "model.apply.type=transformer",
                 "model.apply.transformer.readout_from=sum",
@@ -28,7 +28,7 @@
                 "debug.validate_cache=True",
                 "debug.no_cache=False",
                 "debug.p_check_abstract=0.",
-                "model.ordering=random",
+                "model.ordering=right",
 
                 "data.T=1",
                 "data.lambda_depth=2",

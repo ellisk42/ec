@@ -130,14 +130,69 @@ class PolicyHead(nn.Module):
 
         assert root.root_str() == verify_str, "root was mutated"
         return hole, prods,lls
+    def train_loss_fast(self, ps, tasks):
+        if sing.cfg.model.phead == 'rnn':
+            return self.train_loss(ps,tasks)
+        assert sing.cfg.model.phead == 'repl'
 
+
+        ps = [pnode_fast.FPNode.from_dreamcoder(p,t) for p,t in zip(ps,tasks)]
+        for p in ps:
+            pnode_fast.label_ctxs(p) # label each node with a `.ctx`
+            pnode_fast.delete_app_abs(p) # change to OUTPUT(body), cutting out the APP(ABS,EW)
+            pnode_fast.label_concrete_member(p) # label everyone with their concrete value. Separate from folding in case we want to do only partial folding (or no folding but want supervision on concrete values)
+
+        sks, holezippers = zip(*flatten(pnode_fast.get_traces(p) for p in ps))
+        for sk in sks:
+            pnode_fast.fold_concrete(sk) # fold concrete subtrees into EW nodes
+            pnode_fast.batched_ctx_encode([n.ctx for n in sk.all_nodes()])
+        batcher = pnode_fast.Batcher(sks)
+        batcher.saturate()
+
+        if sing.cfg.debug.pnode_concrete_check:
+            for root in filterr(sks, lambda r: not r.has_holes):
+                assert root.task.outputs.concrete == root.tree.ew.concrete
+        
+        # only train on ones that have holes
+        root_hole = [(root,root.apply_zipper(hzip)) for root,hzip in zip(sks,holezippers) if root.has_holes]
+
+        # TODO this is very pricey validation
+        pnode_fast.validate_along_trace(root_hole,batcher)
+        pnode_fast.validate_all(root_hole,batcher)
+
+
+        ctx_reps = rearrange([hole.ctx.encode() for root,hole in root_hole], 'sks exs H -> sks exs H') # stack
+        if sing.cfg.model.multidir:
+            sk_reps = rearrange([batcher.inverse_vec(hole) for root,hole in root_hole], 'sks exs H -> sks exs H')
+            out_feats = None
+        else:
+            sk_reps = rearrange([batcher.beval_vec(root.tree) for root,_ in root_hole], 'sks exs H -> sks exs H')
+            out_feats = rearrange([root.task.outputs.get_abstract() for root,_ in root_hole], 'sks exs H -> sks exs H')
+        
+        unmasked = self.unmasked_distributions_fast(sk_reps,ctx_reps,out_feats) # sks prod
+        mask = rearrange([self.build_mask(hole,sing.cfg.data.max_depth) for _,hole in root_hole], 'sks prods -> sks prods')
+        assert unmasked.shape == mask.shape
+        dists = unmasked + mask
+
+        targets = torch.tensor([self.prod_to_index[hole.orig_node.get_prod()] for _,hole in root_hole], device=sing.device) # shape: 'sks'. indices instead of onehots hence 1D
+        print(f"{targets=}")
+        loss = self.lossFn(dists,targets)
+
+        if loss.item() == np.inf:
+            mlb.red("You seem to be masking out the right answer")
+            assert False
+        
+        return loss
+
+
+
+
+        pnode_fast.fast(ps,tasks)
     def train_loss(self, ps, tasks):
         """
 
         """
-        pnode_fast.fast(ps,tasks)
-        assert False
-
+        
         assert all(not p.hasHoles for p in ps)
 
         if sing.cfg.debug.pnode_concrete_check:
@@ -184,6 +239,8 @@ class PolicyHead(nn.Module):
         assert dists.shape == masks.shape
 
         masked_dists = dists + masks
+
+        print(f"{targets=}")
 
         loss = self.lossFn(masked_dists, targets)
         
@@ -258,7 +315,7 @@ class PolicyHead(nn.Module):
             strings.append(str(root))
             processed_holes.append(self.process_hole(hole))
             hole.unhide()
-        assert False
+
 class UniformPolicyHead(PolicyHead):
     def __init__(self):
         super().__init__()
@@ -391,6 +448,8 @@ class ListREPLPolicyHead(PolicyHead):
 
         print(f"num of params in {self.__class__.__name__} policy model", count_parameters(self))
 
+
+
     def process_hole(self,hole):
         """
         Process hole always returns something that will not be affected by changes to
@@ -449,6 +508,32 @@ class ListREPLPolicyHead(PolicyHead):
             input = rearrange([compared,ctx_reps], 'list sks exs H -> sks exs (list H)') # cat along hidden dim
             input = reduce(input, 'sks exs H2 -> sks H2', 'max')
             # input = input.max(1).values # max over examples to yield [num_sks,H]
+            return self.output(input)
+    def unmasked_distributions_fast(self, sk_reps, ctx_reps, out_feats):
+        """
+        All tensor inputs no lists. zoom zoom.
+        sk_reps :: sks exs H
+        ctx_reps :: sks exs H
+        in_feats :: sks H
+        out_feats :: sks H
+        """
+
+        if sing.cfg.debug.zero_sk:
+            sk_reps = torch.zeros_like(sk_reps)
+
+        if sing.cfg.model.multidir:
+            # MBAS
+            input = rearrange([sk_reps,ctx_reps], 'list sks exs H -> sks exs (list H)') # cat along hidden dim
+            input = reduce(input, 'sks exs H2 -> sks H2', 'max')
+            return self.output(input)
+        else:
+            # BAS
+            if sing.cfg.debug.zero_output_feats:
+                out_feats = torch.zeros_like(out_feats)
+            
+            compared = sing.model.abstract_comparer(sk_reps,out_feats) # [num_sketches,num_exs,H]
+            input = rearrange([compared,ctx_reps], 'list sks exs H -> sks exs (list H)') # cat along hidden dim
+            input = reduce(input, 'sks exs H2 -> sks H2', 'max')
             return self.output(input)
 
 

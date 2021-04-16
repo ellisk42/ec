@@ -751,6 +751,7 @@ class PNode:
         """
         root = PNode(NType.OUTPUT, tp=None, parent=ptask, ctx_tps=())
         root.tree = root.build_hole(ptask.request)
+        root.toplevel_app_abs = True
 
         # do some sanity checks
         hole, num_abs = root.tree.unwrap_abstractions(count=True)
@@ -1443,7 +1444,7 @@ class PNode:
 
         if self.ntype.output or self.ntype.abs:
             pass # we cant hide an output or abs, they just recurse if recursive=True
-        elif self.ntype.prim and self.parent.ntype.app:
+        elif self.ntype.prim and self.parent.ntype.app and self.parent.fn == self:
             pass # to hide an APP we hide its args and the APP node itself but not the fn (which should be revealed when the app node is unhidden)
         elif self.ntype.hole:
             raise TypeError

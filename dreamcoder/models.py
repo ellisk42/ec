@@ -75,6 +75,8 @@ class MBAS(nn.Module):
 
     vloss = self.vhead.train_loss(ps,tasks)
     ploss = self.phead.train_loss(ps,tasks)
+    ploss_fast = self.phead.train_loss_fast(ps,tasks)
+    print('ploss:',ploss.item(),' fast:',ploss_fast.item())
 
     self.running_vloss.add(vloss)
     self.running_ploss.add(ploss)
