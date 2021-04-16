@@ -391,6 +391,19 @@ class ApplyNN(nn.Module):
         
 
 
+class IsMember(nn.Module):
+    def __init__(self):
+        super().__init__()
+        cfg = sing.cfg
+    def forward(self,value,set):
+        """
+        Returns a value ranging from 1 (is member of set) to 0 (is not member of set)
+        value :: Tensor, set :: Tensor
+        Works with batches
+        """
+        pass
+
+
 def distance(target_vec, cand_vec):
     raise NotImplementedError # dot prod
 
