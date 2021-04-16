@@ -78,6 +78,8 @@ class MBAS(nn.Module):
     if sing.cfg.debug.validate_batcher_full: # btw if you re-enable this, you probably want to 
       ploss_nobatch = self.phead.train_loss(ps,tasks)
       print(f"batch:{ploss.item()} nobatch:{ploss_nobatch.item()}")
+      if sing.cfg.model.ordering != 'right':
+        yellow("dont expect these to be the same! ordering is not set to 'right' so they can sample diff traces!")
       # assert allclose(ploss_nobatch,ploss)
       # print("HECK yes")
 
