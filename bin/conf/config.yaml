@@ -62,6 +62,7 @@ debug:
   no_cache: False # disables caching altogether
   validate_batcher_inside: False
   validate_batcher_full: False
+  unbatched: False
 
 
 plot: # for mode=plot

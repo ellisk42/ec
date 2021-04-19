@@ -270,8 +270,6 @@ def get_nodes_edges(node,start_id):
 
   return nodes,edges
 
-
-
 class Batcher:
   def __init__(self, roots):
     self.roots = roots
@@ -282,12 +280,21 @@ class Batcher:
      self.nodes += nodes
      self.edges += edges
     
+    self.edges.sort(key=lambda e: e[0])
+    self.edges_first = {}
+    self.edges_last = {}
+    for i,(src,_) in enumerate(self.edges):
+        if src not in self.edges_first:
+            self.edges_first[src] = i
+        self.edges_last[src] = i
+
+    
     self.edges_todo = self.edges[:] # :: [(src,dst)]
     self.edges_done = [] # :: [(src,dst)]
     self.edges_done_results = [] # :: [Tensor] and is zippable with edges_done
 
-    self.neighbors = functools.cache(self.neighbors) # do this instead of decorator so its a per-instance thing and also gets garbage collected
-    self.necessary_edges = functools.cache(self.necessary_edges)
+    # self.neighbors = (self.neighbors) # do this instead of decorator so its a per-instance thing and also gets garbage collected
+    # self.necessary_edges = functools.cache(self.necessary_edges)
 
   def beval_vec(self,node): # vec going from node -> node.parent
       edge = (node.id,node.parent.id)
@@ -302,7 +309,7 @@ class Batcher:
     while len(self.edges_todo) > 0:
       worklist = []
       for src,dst in self.edges_todo:
-        if all(edge in self.edges_done for edge in self.necessary_edges(src,dst)):
+        if all([edge in self.edges_done for edge in self.necessary_edges(src,dst)]):
           worklist.append((src,dst))
       assert len(worklist) > 0
 
@@ -370,12 +377,31 @@ class Batcher:
       """
       EXWISE
       """
+
+      """
+      if EW.abstract is already filled just use that value
+      """
+
+      new_edges = []
+      for (src,dst) in edges:
+          abstract = self.nodes[src].ew.abstract
+          if abstract is not None:
+              self.finish_edge((src,dst),abstract)
+          else:
+              new_edges.append((src,dst))
+      edges = new_edges
+      
+
+
+
       by_type = group_by(edges, lambda e: self.nodes[e[0]].tp.show(True))
       for ty,edges in by_type.items():
         values = [self.nodes[src].ew.concrete for (src,dst) in edges]
         values = flatten(values)
         res = sing.model.abstraction_fn.encoder.encodeValue(values)
         res = rearrange(res,'(batch exs) H -> batch exs H',exs=sing.num_exs)
+        for (src,dst),vec in zip(edges,res):
+            self.nodes[src].ew.abstract = vec
         self.finish_edges(edges,res)
   def compute_edges_prim(self, edges):
     """
@@ -390,6 +416,7 @@ class Batcher:
     * this code probably never runs thanks to EW folding
 
     """
+    assert False
     by_type = group_by(edges, lambda e: self.nodes[e[0]].tp.show(True))
     for ty,edges in by_type.items():
       values = [self.nodes[src].value for (src,dst) in edges]
@@ -516,10 +543,14 @@ class Batcher:
     return self.edges_done_results[self.edges_done.index((src,dst))]
 
   def neighbors(self,id):
-    return {dst for (src,dst) in self.edges if src==id}
+    start = self.edges_first[id]
+    end = self.edges_last[id]
+    return {dst for src,dst in self.edges[start:end+1]}
 
   def necessary_edges(self,src,dst):
     return {(nei,src) for nei in  self.neighbors(src) - {dst}}
+
+      
 
 
 

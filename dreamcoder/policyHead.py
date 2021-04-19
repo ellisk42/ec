@@ -131,7 +131,7 @@ class PolicyHead(nn.Module):
         assert root.root_str() == verify_str, "root was mutated"
         return hole, prods,lls
     def train_loss_fast(self, ps, tasks):
-        if sing.cfg.model.phead == 'rnn':
+        if sing.cfg.model.phead == 'rnn' or sing.cfg.debug.unbatched:
             return self.train_loss(ps,tasks)
         assert sing.cfg.model.phead == 'repl'
 
