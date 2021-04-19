@@ -30,7 +30,7 @@ class FireEvery:
             # make j a multiple of j_multiplier. Round upwards.
             self.j = sing.cfg.loop.j_multiplier * ((self.j // sing.cfg.loop.j_multiplier) + 1)
     def check(self):
-        return self.j is not None and sing.train_state.j % self.j == 0
+        return self.j is not None and sing.train_state.j % self.j == 0 and sing.train_state.j != 0
 
 class TrainState:
     def __init__(s,cfg):
