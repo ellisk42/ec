@@ -22,10 +22,10 @@ pnode: # anything to do with pnodes, neural execution, blended execution, etc
   allow_concrete_eval: True
 apply:
   type: transformer # transformer | rnn
-  bind: cat # cat | sum
+  bind: sum # cat | sum
   transformer:
-    readout_from: mask # mask | sum
-    readout_by: linear # linear | cut | identity
+    readout_from: sum # mask | sum
+    readout_by: identity # linear | cut | identity
     num_layers: 1
     nhead: 2
   gru:

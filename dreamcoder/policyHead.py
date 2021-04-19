@@ -415,12 +415,12 @@ class RNNPolicyHead(PolicyHead):
         if sing.cfg.debug.zero_output_feats:
             out_feats = torch.zeros_like(out_feats)
         
-        task_feats = torch.cat((in_feats,out_feats)) # [H*2]
-        task_feats = task_feats.expand(num_sks, -1)
+        task_feats = torch.cat((in_feats,out_feats),dim=-1) # [H*2]
+        # task_feats = task_feats.expand(num_sks, -1)
 
         assert task_feats.dim() == sk_feats.dim() == 2
 
-        input = torch.cat((sk_feats,task_feats),dim=1) # [num_sks,H] `cat dim=1` [num_sks,H*2] -> [num_sks,H*3]
+        input = torch.cat((sk_feats,task_feats),dim=-1) # [num_sks,H] `cat dim=1` [num_sks,H*2] -> [num_sks,H*3]
         res = self.output(input)
         return res
 

@@ -13,13 +13,14 @@
             "args":[
                 "model=mbas",
                 "model.vhead=uniform",
-                "model.phead=repl",
+                "model.phead=rnn",
                 "model.pnode.allow_concrete_eval=True",
-                "model.multidir=True",
+                "model.multidir=False",
 
                 "model.apply.type=transformer",
+                "model.apply.bind=sum",
                 "model.apply.transformer.readout_from=sum",
-                "model.apply.transformer.readout_by=linear",
+                "model.apply.transformer.readout_by=identity",
                 "model.apply.transformer.nhead=2",
 
                 "solver=astar",
