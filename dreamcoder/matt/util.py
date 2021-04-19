@@ -73,7 +73,7 @@ def pad_list_list_tensor(list_list_tensor):
     """
     longest = max(len(l) for l in list_list_tensor)
     H = list_list_tensor[0][0].shape
-    pad = zeros(*H)
+    pad = zeros(*H,device=sing.device)
     mask = ones(len(list_list_tensor), longest,     device=sing.device, dtype=bool)
     
     # res =  torch.zeros(len(list_list_tensor), longest, *H, device=sing.device)
