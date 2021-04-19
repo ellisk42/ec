@@ -13,9 +13,9 @@
             "args":[
                 "model=mbas",
                 "model.vhead=uniform",
-                "model.phead=rnn",
+                "model.phead=repl",
                 "model.pnode.allow_concrete_eval=True",
-                "model.multidir=False",
+                "model.multidir=True",
 
                 "model.apply.type=transformer",
                 "model.apply.bind=sum",

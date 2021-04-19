@@ -644,13 +644,16 @@ class PNode:
         else:
             raise TypeError
         
-    def build_hole(self, tp):
+    def build_hole(self, tp, ctx_tps=None):
         """
-        Make a new hole with `self` as parent (and `ctx` calculated from `self`)
-        This also handles expanding into Abstractions if tp.isArrow()
+        Make a new hole with `self` as parent.
+        ctx_tps=None means same ctx_tps as parent
         """
+        if ctx_tps is None:
+            ctx_tps = self.ctx_tps
+
         if not tp.isArrow():
-            return PNode(NType.HOLE, tp, parent=self, ctx_tps=self.ctx_tps)
+            return PNode(NType.HOLE, tp, parent=self, ctx_tps=ctx_tps)
         
         # Introduce a lambda
         
@@ -666,8 +669,8 @@ class PNode:
         # push it onto the ctx stack
         # abs = PNode(NType.ABS, tp, parent=self, ctx=(Ctx(arg_tp,exwise),*self.ctx))
         # now make an inner hole (which may itself be an abstraction ofc)
-        abs = PNode(NType.ABS, tp, parent=self, ctx_tps=(arg_tp,*self.ctx_tps))
-        inner_hole = abs.build_hole(res_tp)
+        abs = PNode(NType.ABS, tp, parent=self, ctx_tps=ctx_tps) # abs has same ctx as its parent
+        inner_hole = abs.build_hole(res_tp, ctx_tps=(arg_tp,*ctx_tps)) # however abs.body 
         abs.body = inner_hole
         abs.argc = 1  # TODO can change
 

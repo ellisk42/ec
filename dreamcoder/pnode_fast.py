@@ -662,19 +662,22 @@ class FPNode:
         else:
             raise TypeError
         
-    def build_hole(self, tp):
+    def build_hole(self, tp, ctx_tps=None):
         """
-        Make a new hole with `self` as parent (and `ctx` calculated from `self`)
-        This also handles expanding into Abstractions if tp.isArrow()
+        Make a new hole with `self` as parent.
+        ctx_tps=None means same ctx_tps as parent
         """
+        if ctx_tps is None:
+            ctx_tps = self.ctx_tps
+
         if not tp.isArrow():
-            return FPNode(NType.HOLE, tp, parent=self, ctx_tps=self.ctx_tps)
+            return FPNode(NType.HOLE, tp, parent=self, ctx_tps=ctx_tps)
         
         arg_tp = tp.arguments[0] # the input arg to this arrow
         res_tp = tp.arguments[1] # the return arg (which may be an arrow)
 
-        abs = FPNode(NType.ABS, tp, parent=self, ctx_tps=(arg_tp,*self.ctx_tps))
-        inner_hole = abs.build_hole(res_tp)
+        abs = FPNode(NType.ABS, tp, parent=self, ctx_tps=ctx_tps) # abs has same ctx as its parent
+        inner_hole = abs.build_hole(res_tp, ctx_tps=(arg_tp,*ctx_tps)) # however abs.body 
         abs.body = inner_hole
         abs.argc = 1  # TODO can change
 
@@ -858,6 +861,7 @@ class FPNode:
         return res
     @property
     def in_HOF_lambda(self): # TODO worth changing, p specific to this dsl
+        return len(self.ctx_tps) > len(self.task.inputs)
         return self.get_zipper().count('body') > len(self.task.inputs)
 
     def beval_single_concrete(self, ctx):

@@ -156,10 +156,26 @@ class PolicyHead(nn.Module):
         # only train on ones that have holes
         root_hole = [(root,root.apply_zipper(hzip)) for root,hzip in zip(sks,holezippers) if root.has_holes]
 
-        # TODO this is very pricey validation
+        # this is very pricey validation
         if sing.cfg.debug.validate_batcher_inside:
             pnode_fast.validate_along_trace(root_hole,batcher)
             pnode_fast.validate_all(root_hole,batcher)
+        
+        
+        if sing.cfg.model.train_all_inverse_nodes and sing.cfg.model.multidir:
+            """
+            train on not just the hole at this point in the trace, but ALL nodes (regardless of whether theyre holes) in the sketch.
+            This even works if nodes are EWs thanks to .orig_node call before .get_prod() for target
+            """
+            new_root_hole=[]
+            for root,_ in root_hole:
+                for node in root.children(recursive=True):
+                    if 'fn' in node.get_zipper():
+                        continue # we dont try inverting into a .fn bc that hasnt been implemented (tho it wouldnt be hard to)
+                    if node.is_abs:
+                        continue # we only expand the inner .body holes not the outer ABS guys
+                    new_root_hole.append((root,node)) # pretending `node` is a hole, whether or not thats true.
+            root_hole = new_root_hole
 
 
         ctx_reps = rearrange([hole.ctx.encode() for root,hole in root_hole], 'sks exs H -> sks exs H') # stack
@@ -180,6 +196,12 @@ class PolicyHead(nn.Module):
 
         if loss.item() == np.inf:
             mlb.red("You seem to be masking out the right answer")
+            for i in range(len(targets)):
+                loss = self.lossFn(dists[i][None],targets[i][None])
+                if loss.item() == np.inf:
+                    print(i)
+                    print("prod:",self.index_to_prod[targets[i].item()])
+                    assert False
             assert False
         
         return loss

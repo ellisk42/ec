@@ -5,6 +5,7 @@ optim:
   lr: .001
 ordering: right
 tiebreaking: random
+train_all_inverse_nodes: True
 H: 64
 max_var: 10
 vhead: check_invalid # repl | rnn | check_invalid | uniform
