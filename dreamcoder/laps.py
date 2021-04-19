@@ -1,25 +1,23 @@
 """
 laps.py | Author : Catherine Wong
 
-Framework for hierarchical Bayesian models that synthesize and induce over programs and language.
-Interfaces modularly with the codebase in DreamCoder.
+Framework for running experiments with hierarchical Bayesian models that synthesize and induce over programs and language. 
 """
-
-import dreamcoder.checkpoint as checkpoint
 import dreamcoder.configlib as configlib
 
 laps_parser = configlib.add_parser("laps.py")
 laps_parser.add_argument("--laps", action="store_true", help="Enable LAPS experimental framework instead of DreamCoder.")
-
-
 # TODO: implement a result object.
 
 # TODO: implement a global dictionary for the experiment segments.
 # You should be able to just run a model configuration at each step.
 experiment_block_registry = {}
 
-
 def LAPSIterator(*args, **kwargs):
+    """LAPSIterator: Iterator for a running experiment. At each iteration,
+    loops over a set of experiment blocks defined via an experiment configuration file.
+    Experiments are responsible for defining their own
+    """
     initialize_state_and_tasks()
     
     # Get the next task batch for the number of iterations.
