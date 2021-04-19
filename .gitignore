@@ -21,13 +21,13 @@ compressionMessages/
 container.img
 launchers/
 data/**
+!data/arc
 !data/clevr
 data/cogsci_2019/*
 data/re2
 data/geom/
 data/logo/
 !data/puddleworld/
-
 data/taskRankGraphs
 message
 sklearn-container.img
