@@ -113,7 +113,7 @@ class MBAS(nn.Module):
       running_ploss = RunningFloat()
       for f in fs:
         vloss = self.vhead.train_loss(ps,tasks)
-        ploss = self.phead.train_loss(ps,tasks)
+        ploss = self.phead.train_loss_fast(ps,tasks)
         running_vloss.add(vloss)
         running_ploss.add(ploss)
         running_loss.add(vloss+ploss)

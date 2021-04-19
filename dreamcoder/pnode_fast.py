@@ -289,20 +289,20 @@ class Batcher:
         self.edges_last[src] = i
 
     
-    self.edges_todo = self.edges[:] # :: [(src,dst)]
-    self.edges_done = [] # :: [(src,dst)]
-    self.edges_done_results = [] # :: [Tensor] and is zippable with edges_done
+    self.edges_todo = set(self.edges) # :: [(src,dst)]
+    self.edges_done = {} # :: [(src,dst)] -> Tensor
+
 
     # self.neighbors = (self.neighbors) # do this instead of decorator so its a per-instance thing and also gets garbage collected
     # self.necessary_edges = functools.cache(self.necessary_edges)
 
   def beval_vec(self,node): # vec going from node -> node.parent
       edge = (node.id,node.parent.id)
-      return self.edges_done_results[self.edges_done.index(edge)]
+      return self.edges_done[edge]
 
   def inverse_vec(self,node): # vec going from node.parent -> node
       edge = (node.parent.id,node.id)
-      return self.edges_done_results[self.edges_done.index(edge)]
+      return self.edges_done[edge]
 
   def saturate(self):
     
@@ -339,8 +339,7 @@ class Batcher:
   def finish_edge(self,edge,vec):
       assert vec.dim() == 2
       self.edges_todo.remove(edge)
-      self.edges_done.append(edge)
-      self.edges_done_results.append(vec)
+      self.edges_done[edge] = vec
   
   def finish_edges(self,edges,vecs):
     """
@@ -540,7 +539,7 @@ class Batcher:
 
     
   def get_done_vec(self,src,dst):
-    return self.edges_done_results[self.edges_done.index((src,dst))]
+    return self.edges_done[(src,dst)]
 
   def neighbors(self,id):
     start = self.edges_first[id]
