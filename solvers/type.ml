@@ -282,13 +282,28 @@ let tprogram           = make_ground "program"
 let tmaybe t           = kind "maybe" [t]
 let tcanvas            = tlist tint
 
-(** CLEVR Types -- types.ml **)
-let tclevrcolor = make_ground "tclevrcolor";;
-let tclevrsize = make_ground "tclevrsize";;
-let tclevrmaterial = make_ground "tclevrmaterial";;
-let tclevrshape = make_ground "tclevrshape";;
-let tclevrrelation = make_ground "tclevrrelation";;
-let tclevrobject = make_ground "tclevrobject";;
+let tblock = make_ground "tblock" ;;
+let tcolor = make_ground "tcolor" ;;
+let tgridin = make_ground "tgridin" ;;
+let tgridout = make_ground "tgridout" ;;
+let tdirection = make_ground "tdirection" ;;
+let ttile = make_ground "ttile" ;;
+let tsplitblock = make_ground "tsplitblock" ;;
+let tlogical = make_ground "tlogical" ;;
+let ttbs = make_ground "template_blocks_scene" ;;
+let tpair t t' = kind "pair" [t;t'];;
+let tcolorpair = tpair tcolor tcolor ;;
+
+(* let tcmap = tlist tcolorpair ;; *)
+
+(* let tintcolorcpair = tpair tint tcolor ;;
+let ticmap = tlist tintcolorcpair ;; *)
+
+let ttiles = tlist ttile ;;
+let tblocks = tlist tblock ;;
+let tcolors = tlist tcolor ;;
+let tsplitblocks = tlist tsplitblock ;;
+let tdirections = tlist tdirection ;;
 
 let unify_many_types ts =
   let k = empty_context in

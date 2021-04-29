@@ -305,7 +305,7 @@ def solveForTask_ocaml(_=None,
     if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
         message["maxParameters"] = tasks[0].maxParameters
 
-    message = json.dumps(message)
+    message = json.dumps(message, default=lambda x: x.__repr__())
     # uncomment this if you want to save the messages being sent to the solver
     
     solver_file = 'solver'

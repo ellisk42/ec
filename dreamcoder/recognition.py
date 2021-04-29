@@ -1636,9 +1636,7 @@ class LowRank(nn.Module):
         if needToSqueeze:
             y = y.squeeze(0)
         return y
-            
-            
-            
+                        
 
 class DummyFeatureExtractor(nn.Module):
     def __init__(self, tasks, testingTasks=[], cuda=False):

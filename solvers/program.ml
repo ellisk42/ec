@@ -2,10 +2,6 @@ open Core
 open Parser
 open Utils
 open Type
-open Str
-open Re2
-
-open Yojson.Basic
 
 type program =
   | Index of int
@@ -76,23 +72,6 @@ let rec show_program (is_function : bool) = function
   | Invented(_,i) -> "#"^show_program false i
 
 let string_of_program = show_program false
-
-let rec left_order_tokens (show_vars : bool) tokens = function
-  | Index(j) -> 
-    if show_vars then tokens @ ["VAR"]
-    else tokens @ []
-  | Abstraction(body) -> tokens @ (left_order_tokens show_vars [] body)
-  | Apply(p,q) -> 
-    tokens @ (left_order_tokens show_vars [] p) @ (left_order_tokens show_vars [] q)
-  | Invented (_, i) -> tokens @ [ "#"^show_program false i]
-  | Primitive (_, n, _) -> tokens @ [n]
-
-
-    
-let string_of_tokens (show_vars : bool) p = 
-  let tokens = ((left_order_tokens show_vars []) p) in 
-  let escaped_tokens = tokens |> List.map ~f:(fun token -> Str.global_replace (Str.regexp_string " ") "^" token) in
-  String.concat ~sep:" " escaped_tokens
 
 
 let primitive_name = function | Primitive(_,n,_) -> n
@@ -367,32 +346,6 @@ let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'-'" tcharacter '-';
                                   primitive "LPAREN" tcharacter '(';
                                   primitive "RPAREN" tcharacter ')';
-                                  primitive "'a'" tcharacter 'a';
-                                  primitive "'b'" tcharacter 'b';
-                                  primitive "'c'" tcharacter 'c';
-                                  primitive "'d'" tcharacter 'd';
-                                  primitive "'e'" tcharacter 'e';
-                                  primitive "'f'" tcharacter 'f';
-                                  primitive "'g'" tcharacter 'g';
-                                  primitive "'h'" tcharacter 'h';
-                                  primitive "'i'" tcharacter 'i';
-                                  primitive "'j'" tcharacter 'j';
-                                  primitive "'k'" tcharacter 'k';
-                                  primitive "'l'" tcharacter 'l';
-                                  primitive "'m'" tcharacter 'm';
-                                  primitive "'n'" tcharacter 'n';
-                                  primitive "'o'" tcharacter 'o';
-                                  primitive "'p'" tcharacter 'p';
-                                  primitive "'q'" tcharacter 'q';
-                                  primitive "'r'" tcharacter 'r';
-                                  primitive "'s'" tcharacter 's';
-                                  primitive "'t'" tcharacter 't';
-                                  primitive "'u'" tcharacter 'u';
-                                  primitive "'v'" tcharacter 'v';
-                                  primitive "'w'" tcharacter 'w';
-                                  primitive "'x'" tcharacter 'x';
-                                  primitive "'y'" tcharacter 'y';
-                                  primitive "'z'" tcharacter 'z';
                                  ];;
 (* let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
  *     (fun i j s ->
@@ -501,272 +454,12 @@ let rec number_of_free_parameters = function
   | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x
   | Index(_) -> 0
 
-(** CLEVR Function definitions. See clevrPrimitives.py **)
-(** Utilities for object serialization **)
-let obj_to_string obj = 
-  let (_, id) =  List.Assoc.find_exn obj "id" ~equal:(=) in
-  let id = Pervasives.string_of_int (magical id) in 
-  let attributes = ["color"; "shape"; "material"; "size"; "left"; "right"; "front"; "behind"] in
-  let attribute_strings = attributes |> List.map ~f: (fun attr_type ->
-    let (_, a) =  List.Assoc.find_exn obj attr_type ~equal:(=)
-    in a) in 
-  let zipped = List.zip_exn ("id" :: attributes) (id :: (magical attribute_strings)) in 
-  let delimited = zipped |> List.map ~f: (fun (attr_name, attr_string) -> attr_name ^ ":" ^ attr_string) in String.concat ~sep:"|" delimited
-  
-let print_obj_list obj_list = 
-  let _ = obj_list |> List.map ~f: (fun obj -> 
-    Printf.eprintf "%s, " (obj_to_string obj)) in
-  Printf.eprintf " Length: %d\n" (List.length obj_list)
-  
-(** Sort, dedup, and compare object lists as sets **)
-let sort_objs obj_list = 
-  List.sort (fun obj1 obj2 -> 
-    let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
-    let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
-    Pervasives.compare id1 id2
-    ) obj_list
-    
-(** Deduplicates an object set by ID *)
-let dedup obj_list = 
-  let seen_ids = Int.Set.empty in 
-  let rec dedup_list seen no_dup_l = function 
-    | [] -> no_dup_l
-    | o :: objs -> 
-      let (_, id) = List.Assoc.find_exn o "id" ~equal:(=) in
-      let found = Set.mem seen (magical id) in 
-      if found then 
-        dedup_list seen no_dup_l objs
-      else
-        let seen = Set.add seen (magical id) in 
-        dedup_list seen (o :: no_dup_l) objs in 
-  dedup_list seen_ids [] obj_list
-  
-let sort_dedup obj_list = obj_list |> dedup |> sort_objs
-  
-(** Utilities for checking correctness **)
-let compare_ids o1 o2 = 
-  let (_, id1) =  List.Assoc.find_exn o1 "id" ~equal:(=) in
-  let (_, id2) =  List.Assoc.find_exn o2 "id" ~equal:(=) in
-  id1 = id2
-let compare_attrs o1 o2 attr_type = 
-  let (_, a1) =  List.Assoc.find_exn o1 attr_type ~equal:(=) in
-  let (_, a2) =  List.Assoc.find_exn o2 attr_type ~equal:(=) in
-  String.equal (magical a1) (magical a2)
 
-let all_true bool_list = bool_list |> (List.fold_right ~f:(&&) ~init:true)
- 
-let compare_obj o1 o2 = 
-  let same_id = compare_ids o1 o2 in 
-  let same_attr = ["color"; "shape"; "material"; "size"; "left"; "right"; "front"; "behind"] |> List.map ~f: (fun attr_type ->
-    compare_attrs o1 o2 attr_type
-    ) in 
-  let compared_attrs = same_id :: same_attr in 
-  all_true compared_attrs
-    
-let compare_objs objs1 objs2 = 
-  try
-    let objs1 = (sort_dedup objs1) in 
-    let objs2 = (sort_dedup objs2) in 
-    if not ((List.length objs1) = (List.length objs2)) then false 
-    else
-      let zipped = List.zip_exn objs1 objs2 in 
-      let compared_objs = zipped |> List.map ~f: (fun (o1, o2) -> compare_obj o1 o2) in 
-      all_true compared_objs
-  with
-  | _ -> false
 
-(** Constants **)
-let primitive_clevr_gray = primitive "clevr_gray" (tclevrcolor) ("gray");;
-let primitive_clevr_red = primitive "clevr_red" (tclevrcolor) ("red");;
-let primitive_clevr_blue = primitive "clevr_blue" (tclevrcolor) ("blue");;
-let primitive_clevr_green = primitive "clevr_green" (tclevrcolor) ("green");;
-let primitive_clevr_brown = primitive "clevr_brown" (tclevrcolor) ("brown");;
-let primitive_clevr_purple = primitive "clevr_purple" (tclevrcolor) ("purple");;
-let primitive_clevr_cyan = primitive "clevr_cyan" (tclevrcolor) ("cyan");;
-let primitive_clevr_yellow = primitive "clevr_yellow" (tclevrcolor) ("yellow");;
-let primitive_clevr_small = primitive "clevr_small" (tclevrsize) ("small");;
-let primitive_clevr_large = primitive "clevr_large" (tclevrsize) ("large");;
-let primitive_clevr_rubber = primitive "clevr_rubber" (tclevrmaterial) ("rubber");;
-let primitive_clevr_metal = primitive "clevr_metal" (tclevrmaterial) ("metal");;
-let primitive_clevr_cube = primitive "clevr_cube" (tclevrshape) ("cube");;
-let primitive_clevr_sphere = primitive "clevr_sphere" (tclevrshape) ("sphere");;
-let primitive_clevr_cylinder = primitive "clevr_cylinder" (tclevrshape) ("cylinder");;
-let primitive_clevr_left = primitive "clevr_left" (tclevrrelation) ("left");;
-let primitive_clevr_right = primitive "clevr_right" (tclevrrelation) ("right");;
-let primitive_clevr_behind = primitive "clevr_behind" (tclevrrelation) ("behind");;
-let primitive_clevr_front = primitive "clevr_front" (tclevrrelation) ("front");;
 
-(** Relational querying **)
-let unpack_relate_list rel_str = 
-  let split_str = Str.split (Str.regexp ",") rel_str 
-  in split_str |> List.map ~f: (fun r -> Pervasives.int_of_string r);;
+(* let primitive_merge_blocks = primitive "merge_blocks" (tblocks @> tblock) (fun blocks -> List.nth_exn blocks 0) ;; *)
+(* let primitive_reflect = primitive "reflect1" (tgrid @> tgrid) (fun block -> block) ;; *)
 
-let clevr_relate obj1 rel obj_list = 
-  try 
-    let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
-    let obj_in_set = obj_list |> List.filter ~f: (fun obj2 ->
-      let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in 
-      id1 = id2
-      ) in 
-    if List.length obj_in_set < 0 then []
-    else 
-      let query_obj = List.hd_exn obj_in_set in
-      let (_, related) = List.Assoc.find_exn query_obj rel ~equal:(=) in 
-      let unpacked = unpack_relate_list (magical related)  in 
-      let rel_set = Int.Set.of_list unpacked in 
-      obj_list |> List.filter ~f: (fun obj2 ->
-        let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in 
-        Set.mem rel_set (magical id2)) |> sort_dedup
-  with _ -> [];;
-    
-let primitive_clevr_relate = primitive "clevr_relate" (tclevrobject @> tclevrrelation @> tlist tclevrobject @> tlist tclevrobject) (clevr_relate);;
-
-(** Predefined filter functions **)
-let filter_attribute attr_type = (fun obj_list attr -> 
-  try 
-    obj_list |> List.filter ~f: 
-    (fun obj -> 
-      let (_, obj_attr) = List.Assoc.find_exn obj attr_type ~equal:(=) in
-      obj_attr = attr) |> sort_dedup
-  with _ -> []
-  );;
-
-let primitive_clevr_filter_color = primitive "clevr_filter_color" (tlist tclevrobject @> tclevrcolor @> tlist tclevrobject) (filter_attribute "color");;
-let primitive_clevr_filter_size = primitive "clevr_filter_size" (tlist tclevrobject @> tclevrsize @> tlist tclevrobject) (filter_attribute "size");; 
-let primitive_clevr_filter_material = primitive "clevr_filter_material" (tlist tclevrobject @> tclevrmaterial @> tlist tclevrobject) (filter_attribute "material");;
-let primitive_clevr_filter_shape = primitive "clevr_filter_shape" (tlist tclevrobject @> tclevrshape @> tlist tclevrobject) (filter_attribute "shape");;
-let primitive_clevr_filter = primitive "clevr_filter" ((t0 @> tboolean) @> tlist tclevrobject @> tlist tclevrobject) (fun f l -> l |> List.filter ~f:f |> sort_dedup);;
-  
-(**  Query object attributes and check equality. **)
-let primitive_clevr_query_color = primitive "clevr_query_color" (tclevrobject @> tclevrcolor) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "color" ~equal:(=) in attr);;
-let primitive_clevr_query_size = primitive "clevr_query_size" (tclevrobject @> tclevrsize) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "size" ~equal:(=) in attr);;
-let primitive_clevr_query_material = primitive "clevr_query_material" (tclevrobject @> tclevrmaterial) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "material" ~equal:(=) in attr);;
-let primitive_clevr_query_shape = primitive "clevr_query_shape" (tclevrobject @> tclevrshape) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "shape" ~equal:(=) in attr);;
-
-let primitive_clevr_eq_color = primitive "clevr_eq_color" (tclevrcolor @> tclevrcolor @> tboolean) (fun (a : string) (b : string) -> a = b);;
-let primitive_clevr_eq_size = primitive "clevr_eq_size" (tclevrsize @> tclevrsize @> tboolean) (fun (a : string) (b : string) -> a = b);;
-let primitive_clevr_eq_material = primitive "clevr_eq_material" (tclevrmaterial @> tclevrmaterial @> tboolean) (fun (a : string) (b : string) -> a = b);;
-let primitive_clevr_eq_shape = primitive "clevr_eq_shape" (tclevrshape @> tclevrshape @> tboolean) (fun (a : string) (b : string) -> a = b);;
-let primitive_clevr_eq_objects = primitive "clevr_eq_objects" (tclevrobject @> tclevrobject @> tboolean) (fun obj1 obj2 ->
-  let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
-  let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
-  id1 = id2
-  );;
-
-(** Same: filters for objects except for a given object. **)
-let same_attribute attr_type = (fun obj1 obj_list -> 
-  try 
-    let (_, obj1_attr) = List.Assoc.find_exn obj1 attr_type ~equal:(=) in
-    let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
-    obj_list |> List.filter ~f:
-    (fun obj2 -> 
-      let (_, obj2_attr) = List.Assoc.find_exn obj2 attr_type ~equal:(=) in
-      let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
-      (obj1_attr = obj2_attr) && (not (id1 = id2))
-      ) |> sort_dedup
-  with _ -> []
-  );;
-
-let filter_except obj1 condition_fn obj_list  = 
-  try 
-    let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
-    obj_list |> List.filter ~f: 
-    (fun obj2 -> 
-      let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
-      (condition_fn obj2) && (not (id1 = id2))
-      ) |> sort_dedup
-  with _ -> [];;
-
-let primitive_clevr_same_color = primitive "clevr_same_color" (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (same_attribute "color");;
-let primitive_clevr_same_size = primitive "clevr_same_size" (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (same_attribute "size");;
-let primitive_clevr_same_shape = primitive "clevr_same_shape" (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (same_attribute "shape");;
-let primitive_clevr_same_material = primitive "clevr_same_material" (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (same_attribute "material");;
-
-let primitive_clevr_filter_except = primitive "clevr_filter_except" (tclevrobject @> (t0 @> tboolean) @> tlist tclevrobject @> tlist tclevrobject) (filter_except);;
-
-(** Set operations over the object IDS **)
-let obj_id_set obj_list = obj_list |>  List.map ~f: (fun obj -> 
-  let (_, id) = List.Assoc.find_exn obj "id" ~equal:(=) in id) |> Int.Set.of_list;;
-(** Note: disambiguate by taking from the first set only **)
-let objset_op op_fn l1 l2 = 
-  try 
-    let s1 = obj_id_set l1 in 
-    let s2 = obj_id_set l2 in 
-    let result_set = op_fn s1 s2 in 
-    let filter_l1 = l1 |> List.filter ~f: (fun obj -> 
-      let (_, id) =  List.Assoc.find_exn obj "id" ~equal:(=) 
-      in Set.mem result_set id) in 
-    let filter_l1_ids = obj_id_set filter_l1 in 
-    let filter_l2 = l2 |> List.filter ~f: (fun obj -> 
-      let (_, id) =  List.Assoc.find_exn obj "id" ~equal:(=) 
-      in (Set.mem result_set id) && (not (Set.mem filter_l1_ids id))) in 
-    (filter_l1 @ filter_l2) |> sort_dedup
-  with _ -> [];;
-
-let primitive_clevr_union = primitive "clevr_union" ((tlist tclevrobject) @> (tlist tclevrobject) @> (tlist tclevrobject)) (objset_op Set.union);;
-let primitive_clevr_intersect = primitive "clevr_intersect" (tlist tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (objset_op Set.inter);;
-let primitive_clevr_difference= primitive "clevr_difference" (tlist tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (objset_op Set.diff);;
-
-(** Mathematical operations **)
-let primitive_clevr_count = primitive "clevr_count" (tlist tclevrobject @> tint) (List.length);;
-let primitive_clevr_eq_int = primitive "clevr_eq_int" (tint @> tint @> tboolean) (fun (a : int) (b : int) -> a = b);;
-let primitive_clevr_gt = primitive "clevr_gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
-let primitive_clevr_lt = primitive "clevr_lt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x < y);;
-
-let primitive_clevr_not = primitive "clevr_not" (tboolean @> tboolean) (not);;
-
-(** Singleton operators **)
-let primitive_clevr_unique = primitive "clevr_unique" (tlist tclevrobject @> tclevrobject) (fun xs -> List.hd_exn xs);;
-let primitive_clevr_exist = primitive "clevr_exist" (tlist tclevrobject @> tboolean) (fun obj_list -> (List.length obj_list) > 0);;
-
-(** # Transformation operators. Returns an object with a given attribute transformed. **)
-let transform attr_type = (fun attr old_obj -> 
-  try
-    let open Yojson.Basic.Util in
-    let removed = List.Assoc.remove old_obj attr_type ~equal:(=) in 
-    let new_json : json = 
-      `Assoc([attr_type, `String(attr);]) in
-    let new_attr = new_json |> to_assoc |> magical in 
-    removed @ new_attr
-  with _ ->
-    old_obj
-  )
-let primitive_transform_color = primitive "clevr_transform_color" (tclevrcolor @> tclevrobject @>  tclevrobject) (transform "color");;
-let primitive_transform_size = primitive "clevr_transform_size" (tclevrsize @> tclevrobject @>  tclevrobject) (transform "size");;
-let primitive_transform_shape = primitive "clevr_transform_shape" (tclevrshape @> tclevrobject @>  tclevrobject) (transform "shape");;
-let primitive_transform_material = primitive "clevr_transform_material" (tclevrmaterial @> tclevrobject @>  tclevrobject) (transform "material");;
-
-(** Basic list operators **)
-let primitive_clevr_map = primitive "clevr_map" ((tclevrobject @> tclevrobject) @> tlist tclevrobject @> tlist tclevrobject) (fun f l -> l |> List.map ~f:f |> sort_dedup);;
-let primitive_clevr_if = primitive "clevr_if" (tboolean @> t0 @> t0 @> t0)
-    ~manualLaziness:true
-    (fun p x y -> if Lazy.force p then Lazy.force x else Lazy.force y);;
-    
-let primitive_clevr_is_empty = primitive "clevr_empty?" (tlist tclevrobject @> tboolean) (function | [] -> true
-              | _ -> false);;
-let primitive_clevr_empty = primitive "clevr_empty" (tlist tclevrobject) [];;
-(** Removes any duplicate object from the list before adding a new one **)
-let clevr_add obj1 obj_list = 
-  let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
-  let filtered_obj_list = obj_list |> List.filter ~f: 
-    (fun obj2 -> 
-      let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
-      (not (id1 = id2))
-      ) in 
-  sort_dedup (obj1 :: filtered_obj_list);;
-
-let primitive_clevr_fold = primitive "clevr_fold" (tlist tclevrobject @> tlist tclevrobject @> (tclevrobject @> tlist tclevrobject @> tlist tclevrobject) @> tlist tclevrobject) (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
-let primitive_clevr_add = primitive "clevr_add" (tclevrobject @> tlist tclevrobject  @> tlist tclevrobject) (fun x xs -> (clevr_add x xs));;
-
-let primitive_clevr_car = primitive "clevr_car" (tlist tclevrobject @> tclevrobject) (fun xs -> List.hd_exn xs);;
-
-let safe_tail xs = 
-  match xs with 
-    | [] -> []
-    | (h :: t) -> t
-let primitive_clevr_cdr = primitive "clevr_cdr" (tlist tclevrobject @> tlist tclevrobject) (fun xs -> safe_tail xs);;
-
-(* List Function Definitions *)
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~compare:(fun x y -> x - y));;
@@ -865,7 +558,6 @@ let var_prev         = primitive "var_prev" (tvar @> tvar) GeomLib.Plumbing.var_
 let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.var_opposite
 let var_opposite     = primitive "var_divide" (tvar @> tvar @> tvar) GeomLib.Plumbing.var_divide
 let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
-
 
 (* LOGO *)
 let logo_RT  = primitive "logo_RT"             (tangle @> turtle) LogoLib.LogoInterpreter.logo_RT
@@ -1355,78 +1047,3 @@ ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;
-
-(* RE2 Type Definitions *)
-let tfullstr = make_ground "tfullstr";;
-let tsubstr = make_ground "tsubstr";;
-
-(** Regex constants **)
-let primitive_ra = primitive "_a" tsubstr "a";;
-let primitive_rb = primitive "_b" tsubstr "b";;
-let primitive_rc = primitive "_c" tsubstr "c";;
-let primitive_rd = primitive "_d" tsubstr "d";;
-let primitive_re = primitive "_e" tsubstr "e";;
-let primitive_rf = primitive "_f" tsubstr "f";;
-let primitive_rg = primitive "_g" tsubstr "g";;
-let primitive_rh = primitive "_h" tsubstr "h";;
-let primitive_ri = primitive "_i" tsubstr "i";;
-let primitive_rj = primitive "_j" tsubstr "j";;
-let primitive_rk = primitive "_k" tsubstr "k";;
-let primitive_rl = primitive "_l" tsubstr "l";;
-let primitive_rm = primitive "_m" tsubstr "m";;
-let primitive_rn = primitive "_n" tsubstr "n";;
-let primitive_ro = primitive "_o" tsubstr "o";;
-let primitive_rp = primitive "_p" tsubstr "p";;
-let primitive_rq = primitive "_q" tsubstr "q";;
-let primitive_rr = primitive "_r" tsubstr "r";;
-let primitive_rs = primitive "_s" tsubstr "s";;
-let primitive_rt = primitive "_t" tsubstr "t";;
-let primitive_ru = primitive "_u" tsubstr "u";;
-let primitive_rv = primitive "_v" tsubstr "v";;
-let primitive_rw = primitive "_w" tsubstr "w";;
-let primitive_rx = primitive "_x" tsubstr "x";;
-let primitive_ry = primitive "_y" tsubstr "y";;
-let primitive_rz = primitive "_z" tsubstr "z";;
-
-let primitive_emptystr = primitive "_rempty" tsubstr "";;
-let primitive_rdot = primitive "_rdot" tsubstr ".";;
-
-let primitive_rvowel = primitive "_rvowel" tsubstr "(a|e|i|o|u)" ;;
-let primitive_rconsonant = primitive "_rconsonant" tsubstr "[^aeiou]" ;;
-
-
-let primitive_rnot = primitive "_rnot" (tsubstr @> tsubstr) (fun s -> "[^" ^ s ^ "]");;
-let primitive_ror = primitive "_ror" (tsubstr @> tsubstr @> tsubstr) (fun s1 s2 -> "(("^ s1 ^ ")|("^ s2 ^"))");;
-let primitive_rconcat = primitive "_rconcat" (tsubstr @> tsubstr @> tsubstr) (fun s1 s2 -> s1 ^ s2);;
-
-(* RE2 Function Definitions *)
-(* Exact regex match *)
-let primitive_rmatch = primitive "_rmatch" (tsubstr @> tsubstr @> tboolean) (fun s1 s2 -> 
-  try 
-    let regex = Re2.create_exn ("^" ^ s1 ^ "$") in
-    Re2.matches regex s2 
-  with _ -> false
-  );;
-  
-(** Flattens list of substrings back into a string *)
-let primitive_rflatten = primitive "_rflatten" ((tlist tsubstr) @> tfullstr) (fun l -> String.concat ~sep:"" l);;
-let primitive_rtail = primitive "_rtail" ((tlist tsubstr) @> tsubstr) (fun l -> 
-  let arr = Array.of_list l in arr.(Array.length arr - 1)
-  );;
-
-(** Splits s2 on regex s1 as delimiter, including the matches *)
-let not_empty str = (String.length str) > 0;;
-let primitive_rsplit = primitive "_rsplit" (tsubstr @> tfullstr @> (tlist tsubstr)) (fun s1 s2 -> 
-  try
-    let regex = Re2.create_exn s1 in
-    let init_split = Re2.split ~include_matches:true regex s2 in
-    (List.filter init_split not_empty)
-  with _ -> [s2]
-  );;
-  
-let primitive_rappend = primitive "_rappend" (tsubstr @> (tlist tsubstr) @> (tlist tsubstr)) (fun x l -> l @ [x]);;
-let primitive_rrevcdr = primitive "_rrevcdr" ((tlist tsubstr) @> (tlist tsubstr)) (fun l -> 
-  let arr = Array.of_list l in 
-  let slice = Array.sub arr 0 (Array.length arr - 1) in
-  Array.to_list slice
-  );; 

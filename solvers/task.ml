@@ -9,8 +9,6 @@ open Program
 open Enumeration
 open Grammar
 open Differentiation
-open Base.Exn
-open Printexc
 
 type task =
   { name: string; task_type: tp;
@@ -93,47 +91,7 @@ let run_recent_logo ~timeout program =
     bx
 ;;
 
-(** Sort and deduplicate the objects before comparing **)
-register_special_task "clevrobjectlist" (fun extras
-  ?timeout:(timeout = 0.05) name ty examples ->
-  {
-    name = name    ;
-    task_type = ty ;
-    log_likelihood =
-      (fun p ->
-        let p = analyze_lazy_evaluation p in
-        let rec loop = function
-          | [] -> true
-          | (xs,y) :: e ->
-            try
-              match run_for_interval
-                      timeout
-                      (fun () -> 
-                        let output = run_lazy_analyzed_with_arguments p xs in
-                        let compare = 
-                        Program.compare_objs (magical output) (magical y)
-                        in compare 
-                        )
-              with
-                | Some(true) -> loop e
-                | _ -> false
-            with (* We have to be a bit careful with exceptions if the
-                  * synthesized program generated an exception, then we just
-                  * terminate w/ false but if the enumeration timeout was
-                  * triggered during program evaluation, we need to pass the
-                  * exception on
-                  *)
-              | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-              | EnumerationTimeout  -> 
-                let _ = Printf.eprintf("Enumeration timeout;") in 
-                raise EnumerationTimeout
-              | _                   ->  false
-        in
-        if loop examples
-          then 0.0
-          else log 0.0)
-  }
-);;
+
 
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
@@ -328,7 +286,6 @@ register_special_task "differentiable"
             if l < t then 0. -. d*.parameterPenalty else log 0.)
   });;
 
-
 register_special_task "stringConstant" (fun extras
     (* ?parameterPenalty:(parameterPenalty=0.) *)
     (* ?maxParameters:(maxParameters=100) *)
@@ -398,8 +355,7 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
 type hit_result = {hit_program: string;
                    hit_likelihood: float;
                    hit_prior: float;
-                   hit_time: float;
-                   hit_tokens: string;}
+                   hit_time: float;}
 
 let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~maxFreeParameters
@@ -470,8 +426,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
                      {hit_program = string_of_program p;
                       hit_prior = logPrior;
                       hit_likelihood = logLikelihood;
-                      hit_time = dt;
-                      hit_tokens = string_of_tokens false p} ;
+                      hit_time = dt;} ;
                    while Heap.length hits.(j) > maximumFrontier.(j) do
                      Heap.remove_top hits.(j)
                    done;

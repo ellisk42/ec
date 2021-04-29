@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     args = commandlineArguments(
         enumerationTimeout=10, activation='tanh', iterations=10, recognitionTimeout=3600, 
-        maximumFrontier=10, topK=2, pseudoCounts=1.0, useRecognitionModel=True,
+        maximumFrontier=10, topK=2, pseudoCounts=1.0,
         helmholtzRatio=0, structurePenalty=1.,
         CPUs=numberOfCPUs(),
         extras=list_options)

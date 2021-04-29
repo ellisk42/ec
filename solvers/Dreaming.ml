@@ -111,7 +111,7 @@ let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc
   let rec loop lb =
     if enumeration_timed_out() then () else begin 
       let final_results = 
-        enumerate_programs ~extraQuiet:true~nc:nc ~final:(fun () -> [behavior_to_programs])
+        enumerate_programs ~extraQuiet:true ~nc:nc ~final:(fun () -> [behavior_to_programs])
           g request lb (lb+.1.5) (fun p l ->
               if Hashtbl.length behavior_to_programs > maximumSize then set_enumeration_timeout (-1.0) else
                 match behavior_hash p with
@@ -130,6 +130,7 @@ let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc
 
 let rec unpack x =
   let open Yojson.Basic.Util in
+  
   try magical (x |> to_int) with _ ->
   try magical (x |> to_float) with _ ->
   try magical (x |> to_bool) with _ ->
@@ -148,11 +149,11 @@ let rec pack t v : json =
   | TCon("int",[],_) -> `Int(magical v)
   | TCon("bool",[],_) -> `Bool(magical v)
   | TCon("char",[],_) -> `String(magical v |> String.of_char)
-  | TCon("tfullstr", [], _) -> `String(magical v)
   | _ -> assert false
 
 let special_helmholtz =   Hashtbl.Poly.create();;
 let register_special_helmholtz name handle = Hashtbl.set special_helmholtz name handle;;
+
 
 let default_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
@@ -184,6 +185,7 @@ let default_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t
 
 let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
+
   (* convert json -> ocaml *)
   let inputs : 'a list list = unpack inputs in
   let return = return_of_type request in
@@ -216,61 +218,6 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
 
 register_special_helmholtz "string" string_hash;;
 
-let rec unpack_clevr x =
-  let open Yojson.Basic.Util in 
-  try x |> to_assoc |> magical with _ ->
-  try x |> to_list |> List.map ~f:unpack_clevr |> magical
-  with _ -> raise (Failure "could not unpack clevr objects");;
-
-(* Pack and sort any object lists, if we decide we want them. *)
-let rec poly_pack_clevr t v = 
-  match t with
-  | TCon("list",[t'],_) -> 
-    let return_list = 
-      match t' with 
-      | TCon("tclevrobject",[],_) -> sort_dedup (magical v)
-      | _ -> v 
-    in PolyValue.List(magical return_list |> List.map ~f:(poly_pack_clevr (magical t'))) 
-  | TCon("int",[],_) -> PolyValue.Integer(magical v)
-  | TCon("bool",[],_) -> PolyValue.Boolean(magical v)
-  | TCon("tclevrobject",[],_) -> PolyValue.FullString(magical (obj_to_string (magical (v))))
-  | _ -> PolyValue.FullString(magical v)
-
-let clevr_hash ?timeout:(timeout=0.005) request inputs : program -> PolyList.t option =
-  let open Yojson.Basic.Util in
-
-  (* convert json -> ocaml *)
-  let inputs : 'a list list = unpack_clevr inputs in
-  let return = return_of_type request in
-  
-  (** Allow behavior duplication in CLEVR **)
-  let open Random in 
-  fun program ->
-    let p = analyze_lazy_evaluation program in
-    let outputs = inputs |> List.map ~f:(fun input ->
-        try
-          match run_for_interval ~attempts:2 timeout
-                  (fun () -> run_lazy_analyzed_with_arguments p input)
-          with
-          | Some(value) -> 
-            let max_programs = 5000000 in 
-            let random_hash = Random.int max_programs in 
-            let packed = PolyValue.Integer(magical random_hash) in
-            packed
-          | _ -> PolyValue.None
-        with (* We have to be a bit careful with exceptions if the
-              * synthesized program generated an exception, then we just
-              * terminate w/ false but if the enumeration timeout was
-              * triggered during program evaluation, we need to pass the
-              * exception on
-             *)
-        | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-        | _                   -> PolyValue.None) in
-    if List.exists outputs ~f:PolyValue.is_some then
-      Some(outputs)
-    else None
-;;
-register_special_helmholtz "clevr" clevr_hash;;
 
 
 (* let rational_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option = *)

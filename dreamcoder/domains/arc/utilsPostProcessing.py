@@ -4,6 +4,7 @@ import json
 import math
 import torch
 
+from dreamcoder.domains.arc.arcPrimitives import *
 from dreamcoder.grammar import Grammar, ContextualGrammar
 from dreamcoder.program import Program
 from dreamcoder.type import *
@@ -106,7 +107,7 @@ def upweightConditionalProductions(parent2UpdateProduction, scaleFactor, context
         currentGrammar = upweightConditionalProduction(parentPrimitive, argIndex, production, scaleFactor, currentGrammar)
     return currentGrammar
 
-def evaluateGrammars(dreamcoderFrontier, manuallySolvedTasks, grammar1=None, grammar2=None, recognizer1=None, recognizer2=None):
+def evaluateGrammars(dreamcoderFrontier, manuallySolvedTasks=None, grammar1=None, grammar2=None, recognizer1=None, recognizer2=None):
 
     print('\n ------------------------------ Solved by Dreamcoder ------------------------------------ \n')
     averageLLBefore, averageLLAfter = 0,0
@@ -127,32 +128,33 @@ def evaluateGrammars(dreamcoderFrontier, manuallySolvedTasks, grammar1=None, gra
     else:
         print('Average LL: {} -> {}'.format(averageLLBefore / len(dreamcoderFrontier), (averageLLAfter / len(dreamcoderFrontier))))
 
-    print('\n ------------------------------ Manually Solved ------------------------------------ \n')        
+    if manuallySolvedTasks is not None:
 
+        print('\n ------------------------------ Manually Solved ------------------------------------ \n')        
 
-    solvedByDreamcoder = 0
-    averageLLBefore, averageLLAfter = 0,0
-    for task,program in manuallySolvedTasks.items():
-        if task not in [frontier.task.name for frontier in dreamcoderFrontier]:
-            p = Program.parse(manuallySolvedTasks[task])
-            llBefore = scoreProgram(p, grammar=grammar1, recognizer=recognizer1)
-            llAfter = scoreProgram(p, grammar=grammar2, recognizer=recognizer2)
-            if llAfter == 0:
-                print("{}: {}".format(task, llBefore))
+        solvedByDreamcoder = 0
+        averageLLBefore, averageLLAfter = 0,0
+        for task,program in manuallySolvedTasks.items():
+            if task not in [frontier.task.name for frontier in dreamcoderFrontier]:
+                p = Program.parse(manuallySolvedTasks[task])
+                llBefore = scoreProgram(p, grammar=grammar1, recognizer=recognizer1)
+                llAfter = scoreProgram(p, grammar=grammar2, recognizer=recognizer2)
+                if llAfter == 0:
+                    print("{}: {}".format(task, llBefore))
+                else:
+                    print("{}: {} -> {}".format(task, llBefore, llAfter))
+                print("Program: {}\n".format(p))
+                averageLLBefore += llBefore
+                averageLLAfter += llAfter
             else:
-                print("{}: {} -> {}".format(task, llBefore, llAfter))
-            print("Program: {}\n".format(p))
-            averageLLBefore += llBefore
-            averageLLAfter += llAfter
+                solvedByDreamcoder += 1
+        
+        print("{} of {} manually written solutions were found by Dreamcoder".format(solvedByDreamcoder, len(manuallySolvedTasks)))
+        numUnsolved = len(manuallySolvedTasks) - solvedByDreamcoder
+        if llAfter == 0:
+            print('Average LL: {}'.format(averageLLBefore / numUnsolved))
         else:
-            solvedByDreamcoder += 1
-    
-    print("{} of {} manually written solutions were found by Dreamcoder".format(solvedByDreamcoder, len(manuallySolvedTasks)))
-    numUnsolved = len(manuallySolvedTasks) - solvedByDreamcoder
-    if llAfter == 0:
-        print('Average LL: {}'.format(averageLLBefore / numUnsolved))
-    else:
-        print('Average LL: {} -> {}'.format(averageLLBefore/numUnsolved, averageLLAfter/numUnsolved))
+            print('Average LL: {} -> {}'.format(averageLLBefore/numUnsolved, averageLLAfter/numUnsolved))
 
 def convertFrontiersOverTimeToJson(frontiersOverTime):
     frontiersOverTimeJson = {}
@@ -222,7 +224,7 @@ def checkFrontiersOnEvalExamples(frontiers):
     return percentCorrect / len(frontiers)
 
     # # Tasks I'm not solving
-    # # evaluateGrammars(firstFrontier, manuallySolvedTasks, grammar1=preConsolidationGrammar.insideOutside(firstFrontier, 30, iterations=1))
+    # evaluateGrammars(firstFrontier, manuallySolvedTasks, grammar1=preConsolidationGrammar.insideOutside(firstFrontier, 30, iterations=1))
     # # evaluateGrammars(firstFrontier, manuallySolvedTasks, grammar1=preConsolidationGrammar.insideOutside(firstFrontier, 1))
 
     # # How does contextual model do?

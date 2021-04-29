@@ -333,7 +333,13 @@ class Grid(RectangleBlock):
         rows = [' '.join(row) for row in temp.tolist()]
         return '\n'.join(rows)
 
-    def toJson(self):
+    # def toJson(self):
+    #     temp = {}
+    #     for yPos,xPos in self.points:
+    #         temp["{},{}".format(yPos, xPos)] = self.points[(yPos,xPos)]
+    #     return {'grid':temp}
+
+    def __repr__(self):
         temp = {}
         for yPos,xPos in self.points:
             temp["{},{}".format(yPos, xPos)] = self.points[(yPos,xPos)]
@@ -873,7 +879,7 @@ manuallySolvedTasks = {
 
 if __name__ == "__main__":
 
-    directory = '/'.join(os.path.abspath(__file__).split('/')[:-4]) + '/arc-data/data/training'
+    directory = '/'.join(os.path.abspath(__file__).split('/')[:-4]) + '/arc_data/data/training'
     train,test = getTask('f8a8fe49.json', directory)
 
     generatedTasks = generateFromFrontier(train, 73)

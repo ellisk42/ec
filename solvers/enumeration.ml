@@ -67,15 +67,6 @@ let violates_symmetry f a n =
       | (_,"left","right") -> true
       | (_,"right","right") -> true
       | (_,"right","left") -> true
-      (** CLEVR primitives **)
-      | (0,"clevr_car","clevr_add") -> true
-      | (0,"clevr_car","clevr_empty") -> true
-      | (0,"clevr_cdr","clevr_add") -> true
-      | (0,"clevr_cdr","clevr_empty") -> true
-      | (0,"clevr_empty?","clevr_add") -> true
-      | (0,"clevr_empty?","clevr_empty") -> true
-      | (1,"clevr_map","clevr_empty") -> true
-      | (0,"clevr_fold","clevr_empty") -> true
       (* | (_,"tower_embed","tower_embed") -> true *)
       | _ -> false
 
