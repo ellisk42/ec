@@ -107,7 +107,8 @@ def register(name):
     return wrapper
 
 CHECKPOINTS_REGISTRY = {
-"unigram_enumeration" : "experimentOutputs/arc/2021-04-20T23:35:15.171726/arc_aic=1.0_arity=0_ET=10_t_zero=28800_it=1_MF=10_noConsolidation=True_pc=1.0_RW=False_solver=ocaml_STM=True_L=1.0_TRR=default_K=2_topkNotMAP=False_rec=False_graph=True.pickle"
+"unigram_enumeration" : "/om2/user/theosech/arc_dc/ec/experimentOutputs/arc/2021-04-20T23:35:15.171726/arc_aic=1.0_arity=0_ET=10_t_zero=28800_it=1_MF=10_noConsolidation=True_pc=1.0_RW=False_solver=ocaml_STM=True_L=1.0_TRR=default_K=2_topkNotMAP=False_rec=False_graph=True.pickle",
+'bigram_enumeration' : "/om2/user/theosech/arc_dc/ec/experimentOutputs/arc/2021-04-21T20:11:03.040547/arc_arity=0_BO=False_CO=True_ES=1_ET=600_t_zero=3600_HR=0_it=2_MF=10_noConsolidation=True_RS=10000_RT=3600_RR=False_RW=False_solver=ocaml_STM=True_TRR=default_K=2_topkNotMAP=False_DSL=False.pickle"
 }
 
     
