@@ -8,7 +8,6 @@ Commonly used utilities are:
     parser = get_experiment_argparser(domain_name_prefix) -- gets an argparser with the commmands.
     @register_experiment(name) -- registers experiment builder functions for the experiment commands.
     
-    TBD: main function:
     generate_all_launch_commands_and_log_lines(args, checkpoint_registry=dict()) -- takes a default checkpoint registry and generates all launch commands and log_lines.
 """
 import os
