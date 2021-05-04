@@ -19,14 +19,14 @@ from dreamcoder.utilities import eprint, flatten, testTrainSplit, lse, runWithTi
 from dreamcoder.grammar import Grammar, ContextualGrammar
 from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
-from dreamcoder.recognition import RecognitionModel, DummyFeatureExtractor
+from dreamcoder.recognition import RecognitionModel, DummyFeatureExtractor, variable
 from dreamcoder.program import Program
 from dreamcoder.domains.arc.utilsPostProcessing import *
 from dreamcoder.domains.arc.arcPrimitives import *
 from dreamcoder.domains.arc.taskGeneration import *
 
-DEFAULT_ARC_DOMAIN_NAME_PREFIX = "arc"
-DEFAULT_LANGUAGE_DIR = f"data/{DEFAULT_ARC_DOMAIN_NAME_PREFIX}/language"
+DEFAULT_DOMAIN_NAME_PREFIX = "arc"
+DEFAULT_LANGUAGE_DATASET_DIR = f"data/{DEFAULT_DOMAIN_NAME_PREFIX}/language"
 
 class EvaluationTimeout(Exception):
     pass
@@ -121,15 +121,17 @@ def retrieveARCJSONTask(filename, directory):
     return task
 
 
-def list_options(parser):
+def arc_options(parser):
     # parser.add_argument("--random-seed", type=int, default=17)
-    parser.add_argument("--languageDatasetDir",
-                        default=DEFAULT_LANGUAGE_DIR)
+    parser.add_argument("--unigramEnumerationTimeout", type=int, default=3600)
+    parser.add_argument("--firstTimeEnumerationTimeout", type=int, default=1)
     parser.add_argument("--featureExtractor", default="dummy", choices=[
-        "ArCNN",
+        "arcCNN",
         "dummy"])
 
-    # parser.add_argument("-i", type=int, default=10)
+    parser.add_argument("--languageDatasetDir",             
+        default=DEFAULT_LANGUAGE_DATASET_DIR,
+        help="Top-level directory containing the language tasks.")
 
 
 def check(filename, f, directory):
@@ -168,39 +170,55 @@ class ArcCNN(nn.Module):
     
     def __init__(self, tasks=[], testingTasks=[], cuda=False, H=64, inputDimensions=25):
         super(ArcCNN, self).__init__()
+
         self.CUDA = cuda
         self.recomputeTasks = True
+
         self.outputDimensionality = H
+        def conv_block(in_channels, out_channels):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                # nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+                nn.MaxPool2d(2)
+            )
 
-        if cuda:
-            self.CUDA=True
-            self.cuda()  # I think this should work?
+        self.gridDimension = 30
 
-        self.linear = nn.Linear(inputDimensions,H)
-        # self.hidden = nn.Linear(H, H)
+        # channels for hidden
+        hid_dim = 64
+        z_dim = 64
 
-    def forward(self, v, v2=None):
+        self.encoder = nn.Sequential(
+            conv_block(22, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, z_dim),
+            Flatten()
+        )
 
-        v = F.relu(self.linear(v))
-        return v.view(-1)
+    def forward(self, v):
+        """ """
+        assert v.shape == (v.shape[0], 22, self.gridDimension, self.gridDimension)
+        v = variable(v, cuda=self.CUDA).float()
+        v = self.encoder(v)
+        return v.mean(dim=0)
 
-    def featuresOfTask(self, t, t2=None):  # Take a task and returns [features]
+
+    def featuresOfTask(self, t):  # Take a task and returns [features]
         v = None
-        for example in t.examples[-1:]:
+        for example in t.examples:
             inputGrid, outputGrid = example
             inputGrid = inputGrid[0]
 
-            inputVector = np.array(gridToArray(inputGrid)).flatten().astype(np.float32)
-            paddedInputVector = nn.functional.pad(torch.from_numpy(inputVector), (0,900 - inputVector.shape[0]), 'constant', 0)
+            inputTensor = inputGrid.to_tensor(grid_height=30, grid_width=30)
+            outputTensor = outputGrid.to_tensor(grid_height=30, grid_width=30)
+            ioTensor = torch.cat([inputTensor, outputTensor], 0).unsqueeze(0)
 
-            outputVector = np.array(gridToArray(outputGrid)).flatten().astype(np.float32)
-            paddedOutputVector = nn.functional.pad(torch.from_numpy(outputVector), (900 - outputVector.shape[0],0), 'constant', 0)
-
-            exampleVector = torch.cat([paddedInputVector, paddedOutputVector], dim=0)
             if v is None:
-                v = exampleVector
+                v = ioTensor
             else:
-                v = torch.cat([v, exampleVector], dim=0)
+                v = torch.cat([v, ioTensor], dim=0)
         return self(v)
 
     def taskOfProgram(self, p, tp):
@@ -289,147 +307,16 @@ def main(args):
     # print("base Grammar {}".format(baseGrammar))
 
     timestamp = datetime.datetime.now().isoformat()
-    outputDirectory = "ec/experimentOutputs/arc/%s" % timestamp
+    outputDirectory = "experimentOutputs/arc/%s" % timestamp
     os.system("mkdir -p %s" % outputDirectory)
 
     args.update(
         {"outputPrefix": "%s/arc" % outputDirectory, "evaluationTimeout": 1,}
     )
 
-    # # nnTrainTask, _ = retrieveARCJSONTasks(dataDirectory, ['dae9d2b5.json'])
-    # # arcNN = ArcCNN(inputDimensions=25)
-    # # v = arcNN.featuresOfTask(nnTrainTask[0])
-    # # print(v)
-
-
-    def convertFrontiersOverTimeToJson(frontiersOverTime):
-        frontiersOverTimeJson = {}
-        numFrontiers = len(list(frontiersOverTime.values())[0])
-        # print('{} frontiers per task'.format(numFrontiers))
-        for task,frontiers in frontiersOverTime.items():
-            # print('frontiers: ', frontiers)
-            frontiersOverTimeJson[task.name] = {i:str(frontier.entries[0].program) + '\n' + str(frontier.entries[0].logPosterior) for i,frontier in enumerate(frontiers) if len(frontier.entries) > 0}
-        return frontiersOverTimeJson
-
-    def getProgramUses(program, request, grammar):
-        ls = grammar.closedLikelihoodSummary(request, program)
-        def uses(summary):
-            if hasattr(summary, 'uses'): 
-                return torch.tensor([ float(int(p in summary.uses))
-                                      for p in grammar.primitives])
-            assert hasattr(summary, 'noParent')
-            u = uses(summary.noParent) + uses(summary.variableParent)
-            for ss in summary.library.values():
-                for s in ss:
-                    u += uses(s)
-            return u
-        u = uses(ls)
-        # u[u > 1.] = 1.
-        usesIdx = torch.nonzero(u).squeeze().tolist()
-        if isinstance(usesIdx, int):
-            usesIdx = [usesIdx]
-        return usesIdx
-
-    def parseHandwritten(taskName):
-        # if taskName in ["007bbfb7.json", "ea786f4a.json"]:
-        #     return None
-        # else:
-        print(taskName)
-        program = Program.parse(manuallySolvedTasks[taskName])
-        return program
-
-    # frontiersOverTime = convertFrontiersOverTimeToJson(frontierOverTime)
-
-    # grammarJson = topDownGrammar.jsonWithTypes()
-    # productions = []
-    
-    # toReturn = {}
-
-    # for task in frontierOverTime.keys():
-    #     taskFrontiers = frontierOverTime[task]
-    #     manuallySolved = str(task.name) in list(manuallySolvedTasks.keys())
-
-    #     humanSolution = None
-    #     if manuallySolved:
-    #         humanProgram = parseHandwritten(str(task.name))
-    #         usesIdx = getProgramUses(humanProgram, arrow(tgridin, tgridout), topDownGrammar)
-    #         humanSolution = (len(usesIdx), usesIdx)
-
-    #     taskData = {"manuallySolved": manuallySolved, "humanSolution": humanSolution, "programsOverTime": []}
-    #     toReturn[str(task.name)] = taskData
-
-    #     for frontier in taskFrontiers:
-    #         if len(frontier.entries) > 0:
-    #             bestProgram = frontier.bestPosterior.program
-    #             usesIdx = getProgramUses(bestProgram, arrow(tgridin, tgridout), topDownGrammar)
-    #             taskData["programsOverTime"].append((len(usesIdx), usesIdx))
-
-    # for task in toReturn.keys():
-    #     if toReturn[task]["manuallySolved"]:
-    #         pass
-    #         # print(task, toReturn[task])
-
-    # for i, productions in enumerate(grammarJson['productions']):
-    #     print("{}: {},".format(productions['expression'], productions['type']))
-
-
-    # for i,p in enumerate([str(p) for p in topDownGrammar.primitives]):
-    #     print(i, p)
-
-    # with open(resumePath + resumeDirectory + 'grammarPrimitivesList.p', 'wb') as f:
-    #     pickle.dump([str(p) for p in topDownGrammar.primitives], f)
-
-    # with open(resumePath + resumeDirectory + 'discoveredPrograms.p', 'wb') as f:
-    #     pickle.dump(toReturn, f)
-
-    # json.dump(grammarJson, open('grammar.json', 'w'))
-    # print("homeDirectory: {}".format(homeDirectory))
-    # resumeDirectory = "/experimentOutputs/arc/2021-04-20T23:35:15.171726/"
-    # pickledFile = "arc_aic=1.0_arity=0_ET=10_t_zero=28800_it=1_MF=10_noConsolidation=True_pc=1.0_RW=False_solver=ocaml_STM=True_L=1.0_TRR=default_K=2_topkNotMAP=False_rec=False_graph=True.pickle"
-    # result, firstFrontier, allFrontiers, frontierOverTime, topDownGrammar, preConsolidationGrammar, resumeRecognizer, learnedProductions = getTrainFrontier(homeDirectory + resumeDirectory + pickledFile, 0)
-
-    # print(fittedGrammar)
-    # evaluateGrammars(allFrontiers, manuallySolvedTasks=None, grammar1=topDownGrammar, grammar2=fittedGrammar, recognizer1=None, recognizer2=None)
-
-    # print(resumeRecognizer.featureExtractor.featuresOfTask("t"))
-
-    # print(result.parameters)
-    # for i,frontier in enumerate(firstFrontier):
-    #     print(i, frontier.topK(1).entries[0].program)
-
-    # timeout = 10.0
     featureExtractor = {
         "dummy": DummyFeatureExtractor,
-        "None": None
+        "arcCNN": ArcCNN
     }[args.pop("featureExtractor")]
-
-
-    # recognizer = RecognitionModel(featureExtractor, topDownGrammar)
-    # request = arrow(tgridin, tgridout)
-    # inputs = [inputGrid[0].toJson() for task in trainTasks for inputGrid, _ in task.examples]
-    # print(inputs)    
-
-    # helmholtzEnumeration(baseGrammar, request, inputs, timeout, _=None,
-                         # special="arc", evaluationTimeout=None)
-    # sample = recognizer.sampleHelmholtz([request], statusUpdate='.', seed=1)
-
-
-    # print(sample)
-
-
-    #     print(featureExtractor.featuresOfTask(task))
-    # timeout = 1200
-    # path = "recognitionModels/{}_trainTasks={}_timeout={}".format(datetime.datetime.now(), len(firstFrontier), timeout)
-    
-    # trainedRecognizer = sleep_recognition(None, baseGrammar, [], [], [], firstFrontier, featureExtractor=ArcCNN, activation='tanh', CPUs=1, timeout=timeout, helmholtzFrontiers=[], helmholtzRatio=0, solver='ocaml', enumerationTimeout=0, skipEnumeration=True)
-    
-    # with open(path,'wb') as handle:
-    #     dill.dump(trainedRecognizer, handle)
-    #     print('Stored recognizer at: {}'.format(path))
-
-
-    # trainedRecognizerPath = 'recognitionModels/2020-04-26 15:05:28.972185_trainTasks=2343_timeout=1200'
-    # with open(trainedRecognizerPath, 'rb') as handle:
-    #     trainedRecognizer = dill.load(handle)
 
     explorationCompression(baseGrammar, trainTasks, featureExtractor=featureExtractor, testingTasks=[], **args)

@@ -25,6 +25,13 @@ class FrontierEntry(object):
     def __repr__(self):
         return "FrontierEntry(program={self.program}, logPrior={self.logPrior}, logLikelihood={self.logLikelihood}".format(
             self=self)
+        
+    def maybe_tokenize_entry(self):
+        """Backwards compatability to initialize tokenized program."""
+        if not hasattr(self, 'tokens'):
+            if self.program is None: self.tokens = []
+            else:
+                self.tokens = self.program.left_order_tokens(show_vars=False)
 
 
 class Frontier(object):
@@ -39,6 +46,10 @@ class Frontier(object):
 
     def __len__(self): return len(self.entries)
 
+    def maybe_tokenize_entries(self):
+        for entry in self.entries:
+            entry.maybe_tokenize_entry()
+            
     def json(self):
         return {"request": self.task.request.json(),
                 "task": str(self.task),

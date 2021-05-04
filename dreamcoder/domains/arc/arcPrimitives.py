@@ -12,15 +12,20 @@ else:
             self.program = "(lambda (overlap_split_blocks (split_grid $0 (has_color (tile_to_block (block_to_tile (grid_to_block $0))) red)) (lambda (lambda $0))))"
     #
 
+import copy
 import itertools
 from functools import reduce
 import json
 import math
 import numpy as np
 import os
-import copy
-import random
+from PIL import Image
+from PIL import ImageColor
 from scipy.special import perm, comb
+import random
+import torch
+import torch
+
 
 class Block:
 
@@ -449,6 +454,52 @@ class Grid(RectangleBlock):
     def maskAndCenter(self, mask):
         return self.fromPoints(points={(key[0] - mask.topLeftTile[0 ], key[1] - mask.topLeftTile[1]):color for key,color in self.points.items() if key in mask.points})
 
+    def to_tensor(self, grid_height=10, grid_width=10, device=None):
+        """
+        Converts to tensor of size (grid_height, grid_width, 11) where each color is represented as a one-hot encoding
+        """
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        tensor = torch.zeros(size=(11, grid_height, grid_width), device=device)
+
+        for row in range(grid_height):
+            for col in range(grid_width):
+                if row < self.getNumRows() and col < self.getNumCols():
+                    tensor[self.points[(row, col)] + 1, row, col] = 1
+                else:
+                    tensor[0, row, col] = 1
+        return tensor
+
+    def to_pil_img(self):
+        """
+        Convert grid to PIL.Image to easily view
+        """
+
+        int_to_color_name_map = {
+        -1:"white",
+        0:"black",
+        1:"blue",
+        2:"red",
+        3:"green",
+        4:"yellow",
+        5:"grey",
+        6:"pink",
+        7:"orange",
+        8:"teal",
+        9:"maroon",
+        }
+
+        rgb_array = np.empty(shape=(self.get_height(), self.get_width(), 3))
+
+        for i in range(self.get_height()):
+            for j in range(self.get_width()):
+                rgb_vals = ImageColor.getrgb(int_to_color_name_map[self.grid_array[i][j]])
+                for c in range(3):
+                    rgb_array[i, j, c] = rgb_vals[c]
+
+        rgb_array = rgb_array.astype(np.uint8)
+        return Image.fromarray(rgb_array, mode='RGB')
+
 
 colorToInt = {
 "black":0,
@@ -858,10 +909,10 @@ manuallySolvedTasks = {
     "72ca375d.json":"(lambda (blocks_to_min_grid (filter_blocks (find_same_color_blocks $0 true false) (lambda (is_tile $0))) false false))",
     "f25fbde4.json":"(lambda (to_min_grid (grow (merge_blocks (find_blocks_by_black_b $0 true false) true) 1) false))",
     "fcb5c309.json": "(lambda (to_min_grid (replace_color (first_of_sorted_object_list (find_same_color_blocks $0 true true) (lambda (get_num_tiles $0)) false) (nth_primary_color (remove_black_b (first_of_sorted_object_list (find_same_color_blocks $0 true true) (lambda (get_num_tiles $0)) false)) 0) (nth_primary_color (remove_black_b (first_of_sorted_object_list (find_same_color_blocks $0 true true) (lambda (get_num_tiles $0)) false)) 0)) false))",
-    "ce4f8723.json":"(lambda (overlap_split_blocks (split_grid $0 true) (lambda (lambda (color_logical $1 $0 green lor)))))",
-    "0520fde7.json": "(lambda (overlap_split_blocks (split_grid $0 true) (lambda (lambda (color_logical $1 $0 red land)))))",
+    # "ce4f8723.json":"(lambda (overlap_split_blocks (split_grid $0 true) (lambda (lambda (color_logical $1 $0 green lor)))))",
+    # "0520fde7.json": "(lambda (overlap_split_blocks (split_grid $0 true) (lambda (lambda (color_logical $1 $0 red land)))))",
     "c9e6f938.json": "(lambda (to_min_grid (move (reflect (grid_to_block $0) false) 3 east true) false))",
-    "97999447.json": "(lambda (blocks_to_original_grid (map_blocks (map_tiles (find_tiles_by_black_b $0) (lambda (extend_towards_until $0 east (lambda (touches_any_boundary (tile_to_block $0)))))) (lambda (fill_snakewise $0 (make_colorpair invisible grey)))) false true))",
+    # "97999447.json": "(lambda (blocks_to_original_grid (map_blocks (map_tiles (find_tiles_by_black_b $0) (lambda (extend_towards_until $0 east (lambda (touches_any_boundary (tile_to_block $0)))))) (lambda (fill_snakewise $0 (make_colorpair invisible grey)))) false true))",
     "5521c0d9.json": "(lambda (blocks_to_original_grid (map_blocks (find_same_color_blocks $0 true false) (lambda (move $0 (get_height $0) north false))) false true))",
     # "007bbfb7.json": "cant represent",
     "d037b0a7.json": "(lambda (blocks_to_original_grid (map_tiles (find_tiles_by_black_b $0) (lambda (extend_towards_until $0 south (lambda (touches_boundary (tile_to_block $0) south))))) false true))",
@@ -870,23 +921,12 @@ manuallySolvedTasks = {
     "50cb2852.json": "(lambda (blocks_to_original_grid (map_blocks (find_blocks_by_black_b $0 true false) (lambda (fill_color (filter_block_tiles $0 (lambda (is_interior $0 true))) teal))) true true))",
     "a5313dff.json": "(lambda (blocks_to_original_grid (map_blocks (filter_blocks (find_blocks_by_color $0 black false false) (lambda (negate_boolean (touches_any_boundary $0)))) (lambda (fill_color $0 blue))) true true))",
     # "ea786f4a.json": "cant represent",
-    "22eb0ac0.json": "(lambda (blocks_to_original_grid (map_tiles (find_tiles_by_black_b $0) (lambda (extend_towards_until_edge $0 east))) true false))",
-    "88a10436.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_black_b $0 true false) (lambda (is_rectangle $0 false))) (lambda (lambda (center_block_on_tile $0 (block_to_tile $1)))) false) true true))",
-    "a48eeaf7.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_inferred_b $0 true false) (lambda (is_tile $0))) (lambda (lambda (move_until_touches_block (block_to_tile $0) $1 true))) true) false false))",
-    "2c608aff.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_inferred_b $0 true false) (lambda (is_tile $0))) (lambda (lambda (extend_until_touches_block (block_to_tile $0) $1 false))) true) true false))",
-    "1f642eb9.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_inferred_b $0 true false) (lambda (is_tile $0))) (lambda (lambda (move_until_overlaps_block (block_to_tile $0) $1 false))) false) true false))",
+    # "22eb0ac0.json": "(lambda (blocks_to_original_grid (map_tiles (find_tiles_by_black_b $0) (lambda (extend_towards_until_edge $0 east))) true false))",
+    # "88a10436.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_black_b $0 true false) (lambda (is_rectangle $0 false))) (lambda (lambda (center_block_on_tile $0 (block_to_tile $1)))) false) true true))",
+    # "a48eeaf7.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_inferred_b $0 true false) (lambda (is_tile $0))) (lambda (lambda (move_until_touches_block (block_to_tile $0) $1 true))) true) false false))",
+    # "2c608aff.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_inferred_b $0 true false) (lambda (is_tile $0))) (lambda (lambda (extend_until_touches_block (block_to_tile $0) $1 false))) true) true false))",
+    # "1f642eb9.json": "(lambda (blocks_to_original_grid (map_tbs (filter_template_block (find_blocks_by_inferred_b $0 true false) (lambda (is_tile $0))) (lambda (lambda (move_until_overlaps_block (block_to_tile $0) $1 false))) false) true false))",
 }
 
 if __name__ == "__main__":
-
-    directory = '/'.join(os.path.abspath(__file__).split('/')[:-4]) + '/arc_data/data/training'
-    train,test = getTask('f8a8fe49.json', directory)
-
-    generatedTasks = generateFromFrontier(train, 73)
-    for task in generatedTasks:
-        for example in task.examples:
-            inputGrid, outputGrid = example
-            print(inputGrid)
-            print('-------------------------')
-            print(outputGrid)
-            print('\n')
+    pass

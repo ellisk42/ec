@@ -80,16 +80,10 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
             return self.tokenized_tasks[task.name]
         elif task.name in self.tokenized_helmholtz:
             return self.tokenized_helmholtz[task.name]
-        
-        elif task.nearest_name is not None and task.nearest_name in self.tokenized_tasks:
-            # Returns tokens for the nearest task
-            return self.tokenized_tasks[task.nearest_name] 
+
         elif task.name not in self.language_data:
             print("Not found! ",  task.name)
-            if task.nearest_name not in self.language_data:
-                self.language_data[task.name] = [self.UNK]
-            else:
-                use_task_name = task.nearest_name
+            self.language_data[task.name] = [self.UNK]
         tokens = []
         for sentence in self.language_data[use_task_name]:
             sentence_tokens = self.tokenizer_fn(sentence)

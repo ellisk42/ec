@@ -213,6 +213,8 @@ def ecIterator(grammar, tasks,
                rewriteTaskMetrics=True,
                auxiliaryLoss=False,
                custom_wake_generative=None,
+               firstTimeEnumerationTimeout=1, # Annealing schedule on enumeration.
+               unigramEnumerationTimeout=3600, # Separate timeout for unigram search.
                interactive=False,
                parser=None,
                interactiveTasks=None,
@@ -325,6 +327,8 @@ def ecIterator(grammar, tasks,
             "parser",
             "print_recognition_model_summary",
             "test_joint_language_program_model",
+            "firstTimeEnumerationTimeout",
+            "unigramEnumerationTimeout",
             "solver"} and v is not None}
     if not recognition_0:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
@@ -425,6 +429,16 @@ def ecIterator(grammar, tasks,
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
         result.numTestingTasks = numTestingTasks
         
+        # Create a task language dictionary if we don't already have one.
+        if not hasattr(result, 'taskLanguage'):
+            result.taskLanguage={
+             t.name: [] for t in tasks + testingTasks}
+            
+        # Backwards compatability to generate tokens for frontier entries.
+        for frontier in result.allFrontiers.values():
+            if not frontier.empty:
+                frontier.maybe_tokenize_entries()
+        
         new_tasks = [t for t in tasks if t not in result.allFrontiers]
         new_testing = [t for t in testingTasks if t.name not in result.taskLanguage]
         print(f"Found {len(new_tasks)} new tasks and {len(new_testing)} new testing tasks")
@@ -437,6 +451,7 @@ def ecIterator(grammar, tasks,
         for t in tasks + testingTasks:
             if t.name not in result.taskLanguage:
                 result.taskLanguage[t.name] = []
+                
     else:  # Start from scratch
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
@@ -522,7 +537,6 @@ def ecIterator(grammar, tasks,
         eprint("Loaded language dataset from ", languageDataset)
         if test_task_language: 
             yield result # Integration test outpoint.
-    
     
     ## TODO (catwong): change this to a more graceful entrypoint for the joint language data.
     if test_joint_language_program_model:
@@ -629,7 +643,7 @@ def ecIterator(grammar, tasks,
             topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
                                                       solver=solver,
                                                       maximumFrontier=maximumFrontier,
-                                                      enumerationTimeout=enumeration_time,
+                                                      enumerationTimeout=unigramEnumerationTimeout,
                                                       CPUs=CPUs,
                                                       evaluationTimeout=evaluationTimeout,
                                                       max_mem_per_enumeration_thread=max_mem_per_enumeration_thread)
