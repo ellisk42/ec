@@ -349,7 +349,7 @@ def solveForTask_ocaml(_=None,
         solutions = response[t.name]
         frontier = Frontier([FrontierEntry(program=p,
                                            logLikelihood=e["logLikelihood"],
-                                           tokens=escape_tokens(e["tokens"]).split(),
+                                           tokens=escape_tokens(e.get("tokens", [])).split(),
                                            logPrior=g.logLikelihood(t.request, p))
                              for e in solutions 
                              for p in [Program.parse(e["program"])]],

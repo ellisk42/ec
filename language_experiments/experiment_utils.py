@@ -281,7 +281,7 @@ def build_default_slurm_command(args):
     mem_per_task = get_input_or_default("Max mem per node?", DEFAULT_SLURM_MEMORY)
     # This requires limitation on the program side, so we set it in the global dictionary.
     GLOBAL_EXPERIMENTS_ARGUMENTS[NUM_CPUS_TAG] = number_cpus_per_task
-    slurm_base_command = f"sbatch --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1" + f"--mem={mem_per_task} --cpus-per-task "+str(number_cpus_per_task)
+    slurm_base_command = f"sbatch --job-name="+args.experiment_prefix+"-language-{}_{} --output="+args.experiment_log_directory+"/" +args.experiment_prefix+"-{}_{} --ntasks=1" + f" --mem={mem_per_task} --cpus-per-task "+str(number_cpus_per_task)
     print("\n")
     return slurm_base_command
     
@@ -395,11 +395,12 @@ def get_interactive_experiment_parameters():
     task_batch_size = get_input_or_default("Task batch size?", DEFAULT_TASK_BATCH_SIZE)
     number_of_iterations = get_input_or_default("Number of iterations?", DEFAULT_ITERATIONS)
     test_every = get_input_or_default("Test on every N iterations?", DEFAULT_TEST_EVERY)
-    enumeration_timeout = get_input_or_default("Enumeration timeout per task? Same as testing timeout.", DEFAULT_ENUMERATION_TIMEOUT)
+    enumeration_timeout = get_input_or_default("Enumeration timeout per task?", DEFAULT_ENUMERATION_TIMEOUT)
+    testing_timeout = get_input_or_default("Testing timeout per task?", enumeration_timeout)
     recognition_steps = get_input_or_default("Total recognition steps? ", DEFAULT_RECOGNITION_STEPS)
     rep_tag = get_input_or_default("Add any replication tag to avoid namespace collision? ", "")
     
-    interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {enumeration_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --recognitionSteps {recognition_steps} "
+    interactive_experiment_parameters = f"--enumerationTimeout {enumeration_timeout} --testingTimeout {testing_timeout} --iterations {number_of_iterations} --taskBatchSize {task_batch_size} --testEvery {test_every} --recognitionSteps {recognition_steps} "
     
     interactive_experiment_tag = f"et_{enumeration_timeout}_it_{number_of_iterations}_batch_{task_batch_size}"
     if len(rep_tag) > 0:
