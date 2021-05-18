@@ -137,7 +137,7 @@ register_special_task "differentiable"
     let open Yojson.Basic.Util in
     let maybe_float name default =
       try
-        extras |> member name |> to_float
+        extras |> member name |> to_number
       with _ -> default
     in
     let maybe_int name default =
@@ -154,9 +154,9 @@ register_special_task "differentiable"
     let lr = maybe_float "lr" 0.5 in
     let decay = maybe_float "decay" 0.5 in
     let grow = maybe_float "grow" 1.2 in
-    let lossThreshold = try Some(extras |> member "lossThreshold" |> to_float) with _ -> None in
-    let clipOutput = try Some(extras |> member "clipOutput" |> to_float) with _ -> None in
-    let clipLoss = try Some(extras |> member "clipLoss" |> to_float) with _ -> None in
+    let lossThreshold = try Some(extras |> member "lossThreshold" |> to_number) with _ -> None in
+    let clipOutput = try Some(extras |> member "clipOutput" |> to_number) with _ -> None in
+    let clipLoss = try Some(extras |> member "clipLoss" |> to_number) with _ -> None in
     let proportional = try
         extras |> member "proportional" |> to_bool
       with _ -> false

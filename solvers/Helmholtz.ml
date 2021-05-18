@@ -20,9 +20,9 @@ let run_job channel =
   let open Yojson.Basic.Util in
   let j = Yojson.Basic.from_channel channel in
   let request = j |> member "request" |> deserialize_type in
-  let timeout = j |> member "timeout" |> to_float in
+  let timeout = j |> member "timeout" |> to_number in
   let evaluationTimeout =
-    try j |> member "evaluationTimeout" |> to_float
+    try j |> member "evaluationTimeout" |> to_number
     with _ -> 0.001
   in
   let nc =

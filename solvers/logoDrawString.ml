@@ -41,7 +41,7 @@ let _ =
     with _ -> false
   in
   let timeout = try
-      to_float (member "timeout" j)
+      to_number (member "timeout" j)
     with _ -> 0.01
   in
 
