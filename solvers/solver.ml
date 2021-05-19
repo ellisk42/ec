@@ -25,7 +25,7 @@ let load_problems channel =
   in
 
   let timeout = try
-      j |> member "programTimeout" |> to_float
+      j |> member "programTimeout" |> to_number
     with _ ->
       begin
         let defaultTimeout = 0.1 in
@@ -45,7 +45,7 @@ let load_problems channel =
 
   let rec unpack x =
     try magical (x |> to_int) with _ ->
-    try magical (x |> to_float) with _ ->
+    try magical (x |> to_number) with _ ->
     try magical (x |> to_bool) with _ ->
     try
       let v = x |> to_string in
@@ -91,21 +91,21 @@ let load_problems channel =
 
 
   let lowerBound =
-    try j |> member "lowerBound" |> to_float
+    try j |> member "lowerBound" |> to_number
     with _ -> 0.
   in
 
   let upperBound =
-    try j |> member "upperBound" |> to_float
+    try j |> member "upperBound" |> to_number
     with _ -> 99.
   in
 
   let budgetIncrement =
-    try j |> member "budgetIncrement" |> to_float
+    try j |> member "budgetIncrement" |> to_number
     with _ -> 1.
   in
 
-  let timeout = j |> member "timeout" |> to_float in
+  let timeout = j |> member "timeout" |> to_number in
   let nc =
     try
       j |> member "nc" |> to_int 

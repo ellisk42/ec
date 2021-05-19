@@ -23,7 +23,7 @@ let deserialize_frontier j =
   let request = j |> member "request" |> deserialize_type in
   let programs = j |> member "programs" |> to_list |> List.map ~f:(fun j ->
       (j |> member "program" |> to_string |> parse_program |> get_some |> strip_primitives,
-       j |> member "logLikelihood" |> to_float))
+       j |> member "logLikelihood" |> to_number))
   in
   {programs;request}
 

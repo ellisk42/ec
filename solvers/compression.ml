@@ -797,9 +797,9 @@ let () =
   let topI = j |> member "topI" |> to_int in
   let bs = j |> member "bs" |> to_int in
   let arity = j |> member "arity" |> to_int in
-  let aic = j |> member "aic" |> to_float in
-  let pseudoCounts = j |> member "pseudoCounts" |> to_float in
-  let structurePenalty = j |> member "structurePenalty" |> to_float in
+  let aic = j |> member "aic" |> to_number in
+  let pseudoCounts = j |> member "pseudoCounts" |> to_number in
+  let structurePenalty = j |> member "structurePenalty" |> to_number in
 
   verbose_compression := (try
       j |> member "verbose" |> to_bool

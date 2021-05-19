@@ -164,7 +164,7 @@ let rec unpack x =
   let open Yojson.Basic.Util in
   
   try magical (x |> to_int) with _ ->
-  try magical (x |> to_float) with _ ->
+  try magical (x |> to_number) with _ ->
   try magical (x |> to_bool) with _ ->
   try
     let v = x |> to_string in

@@ -285,7 +285,7 @@ let make_dummy_contextual g =
 
 let deserialize_grammar g =
   let open Yojson.Basic.Util in
-  let logVariable = g |> member "logVariable" |> to_float in
+  let logVariable = g |> member "logVariable" |> to_number in
   let productions = g |> member "productions" |> to_list |> List.map ~f:(fun p ->
     let source = p |> member "expression" |> to_string in
     let e = parse_program source |> safe_get_some ("Error parsing: "^source) in
@@ -294,7 +294,7 @@ let deserialize_grammar g =
         infer_program_type empty_context [] e |> snd
       with UnificationFailure -> raise (Failure ("Could not type "^source))
     in
-    let logProbability = p |> member "logProbability" |> to_float in
+    let logProbability = p |> member "logProbability" |> to_number in
     
     (e,t,logProbability,compile_unifier t))
   in
