@@ -35,4 +35,4 @@ sexpdata==0.0.3
 six==1.12.0
 torch==1.1.0
 torchvision==0.3.0
-urllib3==1.25.3
+urllib3==1.26.5
