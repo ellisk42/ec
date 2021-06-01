@@ -178,7 +178,7 @@ To train and evaluate the full model in the paper (LAPS + ME + language-program 
 ```
 python3.7 bin/clevr.py --enumerationTimeout 1000 --testingTimeout 1000 --iterations 10 --taskBatchSize 40 --testEvery 1 --taskDatasets all --recognitionSteps 10000 --biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread 5000000000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --primitives clevr_bootstrap clevr_map_transform --synchronous_grammar --smt_pseudoalignments 0.05 --lc_score 0.01 --max_compression 5 --taskReranker randomShuffle
 ```
-A file with the commands for every experiment in the main paper can be found in the Results section.
+Commands to reproduce each of these experiments (including replications) can be found in the ```docs/icml_2021_experiments``` file.
 
 ## Pretrained Models
 Pretrained models for the best models on each domain in the paper trained with and without language in the table below are available on Zenodo [here](https://zenodo.org/record/3889158#.XuGsop5Kg8M). These are checkpoints, and should be resumed using the ```--resume``` command. They can also be used to reproduce the experimental results given in the ```docs/icml_2021_experiments``` file. 
