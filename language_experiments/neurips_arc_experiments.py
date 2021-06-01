@@ -40,6 +40,128 @@ def build_experiment_language_lstm_compression(basename, args, experiment_to_res
     def experiment_parameters_fn():
         return  " --recognition_0 --recognition_1 language --Helmholtz 0 --languageDataset human "
     return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("unigram_enumeration")
+def build_experiment_unigram_enumeration(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor dummy --Helmholtz 0 --no-recognition --no-consolidation --unigramEnumerationTimeout 720   "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("dummy_compression_unigram_enum")
+def build_experiment_dummy_compression_unigram_enum(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor dummy --Helmholtz 0  "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+    
+@register_experiment("language_t5_compression_unigram_enum")
+def build_experiment_language_lstm_compression(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMFeatureExtractor --Helmholtz 0  "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+
+
+@register_experiment("dummy_no_compression")
+def build_experiment_dummy_no_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor dummy --Helmholtz 0 --no-dsl --no-consolidation "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("dummy_compression")
+def build_experiment_dummy_compression(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor dummy --Helmholtz 0 --no-dsl "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("arccnn_no_compression")
+def build_experiment_arccnn_no_compression(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor arcCNN --Helmholtz 0 --no-dsl --no-consolidation "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+    
+@register_experiment("arccnn_compression")
+def build_experiment_arccnn_compression(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor arcCNN --Helmholtz 0 --no-dsl "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_no_compression")
+def build_experiment_language_lstm_compression(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMFeatureExtractor --Helmholtz 0 --no-dsl --no-consolidation "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+    
+@register_experiment("language_t5_compression")
+def build_experiment_language_lstm_compression(basename, args, experiment_to_resume_checkpoint):
+    """Builds a baseline experiment that only trains directly on the language annotations and no examples, with compression.
+    """
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMFeatureExtractor --Helmholtz 0 --no-dsl "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_pseudo_translations_no_compression")
+def build_experiment_language_t5_pseudo_translations_no_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMPseudoTranslationFeatureExtractor --Helmholtz 0.5 --no-background-helmholtz --no-dsl  --no-consolidation"
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_pseudo_translations_compression")
+def build_experiment_language_t5_pseudo_translations_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMPseudoTranslationFeatureExtractor --Helmholtz 0.5 --no-dsl --no-background-helmholtz "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_cnn_no_compression")
+def build_experiment_language_t5_cnn_no_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMCNNFeatureExtractor  --Helmholtz 0 --no-background-helmholtz --no-dsl  --no-consolidation"
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_cnn_compression")
+def build_experiment_language_t5_cnn_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMCNNFeatureExtractor  --Helmholtz 0 --no-dsl --no-background-helmholtz "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_cnn_pseudo_no_compression")
+def build_experiment_language_t5_cnn_pseudo_no_compressionn(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMCNNPseudoFeatureExtractor --Helmholtz 0 --no-background-helmholtz --no-dsl  --no-consolidation"
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_cnn_pseudo_compression")
+def build_experiment_language_t5_cnn_pseudo_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMCNNPseudoFeatureExtractor  --Helmholtz 0 --no-dsl --no-background-helmholtz "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_augmented_no_compression")
+def build_experiment_language_t5_augmented_no_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMAugmentedFeatureExtractor --Helmholtz 0 --no-background-helmholtz --no-dsl  --no-consolidation"
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+
+@register_experiment("language_t5_augmented_compression")
+def build_experiment_language_t5_augmented_compression(basename, args, experiment_to_resume_checkpoint):
+    def experiment_parameters_fn():
+        return  " --featureExtractor LMAugmentedFeatureExtractor  --Helmholtz 0 --no-dsl --no-background-helmholtz "
+    return build_experiment_command_information(basename, args, experiment_parameters_fn)
+    
+    
     
 def main():
     parser = get_experiment_argparser(domain_name_prefix=ARC_DOMAIN_PREFIX)

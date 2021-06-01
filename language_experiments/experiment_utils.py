@@ -24,11 +24,11 @@ DEFAULT_CHECKPOINTS_DIR = "../experimentOutputs"
 GENERATE_ALL_FLAG = "all"
 
 # Default parameters for each experiment.
-DEFAULT_TASK_BATCH_SIZE = 40
+DEFAULT_TASK_BATCH_SIZE = 400
 DEFAULT_RECOGNITION_STEPS = 10000
 DEFAULT_TEST_EVERY = 1
 DEFAULT_ITERATIONS = 10
-DEFAULT_ENUMERATION_TIMEOUT = 1000
+DEFAULT_ENUMERATION_TIMEOUT = 720
 DEFAULT_MEM_PER_ENUMERATION_THREAD = 5000000000 # 5 GB
 DEFAULT_PSEUDOALIGNMENTS_WEIGHT = 0.05
 DEFAULT_LANGUAGE_COMPRESSION_WEIGHT = 0.05
@@ -42,7 +42,7 @@ NUM_CPUS_TAG = 'CPUs'
 
 DEFAULT_SLURM_CPUS_PER_TASK = 24
 DEFAULT_SLURM_TIME_PER_TASK = 10000
-DEFAULT_SLURM_MEMORY = "MaxMemPerNode"
+DEFAULT_SLURM_MEMORY = "50G"  # "MaxMemPerNode"
 
 # Default parameters for running on Supercloud
 SUPERCLOUD_FLAG = 'supercloud'
@@ -116,7 +116,10 @@ def get_experiment_argparser(domain_name_prefix):
     parser.add_argument('--generate_resume_command_for_log',
                     help="String path or a registry key for a logfile to generate a resume command for. Looks for a log in the cached logs, otherwise SCPS it.")
     parser.add_argument('--generate_resume_command_for_checkpoint',
-                    help="String path or a registry key for a checkpoint to generate a resume command for. Looks for a checkpoint in the cached checkpoints, otherwise SCPS it.")    
+                    help="String path or a registry key for a checkpoint to generate a resume command for. Looks for a checkpoint in the cached checkpoints, otherwise SCPS it.") 
+    parser.add_argument('--no_laps',
+                    help="Whether to generate commands for the original EC.",
+                    action="store_true")    
     return parser
     
     
@@ -407,14 +410,19 @@ def get_interactive_experiment_parameters():
         interactive_experiment_tag += f"_{rep_tag}"
     return interactive_experiment_parameters, interactive_experiment_tag  
 
-def get_shared_experiment_parameters():
+def get_shared_experiment_parameters(args):
     """Gets parameters that are shared across all language experiments. Returns a set of experiment parameters as a command."""
     max_mem_per_enumeration_thread = get_input_or_default("Maximum memory per enumeration thread?", DEFAULT_MEM_PER_ENUMERATION_THREAD)
     
     # Add any global parameters.
     global_parameters_command = " ".join([f"--{global_param} {global_param_value} " for (global_param, global_param_value) in GLOBAL_EXPERIMENTS_ARGUMENTS.items()])
     
-    return f"--biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
+    if args.no_laps:
+        preload_frontiers = get_input_or_default("Preload frontiers file?", "NONE")
+        
+        return f"--biasOptimal --contextual --no-cuda --preload_frontiers {preload_frontiers}  " + global_parameters_command
+    else:
+        return f"--biasOptimal --contextual --no-cuda --moses_dir ./moses_compiled --smt_phrase_length 1 --language_encoder recurrent --max_mem_per_enumeration_thread {max_mem_per_enumeration_thread} " + global_parameters_command
 
 def get_shared_full_language_experiment_parameters(primitives_string):
     """Gets experiment parameters that are shared across all the full language experiments. Takes a string indicating which primitives to use.
@@ -432,7 +440,7 @@ def build_experiment_command_information(basename, args, experiment_parameters_f
     """
     print(f"Building an experiment for class: {basename}.")
     interactive_experiment_parameters, interactive_experiment_tag  = get_interactive_experiment_parameters() 
-    shared_experiment_parameters = get_shared_experiment_parameters()
+    shared_experiment_parameters = get_shared_experiment_parameters(args)
     experiment_class_parameters = experiment_parameters_fn()
     experiment_command = get_default_python_command(args) + interactive_experiment_parameters + shared_experiment_parameters + experiment_class_parameters
     
