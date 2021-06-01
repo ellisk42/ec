@@ -1,8 +1,7 @@
-#  Leveraging Language for Abstraction and Program Search
+#  Leveraging Language for Abstraction and Program Search | Author: Catherine Wong
 
-This repository is the official implementation of Leveraging Language for Abstraction and Program Search (currently under review). 
+This repository is the official implementation of Leveraging Language for Abstraction and Program Search (ICML 2021). 
 This repository and branch is a static branch designed to reproduce the results in the paper. 
-This README will be updated with a link to a deanonymized live branch and paper after the review period.
 
 ## Getting Started -- Dependencies and Requirements
 The following setup has been tested on an Ubuntu 16.04 machine. The codebase is implemented in both Python and OCaml.
