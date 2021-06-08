@@ -16,7 +16,7 @@ multiprocess==0.70.7
 nltk==3.4.1
 numpy==1.16.4
 pathos==0.2.3
-Pillow==6.0.0
+Pillow==8.2.0
 pox==0.2.5
 ppft==1.6.4.9
 protobuf==3.8.0
