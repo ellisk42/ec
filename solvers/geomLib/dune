@@ -10,4 +10,4 @@
 
 (library
  (name geomLib)
- (libraries vg vg.cairo))
+ (libraries vg vg.cairo cairo2))
