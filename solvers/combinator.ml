@@ -107,4 +107,5 @@ let test_combinator() =
 ;;
 
 
-test_combinator();;
+let _ : unit =
+  test_combinator();;

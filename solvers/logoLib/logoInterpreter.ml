@@ -20,8 +20,8 @@ let logo_NOP : turtle = fun s -> ([], s)
 let init_state () = {x = d_from_origin; y = d_from_origin; t = 0.; p = true}
 
 let flush_everything () =
-  Pervasives.flush stdout;
-  Pervasives.flush stderr
+  Stdlib.flush stdout;
+  Stdlib.flush stderr
 
 let center_logo_list (l : logo_instruction list) : logo_instruction list =
   let rec minimum = function
@@ -72,7 +72,7 @@ let pp_turtle t =
     l ;
   prerr_newline ()
 
-let eval_turtle ?sequence (t2t : turtle -> turtle) =
+let eval_turtle ?sequence:_ (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
   let p = center_logo_list p in
   let c = ref (new_canvas ()) in
@@ -81,7 +81,7 @@ let eval_turtle ?sequence (t2t : turtle -> turtle) =
   let t = init_state () in
   moveto t.x t.y ;
   let total_cost = ref 0. in
-  let rec eval_instruction i = match i with
+  let eval_instruction i = match i with
     | SEGMENT(x1,y1,x2,y2) ->
       (total_cost := !total_cost +. (sqrt ((x1-.x2)*.(x1-.x2) +. (y1-.y2)*.(y1-.y2)));
        moveto x1 y1;
@@ -90,7 +90,7 @@ let eval_turtle ?sequence (t2t : turtle -> turtle) =
   List.iter eval_instruction p ;
   !c,!total_cost
 
-let animate_turtle ?sequence (t2t : turtle -> turtle) =
+let animate_turtle (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
   let p = center_logo_list p in
   let draw_list p =
@@ -99,7 +99,7 @@ let animate_turtle ?sequence (t2t : turtle -> turtle) =
     and moveto x y = (c := (moveto !c x y)) in
     let t = init_state () in
     moveto t.x t.y ;
-    let rec eval_instruction i = match i with
+    let eval_instruction i = match i with
       | SEGMENT(x1,y1,x2,y2) ->
         (moveto x1 y1; lineto x2 y2)  in
     List.iter eval_instruction p ;

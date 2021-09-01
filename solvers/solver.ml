@@ -1,19 +1,11 @@
 open Core
 
-open Physics
-open Pregex
-open Tower
 (* open Vs *)
-open Differentiation
-open TikZ
 open Utils
 open Type
-open Program
 open Enumeration
 open Task
 open Grammar
-open Task
-open FastType
 
 let load_problems channel =
   let open Yojson.Basic.Util in
@@ -84,7 +76,7 @@ let load_problems channel =
     with _ -> false
   in
 
-  let _ = try
+  let _ : unit = try
       shatter_factor := (j |> member "shatter" |> to_int)
     with _ -> ()
   in
@@ -117,9 +109,8 @@ let load_problems channel =
    nc,timeout,verbose)
 
 let export_frontiers number_enumerated tf solutions : string =
-  let open Yojson.Basic.Util in
   let open Yojson.Basic in
-  let serialization : Yojson.Basic.json =
+  let serialization : Yojson.Basic.t =
     `Assoc(("number_enumerated",`Int(number_enumerated)) ::
            List.map2_exn tf solutions ~f:(fun (t,_) ss ->
         (t.name, `List(ss |> List.map ~f:(fun s ->
@@ -131,13 +122,13 @@ let export_frontiers number_enumerated tf solutions : string =
 ;;
 
 
-let _ =
+let _ :unit =
 
   let (tf,g,
        lowerBound,upperBound,budgetIncrement,
        mfp,
      nc,timeout, verbose) =
-    load_problems Pervasives.stdin in
+    load_problems Stdlib.stdin in
   let solutions, number_enumerated =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf

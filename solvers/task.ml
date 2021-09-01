@@ -1,5 +1,4 @@
 open Core
-open Unix
 
 open CachingTable
 open Timeout
@@ -27,7 +26,7 @@ let gen_passwd length =
       | n when n < 26 + 26 -> int_of_char 'A' + n - 26
       | n -> int_of_char '0' + n - 26 - 26 in
     let gen _ = String.make 1 (char_of_int(gen())) in
-    String.concat (Array.to_list (Array.init length gen))
+    String.concat (Array.to_list (Array.init length ~f:gen))
 
 
 let supervised_task ?timeout:(timeout = 0.001) name ty examples =
@@ -42,7 +41,7 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
             try
               match run_for_interval
                       timeout
-                      (fun () -> run_lazy_analyzed_with_arguments p xs = y)
+                      (fun () -> Core.Poly.equal (run_lazy_analyzed_with_arguments p xs) y)
               with
                 | Some(true) -> loop e
                 | _ -> false
@@ -62,7 +61,7 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   }
 
 let task_handler = Hashtbl.Poly.create();;
-let register_special_task name handler = Hashtbl.set task_handler name handler;;
+let register_special_task name handler = Hashtbl.set task_handler ~key:name ~data:handler;;
 
 let recent_logo_program : (program*((((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)*float) option)) option ref = ref None;;
 let run_recent_logo ~timeout program =
@@ -92,7 +91,7 @@ let run_recent_logo ~timeout program =
 ;;
 
 
-
+let _ : unit =
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
 
@@ -126,7 +125,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
            | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
            | EnumerationTimeout  -> raise EnumerationTimeout
            | _                   -> log 0.0)
-    });;
+    });
 
 
 register_special_task "differentiable"
@@ -221,11 +220,12 @@ register_special_task "differentiable"
                     parameters l
                 in l
           in
+          let open Float in
           match lossThreshold with
           | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
           | Some(t) ->
             if l < t then 0. -. d*.parameterPenalty else log 0.)
-  });;
+  });
 
 register_special_task "stringConstant" (fun extras
     (* ?parameterPenalty:(parameterPenalty=0.) *)
@@ -261,26 +261,25 @@ register_special_task "stringConstant" (fun extras
                    try
                      (match run_for_interval
                              timeout
-                             (fun () -> run_lazy_analyzed_with_arguments p' xs = y)
+                             (fun () -> Core.Poly.equal (run_lazy_analyzed_with_arguments p' xs) y)
                      with
                      | Some(true) -> loop e
                      | _ -> false)
                    with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                        | otherException -> begin
-                            if otherException = EnumerationTimeout then raise EnumerationTimeout else false
-                          end
+                        | EnumerationTimeout -> raise EnumerationTimeout
+                        | _ -> false
                in
                let hit = loop examples in
                if hit
                then lc*.(Float.of_int (string_constants_length p))
-               else log 0.) |> List.fold_right ~init:(log 0.) ~f:max)
+               else log 0.) |> List.fold_right ~init:(log 0.) ~f:Float.max)
   });;
 
 
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =
   {request = f.request;
-   programs =  List.sort ~compare:(fun (_,a) (_,b) -> if a > b then -1 else 1) f.programs |> flip List.take k }
+   programs =  List.sort ~compare:(fun (_,a) (_,b) -> Float.compare b a) f.programs |> flip List.take k }
 
 (* Takes a frontier and a task. Ads in the likelihood on the task to
    the frontier and removes things that didn't hit the task *)
@@ -288,6 +287,7 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
   {request = f.request;
    programs = f.programs |> List.filter_map ~f:(fun (program, descriptionLength) ->
        let likelihood = t.log_likelihood program in
+       let open Float in
        if likelihood > -0.1 then
          Some((program, descriptionLength +. likelihood))
        else None)
@@ -297,6 +297,7 @@ type hit_result = {hit_program: string;
                    hit_likelihood: float;
                    hit_prior: float;
                    hit_time: float;}
+[@@deriving equal]
 
 let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~maxFreeParameters
@@ -318,7 +319,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
   let tasks = Array.of_list (tf |> List.map ~f:fst) in
 
   let request = tasks.(0).task_type in
-  assert (Array.for_all tasks ~f:(fun t -> t.task_type = request));
+  assert (Array.for_all tasks ~f:(fun t -> equal_tp t.task_type request));
 
   (* Store the hits in a priority queue *)
   (* We will only ever maintain maximumFrontier best solutions *)
@@ -337,7 +338,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
 
   while not (enumeration_timed_out()) &&
           List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
-       && !lower_bound +. budgetIncrement <= upperBound
+       && Float.(<=) (!lower_bound +. budgetIncrement) upperBound
   do
     let number_of_enumerated_programs = ref 0 in
       let final_results =
@@ -355,8 +356,8 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
 
              let mdl = 0.-.logPrior in
 
-             assert( !lower_bound <= mdl);
-             assert( mdl < budgetIncrement+.(!lower_bound));
+             assert(Float.(<=) !lower_bound mdl);
+             assert(Float.(<) mdl (budgetIncrement+.(!lower_bound)));
 
              range nt |> List.iter ~f:(fun j ->
                  let logLikelihood = tasks.(j).log_likelihood p in
@@ -386,7 +387,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
                 let new_heap = array_of_heaps.(j) in
                 let old_heap = hits.(j) in
                 List.iter new_heap ~f:(fun element ->
-                    if not (Heap.mem old_heap ~equal:(=) element) then
+                    if not (Heap.mem old_heap ~equal:equal_hit_result element) then
                       (Heap.add old_heap element;
                        if Heap.length old_heap > maximumFrontier.(j)
                        then Heap.remove_top old_heap))))

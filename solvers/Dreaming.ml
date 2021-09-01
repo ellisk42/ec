@@ -3,15 +3,11 @@ open Core
 open Pregex
 open Program
 open Enumeration
-open Grammar
 open Utils
 open Timeout
 open Type
 open Tower
 open PolyValue
-
-open Yojson.Basic
-
 
 
 let remove_bad_dreams behavior_to_programs : (PolyList.t * (float * program list)) list =
@@ -28,7 +24,7 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float * program list
 
   (* number of inputs *)
   let l = ref None in
-  Hashtbl.iteri behavior_to_programs ~f:(fun ~key ~data ->
+  Hashtbl.iteri behavior_to_programs ~f:(fun ~key ~data:_ ->
       match !l with
       | None -> l := Some(List.length key)
       | Some(l') -> assert (List.length key = l'));
@@ -44,7 +40,7 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float * program list
       let outputs = key in
       outputs |> List.iteri ~f:(fun output_index this_output ->
           (* Record that we are one of the behaviors that produces this output *)
-          if this_output = PolyValue.None then () else
+          if PolyValue.equal this_output PolyValue.None then () else
             match Hashtbl.find containers.(output_index) this_output with
             | None -> Hashtbl.set containers.(output_index) ~key:this_output
                         ~data:(Int.Set.singleton this_index)
@@ -58,7 +54,7 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float * program list
     let outputs, _ = get_resizable output_vectors i in
     (* Initialize dominating to be the smallest set *)
     outputs |> List.iteri ~f:(fun output_index this_output ->
-        if this_output = PolyValue.None then () else
+        if PolyValue.equal this_output PolyValue.None then () else
           match Hashtbl.find containers.(output_index) this_output with
           | None -> assert (false)
           | Some(others) ->
@@ -67,7 +63,7 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float * program list
             | _ -> ());
 
     outputs |> List.iteri ~f:(fun output_index this_output ->
-        if this_output = PolyValue.None then () else
+        if PolyValue.equal this_output PolyValue.None then () else
           match Hashtbl.find containers.(output_index) this_output with
           | None -> assert (false)
           | Some(others) ->
@@ -104,6 +100,7 @@ let helmholtz_enumeration (behavior_hash : program -> (PolyList.t*float) option)
 
   let update ~key ~data =
     let l,extra_cost,ps = data in
+    let open Float in
     match Hashtbl.find behavior_to_programs key with
     (* never seen this behavior before *)
     | None -> Hashtbl.set behavior_to_programs ~key ~data:data
@@ -116,7 +113,7 @@ let helmholtz_enumeration (behavior_hash : program -> (PolyList.t*float) option)
       when extra_cost > extra_cost' || (extra_cost = extra_cost' && l' < l)
       -> ()
     (* we are the same cost but less likely *)
-    | Some((l',extra_cost',ps'))
+    | Some((l',extra_cost',_ps'))
       when extra_cost = extra_cost' && l < l'
       -> ()
     (* we cannot be a different cost or of the other conditions would've fired *)
@@ -174,8 +171,7 @@ let rec unpack x =
     x |> to_list |> List.map ~f:unpack |> magical
   with _ -> raise (Failure "could not unpack")
 
-let rec pack t v : json =
-  let open Yojson.Basic.Util in
+let rec pack t v : Yojson.Basic.t =
   match t with
   | TCon("list",[t'],_) -> `List(magical v |> List.map ~f:(pack t'))
   | TCon("int",[],_) -> `Int(magical v)
@@ -184,12 +180,10 @@ let rec pack t v : json =
   | _ -> assert false
 
 let special_helmholtz =   Hashtbl.Poly.create();;
-let register_special_helmholtz name handle = Hashtbl.set special_helmholtz name handle;;
+let register_special_helmholtz name handle = Hashtbl.set special_helmholtz ~key:name ~data:handle;;
 
 
 let default_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
-  let open Yojson.Basic.Util in
-
   (* convert json -> ocaml *)
   let inputs : 'a list list = unpack inputs in
   let return = return_of_type request in
@@ -216,8 +210,6 @@ let default_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.
     else None
 
 let string_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
-  let open Yojson.Basic.Util in
-
   (* convert json -> ocaml *)
   let inputs : 'a list list = unpack inputs in
   let return = return_of_type request in
@@ -248,7 +240,8 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t
     else None
 ;;
 
-register_special_helmholtz "string" string_hash;;
+let _ : unit =
+  register_special_helmholtz "string" string_hash;;
 
 
 
@@ -299,11 +292,8 @@ register_special_helmholtz "string" string_hash;;
 (*             |  *)
 
 
-
-let tower_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
-  let open Yojson.Basic.Util in
-
-  assert (request = (ttower @> ttower));
+let tower_hash ?timeout:(timeout=0.001) request _inputs : program -> (PolyList.t*float) option =
+  assert (equal_tp request (ttower @> ttower));
 
   fun program ->
     let arrangement = evaluate_discrete_tower_program timeout program in
@@ -318,12 +308,14 @@ let tower_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*
                           PolyValue.Integer(d);]))) in
       Some([j],0.)
 ;;
-register_special_helmholtz "tower" tower_hash;;
+
+let _ : unit =
+  register_special_helmholtz "tower" tower_hash;;
 
 let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
   let open Yojson.Basic.Util in
 
-  assert (request = (turtle @> turtle));
+  assert (equal_tp request (turtle @> turtle));
   (* disgusting hack *)
   let costMatters = 1 = (inputs |> to_list |> List.hd_exn |> to_list |> List.hd_exn |> to_int) in
 
@@ -350,11 +342,11 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*f
       let j = PolyValue.List(range (28*28) |> List.map ~f:(fun i -> PolyValue.Integer(a.{i}))) in
       let cost = if costMatters then cost else 0. in
       Some([j],cost);;
-register_special_helmholtz "LOGO" logo_hash;;
+let _ : unit =
+  register_special_helmholtz "LOGO" logo_hash;;
 
-let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
-  let open Yojson.Basic.Util in
-  assert (request = (tregex @> tregex));
+let regex_hash  ?timeout:(timeout=0.001) request _inputs : program -> (PolyList.t*float) option =
+  assert (equal_tp request (tregex @> tregex));
 
   let rec poly_of_regex = function
     | Constant(s) -> PolyValue.List ([PolyValue.Integer(0);
@@ -382,4 +374,5 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t
                    regex_of_program |> canonical_regex in
            ([poly_of_regex r],0.))
 ;;
-register_special_helmholtz "regex" regex_hash;;
+let _ : unit =
+  register_special_helmholtz "regex" regex_hash;;

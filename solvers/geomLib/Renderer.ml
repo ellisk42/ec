@@ -1,7 +1,6 @@
 open Vg
 open Gg
 open Plotter
-open Cairo
 
 type canvas = Plotter.canvas
 

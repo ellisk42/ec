@@ -1,16 +1,9 @@
 open Core
 
-
-open Gc
-
-open Physics
-open Pregex
-open Tower
 open Utils
 open Type
 open Program
 open Enumeration
-open Task
 open Grammar
 
 (* open Eg *)
@@ -25,7 +18,7 @@ let restrict ~topK g frontier =
   let restriction =
     frontier.programs |> List.map ~f:(fun (p,ll) ->
         (ll+.likelihood_under_grammar g frontier.request p,p,ll)) |>
-    sort_by (fun (posterior,_,_) -> 0.-.posterior) |>
+    sort_by (fun (posterior,_,_) -> 0. -. posterior) |>
     List.map ~f:(fun (_,p,ll) -> (p,ll))
   in
   {request=frontier.request; programs=List.take restriction topK}
@@ -215,7 +208,6 @@ let nontrivial e =
   !primitives > 1 || !primitives = 1 && !duplicated_indices > 0
 ;;
 
-open Zmq
 
 type worker_command =
   | Rewrite of program list
@@ -294,7 +286,7 @@ let compression_worker connection ~inline ~arity ~bs ~topK g frontiers =
 
   (* relay this information to the master, whose job it is to pool the candidates *)
   send (candidates,candidate_table.i2s);
-  let candidate_table = () in
+  let [@warning "-26"] candidate_table = () in
   let candidates : program list = receive() in
   let candidates : int list = candidates |> List.map ~f:(incorporate v) in
 
@@ -309,8 +301,8 @@ let compression_worker connection ~inline ~arity ~bs ~topK g frontiers =
 
   send candidate_scores;
    (* I hope that this leads to garbage collection *)
-  let candidate_scores = ()
-  and cost_table = ()
+  let [@warning "-26"] candidate_scores = ()
+  and [@warning "-26"] cost_table = ()
   in
   Gc.compact();
 
@@ -444,7 +436,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
     | _ -> ()
   in
 
-  if !verbose_compression then ignore(Unix.system "ps aux|grep compression 1>&2");
+  if !verbose_compression then ignore(Unix.system "ps aux|grep compression 1>&2" : Core.Unix.Exit_or_signal.t);
 
   let divide_work_fairly nc xs =
     let nt = List.length xs in
@@ -555,7 +547,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
       List.map2_exn candidates new_frontiers ~f:(fun candidate frontiers ->
           (score frontiers candidate, candidate)) |> minimum_by (fun ((_,s),_) -> -.s))
   in
-  if best_score < initial_score then
+  if Float.(<) best_score initial_score then
       (Printf.eprintf "No improvement possible.\n"; finish(); None)
     else
       (let new_primitive = grammar_primitives g' |> List.hd_exn in
@@ -617,7 +609,7 @@ let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=
   in
   let candidates = candidates |> List.filter ~f:(fun candidate ->
       let candidate = List.hd_exn (extract v candidate) in
-      try (ignore(normalize_invention candidate); nontrivial candidate)
+      try (ignore(normalize_invention candidate : program); nontrivial candidate)
       with UnificationFailure -> false)
   in
   Printf.eprintf "Got %d candidates.\n" (List.length candidates);
@@ -668,8 +660,7 @@ let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=
     let _,initial_score = score g !frontiers in
     Printf.eprintf "Initial score: %f\n" initial_score;
 
-
-    let best_score,g',frontiers',best_index =
+    let best_score,g',_frontiers',best_index =
       time_it (Printf.sprintf "Evaluated top-%d candidates" topI) (fun () ->
       ranked_candidates |> List.map ~f:(fun (c,i) ->
           let source = extract v i |> singleton_head in
@@ -689,7 +680,7 @@ let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=
           (s,g',frontiers',i))
       |> minimum_by (fun (s,_,_,_) -> -.s)) in
 
-    if best_score < initial_score then
+    if Float.(<) best_score initial_score then
       (Printf.eprintf "No improvement possible.\n"; None)
     else
       (let new_primitive = grammar_primitives g' |> List.hd_exn in
@@ -710,10 +701,9 @@ let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts
   let timestamp = Time.now() |> Time.to_filename_string ~zone:Time.Zone.utc in
   let fn = Printf.sprintf "compressionMessages/%s" timestamp in
 
-  let open Yojson.Basic.Util in
   let open Yojson.Basic in
 
-  let j : json =
+  let j : Yojson.Basic.t =
     `Assoc(["DSL", serialize_grammar g;
             "topK", `Int(topK);
             "topI", `Int(topI);
@@ -768,29 +758,22 @@ let compression_loop
         if !verbose_compression && iterations > 1 then
           export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts ~arity ~bs ~topI g' frontiers';
         flush_everything();
-        loop (iterations - 1) g' frontiers'
+        loop ~iterations:(iterations - 1) g' frontiers'
   in
   time_it "completed ocaml compression" (fun () ->
       loop ~iterations g frontiers)
 ;;
 
 
-
-
-
-
-
-
-
 let () =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
   let j =
-    if Array.length Sys.argv > 1 then
-      (assert (Array.length Sys.argv = 2);
-       Yojson.Basic.from_file Sys.argv.(1))
+    if Array.length (Sys.get_argv ()) > 1 then
+      (assert (Array.length (Sys.get_argv ()) = 2);
+       Yojson.Basic.from_file (Sys.get_argv ()).(1))
     else
-      Yojson.Basic.from_channel Pervasives.stdin
+      Yojson.Basic.from_channel Stdlib.stdin
   in
   let g = j |> member "DSL" |> deserialize_grammar |> strip_grammar in
   let topK = j |> member "topK" |> to_int in
@@ -837,7 +820,7 @@ let () =
   let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
 
   let g, frontiers =
-    if aic > 500. then
+    if Float.(>) aic 500. then
       (Printf.eprintf "AIC is very large (over 500), assuming you don't actually want to do DSL learning!";
        g, frontiers)
     else compression_loop ~inline ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in

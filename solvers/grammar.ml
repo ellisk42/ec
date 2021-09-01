@@ -86,14 +86,14 @@ let unifying_expressions g environment request context : (program*tp list*tConte
         else None)
   in
   let variable_candidates = match (variable_candidates, g.continuation_type) with
-      | (_ :: _, Some(t)) when t = request ->
+      | (_ :: _, Some(t)) when equal_tp t request ->
         let terminal_indices = List.filter_map variable_candidates ~f:(fun (p,t,_,_) ->
-            if t = [] then Some(get_index_value p) else None) in
-        if terminal_indices = [] then variable_candidates else
+            if List.is_empty t  then Some(get_index_value p) else None) in
+        if List.is_empty terminal_indices then variable_candidates else
           let smallest_terminal_index = fold1 min terminal_indices in
           variable_candidates |> List.filter ~f:(fun (p,t,_,_) ->
               let okay = not (is_index p) ||
-                         not (t = []) ||
+                         not (List.is_empty t) ||
                          get_index_value p = smallest_terminal_index in
               (* if not okay then *)
               (*   Printf.eprintf "Pruning imperative index %s with request %s; environment=%s; smallest=%i\n" *)
@@ -215,7 +215,7 @@ let make_likelihood_summary g request expression =
         match List.find candidates ~f:(fun (candidate,_,_,_) -> program_equal candidate f) with
         | None ->
           s.likelihood_constant <- Float.neg_infinity
-        | Some(_, argument_types, newContext, functionLikelihood) ->
+        | Some(_, argument_types, newContext, _functionLikelihood) ->
           context := newContext;
           record_likelihood_event s f (candidates |> List.map ~f:(fun (candidate,_,_,_) -> candidate));
           List.iter (List.zip_exn xs argument_types)
@@ -264,7 +264,7 @@ let prune_contextual_grammar (g : contextual_grammar) =
              try
                let k, child_type = instantiate_type empty_context child_type in
                let k, argument_type = instantiate_type k argument_type in
-               let _ = unify k child_type argument_type in
+               let _ : tContext = unify k child_type argument_type in
                true
              with UnificationFailure -> false)})
   in
@@ -307,10 +307,9 @@ let deserialize_grammar g =
   g
 
 let serialize_grammar {logVariable; continuation_type; library} =
-  let open Yojson.Basic in
-  let j : json =
+  let j : Yojson.Basic.t =
   `Assoc(["logVariable",`Float(logVariable);
-          "productions",`List(library |> List.map ~f:(fun (e,t,l,_) ->
+          "productions",`List(library |> List.map ~f:(fun (e,_,l,_) ->
               `Assoc(["expression",`String(string_of_program e);
                       "logProbability",`Float(l)])))] @
          match continuation_type with

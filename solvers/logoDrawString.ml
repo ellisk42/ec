@@ -4,7 +4,6 @@ open LogoLib
 open LogoInterpreter
 open VGWrapper
 
-open Differentiation
 open Program
 
 let smooth_logo_wrapper t2t k s0 =
@@ -15,7 +14,7 @@ let smooth_logo_wrapper t2t k s0 =
       let dx = x2-.x1 in
       let dy = y2-.y1 in
       let l = dx*.dx+.dy*.dy |> sqrt in
-      if l <= e then [command] else
+      if Float.(<=) l e then [command] else
         let f = e/.l in
         let x = x1 +. f*.dx in
         let y = y1 +. f*.dy in
@@ -24,9 +23,9 @@ let smooth_logo_wrapper t2t k s0 =
   (p |> List.map  ~f:smooth_path |> List.concat, s)
 
 
-let _ =
+let _: unit =
   let open Yojson.Basic.Util in
-  let j = Yojson.Basic.from_channel Pervasives.stdin in
+  let j = Yojson.Basic.from_channel Stdlib.stdin in
   let open Yojson.Basic in
   let open Utils in
   let open Timeout in
@@ -46,7 +45,8 @@ let _ =
   in
 
   let trim s =
-    if s.[0] = '"' then String.sub s 1 (String.length s - 2) else s
+    let open Char in
+    if s.[0] = '"' then String.sub s ~pos:1 ~len:(String.length s - 2) else s
   in
 
   let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
@@ -75,11 +75,11 @@ let _ =
           let turtle = run_lazy_analyzed_with_arguments p [] in
           let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
           let cs = animate_turtle turtle in
-          List.iteri cs (fun j c ->
+          List.iteri cs ~f:(fun j c ->
               output_canvas_png ~pretty c size (Printf.sprintf "%s_%09d.png" export j));
-          Sys.command (Printf.sprintf "convert -delay 1 -loop 0 %s_*.png %s.gif"
-                         export export);
-          Sys.command (Printf.sprintf "rm %s_*.png" export);
+          ignore(Sys.command (Printf.sprintf "convert -delay 1 -loop 0 %s_*.png %s.gif"
+                         export export) : int);
+          ignore(Sys.command (Printf.sprintf "rm %s_*.png" export) : int);
           `String("exported")
       else
         try
@@ -93,7 +93,7 @@ let _ =
           | None -> `String("timeout")
           | Some(c, array, cost) ->
             let bx = canvas_to_1Darray c 8 in
-            if bx = b0 then `String("empty")
+            if Core.Poly.equal bx b0 then `String("empty")
             else
               match export with
               | Some(fn) -> (output_canvas_png ~pretty c size fn;

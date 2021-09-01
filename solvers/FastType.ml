@@ -58,7 +58,7 @@ let compile_unifier t =
         | Some(t') -> unify k t t'
     end
     | (FastConstructor(n,fs,_),TCon(n',ss,_)) ->
-      if n = n' then
+      if String.(=) n n' then
         List.fold2_exn ~init:k ~f:(fun k f s -> fu f s k) fs ss
       else raise UnificationFailure
     | (FastConstructor(_,_,Some(t')),TID(j)) ->

@@ -1,7 +1,4 @@
 open Core
-open Unix.Select_fds
-open Sys
-open Obj
 
 let power_of exponent natural =
   let rec loop n =
@@ -21,7 +18,7 @@ let float_of_bool = function
   | true -> 1.
   | false -> 0.
 
-let round f = floor (f+.0.5)
+let round f = Float.round_down (f+.0.5)
 
 let join ?separator:(separator = " ") elements= String.concat ~sep:separator elements
 
@@ -71,13 +68,14 @@ let sum = List.fold_left ~f:(+) ~init:0
 
 let minimum l = List.reduce_exn l ~f:min
 ;;
-let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if f x < f y then x else y)
+let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if Float.(<) (f x) (f y) then x else y)
 ;;
-let maximum_by f l = List.reduce_exn l ~f:(fun x y -> if f x > f y then x else y)
-;;
+(* let maximum_by f l = List.reduce_exn l ~f:(fun x y -> if f x > f y then x else y) *)
+(* ;; *)
 let sort_by f l = List.sort ~compare:(fun x y ->
     let x = f x in
     let y = f y in
+    let open Float in
     if x = y then 0 else
       if x > y then 1 else -1) l
 
@@ -89,7 +87,7 @@ let memorize f =
     | Some(y) -> y
     | None ->
       let y = f x in
-      ignore(Hashtbl.Poly.add table x y);
+      ignore(Hashtbl.Poly.add table ~key:x ~data:y : [ `Duplicate | `Ok ]);
       y
 
 let maximum_by ~cmp l =
@@ -101,7 +99,7 @@ let rec map_list f = function
   | [] -> [f []]
   | (x :: xs) -> (f (x :: xs)) :: (map_list f xs)
 
-let is_invalid (x : float) = x <> x || x = Float.infinity || x = Float.neg_infinity;;
+let is_invalid (x : float) = let open Float in x <> x || x = Float.infinity || x = Float.neg_infinity;;
 let is_valid = compose not is_invalid;;
 
 let rec last_one = function
@@ -125,6 +123,7 @@ let set_equal c x y =
 let log2 = log 2.
 
 let lse x y =
+  let open Float in
   if is_invalid x then y else if is_invalid y then x else
   if x > y
   then x +. log (1.0 +. exp (y-.x))
@@ -138,6 +137,7 @@ let lse_list (l : float list) : float =
 
 (* log difference exponential: log(e^x - e^y) = x+log(1-e^(y-x)) *)
 let lde x y =
+  let open Float in
   assert(x >= y);
   x +. log (1. -. exp (y-.x))
 
@@ -149,12 +149,12 @@ let rec remove_duplicates l =
 
 let merge_a_list ls ~f:c =
   let merged = Hashtbl.Poly.create () in
-  List.iter ls (fun l ->
-      List.iter l (fun (tag,value) ->
+  List.iter ls ~f:(fun l ->
+      List.iter l ~f:(fun (tag,value) ->
           try
             let old_value = Hashtbl.find_exn merged tag in
             Hashtbl.set merged ~key:tag ~data:(c value old_value)
-          with Not_found -> ignore (Hashtbl.add merged tag value)
+          with Not_found_s _ -> ignore (Hashtbl.add merged ~key:tag ~data:value : [ `Duplicate | `Ok ])
         )
     );
   Hashtbl.to_alist merged
@@ -177,6 +177,7 @@ let range n = 0 -- (n-1);;
 
 
 let float_interval (i : float) (s : float) (j : float) : float list =
+  let open Float in
   let rec aux n acc =
     if n < i then acc else aux (n-.s) (n :: acc)
   in aux j []
@@ -186,8 +187,8 @@ let float_interval (i : float) (s : float) (j : float) : float list =
 (*   Core.Time. *)
 (*   Core.Time.to_float @@ Time.now () *)
 let flush_everything () =
-  Pervasives.flush stdout;
-  Pervasives.flush stderr
+  Stdlib.flush stdout;
+  Stdlib.flush stderr
 
 
 let time_it ?verbose:(verbose=true) description callback =
@@ -202,7 +203,7 @@ let time_it ?verbose:(verbose=true) description callback =
 let shuffle d = begin
     Random.self_init ();
     let nd = List.map ~f:(fun c -> (Random.bits (), c)) d in
-    let sond = List.sort compare nd in
+    let sond = List.sort ~compare:(fun a b -> compare (fst a) (fst b)) nd in
     List.map ~f:snd sond
   end
 
@@ -219,9 +220,7 @@ let update_progress_bar bar new_progress =
   bar.current_progress <- new_progress;
   if new_dots > old_dots then
     let difference = min 80 (new_dots-old_dots) in
-    List.iter (1--difference) (fun _ -> Out_channel.output_char stdout '.'; Out_channel.flush stdout)
-
-
+    List.iter (1--difference) ~f:(fun _ -> Out_channel.output_char stdout '.'; Out_channel.flush stdout)
 
 
 let number_of_cores = ref 1;; (* number of CPUs *)
@@ -232,21 +231,21 @@ let cpu_count () =
     | "Win32" -> int_of_string (safe_get_some "CPU_count" @@ Sys.getenv "NUMBER_OF_PROCESSORS")
     | _ ->
       let i = Unix.open_process_in "getconf _NPROCESSORS_ONLN" in
-      let close () = ignore (Unix.close_process_in i) in
+      let close () = ignore (Unix.close_process_in i : Core.Unix.Exit_or_signal.t) in
       try Scanf.bscanf (Scanf.Scanning.from_channel i)
                        "%d"
                        (fun n -> close (); n)
       with e ->
         (close () ; raise e)
   with
-    | Not_found | Sys_error _ | Failure _ | Scanf.Scan_failure _
+    | Not_found_s _ | Sys_error _ | Failure _ | Scanf.Scan_failure _
     | End_of_file | Unix.Unix_error (_, _, _) -> 1
 
 
 let string_proper_prefix p s =
   let rec loop n =
     (n >= String.length p) ||
-    (p.[n] = s.[n] && loop (n+1))
+    (Char.(=) p.[n] s.[n] && loop (n+1))
   in
   String.length p < String.length s && loop 0
 
@@ -276,21 +275,24 @@ let normal s m =
   s *. n +. m
 
 let print_arguments () =
-  Array.iter Sys.argv ~f:(fun a -> Printf.printf "%s " a);
+  Array.iter (Sys.get_argv ()) ~f:(fun a -> Printf.printf "%s " a);
   Out_channel.newline stdout
 
 (* samplers adapted from gsl *)
 let rec uniform_positive () =
+  let open Float in
   let u = Random.float 1.0 in
   if u > 0.0 then u else uniform_positive ()
 
 let uniform_interval ~l ~u =
+  let open Float in
   assert (u > l);
   let x = uniform_positive() in
   (l+.u)/.2. +. (u-.l)*.x
 
 
 let rec sample_gamma a b =
+  let open Float in
   if a < 1.0
   then
     let u = uniform_positive () in
@@ -347,10 +349,10 @@ let command_output cmd =
   let buf = Buffer.create 16 in
   (try
      while true do
-       Buffer.add_channel buf ic 1
+       Caml.Buffer.add_channel buf ic 1
      done
    with End_of_file -> ());
-  let _ = Unix.close_process (ic, oc) in
+  let _ : Core.Unix.Exit_or_signal.t = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
 let slice s e l =

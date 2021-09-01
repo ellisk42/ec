@@ -1,0 +1,13 @@
+(ocamllex lambdaLexer)
+
+(ocamllex geomLexer)
+
+(menhir
+ (modules lambdaParser))
+
+(menhir
+ (modules geomParser))
+
+(library
+ (name geomLib)
+ (libraries vg vg.cairo))

@@ -85,7 +85,7 @@ let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 
   in s
 
 let update_variable v x =
-  assert (v.arguments = []);
+  assert (List.is_empty v.arguments);
   v.data <- Some(x)
 
 
@@ -118,6 +118,7 @@ let square_root =
   make_unitary_variable sqrt (fun a -> [0.5/.(sqrt a)])
 
 let clamp ~l ~u =
+  let open Float in
   make_unitary_variable (fun a ->
       if a > u then u else
       if a < l then l else
@@ -128,11 +129,11 @@ let clamp ~l ~u =
 
 let log_soft_max xs =
   make_variable (fun vs ->
-      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in
+      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:Float.max in
       let zm = List.fold_right ~init:0. ~f:(fun x a -> exp (x -. m) +. a) vs in
       m+. (log zm))
     (fun vs ->
-      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in
+      let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:Float.max in
       let zm = List.fold_right ~init:0. ~f:(fun x a -> exp (x -. m) +. a) vs in
       List.map vs ~f:(fun x -> (exp (x-.m)) /. zm))
     xs
@@ -153,7 +154,7 @@ let rec zero_gradients z =
       List.iter z.arguments ~f:(fun a -> zero_gradients a);
       z.gradient <- None;
       z.descendents <- [];
-      if z.arguments = [] then () else z.data <- None
+      if List.is_empty z.arguments then () else z.data <- None
     end
 
 let rec forward z =
@@ -171,7 +172,7 @@ let rec forward z =
 let backward z =
   z.gradient <- Some(1.0);
   let rec b v =
-    ignore(differentiate v);
+    ignore(differentiate v : float);
     List.iter ~f:b v.arguments
   in b z
 
@@ -206,7 +207,7 @@ let restarting_optimize opt ?update:(update = 1000)
       parameters |> List.iter ~f:(fun parameter ->
           update_variable parameter (uniform_interval ~l:(-5.) ~u:5.));
       run_optimizer opt ~update:update ~iterations:iterations parameters loss) |>
-  fold1 min
+  fold1 Float.min
 
 let gradient_descent ?lr:(lr = 0.001) =
   List.map ~f:(fun dx -> ~-. (lr*.dx))
@@ -217,6 +218,7 @@ let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
   let individual_rates = ref [] in
 
   fun dxs ->
+    let open Float in
     let new_signs = dxs |> List.map ~f:(fun dx -> dx > 0.) in
     if !first_iteration then begin
       first_iteration := false;
@@ -230,7 +232,7 @@ let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
     end else begin
       individual_rates := List.map3_exn !individual_rates !previous_signs new_signs
           ~f:(fun individual_rate previous_sign new_sign ->
-              if previous_sign = new_sign
+              if Bool.(=) previous_sign new_sign
               then individual_rate*.grow
               else individual_rate*.decay);
 
@@ -249,7 +251,7 @@ let proportional_optimize parameters loss_pairs =
   parameters |> List.iter ~f:(fun p -> update_variable p 1.);
   let prediction_variables = loss_pairs |> List.map ~f:fst in
   prediction_variables |> List.iter ~f:zero_gradients;
-  let predictions = prediction_variables |> List.map ~f:forward in
+  (* let predictions = prediction_variables |> List.map ~f:forward in *)
   assert (false) (* TODO *)
 
 let test_differentiation () =
@@ -262,21 +264,21 @@ let test_differentiation () =
   update_variable x 2.;
   update_variable y 10.;
 
-  ignore(update_network z);
+  ignore(update_network z : float);
 
   Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);
 
   update_variable x 2.;
   update_variable y 2.;
 
-  ignore(update_network z);
+  ignore(update_network z : float);
 
   Printf.printf "z = %f\n" (z.data |> get_some);
 
   Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);
 
   let l = ((~$ 0.) -& z) in
-  ignore(run_optimizer (gradient_descent ~lr:0.001) [x;y] l)
+  ignore(run_optimizer (gradient_descent ~lr:0.001) [x;y] l : float)
 
 ;;
 
@@ -340,7 +342,7 @@ let rec polymorphic_loss_pairs : tp -> 'a -> 'b -> (variable*variable) list = fu
   | t -> raise (Failure ("placeholder_data: bad type "^(string_of_type t)))
 
 
-let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) t =
+let polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) t =
   let get_pairs = polymorphic_loss_pairs t in
   fun p y ->
     let loss_pairs = get_pairs p y in
@@ -377,7 +379,7 @@ let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) 
 
 let test_program_differentiation() =
   let p = parse_program "(lambda REAL)" |> get_some in
-  let (p, parameters) = replace_placeholders p in
+  let (p, _parameters) = replace_placeholders p in
   let p = analyze_lazy_evaluation p in
 
   let g = run_lazy_analyzed_with_arguments p [~$ 0.] in

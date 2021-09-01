@@ -9,6 +9,7 @@ type program =
   | Apply of program*program
   | Primitive of tp * string * (unit ref)
   | Invented of tp * program
+[@@deriving equal]
 
 let is_index = function
   |Index(_) -> true
@@ -41,7 +42,7 @@ let program_children = function
   | _ -> []
 
 let rec application_function = function
-  | Apply(f,x) -> application_function f
+  | Apply(f,_) -> application_function f
   | e -> e
 
 let rec application_parse = function
@@ -57,7 +58,7 @@ let rec program_size = function
 
 
 let rec program_subexpressions p =
-  p::(List.map (program_children p) program_subexpressions |> List.concat)
+  p::(List.map (program_children p) ~f:program_subexpressions |> List.concat)
 
 let rec show_program (is_function : bool) = function
   | Index(j) -> "$" ^ string_of_int j
@@ -77,8 +78,9 @@ let string_of_program = show_program false
 let primitive_name = function | Primitive(_,n,_) -> n
                               | e -> raise (Failure ("primitive_name: "^string_of_program e^"not a primitive"))
 
-let rec program_equal p1 p2 = match (p1,p2) with
-  | (Primitive(_,n1,_),Primitive(_,n2,_)) -> n1 = n2
+let rec program_equal p1 p2 =
+  match (p1,p2) with
+  | (Primitive(_,n1,_),Primitive(_,n2,_)) -> String.(=) n1 n2
   | (Abstraction(a),Abstraction(b)) -> program_equal a b
   | (Invented(_,a),Invented(_,b)) -> program_equal a b
   | (Index(a),Index(b)) -> a = b
@@ -323,7 +325,7 @@ let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
   in
   let p = Primitive(t,name, ref (magical x)) in
   assert (not (Hashtbl.mem every_primitive name));
-  ignore(Hashtbl.add every_primitive name p);
+  ignore(Hashtbl.add every_primitive ~key:name ~data:p : [ `Duplicate | `Ok ]);
   p
 
 (* let primitive_empty_string = primitive "emptyString" tstring "";; *)
@@ -331,8 +333,8 @@ let primitive_uppercase = primitive "caseUpper" (tcharacter @> tcharacter) Char.
 (* let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);; *)
 let primitive_lowercase = primitive "caseLower" (tcharacter @> tcharacter) Char.lowercase;;
 let primitive_character_equal = primitive "char-eq?" (tcharacter @> tcharacter @> tboolean) Char.equal;;
-let primitive_character_equal = primitive "char-upper?" (tcharacter @> tboolean) Char.is_uppercase;;
-let primitive_character_equal = primitive "str-eq?" (tlist tcharacter @> tlist tcharacter @> tboolean) (fun x y -> x = y);;
+let primitive_character_upper = primitive "char-upper?" (tcharacter @> tboolean) Char.is_uppercase;;
+let primitive_string_equal = primitive "str-eq?" (tlist tcharacter @> tlist tcharacter @> tboolean) (fun x y -> x = y);;
 (* let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
  * let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );; *)
 let primitive_constant_strings = [primitive "','" tcharacter ',';
@@ -479,21 +481,23 @@ let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x 
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
 
+let _ : unit =
 ignore(primitive "take-word" (tcharacter @> tstring @> tstring) (fun c s ->
-    List.take_while s ~f:(fun c' -> not (c = c'))));;
+    List.take_while s ~f:(fun c' -> not (c = c'))) : program);
 ignore(primitive "drop-word" (tcharacter @> tstring @> tstring) (fun c s ->
-    List.drop_while s ~f:(fun c' -> not (c = c')) |> List.tl |> get_some));;
+    List.drop_while s ~f:(fun c' -> not (c = c')) |> List.tl |> get_some) : program);
 ignore(primitive "abbreviate" (tstring @> tstring) (fun s ->
+    let open Char in
     let rec f = function
       | [] -> []
       | ' ' :: cs -> f cs
       | c :: cs -> c :: f (List.drop_while cs ~f:(fun c' -> not (c' = ' ')))
-    in f s));;
+    in f s) : program);
 ignore(primitive "last-word" (tcharacter @> tstring @> tstring)
          (fun c s ->
-            List.rev s |> List.take_while ~f:(fun c' -> not (c = c')) |> List.rev));;
+            List.rev s |> List.take_while ~f:(fun c' -> not (c = c')) |> List.rev) : program);
 ignore(primitive "replace-character" (tcharacter @> tcharacter @> tstring @> tstring) (fun c1 c2 s ->
-    s |> List.map ~f:(fun c -> if c = c1 then c2 else c)));;
+    s |> List.map ~f:(fun c -> if c = c1 then c2 else c)) : program);;
 
 
 
@@ -545,14 +549,14 @@ let primitive_integrate= primitive
                         GeomLib.Plumbing.integrate
 
 let var_unit         = primitive "var_unit" tvar GeomLib.Plumbing.var_unit
-let var_unit         = primitive "var_two" tvar GeomLib.Plumbing.var_two
-let var_unit         = primitive "var_three" tvar GeomLib.Plumbing.var_three
+let var_two          = primitive "var_two" tvar GeomLib.Plumbing.var_two
+let var_three        = primitive "var_three" tvar GeomLib.Plumbing.var_three
 let var_double       = primitive "var_double" (tvar @> tvar) GeomLib.Plumbing.var_double
 let var_half         = primitive "var_half" (tvar @> tvar) GeomLib.Plumbing.var_half
 let var_next         = primitive "var_next" (tvar @> tvar) GeomLib.Plumbing.var_next
 let var_prev         = primitive "var_prev" (tvar @> tvar) GeomLib.Plumbing.var_prev
 let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.var_opposite
-let var_opposite     = primitive "var_divide" (tvar @> tvar @> tvar) GeomLib.Plumbing.var_divide
+let var_divide       = primitive "var_divide" (tvar @> tvar @> tvar) GeomLib.Plumbing.var_divide
 let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 
 (* LOGO *)
@@ -581,7 +585,7 @@ let logo_PD  = primitive "logo_PD"
                            LogoLib.LogoInterpreter.logo_SEQ
                              LogoLib.LogoInterpreter.logo_PD
                              x);;
-primitive "logo_PT"
+let logo_PT = primitive "logo_PT"
   ((turtle @> turtle) @> (turtle @> turtle))
   (fun body continuation ->
      LogoLib.LogoInterpreter.logo_GET (fun state ->
@@ -631,18 +635,18 @@ let logo_GETSET = primitive "logo_GETSET"
 
 
 
-let logo_S2A = primitive "logo_UA" (tangle) (1.)
-let logo_S2A = primitive "logo_UL" (tlength) (1.)
+let logo_UA = primitive "logo_UA" (tangle) (1.)
+let logo_UL = primitive "logo_UL" (tlength) (1.)
 
-let logo_S2A = primitive "logo_ZA" (tangle) (0.)
-let logo_S2A = primitive "logo_ZL" (tlength) (0.)
+let logo_ZA = primitive "logo_ZA" (tangle) (0.)
+let logo_ZL = primitive "logo_ZL" (tlength) (0.)
 
 let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
-let logo_IFTY = primitive "logo_epsL" (tlength) (0.05)
-let logo_IFTY = primitive "logo_epsA" (tangle) (0.025)
+let logo_epsL = primitive "logo_epsL" (tlength) (0.05)
+let logo_epsA = primitive "logo_epsA" (tangle) (0.025)
 
-let logo_IFTY = primitive "line"
+let line = primitive "line"
                           (turtle @> turtle)
                           (fun z ->
                             LogoLib.LogoInterpreter.logo_SEQ
@@ -654,13 +658,13 @@ let logo_IFTY = primitive "line"
 let logo_DIVA = primitive "logo_DIVA"
                           (tangle @> tint @> tangle)
                           (fun a b -> a /. (float_of_int b) )
-let logo_DIVA = primitive "logo_MULA"
+let logo_MULA = primitive "logo_MULA"
                           (tangle @> tint @> tangle)
                           (fun a b -> a *. (float_of_int b) )
-let logo_DIVA = primitive "logo_DIVL"
+let logo_DIVL = primitive "logo_DIVL"
                           (tlength @> tint @> tlength)
                           (fun a b -> a /. (float_of_int b) )
-let logo_DIVA = primitive "logo_MULL"
+let logo_MULL = primitive "logo_MULL"
                           (tlength @> tint @> tlength)
                           (fun a b -> a *. (float_of_int b) )
 
@@ -669,10 +673,10 @@ let logo_SUBA = primitive "logo_SUBA" (tangle @> tangle @> tangle) ( -. )
 let logo_ADDL = primitive "logo_ADDL" (tlength @> tlength @> tlength) ( +. )
 let logo_SUBL = primitive "logo_SUBL" (tlength @> tlength @> tlength) ( -. )
 
-let _ = primitive "logo_forLoop"
+let _ : program = primitive "logo_forLoop"
                    (tint @> (tint @> turtle @> turtle) @> turtle @> turtle)
                    (fun i f z -> List.fold_right (0 -- (i-1)) ~f ~init:z)
-let _ = primitive "logo_forLoopM"
+let _ : program  = primitive "logo_forLoopM"
                    (tint @> (tint @> turtle) @> turtle @> turtle)
                    (fun n body k0 ->
                      ((List.map (0 -- (n-1)) ~f:body))
@@ -686,7 +690,7 @@ let _ = primitive "logo_forLoopM"
 (*let logo_CHEAT3  = primitive "logo_CHEAT3"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT3*)
 (*let logo_CHEAT4  = primitive "logo_CHEAT4"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT4*)
 
-let default_recursion_limit = 20;;
+(* let default_recursion_limit = 20;; *)
 
 let rec unfold x p h n =
   if p x then [] else h x :: unfold (n x) p h n
@@ -746,7 +750,9 @@ let primitive_recursion2 =
     fixed_combinator2;;
 
 
-let is_recursion_of_arity a = function
+let is_recursion_of_arity a t =
+  let open String in
+  match t with
   | Primitive(_,n,_) -> ("fix"^(Int.to_string a)) = n
   | _ -> false
 
@@ -757,7 +763,7 @@ let is_recursion_primitive = function
 
 
 let program_parser : program parsing =
-  let token = token_parser (fun c -> Char.is_alphanum c || List.mem ~equal:( = )
+  let token = token_parser (fun c -> Char.is_alphanum c || List.mem ~equal:Char.(=)
                                        ['_';'-';'?';'/';'.';'*';'\'';'+';',';
                                         '>';'<';'@';'|';] c) in
   let whitespace = token_parser ~can_be_empty:true Char.is_whitespace in
@@ -852,7 +858,7 @@ let parsing_test_case s =
   program_parser (s,0) |> List.iter ~f:(fun (p,n) ->
       if n = String.length s then
         (Printf.printf "Parsed into the program: %s\n" (string_of_program p);
-         assert (s = (string_of_program p));
+         assert (String.(=) s (string_of_program p));
         flush_everything())
       else
         (Printf.printf "With the suffix %n, we get the program %s\n" n (string_of_program p);
@@ -886,14 +892,14 @@ let [@warning "-20"] performance_test_case() =
           if j = n then
             Printf.printf "%s\n" (evaluate [] e xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else
-            ignore (evaluate [] e xs)));
+            ignore (evaluate [] e xs : unit)));
   let c = analyze_evaluation e [] in
   time_it "evaluate analyzed program many times" (fun () ->
       (0--n) |> List.iter ~f:(fun j ->
           if j = n then
             Printf.printf "%s\n" (c xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else
-            ignore(c xs)))
+            ignore(c xs : unit)))
 ;;
 
 
@@ -1015,31 +1021,32 @@ let t_model_p = make_ground "t_model_p";;
 
 (* Puddleworld Primitive Definitions *)
 
-ignore(primitive "true_p" (t_boolean_p) (fun x -> x));;
-ignore(primitive "left_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "right_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "up_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "down_p" (t_direction_p) (fun x -> x));;
-ignore(primitive "1_p" (t_int_p) (fun x -> x));;
-ignore(primitive "2_p" (t_int_p) (fun x -> x));;
-ignore(primitive "move_p" (t_object_p @> t_action_p) (fun x -> x));;
-ignore(primitive "relate_p" (t_object_p @> t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "relate_n_p" (t_object_p @> t_object_p @> t_direction_p @> t_int_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "in_half_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "apply_p" ((t_object_p @> t_boolean_p) @> t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "and__p" (t_boolean_p @> t_boolean_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "max_in_dir_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "is_edge_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "grass_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "puddle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "star_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "circle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "triangle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "heart_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "spade_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "diamond_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "rock_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
-ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;
+let _: unit =
+ignore(primitive "true_p" (t_boolean_p) (fun x -> x) :program);
+ignore(primitive "left_p" (t_direction_p) (fun x -> x) :program);
+ignore(primitive "right_p" (t_direction_p) (fun x -> x) :program);
+ignore(primitive "up_p" (t_direction_p) (fun x -> x) :program);
+ignore(primitive "down_p" (t_direction_p) (fun x -> x) :program);
+ignore(primitive "1_p" (t_int_p) (fun x -> x) :program);
+ignore(primitive "2_p" (t_int_p) (fun x -> x) :program);
+ignore(primitive "move_p" (t_object_p @> t_action_p) (fun x -> x) :program);
+ignore(primitive "relate_p" (t_object_p @> t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "relate_n_p" (t_object_p @> t_object_p @> t_direction_p @> t_int_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "in_half_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "apply_p" ((t_object_p @> t_boolean_p) @> t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "and__p" (t_boolean_p @> t_boolean_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "max_in_dir_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "is_edge_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "grass_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "puddle_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "star_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "circle_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "triangle_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "heart_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "spade_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "diamond_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "rock_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x) :program);
+ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x) :program);;

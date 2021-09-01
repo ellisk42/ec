@@ -1,6 +1,5 @@
 open Core
 
-open Zmq
 
 type socket_connection = (([`Req] Zmq.Socket.t) ref * int) ;;
 let context = ref (Zmq.Context.create());;
@@ -36,7 +35,7 @@ let refresh_socket_connections() =
     end
 
 let close_socket_connections() =
-  !socket_connections |> List.iter ~f:(fun (r,p) ->
+  !socket_connections |> List.iter ~f:(fun (r,_) ->
       Zmq.Socket.close !r);
   socket_connections := []
 

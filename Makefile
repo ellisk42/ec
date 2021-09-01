@@ -1,26 +1,38 @@
-all:
-	rm -f data/geom/logoDrawString
-	cd solvers && \
-	  jbuilder build solver.exe && \
-	  jbuilder build versionDemo.exe && \
-	  jbuilder build helmholtz.exe && \
-	  jbuilder build logoDrawString.exe && \
-	  jbuilder build protonet-tester.exe && \
-	  jbuilder build compression.exe && \
-	  cp _build/default/compression.exe ../compression && \
-	  cp _build/default/versionDemo.exe ../versionDemo && \
-	  cp _build/default/solver.exe ../solver && \
-	  cp _build/default/helmholtz.exe ../helmholtz && \
-	  cp _build/default/protonet-tester.exe ../protonet-tester && \
-	  cp _build/default/logoDrawString.exe \
-	    ../logoDrawString && \
-	  ln -s ../../logoDrawString \
-	    ../data/geom/logoDrawString
+all: solver compression helmholtz protonet-tester versionDemo logoDrawString
+
+.PHONY: solver compression helmholtz protonet-tester versionDemo logoDrawString
 
 clean:
-	cd solvers && jbuilder clean
+	dune clean
 	rm -f solver
 	rm -f compression
 	rm -f helmholtz
+	rm -f protonet-tester
+	rm -f versionDemo
 	rm -f logoDrawString
 	rm -f data/geom/logoDrawString
+
+solver:
+	dune build solvers/solver.exe
+	mv solvers/solver.exe solver
+
+compression:
+	dune build solvers/compression.exe
+	mv solvers/compression.exe compression
+
+helmholtz:
+	dune build solvers/helmholtz.exe
+	mv solvers/helmholtz.exe helmholtz
+
+protonet-tester:
+	dune build solvers/protonet_tester.exe
+	mv solvers/protonet_tester.exe protonet-tester
+
+versionDemo:
+	dune build solvers/versionDemo.exe
+	mv solvers/versionDemo.exe versionDemo
+
+logoDrawString:
+	dune build solvers/logoDrawString.exe
+	mv solvers/logoDrawString.exe logoDrawString
+	ln -sf ../../logoDrawString data/geom/logoDrawString

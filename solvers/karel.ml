@@ -162,6 +162,7 @@ let execute_primitives game primitives =
 	in
 	aux primitives;;
 
+let _ : unit =
 let new_game = make_new_game 5 6 in
 
 print_game new_game;

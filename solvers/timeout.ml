@@ -12,21 +12,21 @@ let run_for_interval' (time : float) (c : unit -> 'a) : 'a option =
   let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_behavior
   in
   try
-    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = time}) ;
+    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = time}: Unix.interval_timer_status) ;
     let res = c () in
-    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}) ;
+    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}: Unix.interval_timer_status) ;
     reset_sigalrm () ;
     Some(res)
   with
     | Timeout ->
         begin
-          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}) ;
+          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}: Unix.interval_timer_status) ;
           reset_sigalrm () ;
           None
         end
     | e ->
         begin
-          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}) ;
+          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}: Unix.interval_timer_status) ;
           reset_sigalrm () ;
           raise e
         end

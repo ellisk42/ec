@@ -3,12 +3,10 @@ open Core
 open Utils
 open Type
 open Program
-open Enumeration
-open Task
-open Grammar
 open Task
 
 type vector = Vector of int*int
+[@@deriving equal, compare]
 
 let string_of_vector = function | Vector(x,y) -> "(" ^ string_of_int x ^ "," ^ string_of_int y ^ ")"
 
@@ -16,15 +14,16 @@ type command =
   | Circle of vector
   | Rectangle of vector*vector
   | Line of vector*vector
+[@@deriving equal, compare]
 
 let canonical_command_list : 'a Core.List.t -> 'a Core.List.t =
   fun l ->
     let l2 =
       List.dedup_and_sort
-      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      ~compare:compare_command
       l in
     List.sort
-      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      ~compare:compare_command
       l2
 
 type cid = C|R|L
@@ -203,7 +202,7 @@ let score_latex output =
       if List.exists (0--100) ~f:(fun _ ->
           let p = random_instantiation ~x:false ~i:C program in
           let v : command list = evaluate [] p |> magical |> canonical_command_list in
-          v = output)
+          equal_list equal_command v output)
       then begin Printf.eprintf "PROGRAM: %s\n" (string_of_program program);
         10.*. likelihood_penalty program
       end else log 0.
