@@ -14,7 +14,7 @@
     5. [PyPy](#pypy)
 4. [Software Architecture](#software-architecture)
 5. [`protonet-networks`](#protonet-networks)
-    
+
 # Overview
 
 DreamCoder is a wake-sleep algorithm that finds programs to solve a given set of tasks in a particular domain.
@@ -34,6 +34,11 @@ The codebase has several git submodule dependencies.
 If you’ve already cloned the repo and did not clone the submodules, run:
 ```
 git submodule update --recursive --init
+```
+
+To get better `git blame` results and skip reformatting commits run:
+```
+git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
 ### Running using Singularity
@@ -197,8 +202,8 @@ make
 If you are not running within the singularity container, you will need to install the OCaml libraries dependencies first. Currently, in order to build the solver on a fresh opam switch, the following packages (anecdotal data from Arch x64, assuming you have `opam`) are required:
 ```bash
 opam update                 # Seriously, do that one
-opam switch 4.06.1+flambda  # caml.inria.fr/pub/docs/manual-ocaml/flambda.html
-eval `opam config env`      # *sight*
+opam switch create 4.12.0+flambda --package=ocaml-variants.4.12.0+options,ocaml-option-flambda  # caml.inria.fr/pub/docs/manual-ocaml/flambda.html
+eval $(opam env)            # *sight*
 opam install ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq
 ```
 
