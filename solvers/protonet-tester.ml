@@ -33,4 +33,3 @@ let _ =
     Printf.sprintf "Raw dist:\t%f\nProposal:\t%f"
     log_likelihood (-. (100. *. log_likelihood))
   )
-

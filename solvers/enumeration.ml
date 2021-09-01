@@ -37,10 +37,10 @@ let serialize_frontier f =
   in
   j
 
-let violates_symmetry f a n = 
+let violates_symmetry f a n =
   if not (is_base_primitive f) then false else
     let a = application_function a in
-    if not (is_base_primitive a) then false else 
+    if not (is_base_primitive a) then false else
       match (n, primitive_name f, primitive_name a) with
       (* McCarthy primitives *)
       | (0,"car","cons") -> true
@@ -141,7 +141,7 @@ let unwind_path p =
     | (A(_)) :: r -> unwind r
     | R :: r -> unwind r
     | L :: r -> R :: r
-  in 
+  in
   List.rev p |> unwind |> List.rev
 
 let state_violates_symmetry {skeleton} =
@@ -154,7 +154,7 @@ let state_violates_symmetry {skeleton} =
     | _ -> false
   in
   r skeleton
-      
+
 
 let state_successors ~maxFreeParameters cg state =
   let (request,g) = match follow_path state.skeleton state.path with
@@ -213,9 +213,9 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
     | None -> 9999.0
     | Some(ub) -> ub
   in
-  
+
   let completed = ref [] in
-  
+
   let pq =
   Heap.create
       ~cmp:(fun s1 s2 ->
@@ -239,7 +239,7 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
   (!completed,
    Heap.to_list pq)
 
-      
+
 (* Depth first enumeration *)
 let enumeration_timeout = ref Float.max_value;;
 let enumeration_timed_out() = Unix.time() > !enumeration_timeout;;
@@ -361,19 +361,19 @@ let dfs_around_skeleton cg ~maxFreeParameters ~lower_bound ~upper_bound state k 
   let rec around e abstraction_depth ?parent:(parent=None) (* context abstraction_depth l u mfp k *) =
     match e with
     | Abstraction(body) ->
-      let around_body = around ~parent:None body (1+abstraction_depth) in 
-      fun context l u mfp k -> 
+      let around_body = around ~parent:None body (1+abstraction_depth) in
+      fun context l u mfp k ->
         around_body context l u mfp
           (fun body newContext ll fp -> k (Abstraction(body)) newContext ll fp)
     | Apply(f,x) when free x && (not (free f)) ->
       let around_argument = around ~parent:(Some(parent_index e)) x abstraction_depth in
-      fun context l u mfp k ->       
+      fun context l u mfp k ->
         around_argument context l u mfp
           (fun x' newContext ll fp -> k (Apply(f,x')) newContext ll fp)
     | Apply(f,x) when free f && free x ->
       let around_argument = around ~parent:(Some(parent_index e)) x abstraction_depth in
       let around_function = around ~parent:None f abstraction_depth in
-      fun context l u mfp k ->             
+      fun context l u mfp k ->
         around_function context 0. u mfp
           (fun f' context f_ll fp ->
              around_argument context (l+.f_ll) (u+.f_ll) (mfp - fp)
@@ -385,14 +385,14 @@ let dfs_around_skeleton cg ~maxFreeParameters ~lower_bound ~upper_bound state k 
     | Primitive(t,"??",g) ->
       let g = !(g |> magical) in
       let environment = List.drop environment (List.length environment - abstraction_depth) in
-      fun context l u mfp k ->             
+      fun context l u mfp k ->
         let (context, t) = applyContext context t in
         (* Printf.printf "Enumerating around type %s mfp = %d\n"
          *   (string_of_type t) (mfp); *)
         enumerate_programs' ~parent:parent cg g context t environment l u ~maxFreeParameters:mfp k
     | _ -> assert false
-  in 
-    
+  in
+
   around ~parent:None state.skeleton 0 state.context (lower_bound -. state.cost) (upper_bound -. state.cost)
     (maxFreeParameters - state.free_parameters)
     (fun e context ll _ -> k e context (ll-.state.cost))
@@ -406,12 +406,12 @@ let multicore_enumeration ?extraQuiet:(extraQuiet=false) ?final:(final=fun () ->
     | (None,1) -> 1
     | (None,c) -> !shatter_factor*c
   in
-  
+
   let (finished, fringe) =
     best_first_enumeration ~lower_bound:(Some(lb)) ~upper_bound:(Some(ub)) ~frontier_size:shatter ~maxFreeParameters:maxFreeParameters cg request
   in
 
-  if not extraQuiet then  
+  if not extraQuiet then
     (Printf.eprintf "\t(ocaml: %d CPUs. shatter: %d. |fringe| = %d. |finished| = %d.)\n"
     cores shatter (List.length fringe) (List.length finished);
      flush_everything());
@@ -435,7 +435,7 @@ let multicore_enumeration ?extraQuiet:(extraQuiet=false) ?final:(final=fun () ->
     (* ignore(time_it "Evaluated finished programs" (fun () -> *)
     finished |> List.iter ~f:(fun s -> k s.skeleton (0.-.s.cost));
     final() :: fringe_results
-  else begin 
+  else begin
     List.iter ~f:continuation fringe;
     finished |> List.iter ~f:(fun s -> k s.skeleton (0.-.s.cost));
     [final()]
@@ -449,13 +449,13 @@ let enumerate_programs ?extraQuiet:(extraQuiet=false) ?maxFreeParameters:(maxFre
 
   (* Strip out the recursion operators because they only occur at the top level *)
   let strip_recursion g =
-    {g with     
+    {g with
      library =
        g.library |>
        List.filter ~f:(fun (p,_,_,_) -> not (is_recursion_primitive p)) |>
        (* sort library by number of arguments so that it will tend to explore shorter things first *)
        List.sort ~compare:(fun (_,a,_,_) (_,b,_,_) -> List.length (arguments_of_type a) - List.length (arguments_of_type b)) }
-  in 
+  in
   let g' = {no_context=strip_recursion cg.no_context;
             variable_context=strip_recursion cg.variable_context;
             contextual_library=cg.contextual_library |> List.filter_map ~f:(fun (program, grammars) ->
@@ -467,9 +467,9 @@ let enumerate_programs ?extraQuiet:(extraQuiet=false) ?maxFreeParameters:(maxFre
   in
 
   let k' =
-    if definitely_recursive then begin 
+    if definitely_recursive then begin
       fun p l ->
-        let p' = 
+        let p' =
           match p with
           | Abstraction(body) ->
             if variable_is_bound ~height:0 body then (* Used the fix point operator *)
@@ -484,7 +484,7 @@ let enumerate_programs ?extraQuiet:(extraQuiet=false) ?maxFreeParameters:(maxFre
     end
     else k
   in
-  
+
   multicore_enumeration ~extraQuiet ~maxFreeParameters:maxFreeParameters ~final:final ~cores:nc g' request' lb ub k'
 
 
@@ -508,7 +508,7 @@ let test_recursive_enumeration () =
 
 
 
-let test_best_enumeration() = 
+let test_best_enumeration() =
   let g = primitive_grammar [
       differentiable_placeholder;
       (* differentiable_zero; *)
@@ -520,9 +520,9 @@ let test_best_enumeration() =
        * differentiable_multiply; *)
     ]
   in
-  let mfp = 4 in 
+  let mfp = 4 in
   let request = treal @> treal in
-  let frontier = ref [] in 
+  let frontier = ref [] in
   let k p l = frontier := (string_of_program p, l) :: !frontier;
     assert (number_of_free_parameters p <= mfp);
     Printf.printf "%s\t%d\n" (string_of_program p) (number_of_free_parameters p)

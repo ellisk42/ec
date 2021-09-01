@@ -32,7 +32,7 @@ let token_parser ?can_be_empty:(can_be_empty = false) (element : char -> bool) :
     let rec check consumed =
       if n + consumed >= String.length s || (not (element s.[n + consumed])) then [] else
         s.[n + consumed] :: check (consumed + 1)
-    in 
+    in
     let token = check 0 in
     if (not can_be_empty) && List.length token = 0 then [] else
       let token = String.concat ~sep:"" (token |> List.map ~f:(String.make 1))  in

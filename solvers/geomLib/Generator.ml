@@ -110,7 +110,7 @@ let rec get_random_var : string list -> var = fun var_list ->
         (*| n when n < cumsum_unit Indefinite -> Indefinite*)
         | n when n < cumsum_unit (Name "") ->
             begin
-                match var_list with 
+                match var_list with
                 | [] -> get_random_var var_list
                 | _ -> Name(pick_random_in_list var_list)
             end

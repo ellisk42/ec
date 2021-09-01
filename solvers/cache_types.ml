@@ -21,7 +21,7 @@ type tower_cash = {
   entries : tower_cash_entry list;
 } [@@unboxed]
 
-let rec default_tower_cash_block 
+let rec default_tower_cash_block
   ?x10:((x10:int32) = 0l)
   ?w10:((w10:int32) = 0l)
   ?h10:((h10:int32) = 0l)
@@ -31,7 +31,7 @@ let rec default_tower_cash_block
   h10;
 }
 
-let rec default_tower_cash_entry 
+let rec default_tower_cash_entry
   ?plan:((plan:tower_cash_block list) = [])
   ?height:((height:float) = 0.)
   ?stability:((stability:float) = 0.)
@@ -49,7 +49,7 @@ let rec default_tower_cash_entry
   staircase;
 }
 
-let rec default_tower_cash 
+let rec default_tower_cash
   ?entries:((entries:tower_cash_entry list) = [])
   () : tower_cash  = {
   entries;

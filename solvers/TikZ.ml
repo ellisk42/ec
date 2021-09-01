@@ -61,7 +61,7 @@ let primitive_loop = primitive "loop"
        let body = (0--(n-1)) |> List.map ~f:body |> List.concat in
        let boundary = match boundary with
          | None -> []
-         | Some(b) -> (0--(n-2)) |> List.map ~f:b |> List.concat 
+         | Some(b) -> (0--(n-2)) |> List.map ~f:b |> List.concat
        in
        boundary@body);;
 let primitive_union = primitive "trace-union" (ttrace @> ttrace @> ttrace) (@);;
@@ -101,7 +101,7 @@ let make_empty_guess () =
   {rectangles = g();
    circles = g();
    lines = g();}
-    
+
 
 let score_latex output =
   (* Calculate all of the different possible coefficients/intercepts/coordinates/etc. *)
@@ -115,7 +115,7 @@ let score_latex output =
         g.circles.y_slope <- (y1 - y2) :: g.circles.y_slope;
         g.circles.y_slope <- (y2 - y1) :: g.circles.y_slope;
       end
-    | (Rectangle(Vector(x1,y1),Vector(x2,y2)),Rectangle(Vector(a1,b1),Vector(a2,b2))) -> begin 
+    | (Rectangle(Vector(x1,y1),Vector(x2,y2)),Rectangle(Vector(a1,b1),Vector(a2,b2))) -> begin
         g.rectangles.x_slope <- (x1 - a1) :: g.rectangles.x_slope;
         g.rectangles.x_slope <- (a1 - x1) :: g.rectangles.x_slope;
         g.rectangles.x_slope <- (x2 - a2) :: g.rectangles.x_slope;
@@ -124,7 +124,7 @@ let score_latex output =
         g.rectangles.y_slope <- (y1 - b1) :: g.rectangles.y_slope;
         g.rectangles.y_slope <- (b1 - y1) :: g.rectangles.y_slope;
         g.rectangles.y_slope <- (y2 - b2) :: g.rectangles.y_slope;
-        g.rectangles.y_slope <- (b2 - y2) :: g.rectangles.y_slope;        
+        g.rectangles.y_slope <- (b2 - y2) :: g.rectangles.y_slope;
        end
     | _ -> ()
   and single_guesses = function
@@ -155,7 +155,7 @@ let score_latex output =
   g.circles.x_slope |> List.iter ~f:(Printf.eprintf "cxm: %d\t");
   g.circles.y_slope |> List.iter ~f:(Printf.eprintf "cym: %d\t");
   Printf.eprintf "\n\n";
-  
+
   let rec random_instantiation ~x ~i expression = match expression with
     | Primitive(t,"COORDINATE",_) ->
       Primitive(t,"COORDINATE",magical @@ ref (random_choice @@ match i with
@@ -199,7 +199,7 @@ let score_latex output =
 
   let output = canonical_command_list output in
 
-  fun program -> begin      
+  fun program -> begin
       if List.exists (0--100) ~f:(fun _ ->
           let p = random_instantiation ~x:false ~i:C program in
           let v : command list = evaluate [] p |> magical |> canonical_command_list in
@@ -207,18 +207,18 @@ let score_latex output =
       then begin Printf.eprintf "PROGRAM: %s\n" (string_of_program program);
         10.*. likelihood_penalty program
       end else log 0.
-    end        
-        
-        
-  
+    end
+
+
+
 
 
 let latex_task name output =
   {name = name;
    task_type = ttrace;
    log_likelihood = score_latex output}
-  
-  
+
+
 (* let () = *)
 (*   let p = parse_program "(loop 3 nothing (lambda (circle (linear COEFFICIENT INTERCEPT $0 COEFFICIENT INTERCEPT $0))))" |> get_some in *)
 (*   Printf.printf "%s\n" (string_of_program p); *)

@@ -100,7 +100,7 @@ let rec compare_program p1 p2 = match (p1,p2) with
   | (Primitive(_,_,_),_) -> -1
   | (Invented(_,b1),Invented(_,b2)) -> compare_program b1 b2
   | (Invented(_,_),_) -> -1
-                                               
+
 exception UnboundVariable;;
 
 let rec infer_program_type context environment p : tContext*tp = match p with
@@ -128,7 +128,7 @@ let make_invention i =
 
 
 exception UnknownPrimitive of string
-    
+
 let every_primitive : (program String.Table.t) = String.Table.create();;
 
 
@@ -137,7 +137,7 @@ let lookup_primitive n =
     Hashtbl.find_exn every_primitive n
   with _ -> raise (UnknownPrimitive n)
 
-  
+
 let [@warning "-20"] rec evaluate (environment: 'b list) (p:program) : 'a =
   match p with
   | Apply(Apply(Apply(Primitive(_,"if",_),branch),yes),no) ->
@@ -155,7 +155,7 @@ let rec analyze_evaluation (p:program) : 'b list -> 'a =
     and yes = analyze_evaluation yes
     and no = analyze_evaluation no
     in
-    fun environment -> 
+    fun environment ->
       if magical (branch environment) then yes environment else no environment
   | Abstraction(b) ->
     let body = analyze_evaluation b in
@@ -205,7 +205,7 @@ let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list
      evaluation conditionals are function just like any other. *)
   | Abstraction(b) ->
     let body = analyze_lazy_evaluation b in
-    fun environment -> 
+    fun environment ->
     lazy (magical @@ fun argument -> Lazy.force (body (argument::environment)))
   | Index(j) ->
     fun environment -> magical @@ List.nth_exn environment j
@@ -213,7 +213,7 @@ let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list
     let analyzed_function = analyze_lazy_evaluation f
     and analyzed_argument = analyze_lazy_evaluation x
     in
-    fun environment -> 
+    fun environment ->
     lazy ((Lazy.force @@ magical @@ analyzed_function environment) (magical @@ analyzed_argument environment))
   | Primitive(_,_,v) -> fun _ -> lazy (magical (!v))
   | Invented(_,i) ->
@@ -275,7 +275,7 @@ let rec beta_normal_form ?reduceInventions:(reduceInventions=false) e =
         | None -> None
       end
     | Invented(_,b) when reduceInventions -> Some(b)
-    | Apply(f,x) -> begin 
+    | Apply(f,x) -> begin
         match step f with
         | Some(f') -> Some(Apply(f',x))
         | None -> match step x with
@@ -286,7 +286,7 @@ let rec beta_normal_form ?reduceInventions:(reduceInventions=false) e =
             | _ -> None
       end
     | _ -> None
-  in 
+  in
   match step e with
   | None -> e
   | Some(e') -> beta_normal_form ~reduceInventions e'
@@ -306,7 +306,7 @@ let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
     (name : string) (t : tp) x =
   let number_of_arguments = arguments_of_type t |> List.length in
   (* Force the arguments *)
-  let x = if manualLaziness then x else magical @@ 
+  let x = if manualLaziness then x else magical @@
       match number_of_arguments with
       | 0 -> magical x
       | 1 -> fun a -> (magical x) (Lazy.force a)
@@ -419,7 +419,7 @@ let rec substitute_string_constants (alternatives : char list list) e = match e 
   | Invented(_,b) -> substitute_string_constants alternatives b
   | Apply(f,x) -> substitute_string_constants alternatives f |> List.map ~f:(fun f' ->
       substitute_string_constants alternatives x |> List.map ~f:(fun x' ->
-          Apply(f',x'))) |> List.concat 
+          Apply(f',x'))) |> List.concat
   | Abstraction(b) -> substitute_string_constants alternatives b |> List.map ~f:(fun b' ->
       Abstraction(b'))
   | Index(_) -> [e]
@@ -592,7 +592,7 @@ primitive "logo_PT"
                     (if original_state
                      then LogoLib.LogoInterpreter.logo_PD else LogoLib.LogoInterpreter.logo_PU)
                     continuation))))
-                         
+
 
 let logo_GET = primitive "logo_GET"
                          (tstate @> turtle @> turtle)
@@ -680,7 +680,7 @@ let _ = primitive "logo_forLoopM"
                           ~f:(LogoLib.LogoInterpreter.logo_SEQ)
                           ~init:k0
                    )
-                   
+
 (*let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT*)
 (*let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2*)
 (*let logo_CHEAT3  = primitive "logo_CHEAT3"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT3*)
@@ -702,8 +702,8 @@ let primitive_fold = primitive "fold" (tlist t0 @> t1 @> (t0 @> t1 @> t1) @> t1)
 let default_recursion_limit = ref 50;;
 let set_recursion_limit l = default_recursion_limit := l;;
 exception RecursionDepthExceeded of int;;
-    
-let fixed_combinator argument body = 
+
+let fixed_combinator argument body =
   (* strict with respect to body but lazy with respect argument *)
   (* body expects to be passed 2 thunks *)
   let body = Lazy.force body in
@@ -726,10 +726,10 @@ let fixed_combinator2 argument1 argument2 body =
   let body = Lazy.force body in
   let recursion_limit = ref !default_recursion_limit in
 
-  let rec fix x y = 
+  let rec fix x y =
     let r a b =
       decr recursion_limit;
-      if !recursion_limit > 0 then  
+      if !recursion_limit > 0 then
         fix a b
       else raise (RecursionDepthExceeded(!default_recursion_limit))
     in body (lazy r) x y
@@ -778,7 +778,7 @@ let program_parser : program parsing =
         let v = v |> Float.of_string in
         Primitive(treal, "real", ref (v |> magical)) |> return_parse))
   in
-  
+
   let rec program_parser () : program parsing =
     (application () <|> primitive <|> variable <|> invented() <|> abstraction() <|> fixed_real)
 
@@ -809,7 +809,7 @@ let program_parser : program parsing =
             program_parser()%%(fun b ->
                 constant_parser ")"%%(fun _ ->
                   return_parse (nabstractions (Int.of_string n) b))))))
-                           
+
   and application_sequence (maybe_function : program option) : program parsing =
     whitespace%%(fun _ ->
         match maybe_function with
@@ -817,11 +817,11 @@ let program_parser : program parsing =
           program_parser () %%(fun f -> application_sequence (Some(f)))
         | Some(f) ->
           (return_parse f) <|> (program_parser () %%(fun x -> application_sequence (Some(Apply(f,x))))))
-        
-    
+
+
   and application () =
     constant_parser "(" %% (fun _ ->
-        application_sequence None %% (fun a -> 
+        application_sequence None %% (fun a ->
             constant_parser ")" %% (fun _ ->
                 return_parse a)))
   in
@@ -836,7 +836,7 @@ let parse_program s = run_parser program_parser s
  *   let t = canonical_type t in
  *   Printf.printf "%s : %s\n" (string_of_program program) (string_of_type t);
  *   assert (t = (canonical_type desired_type))
- * 
+ *
  * let program_test_cases() =
  *   test_program_inference (Abstraction(Index(0))) (t0 @> t0);
  *   test_program_inference (Abstraction(Abstraction(Apply(Index(0),Index(1))))) (t0 @> (t0 @> t1) @> t1);
@@ -844,7 +844,7 @@ let parse_program s = run_parser program_parser s
  *   test_program_inference (Abstraction(Abstraction(Index(0)))) (t0 @> t1 @> t1);
  *   let v : int = evaluate [] (Apply(primitive_increment, primitive0)) in
  *   Printf.printf "%d\n" v;
- *   
+ *
  * ;; *)
 
 let parsing_test_case s =
@@ -876,23 +876,23 @@ let parsing_test_cases() =
 
 
 (* program_test_cases();; *)
-             
+
 let [@warning "-20"] performance_test_case() =
   let e = parse_program "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0))))))))" |> get_some in
   let xs = [2;1;9;3;] in
   let n = 10000000 in
-  time_it "evaluate program many times" (fun () -> 
+  time_it "evaluate program many times" (fun () ->
       (0--n) |> List.iter ~f:(fun j ->
           if j = n then
             Printf.printf "%s\n" (evaluate [] e xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else
             ignore (evaluate [] e xs)));
   let c = analyze_evaluation e [] in
-  time_it "evaluate analyzed program many times" (fun () -> 
+  time_it "evaluate analyzed program many times" (fun () ->
       (0--n) |> List.iter ~f:(fun j ->
           if j = n then
             Printf.printf "%s\n" (c xs |> List.map ~f:Int.to_string |> join ~separator:" ")
-          else 
+          else
             ignore(c xs)))
 ;;
 
@@ -911,7 +911,7 @@ let [@warning "-20"] performance_test_case() =
  *   let e = parse_program "(lambda (fix1 (lambda (lambda (if (empty? $0) $0 (cons (\* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
  *   Printf.printf "%s\n" (string_of_program e);
  *   evaluate [] e [1;2;3;4;] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
- * 
+ *
  *   let e = parse_program "(lambda (lambda (fix2 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))) $0 $1)))" |> get_some in
  *   infer_program_type empty_context [] e |> snd |> string_of_type |> Printf.printf "%s\n";
  *   evaluate [] e (0--4) [9;42;1] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n" *)
@@ -929,8 +929,8 @@ let [@warning "-20"] performance_test_case() =
 (*   let xs = [(0--10);(0--10);(0--10)] in *)
 
 (*   time_it "evaluated all of the programs" (fun () -> *)
-      
-  
+
+
 
 (* let () = *)
 (*   let e = parse_program "(lambda (reducei (lambda (lambda (lambda (range $0)))) empty $0))" |> get_some in *)
@@ -977,9 +977,9 @@ let test_lazy_evaluation() =
         (arguments |> List.map ~f:Int.to_string |> join ~separator:"; ");
       flush_everything();
       let v = run_lazy_analyzed_with_arguments a arguments in
-      begin 
+      begin
         match string_of_type (return_of_type t) with
-        | "int" -> 
+        | "int" ->
           Printf.printf "value = %d\n" (v |> magical)
         | "list<int>" ->
           Printf.printf "value = %s\n" (v |> magical |> List.map ~f:Int.to_string |> join ~separator:",")

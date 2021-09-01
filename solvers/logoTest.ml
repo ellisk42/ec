@@ -5,7 +5,7 @@ let pi2 = 2. *. 3.1459
 
 let rec unfold f stop b =
 if stop b then []
-else 
+else
   let x, b' = f b in
    x :: (unfold f stop b')
 

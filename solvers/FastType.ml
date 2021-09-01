@@ -52,7 +52,7 @@ let compile_unifier t =
 
   (* todo because f is known ahead of time we can compile this into closures *)
   let rec fu f t k : tContext = match (f,t) with
-    | (FastVariable(r), t) -> begin 
+    | (FastVariable(r), t) -> begin
       match !r with
         | None -> r := Some(t); k
         | Some(t') -> unify k t t'
@@ -99,15 +99,15 @@ let compile_unifier t =
     Array.iter mapping ~f:(fun r -> r := None);
 
     (context, arguments)
-     
+
 
 let test_fast() =
   let library_types = [t1 @> t0 @> tlist t0 @> tlist t0] in
   let requesting_types = [tlist tint; tlist t1; t2] in
 
-  library_types |> List.iter ~f:(fun library_type -> 
+  library_types |> List.iter ~f:(fun library_type ->
       let u = compile_unifier library_type in
-      requesting_types |> List.iter ~f:(fun request -> 
+      requesting_types |> List.iter ~f:(fun request ->
           let k = makeTIDs (next_type_variable request) empty_context in
 
           let (k,arguments) = u k request in

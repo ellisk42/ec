@@ -18,9 +18,9 @@ let smooth_logo_wrapper t2t k s0 =
       if l <= e then [command] else
         let f = e/.l in
         let x = x1 +. f*.dx in
-        let y = y1 +. f*.dy in        
+        let y = y1 +. f*.dy in
         (SEGMENT(x1,y1,x,y)) :: smooth_path (SEGMENT(x,y,x2,y2))
-  in       
+  in
   (p |> List.map  ~f:smooth_path |> List.concat, s)
 
 
@@ -31,7 +31,7 @@ let _ =
   let open Utils in
   let open Timeout in
   let jobs = to_list (member "jobs" j) in
-  
+
   let pretty = try
       to_bool (member "pretty" j)
     with _ -> false
@@ -47,7 +47,7 @@ let _ =
 
   let trim s =
     if s.[0] = '"' then String.sub s 1 (String.length s - 2) else s
-  in 
+  in
 
   let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
   Bigarray.Array1.fill b0 0 ;
@@ -63,14 +63,14 @@ let _ =
       let animate = try
           to_bool (member "animate" j)
         with _ -> false
-      in 
-      
+      in
+
       let p = to_string (member "program" j) |> trim in
       let p = safe_get_some (Printf.sprintf "Could not parse %s\n" p) (parse_program p) in
       if animate then
         match export with
         | None -> assert (false)
-        | Some(export) -> 
+        | Some(export) ->
           let p = analyze_lazy_evaluation p in
           let turtle = run_lazy_analyzed_with_arguments p [] in
           let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
@@ -81,7 +81,7 @@ let _ =
                          export export);
           Sys.command (Printf.sprintf "rm %s_*.png" export);
           `String("exported")
-      else 
+      else
         try
           match run_for_interval timeout (fun () ->
               let p = analyze_lazy_evaluation p in
@@ -91,7 +91,7 @@ let _ =
               let array = canvas_to_1Darray c size in
               c, array, cost) with
           | None -> `String("timeout")
-          | Some(c, array, cost) ->       
+          | Some(c, array, cost) ->
             let bx = canvas_to_1Darray c 8 in
             if bx = b0 then `String("empty")
             else

@@ -9,7 +9,7 @@ exception MalformedProgram of string
 
 let _ = Random.self_init ()
 
-let print_pos lexbuf = 
+let print_pos lexbuf =
   let pos = lexbuf.lex_curr_p in
   sprintf "(line %d ; column %d)"
           pos.pos_lnum (pos.pos_cnum - pos.pos_bol)

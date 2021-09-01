@@ -48,9 +48,8 @@ let rgb2hsl r g b =
 let interpolate_color (r1,g1,b1) (r2,g2,b2) =
   let (h1,s1,l1) = rgb2hsl r1 g1 b1 in
   let (h2,s2,l2) = rgb2hsl r2 g2 b2 in
-  fun distance -> 
+  fun distance ->
     let h = h1 +. (h2-.h1)*.distance in
     let s = s1 +. (s2-.s1)*.distance in
     let l = l1 +. (l2-.l1)*.distance in
     hsl2rgb h s l
-

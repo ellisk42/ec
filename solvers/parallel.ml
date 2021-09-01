@@ -6,7 +6,7 @@ open Utils
 let parallel_do nc actions =
   let finished_actions = ref 0 in
   let number_of_actions = List.length actions in
-  
+
   let children = ref [] in
   let actions = ref actions in
 
@@ -94,11 +94,11 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
 let parallel_map ~nc l ~f =
   let input_array = Array.of_list l in
   let output_array = Array.create (Array.length input_array) None in
-  let output_array = 
+  let output_array =
     pmap ~processes:(min (Array.length input_array) nc)
       ~bsize:1
       (fun x -> Some(f x)) (Array.get input_array) output_array
-  in 
+  in
   Out_channel.flush stdout;
   Array.to_list output_array |> List.map ~f:(safe_get_some "parallel_map")
 
@@ -106,7 +106,7 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
   if nc = 1 then begin
     actions |> List.iter ~f:(fun a -> a());
     [final()]
-  end else 
+  end else
   let chunk = match chunk with
     | 0 -> List.length actions / nc
     | x -> x

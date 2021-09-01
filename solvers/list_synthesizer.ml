@@ -65,7 +65,7 @@ let list_grammar =
 
 let _ =
   let t = supervised_task "filter-squares" (tlist tint @> tlist tint)
-      [([1;2;1;9;4;3;2],[1;1;9;4])] 
+      [([1;2;1;9;4;3;2],[1;1;9;4])]
   in
   enumerate_for_task ~timeout:30000 list_grammar t
 

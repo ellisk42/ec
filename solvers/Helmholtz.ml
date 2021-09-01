@@ -10,11 +10,11 @@ open Utils
 open Timeout
 open Type
 open Tower
-    
+
 open Yojson.Basic
 
-    
-    
+
+
 
 let run_job channel =
   let open Yojson.Basic.Util in
@@ -61,13 +61,13 @@ let output_job ?maxExamples:(maxExamples=50000) result =
       let p = (maxExamples |> Float.of_int)/.(l |> Float.of_int) in
       result |> List.filter ~f:(fun _ -> Random.float 1. < p)
   in
-  let message : json = 
+  let message : json =
     `List(results |> List.map ~f:(fun (behavior, (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
                 "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)))])))
-  in 
+  in
   message
 
-let _ = 
+let _ =
   run_job Pervasives.stdin |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout

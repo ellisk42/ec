@@ -38,4 +38,3 @@ let () =
   npp l ;
   print_newline () ;
   output_canvas_png (path,box) 512 "toto.png"
-

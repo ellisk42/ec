@@ -1,12 +1,12 @@
 (*
   funarray.mli
-   
-  Port of Chris Okasaki's purely functional 
+
+  Port of Chris Okasaki's purely functional
   random-access list to CAML: supports random access
-  and pure functional updates AND supports head/tail 
+  and pure functional updates AND supports head/tail
   operations in O(1)
-  
-  Construct a random-access list with 
+
+  Construct a random-access list with
     cons elt empty
   -> returns elt::empty
 
@@ -20,7 +20,7 @@
 
 ---
 
-  ported by Will Benton, 10/5/2004 
+  ported by Will Benton, 10/5/2004
 
   distributed under the GNU GPL
 *)

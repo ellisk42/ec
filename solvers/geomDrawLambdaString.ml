@@ -18,7 +18,7 @@ let npp data =
   done ;
   print_int (data.{((Bigarray.Array1.dim data) - 1)})
 
-let print_pos lexbuf = 
+let print_pos lexbuf =
   let pos = lexbuf.lex_curr_p in
   Printf.sprintf "(line %d ; column %d)"
           pos.pos_lnum (pos.pos_cnum - pos.pos_bol)

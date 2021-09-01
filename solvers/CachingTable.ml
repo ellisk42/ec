@@ -188,9 +188,9 @@ module CachingTable = struct
       Printf.eprintf "\n";
       backward_historical m |> List.rev |> List.iter ~f:(Printf.eprintf "%d ");
       Printf.eprintf "\n"
-    done  
-    
+    done
+
 end;;
-  
+
 
 (* CachingTable.test() *)

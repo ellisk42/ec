@@ -12,7 +12,7 @@ type tower_state = {hand_position : int;
 let empty_tower_state =
   {hand_position = 0;
    hand_orientation = 1;}
-                   
+
 (* ttower = state -> (state, list of blocks) *)
 type tt = tower_state -> tower_state * ( (int*int*int) list)
 
@@ -76,12 +76,12 @@ ignore(primitive "right" (tint @> ttower @> ttower)
                (hand'', rest)
           in f));;
 ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
-         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : tower_state) -> 
+         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : tower_state) ->
              if start >= stop then (hand,[]) else
                let (hand', thisIteration) = body start hand in
                let (hand'', laterIterations) = f (start+1) stop body hand' in
                (hand'', thisIteration @ laterIterations)
-          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : tower_state) -> 
+          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : tower_state) ->
             let (hand, body_blocks) = f 0 n b hand in
             let hand, later_blocks = k hand in
             (hand, body_blocks @ later_blocks)));;
@@ -101,7 +101,7 @@ ignore(primitive "reverseHand" (ttower @> ttower)
          (fun (k : tt) : tt ->
             fun (state : tower_state) ->
               k {state with hand_orientation = -1*state.hand_orientation}));;
-            
+
 
 let simulate_without_physics plan =
   let overlaps (x,w,h) (x',y',w',h')  =
@@ -114,7 +114,7 @@ let simulate_without_physics plan =
   in
 
   let lowest_possible_height (_,_,h) = h/2 in
-  let place_at_height (x,w,h) y = (x,y,w,h) in 
+  let place_at_height (x,w,h) y = (x,y,w,h) in
 
   let place_block world block =
     let lowest = List.filter_map world ~f:(overlaps block) |>
@@ -143,7 +143,7 @@ let blocks_extent blocks =
 let tower_height blocks =
   if blocks = [] then 0 else
     let ys = blocks |> List.map ~f:(fun (_,y,_,h) -> y + h/2) in
-    let y1 = List.fold_left ~init:(List.hd_exn ys) ~f:max ys in    
+    let y1 = List.fold_left ~init:(List.hd_exn ys) ~f:max ys in
     let ys = blocks |> List.map ~f:(fun (_,y,_,h) -> y - h/2) in
     let y0 = List.fold_left ~init:(List.hd_exn ys) ~f:min ys in
     y1 - y0
@@ -164,7 +164,7 @@ let evaluate_discrete_tower_program timeout p =
       recent_tower := Some(p);
       (* Printf.eprintf "%s\n" (string_of_program p); *)
       let p = analyze_lazy_evaluation p in
-      let new_discrete = 
+      let new_discrete =
         try
           match run_for_interval
                   timeout
@@ -190,12 +190,12 @@ let evaluate_discrete_tower_program timeout p =
 ;;
 
 register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
-    name task_type examples -> 
+    name task_type examples ->
   assert (task_type = ttower @> ttower);
   assert (examples = []);
 
   let open Yojson.Basic.Util in
-  
+
   let plan = extra |> member "plan" |> to_list |> List.map ~f:(fun command ->
       match command |> to_list with
       | [a;b;c;] -> (a |> to_int, b |> to_int, c |> to_int)
@@ -213,4 +213,3 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
          if hit then 0. else log 0.)
   })
 ;;
-

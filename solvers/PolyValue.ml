@@ -4,7 +4,7 @@ open Utils
 open Type
 
 open Yojson.Basic
-       
+
 module PolyValue = struct
   type t =
     | List of t list
@@ -40,7 +40,7 @@ module PolyValue = struct
     | `Int(i) -> Integer(i)
     | `Bool(b) -> Boolean(b)
     | _ -> assert (false)
-      
+
 end;;
 
 let make_poly_table() = Hashtbl.create (module PolyValue)
