@@ -79,6 +79,7 @@ jobs:
   test-list:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -110,6 +111,7 @@ jobs:
   test-text:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -168,12 +170,14 @@ jobs:
         id: cache-virtualenv
 
       - name: run test
+        continue-on-error: true
         run: python bin/logo.py -t 5 -RS 10 --biasOptimal -i 2
 
   test-tower:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
     continue-on-error: true
+    if: false
 
     steps:
       - name: Checkout code
@@ -205,6 +209,7 @@ jobs:
   test-graph:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -238,6 +243,7 @@ jobs:
   test-rational:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -270,6 +276,7 @@ jobs:
   test-scientificLaws:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -305,6 +312,7 @@ jobs:
     needs: [build, create-virtualenv]
     runs-on: ubuntu-latest
     continue-on-error: true
+    if: false
 
     steps:
       - name: Checkout code
