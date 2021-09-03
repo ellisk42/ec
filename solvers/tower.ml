@@ -86,7 +86,7 @@ ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
             let hand, later_blocks = k hand in
             (hand, body_blocks @ later_blocks)): program);
 ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> ttower)
-         (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z):program);
+         (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z): program);
 ignore(primitive "tower_embed" ((ttower @> ttower) @> ttower @> ttower)
          (fun (body : tt -> tt) (k : tt) : tt ->
             fun (hand : tower_state) ->
@@ -164,9 +164,9 @@ let evaluate_discrete_tower_program timeout p =
       let p = analyze_lazy_evaluation p in
       let new_discrete =
         try
-          match run_for_interval
+          [@warning "-20"] match run_for_interval
                   timeout
-                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] |> snd)
+                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] empty_tower_state |> snd)
           with
           | Some(p) ->
             let p = center_tower p in

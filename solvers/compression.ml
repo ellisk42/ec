@@ -1,5 +1,8 @@
 open Core
 
+open [@warning "-33"] Physics
+open [@warning "-33"] Pregex
+open [@warning "-33"] Tower
 open Utils
 open Type
 open Program

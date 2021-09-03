@@ -1,11 +1,18 @@
 open Core
 
+open [@warning "-33"] Physics
+open [@warning "-33"] Pregex
+open [@warning "-33"] Tower
 (* open Vs *)
+open [@warning "-33"] Differentiation
+open [@warning "-33"] TikZ
 open Utils
 open Type
+open [@warning "-33"] Program
 open Enumeration
 open Task
 open Grammar
+open [@warning "-33"] FastType
 
 let load_problems channel =
   let open Yojson.Basic.Util in
