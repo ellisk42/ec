@@ -42,11 +42,11 @@ jobs:
         # This checks if the binaries in the repo are up to date and if not,
         # create a new commit from the author of the last commit
         run: |
-          git config --local user.email ${{ github.event.commits[github.event.commits.length-1].author.email }}
-          git config --local user.name ${{ github.event.commits[github.event.commits.length-1].author.name }}
+          git config --local user.email ${{ github.event.commits[0].author.email }}
+          git config --local user.name ${{ github.event.commits[0].author.name }}
           git diff --quiet && git diff --staged --quiet || \
-            git commit -am "${{ github.event.commits[github.event.commits.length-1].message }}; update binaries" \
-            --author=${{ github.event.commits[github.event.commits.length-1].author.email }}
+            git commit -am "${{ github.event.commits[0].message }}; update binaries" \
+            --author=${{ github.event.commits[0].author.email }}
 
       - name: Push changes
         uses: ad-m/github-push-action@master
