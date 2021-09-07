@@ -166,7 +166,12 @@ def dreamOfTowers(grammar, prefix, N=250, make_montage=True):
             scipy.misc.imsave('%s.png'%prefix, matrix)
         else:
             for n,i in enumerate(matrix):
-                scipy.misc.imsave(f'{prefix}/{n}.png', i)
+                from PIL import Image
+                #import pdb; pdb.set_trace()
+                
+                #Image.fromarray(i).save(f'{prefix}/{n}.png')
+                scipy.io.imwrite(f'{prefix}/{n}.png', i)
+                #scipy.misc.imsave(f'{prefix}/{n}.png', i)
     else:
         eprint("Tried to visualize dreams, but none to visualize.")
 
