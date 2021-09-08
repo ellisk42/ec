@@ -1,5 +1,4 @@
 open Core
-open Unix
 
 open CachingTable
 open Timeout
@@ -27,7 +26,7 @@ let gen_passwd length =
       | n when n < 26 + 26 -> int_of_char 'A' + n - 26
       | n -> int_of_char '0' + n - 26 - 26 in
     let gen _ = String.make 1 (char_of_int(gen())) in
-    String.concat (Array.to_list (Array.init length gen))
+    String.concat (Array.to_list (Array.init length ~f:gen))
 
 
 let supervised_task ?timeout:(timeout = 0.001) name ty examples =
@@ -42,7 +41,7 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
             try
               match run_for_interval
                       timeout
-                      (fun () -> run_lazy_analyzed_with_arguments p xs = y)
+                      (fun () -> Core.Poly.equal (run_lazy_analyzed_with_arguments p xs) y)
               with
                 | Some(true) -> loop e
                 | _ -> false
@@ -62,7 +61,7 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   }
 
 let task_handler = Hashtbl.Poly.create();;
-let register_special_task name handler = Hashtbl.set task_handler name handler;;
+let register_special_task name handler = Hashtbl.set task_handler ~key:name ~data:handler;;
 
 let recent_logo_program : (program*((((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)*float) option)) option ref = ref None;;
 let run_recent_logo ~timeout program =
@@ -75,10 +74,10 @@ let run_recent_logo ~timeout program =
                     let x = run_lazy_analyzed_with_arguments p [] in
                     let l = LogoLib.LogoInterpreter.turtle_to_list x in
                     if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l)
-                    then None  
+                    then None
                     else match CachingTable.find p2i l with
                       | Some(bx) -> Some(bx)
-                      | None -> 
+                      | None ->
                         let bx = LogoLib.LogoInterpreter.turtle_to_array_and_cost x 28 in
                         CachingTable.set p2i l bx;
                         Some(bx))
@@ -92,7 +91,7 @@ let run_recent_logo ~timeout program =
 ;;
 
 
-
+let _ : unit =
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
 
@@ -100,7 +99,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
       try
         extras |> member "costMatters" |> to_bool
       with _ -> assert false
-    in 
+    in
 
     let by = match examples with
       | [([0],y)] ->
@@ -126,7 +125,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
            | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
            | EnumerationTimeout  -> raise EnumerationTimeout
            | _                   -> log 0.0)
-    });;
+    });
 
 
 register_special_task "differentiable"
@@ -144,7 +143,7 @@ register_special_task "differentiable"
       try
         extras |> member name |> to_int
       with _ -> default
-    in 
+    in
     let temperature = maybe_float "temperature" 1. in
     let parameterPenalty = maybe_float "parameterPenalty" 0. in
     let maxParameters = maybe_int "maxParameters" 99 in
@@ -161,15 +160,15 @@ register_special_task "differentiable"
         extras |> member "proportional" |> to_bool
       with _ -> false
     in
-    
-                                         
+
+
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
   let examples = examples |> List.map ~f:(fun (xs,y) ->
       (List.map2_exn argument_types xs ~f:placeholder_data,
       placeholder_data return_type y))
   in
-    
+
   let loss = polymorphic_sse ~clipOutput ~clipLoss return_type in
   { name = name    ;
     task_type = ty ;
@@ -177,7 +176,7 @@ register_special_task "differentiable"
       (fun expression ->
          let (p,parameters) = replace_placeholders expression in
          assert (List.length parameters <= maxParameters);
-        if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else 
+        if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else
           let p = analyze_lazy_evaluation p in
           (* let predictions = examples |> List.map ~f:(fun (xs,_) -> *)
           (*     run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs)) *)
@@ -208,11 +207,11 @@ register_special_task "differentiable"
         | Some(l) ->
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
-          let l = if proportional && List.length parameters > 0 then begin 
+          let l = if proportional && List.length parameters > 0 then begin
               assert (List.length parameters = 1);
               parameters |> List.iter ~f:(fun p -> update_variable p 1.);
               assert (false)
-            end else 
+            end else
                 let l = l *& (~$ (1. /. n)) in
                 let l = restarting_optimize (rprop ~lr ~decay ~grow)
                     ~attempts:restarts
@@ -221,11 +220,12 @@ register_special_task "differentiable"
                     parameters l
                 in l
           in
+          let open Float in
           match lossThreshold with
           | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
           | Some(t) ->
             if l < t then 0. -. d*.parameterPenalty else log 0.)
-  });;
+  });
 
 register_special_task "stringConstant" (fun extras
     (* ?parameterPenalty:(parameterPenalty=0.) *)
@@ -237,7 +237,7 @@ register_special_task "stringConstant" (fun extras
       try
         extras |> member name |> to_int
       with _ -> default
-    in 
+    in
     let stringConstants =
       extras |> member "stringConstants" |> to_list |> List.map ~f:to_string |> List.map ~f:(String.to_list)
     in
@@ -246,7 +246,7 @@ register_special_task "stringConstant" (fun extras
 
   let lc = log (26.*.2.+.10.) in
   let lc = 0.-.lc in
-  
+
   { name = name    ;
     task_type = ty ;
     log_likelihood =
@@ -261,26 +261,25 @@ register_special_task "stringConstant" (fun extras
                    try
                      (match run_for_interval
                              timeout
-                             (fun () -> run_lazy_analyzed_with_arguments p' xs = y)
+                             (fun () -> Core.Poly.equal (run_lazy_analyzed_with_arguments p' xs) y)
                      with
                      | Some(true) -> loop e
                      | _ -> false)
                    with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                        | otherException -> begin
-                            if otherException = EnumerationTimeout then raise EnumerationTimeout else false
-                          end
+                        | EnumerationTimeout -> raise EnumerationTimeout
+                        | _ -> false
                in
                let hit = loop examples in
                if hit
                then lc*.(Float.of_int (string_constants_length p))
-               else log 0.) |> List.fold_right ~init:(log 0.) ~f:max)
+               else log 0.) |> List.fold_right ~init:(log 0.) ~f:Float.max)
   });;
 
 
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =
   {request = f.request;
-   programs =  List.sort ~compare:(fun (_,a) (_,b) -> if a > b then -1 else 1) f.programs |> flip List.take k }
+   programs =  List.sort ~compare:(fun (_,a) (_,b) -> Float.compare b a) f.programs |> flip List.take k }
 
 (* Takes a frontier and a task. Ads in the likelihood on the task to
    the frontier and removes things that didn't hit the task *)
@@ -288,7 +287,8 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
   {request = f.request;
    programs = f.programs |> List.filter_map ~f:(fun (program, descriptionLength) ->
        let likelihood = t.log_likelihood program in
-       if likelihood > -0.1 then 
+       let open Float in
+       if likelihood > -0.1 then
          Some((program, descriptionLength +. likelihood))
        else None)
   }
@@ -297,6 +297,7 @@ type hit_result = {hit_program: string;
                    hit_likelihood: float;
                    hit_prior: float;
                    hit_time: float;}
+[@@deriving equal]
 
 let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~maxFreeParameters
@@ -318,17 +319,17 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
   let tasks = Array.of_list (tf |> List.map ~f:fst) in
 
   let request = tasks.(0).task_type in
-  assert (Array.for_all tasks ~f:(fun t -> t.task_type = request));
+  assert (Array.for_all tasks ~f:(fun t -> equal_tp t.task_type request));
 
   (* Store the hits in a priority queue *)
   (* We will only ever maintain maximumFrontier best solutions *)
   let hits =
-    Array.init nt ~f:(fun _ -> 
+    Array.init nt ~f:(fun _ ->
         Heap.create
           ~cmp:(fun h1 h2 ->
               Float.compare (h1.hit_likelihood+.h1.hit_prior) (h2.hit_likelihood+.h2.hit_prior))
           ()) in
-  
+
   let lower_bound = ref lowerBound in
 
   let startTime = Time.now () in
@@ -337,7 +338,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
 
   while not (enumeration_timed_out()) &&
           List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
-       && !lower_bound +. budgetIncrement <= upperBound
+       && Float.(<=) (!lower_bound +. budgetIncrement) upperBound
   do
     let number_of_enumerated_programs = ref 0 in
       let final_results =
@@ -352,13 +353,13 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
           (fun p logPrior ->
              incr number_of_enumerated_programs;
              incr total_number_of_enumerated_programs;
-             
+
              let mdl = 0.-.logPrior in
 
-             assert( !lower_bound <= mdl);
-             assert( mdl < budgetIncrement+.(!lower_bound));
+             assert(Float.(<=) !lower_bound mdl);
+             assert(Float.(<) mdl (budgetIncrement+.(!lower_bound)));
 
-             range nt |> List.iter ~f:(fun j -> 
+             range nt |> List.iter ~f:(fun j ->
                  let logLikelihood = tasks.(j).log_likelihood p in
                  if is_valid logLikelihood then begin
                    let dt = Time.abs_diff startTime (Time.now ())
@@ -386,16 +387,15 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
                 let new_heap = array_of_heaps.(j) in
                 let old_heap = hits.(j) in
                 List.iter new_heap ~f:(fun element ->
-                    if not (Heap.mem old_heap ~equal:(=) element) then
+                    if not (Heap.mem old_heap ~equal:equal_hit_result element) then
                       (Heap.add old_heap element;
                        if Heap.length old_heap > maximumFrontier.(j)
                        then Heap.remove_top old_heap))))
       ;
-      
+
       lower_bound := budgetIncrement+. (!lower_bound);
 
     done ;
-    
+
   (hits |> Array.to_list |> List.map ~f:Heap.to_list,
    !total_number_of_enumerated_programs)
-

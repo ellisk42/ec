@@ -12,21 +12,21 @@ let run_for_interval' (time : float) (c : unit -> 'a) : 'a option =
   let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_behavior
   in
   try
-    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = time}) ;
+    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = time}: Unix.interval_timer_status) ;
     let res = c () in
-    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}) ;
+    ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}: Unix.interval_timer_status) ;
     reset_sigalrm () ;
     Some(res)
   with
     | Timeout ->
         begin
-          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}) ; 
+          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}: Unix.interval_timer_status) ;
           reset_sigalrm () ;
           None
         end
     | e ->
         begin
-          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}) ;
+          ignore (Unix.setitimer ITIMER_REAL {it_interval = 0.0; it_value = 0.0}: Unix.interval_timer_status) ;
           reset_sigalrm () ;
           raise e
         end
@@ -38,7 +38,7 @@ let run_for_interval' (time : float) (c : unit -> 'a) : 'a option =
 (* and ocaml, the wonderful language it is, does not allow you to temporarily disable the garbage collector *)
 (* So this version of run_for_interval allows you to repeatedly try to run the thing for the interval *)
 let rec run_for_interval ?attempts:(attempts=1) dt c =
-  if attempts < 1 then None else 
+  if attempts < 1 then None else
     match run_for_interval' dt c with
     | Some(v) -> Some(v)
     | None -> run_for_interval ~attempts:(attempts - 1) dt c

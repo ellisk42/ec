@@ -9,7 +9,7 @@ let empty28 = Bigarray.(Array1.create int8_unsigned c_layout (28*28))
 (*let empty64 = Bigarray.(Array1.create int8_unsigned c_layout (64*64))*)
 (*let empty256 = Bigarray.(Array1.create int8_unsigned c_layout (256*256))*)
 
-let _ = Bigarray.Array1.fill empty28 0 ; Random.self_init ()
+let _ :unit = Bigarray.Array1.fill empty28 0 ; Random.self_init ()
 
 
 let npp data =
@@ -18,7 +18,7 @@ let npp data =
   done ;
   print_int (data.{((Bigarray.Array1.dim data) - 1)})
 
-let print_pos lexbuf = 
+let print_pos lexbuf =
   let pos = lexbuf.lex_curr_p in
   Printf.sprintf "(line %d ; column %d)"
           pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
@@ -40,7 +40,7 @@ let read_program program_string =
     program
   with e -> (print_endline program_string ; raise e)
 
-let _ =
+let _ : unit =
   let output_img = Sys.argv.(1) in
   let noise = (String.equal Sys.argv.(2) "noise") in
   let program_string = Sys.argv.(3) in

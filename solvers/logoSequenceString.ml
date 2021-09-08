@@ -2,7 +2,6 @@ open LogoLib
 open LogoInterpreter
 open VGWrapper
 
-open Differentiation
 open Program
 
 let npp data =
@@ -12,7 +11,7 @@ let npp data =
   print_int (data.{((Bigarray.Array1.dim data) - 1)}) ;
   print_newline ()
 
-let _ =
+let _ : unit =
   let str      = Sys.argv.(1)
   and folder   = Sys.argv.(2) in
   try
@@ -24,7 +23,7 @@ let _ =
           let turtle = run_lazy_analyzed_with_arguments p [] in
           let c = eval_turtle ~sequence:(folder^"/output_") turtle in
           prerr_endline "evaled" ;
-          output_canvas_png c 512 (folder^".png") ;
+          output_canvas_png (fst c) 512 (folder^".png") ;
           prerr_endline "drawn"
       | _ -> ()
     with Invalid_argument _ | Failure _ | Stack_overflow -> ()

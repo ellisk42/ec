@@ -5,7 +5,7 @@ open Printf
 open Images
 open Generator
 
-let _ = Random.self_init ()
+let _ : unit = Random.self_init ()
 
 
 let gen_name () =
@@ -58,4 +58,3 @@ let () =
       end
     end with MalformedProgram(s) -> ()
   done
-

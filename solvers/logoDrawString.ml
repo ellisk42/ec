@@ -4,7 +4,6 @@ open LogoLib
 open LogoInterpreter
 open VGWrapper
 
-open Differentiation
 open Program
 
 let smooth_logo_wrapper t2t k s0 =
@@ -15,23 +14,23 @@ let smooth_logo_wrapper t2t k s0 =
       let dx = x2-.x1 in
       let dy = y2-.y1 in
       let l = dx*.dx+.dy*.dy |> sqrt in
-      if l <= e then [command] else
+      if Float.(<=) l e then [command] else
         let f = e/.l in
         let x = x1 +. f*.dx in
-        let y = y1 +. f*.dy in        
+        let y = y1 +. f*.dy in
         (SEGMENT(x1,y1,x,y)) :: smooth_path (SEGMENT(x,y,x2,y2))
-  in       
+  in
   (p |> List.map  ~f:smooth_path |> List.concat, s)
 
 
-let _ =
+let _: unit =
   let open Yojson.Basic.Util in
-  let j = Yojson.Basic.from_channel Pervasives.stdin in
+  let j = Yojson.Basic.from_channel Stdlib.stdin in
   let open Yojson.Basic in
   let open Utils in
   let open Timeout in
   let jobs = to_list (member "jobs" j) in
-  
+
   let pretty = try
       to_bool (member "pretty" j)
     with _ -> false
@@ -46,8 +45,9 @@ let _ =
   in
 
   let trim s =
-    if s.[0] = '"' then String.sub s 1 (String.length s - 2) else s
-  in 
+    let open Char in
+    if s.[0] = '"' then String.sub s ~pos:1 ~len:(String.length s - 2) else s
+  in
 
   let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
   Bigarray.Array1.fill b0 0 ;
@@ -63,25 +63,25 @@ let _ =
       let animate = try
           to_bool (member "animate" j)
         with _ -> false
-      in 
-      
+      in
+
       let p = to_string (member "program" j) |> trim in
       let p = safe_get_some (Printf.sprintf "Could not parse %s\n" p) (parse_program p) in
       if animate then
         match export with
         | None -> assert (false)
-        | Some(export) -> 
+        | Some(export) ->
           let p = analyze_lazy_evaluation p in
           let turtle = run_lazy_analyzed_with_arguments p [] in
           let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
           let cs = animate_turtle turtle in
-          List.iteri cs (fun j c ->
+          List.iteri cs ~f:(fun j c ->
               output_canvas_png ~pretty c size (Printf.sprintf "%s_%09d.png" export j));
-          Sys.command (Printf.sprintf "convert -delay 1 -loop 0 %s_*.png %s.gif"
-                         export export);
-          Sys.command (Printf.sprintf "rm %s_*.png" export);
+          ignore(Sys.command (Printf.sprintf "convert -delay 1 -loop 0 %s_*.png %s.gif"
+                         export export) : int);
+          ignore(Sys.command (Printf.sprintf "rm %s_*.png" export) : int);
           `String("exported")
-      else 
+      else
         try
           match run_for_interval timeout (fun () ->
               let p = analyze_lazy_evaluation p in
@@ -91,9 +91,9 @@ let _ =
               let array = canvas_to_1Darray c size in
               c, array, cost) with
           | None -> `String("timeout")
-          | Some(c, array, cost) ->       
+          | Some(c, array, cost) ->
             let bx = canvas_to_1Darray c 8 in
-            if bx = b0 then `String("empty")
+            if Core.Poly.equal bx b0 then `String("empty")
             else
               match export with
               | Some(fn) -> (output_canvas_png ~pretty c size fn;

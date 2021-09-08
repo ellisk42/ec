@@ -26,6 +26,7 @@ data/taskRankGraphs
 message
 sklearn-container.img
 .idea/
+.vscode/
 venv/
 ec-language-venv/
 language_experiments/

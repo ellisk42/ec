@@ -2,7 +2,6 @@ open GeomLib
 open Plotter
 open Renderer
 open Interpreter
-open Printf
 
 (*let prog = (Plumbing.concat Plumbing.integrate*)
               (*(Plumbing.concat (Plumbing.turn None) Plumbing.integrate))*)
@@ -38,4 +37,3 @@ let () =
   npp l ;
   print_newline () ;
   output_canvas_png (path,box) 512 "toto.png"
-

@@ -1,9 +1,6 @@
-open Hashtbl
-open Random
 open Printf
 open Plotter
 open Utils2
-open Renderer
 
 type var =    Name of string
             | Unit
@@ -130,12 +127,12 @@ let valuesCostVar : var -> int =
     | Unit -> 1
     (*| Indefinite -> 1*)
     | Name _ -> 1
-    | Double v' ->  1
-    | Half v' ->  1
-    | Next v' ->  1
-    | Prev v' ->  1
-    | Opposite v' ->  1
-    | Divide(v1,v2) -> 1
+    | Double _ ->  1
+    | Half _ ->  1
+    | Next _ ->  1
+    | Prev _ ->  1
+    | Opposite _ ->  1
+    | Divide(_,_) -> 1
 
 let costVar : var option -> int =
     let rec helper v = match v with
@@ -278,7 +275,7 @@ let interpret ?factor:(factor=1.) ?noise:(noise=false) shapeprogram =
             let n' = int_of_float (match n with
                 | None -> 2.
                 | Some v -> evaluateVar v htbl_var) in
-            for i = 1 to n' do
+            for _ = 1 to n' do
                 inter ~sizes pr htbl_var curr_state
             done
         | Integrate (f, pen, (speed,accel,angularSpeed,angularAccel)) ->
@@ -301,7 +298,7 @@ let interpret ?factor:(factor=1.) ?noise:(noise=false) shapeprogram =
             curr_state.angularSpeed <- angularSpeed ;
             curr_state.angularAccel <- angularAccel ;
             let pen = match pen with | None -> true | Some b -> b in
-            for i = 1 to (int_of_float (f *. steps /. factor)) do
+            for _ = 1 to (int_of_float (f *. steps /. factor)) do
                 let futur_x =
                   curr_state.x
                   +. (curr_state.speed *. cos(curr_state.face))
@@ -349,10 +346,10 @@ let interpret_normal ?noise:(noise=false) p =
     | Nop -> Nop, found
     | Define (_,_) -> p,found
     | Turn f -> (if found then Turn f else Nop),found
-    | Integrate(a,Some(false),c) ->
+    | Integrate(_,Some(false),_) ->
         if found then (p,found)
         else Nop,false
-    | Integrate(a,pen,c) -> p,true
+    | Integrate(_,_,_) -> p,true
     | Concat(p1,p2) ->
         if found then p,found
         else begin
@@ -370,7 +367,7 @@ let interpret_normal ?noise:(noise=false) p =
           if f then Embed(p''),f
           else Nop,false
         end
-    | Repeat(v,p') -> p,found
+    | Repeat(_,_) -> p,found
   in
   let rec find_bit p = match p with
     | Turn(Some(v)) ->
@@ -380,8 +377,8 @@ let interpret_normal ?noise:(noise=false) p =
     | Concat(p1,p2) ->
         let (b1,b2) = find_bit p1 in
         if b1 then b1,b2 else (find_bit p2)
-    | Embed (p) -> false,false
-    | Repeat (v,p) -> find_bit p
+    | Embed (_) -> false,false
+    | Repeat (_,p) -> find_bit p
     | _ -> false,false
   in
   let rec swap_bit p = match p with

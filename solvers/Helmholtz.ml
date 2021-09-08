@@ -2,19 +2,14 @@ open Core
 
 open Dreaming
 
-open Pregex
 open Program
-open Enumeration
 open Grammar
-open Utils
-open Timeout
 open Type
-open Tower
-    
+
 open Yojson.Basic
 
-    
-    
+
+
 
 let run_job channel =
   let open Yojson.Basic.Util in
@@ -53,21 +48,20 @@ let run_job channel =
   helmholtz_enumeration ~nc:nc (k ~timeout:evaluationTimeout request (j |> member "extras")) g request ~timeout ~maximumSize
 
 let output_job ?maxExamples:(maxExamples=50000) result =
-  let open Yojson.Basic.Util in
   (* let result = Hashtbl.to_alist result in *)
   let results =
     let l = List.length result in
     if l < maxExamples then result else
       let p = (maxExamples |> Float.of_int)/.(l |> Float.of_int) in
-      result |> List.filter ~f:(fun _ -> Random.float 1. < p)
+      result |> List.filter ~f:(fun _ -> Float.(<) (Random.float 1.) p)
   in
-  let message : json = 
-    `List(results |> List.map ~f:(fun (behavior, (l,ps)) ->
+  let message : Yojson.Basic.t =
+    `List(results |> List.map ~f:(fun (_behavior, (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
                 "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)))])))
-  in 
+  in
   message
 
-let _ = 
-  run_job Pervasives.stdin |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout
+let _ : unit =
+  run_job Stdlib.stdin |> remove_bad_dreams |> output_job |> to_channel Stdlib.stdout

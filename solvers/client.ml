@@ -1,12 +1,11 @@
 open Core
 
-open Zmq
 
 type socket_connection = (([`Req] Zmq.Socket.t) ref * int) ;;
 let context = ref (Zmq.Context.create());;
 let socket_connections : (socket_connection list) ref = ref [];;
 
-let socket_json (socket : socket_connection) message = 
+let socket_json (socket : socket_connection) message =
   let open Yojson.Safe in
   let message = to_string message in
   let socket,_ = socket in
@@ -14,7 +13,7 @@ let socket_json (socket : socket_connection) message =
   let response = Zmq.Socket.recv !socket in
   response |> from_string
 
-let connect_socket' p : [`Req] Zmq.Socket.t = 
+let connect_socket' p : [`Req] Zmq.Socket.t =
   let socket = Zmq.Socket.create !context Zmq.Socket.req in
   Zmq.Socket.connect socket @@ "tcp://localhost:"^(p |> Int.to_string);
   socket
@@ -36,7 +35,7 @@ let refresh_socket_connections() =
     end
 
 let close_socket_connections() =
-  !socket_connections |> List.iter ~f:(fun (r,p) ->
+  !socket_connections |> List.iter ~f:(fun (r,_) ->
       Zmq.Socket.close !r);
   socket_connections := []
 

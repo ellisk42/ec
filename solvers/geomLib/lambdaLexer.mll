@@ -1,5 +1,4 @@
 {
-  open Lexing
   open LambdaParser
   exception SyntaxError of string
 }

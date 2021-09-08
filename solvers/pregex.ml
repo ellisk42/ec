@@ -1,5 +1,6 @@
 open Core
 
+module Heap = Pairing_heap
 open Timeout
 open Task
 open Utils
@@ -7,9 +8,9 @@ open Program
 open Type
 open Yojson.Basic.Util
 
-    
+
 type str = String of char list | Dot | D | S | W | L | U
-[@@deriving compare]
+[@@deriving compare, equal]
 
 let dot_ls = List.rev (String.to_list_rev "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t")
 let d_ls = List.rev (String.to_list_rev "0123456789")
@@ -23,16 +24,16 @@ let get_character_class = function
   | D -> d_ls | S -> s_ls | W -> w_ls | L -> l_ls | U -> u_ls
   | _ -> assert (false)
 
-type pregex = 
+type pregex =
 	| Constant of str
 	| Kleene of pregex
 	| Plus of pregex
 	| Maybe of pregex
 	| Alt of pregex * pregex
 	| Concat of pregex * pregex
-[@@deriving compare]
+[@@deriving compare, equal]
 
-let rec string_of_str = function
+let string_of_str = function
   | String(c) -> String.of_char_list c
   | Dot -> "."
   | D -> "[0-9]"
@@ -57,19 +58,19 @@ and
   hash_constant = function
   | String(cs) -> List.fold_right ~init:17 ~f:(fun c a -> Hashtbl.hash (Hashtbl.hash c,a)) cs
   | c -> Hashtbl.hash c
-                   
+
 
 let rec canonical_regex r =
   let empty_regex = Constant(String([])) in
-  
+
   match r with
   | Constant(_) -> r
   | Plus(b) ->
-    let b = canonical_regex b in 
+    let b = canonical_regex b in
     canonical_regex (Concat(b,Kleene(b)))
   | Kleene(b) ->
     let b = canonical_regex b in
-    if b = empty_regex then empty_regex else Kleene(b)    
+    if equal_pregex b empty_regex then empty_regex else Kleene(b)
   | Maybe(b) -> Alt(empty_regex,b) |> canonical_regex
   (* associative rules *)
   | Concat(Concat(a,b),c) -> canonical_regex (Concat(a,Concat(b,c)))
@@ -77,8 +78,8 @@ let rec canonical_regex r =
   | Concat(a,b) ->
     let a = canonical_regex a in
     let b = canonical_regex b in
-    if a = empty_regex then b else
-    if b = empty_regex then a else
+    if equal_pregex a empty_regex then b else
+    if equal_pregex b empty_regex then a else
       Concat(a, b)
   | Alt(a,b) ->
     let a = canonical_regex a in
@@ -97,11 +98,11 @@ type match_state = {
 
 let rec match_regex random (state : match_state) r return = match r with
   | Constant(String(s)) ->
-    if List.take state.match_target (List.length s) = s then
+    if List.equal Char.(=) (List.take state.match_target (List.length s)) s then
       return {state with match_target=List.drop state.match_target (List.length s)}
   | Constant(k) ->
     (match state.match_target with
-     | hd :: tl when List.mem ~equal:(=) (get_character_class k) hd ->
+     | hd :: tl when List.mem ~equal:Char.(=) (get_character_class k) hd ->
        return {match_likelihood=state.match_likelihood-.(get_character_class k |> List.length
                                                         |> Float.of_int |> log);
                match_target=tl}
@@ -144,9 +145,9 @@ let match_regex regex s =
     {match_target=s; match_likelihood=0.;}
     regex
     (fun final ->
-       if final.match_target = [] then  
+       if List.is_empty final.match_target then
          final_state := Some(final));
-  while !final_state = None && not (Heap.is_empty h) do
+  while Option.is_none !final_state && not (Heap.is_empty h) do
     let _,k = Heap.pop_exn h in
     k()
   done;
@@ -155,74 +156,76 @@ let match_regex regex s =
   | _ -> log 0.
 ;;
 
-if false then begin 
-  Printf.eprintf "%f\n"
-    (match_regex (Concat(Kleene(Alt(Constant(D),Constant(S))),Constant(String([])))) ['9';' ';]);
-  flush_everything();
-  assert (false)
-end;;
+let _ : unit =
+  if false then begin
+    Printf.eprintf "%f\n"
+      (match_regex (Concat(Kleene(Alt(Constant(D),Constant(S))),Constant(String([])))) ['9';' ';]);
+    flush_everything();
+    assert (false)
+  end;;
 
-           
-  
+
+
 
 
 type continuation = pregex option * string
 
 
 
-let rec try_remove_prefix prefix str = 
+let rec try_remove_prefix prefix str =
 	(* returns a none if can't remove, else the removed list *)
+  let open Char in
 	match (prefix, str) with
 	| ([], l) -> Some(l)
 	| (_, []) ->  None
 	| (ph::pt, sh::st) -> if ph = sh then try_remove_prefix pt st else None;;
 
 let consumeConst c char_list =
-  match char_list with 
+  match char_list with
   | [] -> (match c with
       (* We are done! We didn't need to match anything and we have nothing *)
       | String([]) -> [(None, []), 0.]
       (* We failed - we needed to terminate matching because the string is up *)
       | _ -> [])
-  | hd :: tl -> 
-    match c with 
-    | String(ls) -> 
-      (match try_remove_prefix ls char_list with 
+  | hd :: tl ->
+    match c with
+    | String(ls) ->
+      (match try_remove_prefix ls char_list with
        | None -> []
        | Some(remainder) -> [ (None, remainder), 0. ])
     | _ ->
-      let character_class = get_character_class c in 
-      if List.mem ~equal:(=) character_class hd
+      let character_class = get_character_class c in
+      if List.mem ~equal:Char.(=) character_class hd
       then [(None, tl), -. log (List.length character_class |> Float.of_int)]
       else []
-        
 
-let f_kleene a partial = 
+
+let f_kleene a partial =
 	match partial with
 	|  ((None, remainder), score) -> ((Some(Kleene(a)), remainder), score +. log 0.5)
 	|  ((Some(r), remainder), score) -> ((Some(Concat(r, Kleene(a))), remainder), score +. log 0.5);; (* is this order of r and a correct?*)
 
-let f_plus a partial = 
+let f_plus a partial =
 	match partial with
 	|  ((None, remainder), score) -> ((Some(Kleene(a)), remainder), score)
 	|  ((Some(r), remainder), score) -> ((Some(Concat(r, Kleene(a))), remainder), score) ;; (* is this order of r and a correct?*)
 
-let f_maybe a ((r, remainder), score) = ((r, remainder), score +. log 0.5) ;;
+let f_maybe _a ((r, remainder), score) = ((r, remainder), score +. log 0.5) ;;
 
 let f_alt ((r, remainder), score) = ((r, remainder), score +. log 0.5 ) ;;
 
-let f_concat a b partial = 
-	match partial with 
+let f_concat _a b partial =
+	match partial with
 	| ((None, remainder), score) -> ((Some(b), remainder), score)
 	| ((Some(r), remainder), score) -> ((Some(Concat(r, b)), remainder), score) ;;
 
-let rec kleeneConsume a str = 
+let rec kleeneConsume a str =
 	((None, str), log 0.5 ) :: (consume (Some(a), str) |> List.map ~f:(f_kleene a))
 
-and plusConsume a str = 
+and plusConsume a str =
   consume (Some(a), str) |> List.map ~f:(f_plus a)
 
-and maybeConsume a str = 
+and maybeConsume a str =
   ((None, str), log 0.5 ) :: (consume (Some(a), str) |> List.map ~f:(f_maybe a))
 
 and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
@@ -232,8 +235,8 @@ and consume cont = (* return a list of continuation, score tuples? *)
   | (None, []) -> assert false (* no regular expression and nothing to consume - this is a match, and should have been caught earlier *)
   | (None, _ :: _) -> [] (* no regular expression and things to consume - not a match *)
   | (Some(Constant(c)), str) -> consumeConst c str
-  | (Some(Kleene(a)), str) -> kleeneConsume a str 
-  | (Some(Plus(a)), str) -> plusConsume a str 
+  | (Some(Kleene(a)), str) -> kleeneConsume a str
+  | (Some(Plus(a)), str) -> plusConsume a str
   | (Some(Maybe(a)), str) -> maybeConsume a str
   | (Some(Alt(a,b)), str) -> List.map (consume (Some(a), str) @ consume (Some(b), str)) ~f:f_alt
   | (Some(Concat(a,b)), str) -> concatConsume a b str
@@ -241,29 +244,29 @@ and consume cont = (* return a list of continuation, score tuples? *)
 
 let preg_match preg str = (* dikjstras *)
 
-  let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in 
+  let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in
   let heap = Heap.create ~cmp:cmp () in
   Heap.add heap ((Some(preg), str), 0.);
   let visited = Hash_set.Poly.create() in
   let solution = ref None in
 
-  let consume_loop (cont_old, score_old) = 
+  let consume_loop (cont_old, score_old) =
     consume cont_old |> List.iter ~f:(fun (cont, score) ->
-	if not (Hash_set.mem visited cont) then begin 
+	if not (Hash_set.mem visited cont) then begin
 	  Hash_set.add visited cont;
 	  let newscore = score +. score_old in
 	  match cont with
-	  | (None, []) -> 
+	  | (None, []) ->
 	    solution := Some(newscore) (* TODO output *)
           | _ ->
             Heap.add heap (cont, newscore)
         end)
-  in 
+  in
 
-  while !solution = None && not (Heap.top heap = None) do
+  while Option.is_none !solution && Option.is_some (Heap.top heap) do
     match Heap.pop heap with
     | Some(partial) -> consume_loop partial
-    | None -> assert false		
+    | None -> assert false
   done;
 
   match !solution with
@@ -274,38 +277,39 @@ let preg_match preg str = (* dikjstras *)
 let tregex = make_ground "pregex" ;;
 let empty_regex = Constant(String([]));;
 
+let _ : unit =
 ignore(primitive "r_dot" (tregex @> tregex)
-         (fun k -> Concat(Constant(Dot),k)));;
+         (fun k -> Concat(Constant(Dot),k)) : program);
 ignore(primitive "r_d" (tregex @> tregex)
-         (fun k -> Concat(Constant(D),k)));;
+         (fun k -> Concat(Constant(D),k)) : program);
 ignore(primitive "r_s" (tregex @> tregex)
-         (fun k -> Concat(Constant(S),k)));;
+         (fun k -> Concat(Constant(S),k)) : program);
 ignore(primitive "r_w" (tregex @> tregex)
-         (fun k -> Concat(Constant(W),k)));;
+         (fun k -> Concat(Constant(W),k)) : program);
 ignore(primitive "r_l" (tregex @> tregex)
-         (fun k -> Concat(Constant(L),k)));;
+         (fun k -> Concat(Constant(L),k)) : program);
 ignore(primitive "r_u" (tregex @> tregex)
-         (fun k -> Concat(Constant(U),k)));;
+         (fun k -> Concat(Constant(U),k)) : program);
 
 
 ignore(primitive "r_kleene" ((tregex @> tregex) @> tregex @> tregex)
-         (fun b k -> Concat(Kleene(b empty_regex),k)));;
+         (fun b k -> Concat(Kleene(b empty_regex),k)) : program);
 ignore(primitive "r_plus" ((tregex @> tregex) @> tregex @> tregex)
-         (fun b k -> Concat(Plus(b empty_regex),k)));;
+         (fun b k -> Concat(Plus(b empty_regex),k)) : program);
 ignore(primitive "r_maybe" ((tregex @> tregex) @> tregex @> tregex)
-         (fun b k -> Concat(Maybe(b empty_regex),k)));;
+         (fun b k -> Concat(Maybe(b empty_regex),k)) : program);
 ignore(primitive "r_alt" ((tregex @> tregex) @> (tregex @> tregex) @> tregex @> tregex)
-         (fun a b k -> Concat(Alt(a empty_regex, b empty_regex),k)));;
+         (fun a b k -> Concat(Alt(a empty_regex, b empty_regex),k)) : program);
 
 ignore(primitive "r_const" (tregex @> tregex)
-         ());;
+         () : program);;
 
 let rec substitute_constant_regex constant p = match p with
   | Abstraction(b) -> Abstraction(substitute_constant_regex constant b)
   | Apply(f, x) -> Apply(substitute_constant_regex constant f,
                          substitute_constant_regex constant x)
   | Invented(t,b) -> Invented(t, substitute_constant_regex constant b)
-  | Primitive(t,"r_const",_) -> constant
+  | Primitive(_,"r_const",_) -> constant
   | Index(_) | Primitive(_,_,_) -> p
 
 let disallowed_regex = Hashtbl.Poly.create ();;
@@ -318,7 +322,7 @@ let build_constant_regex characters =
   in Abstraction(loop characters);;
 
 
-
+let _ : unit =
 [
     ('#', "hash");
     ('!', "bang");
@@ -354,7 +358,7 @@ let build_constant_regex characters =
     ('~', "tilde");
     (' ', "space");
     ('\t', "tab")
-] |> List.iter ~f: (fun (c, name) -> Hashtbl.set disallowed_regex ~key:c ~data:name);;
+] |> List.iter ~f: (fun (c, name) -> Hashtbl.set disallowed_regex ~key:c ~data:name);
 
 
 
@@ -365,7 +369,7 @@ dot_ls |> List.iter ~f: (fun i ->
 	| Some(datum) -> Printf.sprintf "string_%s" datum
     in
     let the_primitive = primitive name (tregex @> tregex)
-        (fun k -> Concat(Constant(String([i])),k)) in 
+        (fun k -> Concat(Constant(String([i])),k)) in
     Hashtbl.set constant_to_regex ~key:i ~data:the_primitive);;
 
 
@@ -373,11 +377,12 @@ let regex_of_program expression : pregex =
   run_lazy_analyzed_with_arguments (analyze_lazy_evaluation expression) [empty_regex];;
 
 (* Printf.eprintf "hello world %" *)
- 
+
+let _ : unit =
 register_special_task "regex"
   (fun extra ?timeout:(timeout=0.001)
     name task_type examples ->
-    assert (task_type = tregex @> tregex);
+    assert (equal_tp task_type (tregex @> tregex));
     examples |> List.iter ~f:(fun (xs,_) -> assert (List.length xs = 0));
 
     let observations : char list list = examples |> List.map ~f:(fun (_,y) -> y |> magical) in
@@ -416,17 +421,18 @@ register_special_task "regex"
                    loop observations)
         with
         | None -> log 0.
-        | Some(l) -> 
+        | Some(l) ->
       	  (let cutoff_option = extra |> member "cutoff" |> to_number_option in
       	   match cutoff_option with
-           | None -> l        
-      	   | Some(cutoff) -> 
+           | None -> l
+      	   | Some(cutoff) ->
+             let open Float in
       	     if l >= cutoff then l -. (Float.of_int number_of_constants) *. const_cost
              else log 0.)
-    in 
+    in
 
     {name; task_type; log_likelihood;} )
-                                
+
 
 (* let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp) ;;
 let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  ((preg_match (Constant(D)) ['9']) |> exp) ;; *)
@@ -437,7 +443,7 @@ let _ = assert (preg_match (Alt(Constant(String(['k'])), Constant(D)))  ['9'] = 
 
 (* qs for kevin:
 map -> List.map list ~f:fun
-implicit def - good 
+implicit def - good
 concat_lists -> List.concat [list1; list2 ...]
 and recursion?
 function defs with pattern matching?
@@ -448,4 +454,3 @@ Hash_set.Poly.create()
 String.to_list()
 ref and !
 Hash_set.mem candidates *)
-

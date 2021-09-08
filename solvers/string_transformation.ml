@@ -1,7 +1,7 @@
 open Core.Std
 
 open Re2
-    
+
 open Utils
 open Type
 open Program
@@ -9,7 +9,7 @@ open Enumeration
 open Task
 open Grammar
 open EC
-    
+
 let load_tasks f =
   let open Yojson.Basic.Util in
   let j = Yojson.Basic.from_file f in
@@ -17,7 +17,7 @@ let load_tasks f =
       (*       Printf.printf "%s\n" (Yojson.Basic.pretty_to_string t); *)
       let name = t |> member "name" |> to_string in
       let ex =
-        (t |> member "train" |> to_list)@(t |> member "test" |> to_list) |> 
+        (t |> member "train" |> to_list)@(t |> member "test" |> to_list) |>
         List.map ~f:(fun example ->
             let x = example |> member "i" |> to_string in
             let y = example |> member "o" |> to_string in
@@ -55,7 +55,7 @@ let primitive_find_string = primitive "find-string" (tstring @> tstring @> tint)
        String.index target (pattern.[0]) |> get_some);;
 let primitive_replace = primitive "string-replace" (tstring @> tstring @> tstring @> tstring)
     (fun x y s ->
-       if String.length x = 0 then raise (Failure "Replacing empty string") else 
+       if String.length x = 0 then raise (Failure "Replacing empty string") else
          let rec loop s =
            if String.length s = 0 then s
            else if String.is_prefix s ~prefix:x then
@@ -70,11 +70,11 @@ let primitive_string_join = primitive "join" (tstring @> tlist tstring @> tstrin
 
 
 
-let _ =
+let _ : unit =
   let n = "stringTransformation.json" in
   let n = "syntheticString.json" in
   let tasks = load_tasks n in
-  
+
   let g = primitive_grammar ([ primitive0; (* primitive1; primitive_n1; *)
                                primitive_increment; primitive_decrement;
                                primitive_emptyString;
@@ -104,4 +104,3 @@ let _ =
     ~alpha:4.
     ~keepTheBest:1 ~arity:2 10000 5
 (* (lambda (map-string $0 (lambda (slice-string (-1 k0) k0 $0)) $0)) *)
-

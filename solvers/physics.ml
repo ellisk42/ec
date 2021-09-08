@@ -5,7 +5,7 @@ open Differentiation
 open Program
 open Type
 open Task
-    
+
 let tvector = make_ground "vector"
 let tobject = make_ground "object"
 let tfield = make_ground "field"
@@ -18,42 +18,41 @@ type physics_field =
   | VelocityField
 ;;
 
-primitive "get-field" (tobject @> tfield @> tvector)
+let _ : unit =
+ignore(primitive "get-field" (tobject @> tfield @> tvector)
   (fun o f -> match f with
      | PositionField -> o.position
-     | VelocityField -> o.velocity);;
-primitive "position" tfield PositionField;;
-primitive "velocity" tfield VelocityField;;
-primitive "get-position" (tobject @> tvector)
-  (fun o -> o.position);;
-primitive "get-velocity" (tobject @> tvector)
-  (fun o -> o.velocity);;
-primitive "mass" (tobject @> treal)
-  (fun o -> o.mass);;
-primitive "*v" (treal @> tvector @> tvector)
-  (fun r v -> v |> List.map ~f:(fun v' -> v'*&r));;
-primitive "/v" (tvector @> treal @> tvector)
-  (fun v r -> v |> List.map ~f:(fun v' -> v'/&r));;
-primitive "+v" (tvector @> tvector @> tvector)
+     | VelocityField -> o.velocity) : program);
+ignore(primitive "position" tfield PositionField : program);
+ignore(primitive "velocity" tfield VelocityField : program);
+ignore(primitive "get-position" (tobject @> tvector)
+  (fun o -> o.position) : program);
+ignore(primitive "get-velocity" (tobject @> tvector)
+  (fun o -> o.velocity) : program);
+ignore(primitive "mass" (tobject @> treal)
+  (fun o -> o.mass) : program);
+ignore(primitive "*v" (treal @> tvector @> tvector)
+  (fun r v -> v |> List.map ~f:(fun v' -> v'*&r)) : program);
+ignore(primitive "/v" (tvector @> treal @> tvector)
+  (fun v r -> v |> List.map ~f:(fun v' -> v'/&r)) : program);
+ignore(primitive "+v" (tvector @> tvector @> tvector)
   (fun a b ->
-     List.map2_exn a b ~f:(+&));;
-primitive "-v" (tvector @> tvector @> tvector)
+     List.map2_exn a b ~f:(+&)) : program);
+ignore(primitive "-v" (tvector @> tvector @> tvector)
   (fun a b ->
-     List.map2_exn a b ~f:(-&));;
-primitive "yhat" tvector [~$0.;~$1.];;
-primitive "normalize" (tvector @> tvector)
+     List.map2_exn a b ~f:(-&)) : program);
+ignore(primitive "yhat" tvector [~$0.;~$1.] : program);
+ignore(primitive "normalize" (tvector @> tvector)
   (fun v ->
      let l = v |> List.map ~f:square |> List.reduce_exn ~f:(+&) |> square_root in
-     v |> List.map ~f:(fun v' -> v'/&l));;
-primitive "sq" (treal @> treal) square;;
-primitive "dp" (tvector @> tvector @> treal)
-  (fun a b -> List.map2_exn a b ~f:( *&) |> List.reduce_exn ~f:(+&));;
-primitive "vector-length" (tvector @> treal)
-  (fun v -> v |> List.map ~f:(fun x -> x *& x) |> List.reduce_exn ~f:(+&) |> square_root);;
+     v |> List.map ~f:(fun v' -> v'/&l)) : program);
+ignore(primitive "sq" (treal @> treal) square : program);
+ignore(primitive "dp" (tvector @> tvector @> treal)
+  (fun a b -> List.map2_exn a b ~f:( *&) |> List.reduce_exn ~f:(+&)) : program);
+ignore(primitive "vector-length" (tvector @> treal)
+  (fun v -> v |> List.map ~f:(fun x -> x *& x) |> List.reduce_exn ~f:(+&) |> square_root) : program);
 
-  
-      
-                       
+
 register_special_task "physics"
   (fun extra ?timeout:(timeout=0.01) name request _ ->
 
@@ -90,9 +89,9 @@ register_special_task "physics"
      in
 
      let unpack t =
-       if t = tvector then unpack_vector else
-       if t = tobject then unpack_object else
-       if t = treal then unpack_real else assert (false)
+       if equal_tp t tvector then unpack_vector else
+       if equal_tp t tobject then unpack_object else
+       if equal_tp t treal then unpack_real else assert (false)
      in
 
      let arguments, return = arguments_and_return_of_type request in
@@ -140,13 +139,10 @@ register_special_task "physics"
               ~iterations:(if List.length parameters = 0 then 0 else steps)
               parameters average_loss
           in
+          let open Float in
           match lossThreshold with
           | None -> 0. -. d*.parameterPenalty -. n *. average_loss /. temperature
           | Some(t) ->
-            if List.for_all l ~f:(fun {data=Some(this_loss)} -> this_loss < t)
+            if [@warning "-8"] List.for_all l ~f:(fun {data=Some(this_loss);_} -> this_loss < t)
             then 0. -. d*.parameterPenalty
             else log 0.)})
-          
-
-     
-     

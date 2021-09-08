@@ -1,5 +1,4 @@
 open Core
-open Enumeration
 open Program
 open Utils
 open Type
@@ -14,6 +13,7 @@ type vs =
   | IndexSpace of int
   | TerminalSpace of program
   | Universe | Void
+[@@deriving equal]
 
 type vt = {universe : int;
            void : int;
@@ -27,7 +27,7 @@ type vt = {universe : int;
 let index_table t index = get_resizable t.i2s index
 let version_table_size t = t.i2s.ra_occupancy
 
-let clear_dynamic_programming_tables {n_step_table; substitution_table;} =
+let clear_dynamic_programming_tables {n_step_table; substitution_table;_} =
   Hashtbl.clear n_step_table;
   Hashtbl.clear substitution_table;;
 let deallocate_versions v =
@@ -92,7 +92,7 @@ let union t vs =
     | [] -> t.void
     | [v] -> v
     | _ -> incorporate_space t (Union(vs))
-    
+
 let rec incorporate t e =
   match e with
   | Index(i) -> version_index t i
@@ -117,14 +117,14 @@ let rec extract t j =
   | Universe -> [primitive "UNIVERSE" t0 ()]
 
 let rec child_spaces t j =
-  (j :: 
+  (j ::
    match index_table t j with
    | Union(u) -> List.map u ~f:(child_spaces t) |> List.concat
    | ApplySpace(f,x) -> child_spaces t f @ child_spaces t x
    | AbstractSpace(b) -> child_spaces t b
    | _ -> [])
   |> List.dedup_and_sort ~compare:(-)
-    
+
 let rec shift_free ?c:(c=0) t ~n ~index =
   if n = 0 then index else
     match index_table t index with
@@ -153,7 +153,7 @@ let rec shift_versions ?c:(c=0) t ~n ~index =
     | AbstractSpace(b) ->
       version_abstract t (shift_versions ~c:(c+1) t ~n:n ~index:b)
     | TerminalSpace(_) | Universe | Void -> index
-    
+
 
 let rec subtract t a b =
   match index_table t a, index_table t b with
@@ -173,11 +173,11 @@ let rec subtract t a b =
              version_apply t f1 (subtract t x1 x2)]
   | ApplySpace(_,_), _ -> a
   | IndexSpace(i1), IndexSpace(i2) when i1 = i2 -> t.void
-  | IndexSpace(i1), _ -> a
-  | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> t.void
+  | IndexSpace(_), _ -> a
+  | TerminalSpace(t1), TerminalSpace(t2) when equal_program t1 t2 -> t.void
   | TerminalSpace(_), _ -> a
 
-    
+
 let rec unique_space t a =
   match index_table t a with
   | Universe | Void | IndexSpace(_) | TerminalSpace(_) -> a
@@ -195,7 +195,7 @@ let rec intersection t a b =
   | Void, _ | _, Void -> t.void
   | Union(xs), Union(ys) ->
     xs |> List.concat_map ~f:(fun x -> ys |> List.map ~f:(fun y -> intersection t x y)) |> union t
-  | Union(xs), _ -> 
+  | Union(xs), _ ->
     xs |> List.map ~f:(fun x -> intersection t x b) |> union t
   | _, Union(xs) ->
     xs |> List.map ~f:(fun x -> intersection t x a) |> union t
@@ -204,7 +204,7 @@ let rec intersection t a b =
   | ApplySpace(f1,x1), ApplySpace(f2,x2) ->
     version_apply t (intersection t f1 f2) (intersection t x1 x2)
   | IndexSpace(i1), IndexSpace(i2) when i1 = i2 -> a
-  | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> a
+  | TerminalSpace(t1), TerminalSpace(t2) when equal_program t1 t2 -> a
   | _ -> t.void
 
 let inline t j =
@@ -243,7 +243,7 @@ let inline t j =
     | Void | Universe | TerminalSpace(_) -> t.void
   in
   il [] j
-        
+
 let rec recursive_inlining t j =
   (* Constructs vs of all programs that are 1 inlining step away from a program in provided vs *)
   match index_table t j with
@@ -257,11 +257,11 @@ let rec recursive_inlining t j =
       | ApplySpace(f,x) -> version_apply t f (recursive_inlining t x)
       | Union(u) -> u |> List.map ~f:inline_arguments |> union t
       | AbstractSpace(_) | TerminalSpace(_) | Universe | Void | IndexSpace(_) -> t.void
-    in 
+    in
     let argument_linings = inline_arguments j in
     union t [top_linings; argument_linings;]
-      
-      
+
+
 
 let rec have_intersection ?table:(table=None) t a b =
   if a = b then true else
@@ -274,7 +274,7 @@ let rec have_intersection ?table:(table=None) t a b =
       | _, Universe -> true
       | Union(xs), Union(ys) ->
         xs |> List.exists ~f:(fun x -> ys |> List.exists ~f:(fun y -> have_intersection ~table t x y))
-      | Union(xs), _ -> 
+      | Union(xs), _ ->
         xs |> List.exists ~f:(fun x -> have_intersection ~table t x b)
       | _, Union(xs) ->
         xs |> List.exists ~f:(fun x -> have_intersection ~table t x a)
@@ -283,10 +283,10 @@ let rec have_intersection ?table:(table=None) t a b =
       | ApplySpace(f1,x1), ApplySpace(f2,x2) ->
         have_intersection ~table t f1 f2 && have_intersection ~table t x1 x2
       | IndexSpace(i1), IndexSpace(i2) when i1 = i2 -> true
-      | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> true
+      | TerminalSpace(t1), TerminalSpace(t2) when equal_program t1 t2 -> true
       | _ -> false
     in
-    
+
     match table with
     | None -> intersect a b
     | Some(table') ->
@@ -306,13 +306,13 @@ let rec substitutions t ?n:(n=0) index =
 
     let s = shift_free t ~n:n ~index in
     let m = Hashtbl.Poly.create() in
-    if s <> t.void then ignore(Hashtbl.add m ~key:s ~data:(version_index t n));
+    if s <> t.void then ignore(Hashtbl.add m ~key:s ~data:(version_index t n) : [ `Duplicate | `Ok ]);
 
-    begin 
+    begin
       match index_table t index with
-      | TerminalSpace(_) -> ignore(Hashtbl.add m ~key:t.universe ~data:index)
+      | TerminalSpace(_) -> ignore(Hashtbl.add m ~key:t.universe ~data:index : [ `Duplicate | `Ok ])
       | IndexSpace(i) ->
-        ignore(Hashtbl.add m ~key:t.universe ~data:(if i < n then index else version_index t (1+i)))
+        ignore(Hashtbl.add m ~key:t.universe ~data:(if i < n then index else version_index t (1+i)) : [ `Duplicate | `Ok ])
       | AbstractSpace(b) ->
         substitutions t ~n:(n+1) b |> Hashtbl.iteri ~f:(fun ~key ~data ->
             Hashtbl.add_exn m ~key ~data:(version_abstract t data))
@@ -324,7 +324,7 @@ let rec substitutions t ?n:(n=0) index =
                 | Some(stuff) -> Hashtbl.set new_mapping ~key:v ~data:(b :: stuff)
                 | None -> Hashtbl.set new_mapping ~key:v ~data:[b]));
         new_mapping |> Hashtbl.iteri ~f:(fun ~key ~data ->
-            Hashtbl.set m ~key ~data:(union t data))          
+            Hashtbl.set m ~key ~data:(union t data))
 
       | ApplySpace(f, x) when !factored_substitution ->
         let new_mapping = Hashtbl.Poly.create() in
@@ -333,7 +333,7 @@ let rec substitutions t ?n:(n=0) index =
 
         fm |> Hashtbl.iteri ~f:(fun ~key:v1 ~data:f ->
             xm |> Hashtbl.iteri ~f:(fun ~key:v2 ~data:x ->
-                if have_intersection t v1 v2 then                   
+                if have_intersection t v1 v2 then
                   Hashtbl.update new_mapping (intersection t v1 v2) ~f:(function
                       | None -> ([f],[x])
                       | Some(fs,xs) -> (f :: fs, x :: xs))));
@@ -342,7 +342,7 @@ let rec substitutions t ?n:(n=0) index =
             let xs = union t xs in
             Hashtbl.set m ~key ~data:(version_apply t fs xs))
 
-      | ApplySpace(f, x) ->         
+      | ApplySpace(f, x) ->
         let new_mapping = Hashtbl.Poly.create() in
         let fm = substitutions t ~n f in
         let xm = substitutions t ~n x in
@@ -358,7 +358,7 @@ let rec substitutions t ?n:(n=0) index =
                 end));
 
         new_mapping |> Hashtbl.iteri ~f:(fun ~key ~data ->
-            Hashtbl.set m ~key ~data:(union t data))          
+            Hashtbl.set m ~key ~data:(union t data))
 
       | _ -> ()
     end;
@@ -368,7 +368,7 @@ let rec substitutions t ?n:(n=0) index =
 let inversion t j =
   substitutions t j |> Hashtbl.to_alist |>
   List.filter_map ~f:(fun (v,b) ->
-      if v = t.universe || index_table t b = IndexSpace(0) then None else 
+      if v = t.universe || equal_vs (index_table t b) (IndexSpace(0)) then None else
       Some(version_apply t (version_abstract t b) v)) |>
   union t
 
@@ -376,13 +376,13 @@ let rec recursive_inversion t j =
   match get_resizable t.recursive_inversion_table j with
   | Some(ri) -> ri
   | None ->
-    let ri = 
+    let ri =
       match index_table t j with
       | Union(u) -> union t (u |> List.map ~f:(recursive_inversion t))
       | _ ->
         let top_inversions = substitutions t j |> Hashtbl.to_alist |>
                              List.filter_map ~f:(fun (v,b) ->
-                                 if v = t.universe || index_table t b = IndexSpace(0) then None else 
+                                 if v = t.universe || equal_vs (index_table t b) (IndexSpace(0)) then None else
                                    Some(version_apply t (version_abstract t b) v))
         in
         let child_inversions = match index_table t j with
@@ -396,7 +396,7 @@ let rec recursive_inversion t j =
     set_resizable t.recursive_inversion_table j (Some(ri));
     ri
 
-let beta_pruning t j = 
+let beta_pruning t j =
 let rec beta_pruning' ?isApplied:(isApplied=false) ?canBeta:(canBeta=true)
     t j =
   match index_table t j with
@@ -415,18 +415,18 @@ let rec beta_pruning' ?isApplied:(isApplied=false) ?canBeta:(canBeta=true)
     u |> List.map ~f:(beta_pruning' ~isApplied ~canBeta t) |> union t
   | IndexSpace(_) | TerminalSpace(_) | Universe | Void -> j
 in beta_pruning' t j
-  
+
 let rec log_version_size t j = match index_table t j with
   | ApplySpace(f,x) -> log_version_size t f +. log_version_size t x
   | AbstractSpace(b) -> log_version_size t b
   | Union(u) -> u |> List.map ~f:(log_version_size t) |> lse_list
   | _ -> 0.
 
-let rec n_step_inversion ?inline:(il=false) t ~n j =
+let n_step_inversion ?inline:(il=false) t ~n j =
   let key = (n, j) in
   match Hashtbl.find t.n_step_table key with
   | Some(ns) -> ns
-  | None -> 
+  | None ->
     (* list of length (n+1), corresponding to 0 steps, 1, ..., n *)
     (* Each "step" is the union of an inverse inlining step and optionally an inlining step *)
     let rec n_step ?completed:(completed=0) current : int list =
@@ -440,9 +440,9 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
           union t [recursive_inversion t v; i]
         else
           recursive_inversion t v
-      in 
+      in
       let rest = if completed = n then [] else
-          n_step ~completed:(completed+1) (step current)            
+          n_step ~completed:(completed+1) (step current)
       in
       beta_pruning t current :: rest
     in
@@ -453,12 +453,12 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
         | ApplySpace(f,x) -> version_apply t (visit f) (visit x)
         | AbstractSpace(b) -> version_abstract t (visit b)
         | IndexSpace(_) | TerminalSpace(_) -> j
-      in 
+      in
       union t (children :: n_step j)
-    in 
+    in
 
     let ns = visit j |> beta_pruning t in
-    Hashtbl.set t.n_step_table key ns;
+    Hashtbl.set t.n_step_table ~key ~data:ns;
     ns
 
 (* let n_step_inversion ?inline:(il=false) t ~n j = *)
@@ -507,8 +507,8 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
 (*   end; *)
 
 (*   ground_truth *)
-  
-  
+
+
 
 let reachable_versions t indices : int list =
   let visited = Hash_set.Poly.create() in
@@ -541,7 +541,7 @@ let garbage_collect_versions ?verbose:(verbose=false) t indices =
     Printf.eprintf "Garbage collection reduced table to %d%% of previous size\n"
       (100*nt.i2s.ra_occupancy/t.i2s.ra_occupancy);
   (nt, indices)
-  
+
 
 (* cost calculations *)
 let epsilon_cost = 0.01;;
@@ -557,27 +557,28 @@ let empty_cost_table t = {function_cost = empty_resizable();
 let rec minimum_cost_inhabitants ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float*(int list) =
   let caching_table = if canBeLambda then t.argument_cost else t.function_cost in
   ensure_resizable_length caching_table (j + 1) None;
-  
+
   match get_resizable caching_table j with
   | Some(c) -> c
   | None ->
     let c =
       match given with
       | Some(invention) when have_intersection t.cost_table_parent invention j -> (1., [invention])
-      | _ -> 
+      | _ ->
       match index_table t.cost_table_parent j with
       | Universe | Void -> assert false
       | IndexSpace(_) | TerminalSpace(_) -> (1., [j])
       | Union(u) ->
         let children = u |> List.map ~f:(minimum_cost_inhabitants ~given ~canBeLambda t) in
-        let c = children |> List.map ~f:(fun (cost,_) -> cost) |> fold1 min in
+        let c = children |> List.map ~f:fst |> fold1 Float.min in
         if is_invalid c then (c,[]) else
+          let open Float in
           let children = children |> List.filter ~f:(fun (cost,_) -> cost = c) in
-          (c, children |> List.concat_map ~f:(fun (_,p) -> p))
+          (c, children |> List.concat_map ~f:snd)
       | AbstractSpace(b) when canBeLambda ->
         let cost, children = minimum_cost_inhabitants ~given ~canBeLambda:true t b in
         (cost+.epsilon_cost, children |> List.map ~f:(version_abstract t.cost_table_parent))
-      | AbstractSpace(b) -> (Float.infinity,[])
+      | AbstractSpace(_) -> (Float.infinity,[])
       | ApplySpace(f,x) ->
         let fc, fs = minimum_cost_inhabitants ~given ~canBeLambda:false t f in
         let xc, xs = minimum_cost_inhabitants ~given ~canBeLambda:true t x in
@@ -603,25 +604,25 @@ let rec minimal_inhabitant_cost
     ?intersectionTable:(intersectionTable=None) ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float =
   let caching_table = if canBeLambda then t.argument_cost else t.function_cost in
   ensure_resizable_length caching_table (j + 1) None;
-  
+
   match get_resizable caching_table j with
   | Some(c) -> c
   | None ->
     let c =
       match given with
       | Some(invention) when have_intersection ~table:intersectionTable t.cost_table_parent invention j -> 1.
-      | _ -> 
+      | _ ->
       match index_table t.cost_table_parent j with
       | Universe | Void -> assert false
       | IndexSpace(_) | TerminalSpace(_) -> 1.
       | Union(u) ->
-         u |> List.map ~f:(minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda t) |> fold1 min
+         u |> List.map ~f:(minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda t) |> fold1 Float.min
       | AbstractSpace(b) when canBeLambda ->
         epsilon_cost +. minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:true t b
-      | AbstractSpace(b) -> Float.infinity
+      | AbstractSpace(_) -> Float.infinity
       | ApplySpace(f,x) ->
         epsilon_cost +. minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:false t f +.
-        minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:true t x 
+        minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:true t x
     in
     set_resizable caching_table j (Some(c));
     c
@@ -636,7 +637,7 @@ let rec minimal_inhabitant
       match c, given with
       | 1., Some(invention) when have_intersection ~table:intersectionTable t.cost_table_parent invention j ->
         extract t.cost_table_parent invention |> singleton_head
-      | _ -> 
+      | _ ->
       match vs with
       | Universe | Void -> assert false
       | IndexSpace(_) | TerminalSpace(_) ->
@@ -660,9 +661,9 @@ type beam = {default_function_cost : float;
 
 let narrow ~bs b =
   let narrow bm =
-    if Hashtbl.length bm > bs then 
-      let sorted = Hashtbl.to_alist bm |> List.sort ~compare:(fun (_,c1) (_,c2) -> Float.compare c1 c2) in      
-      Hashtbl.Poly.of_alist_exn (List.take sorted bs)          
+    if Hashtbl.length bm > bs then
+      let sorted = Hashtbl.to_alist bm |> List.sort ~compare:(fun (_,c1) (_,c2) -> Float.compare c1 c2) in
+      Hashtbl.Poly.of_alist_exn (List.take sorted bs)
     else bm
   in
   b.relative_function <- narrow b.relative_function;
@@ -671,7 +672,7 @@ let narrow ~bs b =
 let relax table key data =
   match Hashtbl.find table key with
   | None -> Hashtbl.set table ~key ~data
-  | Some(old) when old > data -> Hashtbl.set table ~key ~data
+  | Some(old) when Float.(>) old data -> Hashtbl.set table ~key ~data
   | Some(_) -> ()
 ;;
 let relative_function b i = match Hashtbl.find b.relative_function i with
@@ -693,7 +694,7 @@ let calculate_candidate_costs v candidates =
                  List.dedup_and_sort ~compare:(-) |> List.length |> Float.of_int in
       Hashtbl.set candidate_cost ~key:k ~data:(1.+.cost));
   candidate_cost
-  
+
 
 let beam_costs'' ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
   : beam option ra =
@@ -706,7 +707,7 @@ let beam_costs'' ~ct ~bs (candidates : int list) (frontier_indices : (int list) 
   let candidate_cost = calculate_candidate_costs v candidates' in
 
   let rec calculate_costs j =
-    ensure_resizable_length caching_table (j + 1) None;    
+    ensure_resizable_length caching_table (j + 1) None;
     match get_resizable caching_table j with
     | Some(bm) -> bm
     | None ->
@@ -746,7 +747,7 @@ let beam_costs'' ~ct ~bs (candidates : int list) (frontier_indices : (int list) 
       bm
   in
 
-  frontier_indices |> List.iter ~f:(List.iter ~f:(fun j -> ignore(calculate_costs j)));
+  frontier_indices |> List.iter ~f:(List.iter ~f:(fun j -> ignore(calculate_costs j : beam)));
   caching_table
 
 
@@ -759,16 +760,16 @@ let beam_costs' ~ct ~bs (candidates : int list) (frontier_indices : (int list) l
 
   let score i =
     let corpus_size = frontier_beams |> List.map ~f:(fun bs ->
-        bs |> List.map ~f:(fun b -> min (relative_argument b i) (relative_function b i)) |>
-        fold1 min) |> fold1 (+.)
+        bs |> List.map ~f:(fun b -> Float.min (relative_argument b i) (relative_function b i)) |>
+        fold1 Float.min) |> fold1 (+.)
     in
     corpus_size
   in
 
   candidates |> List.map ~f:score
 
-  
-  
+
+
 let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) list) =
   let scored = List.zip_exn (beam_costs' ~ct ~bs candidates frontier_indices) candidates in
   scored |> List.sort ~compare:(fun (s1,_) (s2,_) -> Float.compare s1 s2)
@@ -778,7 +779,7 @@ let batched_refactor ~ct (candidates : int list) (frontier_indices : (int list) 
   let caching_table = beam_costs'' ~ct ~bs:(List.length candidates) candidates frontier_indices in
 
   let v = ct.cost_table_parent in
-  
+
   let rec refactor ~canBeLambda i j =
     let inhabitants = minimum_cost_inhabitants ~canBeLambda:true ct j |> snd in
 

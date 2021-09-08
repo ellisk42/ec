@@ -27,16 +27,16 @@ def multicoreEnumeration(g, tasks, _=None,
      # everything that gets sent between processes will be dilled
     import dill
 
-    solvers = {"ocaml": solveForTask_ocaml,   
-               "pypy": solveForTask_pypy,   
-               "python": solveForTask_python}   
-    assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python." 
+    solvers = {"ocaml": solveForTask_ocaml,
+               "pypy": solveForTask_pypy,
+               "python": solveForTask_python}
+    assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python."
 
     likelihoodModel = None
     if solver == 'pypy' or solver == 'python':
       # Use an all or nothing likelihood model.
-      likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout) 
-      
+      likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout)
+
     solver = solvers[solver]
 
     if not isinstance(g, dict):
@@ -291,7 +291,7 @@ def solveForTask_ocaml(_=None,
 
     message = json.dumps(message)
     # uncomment this if you want to save the messages being sent to the solver
-    
+
 
     try:
         solver_file = os.path.join(get_root_dir(), 'solver')
@@ -306,6 +306,7 @@ def solveForTask_ocaml(_=None,
     except:
         print("response:", response)
         print("error:", error)
+        print("return code: ", process.returncode)
         with open("message", "w") as f:
             f.write(message)
         print("message,", message)
@@ -434,7 +435,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     success, likelihood = likelihoodModel.score(p, task)
                     if not success:
                         continue
-                        
+
                     dt = time() - starting + elapsedTime
                     priority = -(likelihood + prior)
                     hits[n].push(priority,
@@ -462,8 +463,3 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
         min(t for t,_ in hits[n]) for n in range(len(tasks))}
 
     return frontiers, searchTimes, totalNumberOfPrograms
-
-
-
-
-

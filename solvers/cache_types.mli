@@ -27,7 +27,7 @@ type tower_cash = {
 
 (** {2 Default values} *)
 
-val default_tower_cash_block : 
+val default_tower_cash_block :
   ?x10:int32 ->
   ?w10:int32 ->
   ?h10:int32 ->
@@ -35,7 +35,7 @@ val default_tower_cash_block :
   tower_cash_block
 (** [default_tower_cash_block ()] is the default value for type [tower_cash_block] *)
 
-val default_tower_cash_entry : 
+val default_tower_cash_entry :
   ?plan:tower_cash_block list ->
   ?height:float ->
   ?stability:float ->
@@ -47,7 +47,7 @@ val default_tower_cash_entry :
   tower_cash_entry
 (** [default_tower_cash_entry ()] is the default value for type [tower_cash_entry] *)
 
-val default_tower_cash : 
+val default_tower_cash :
   ?entries:tower_cash_entry list ->
   unit ->
   tower_cash

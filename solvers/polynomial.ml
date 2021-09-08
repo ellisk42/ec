@@ -10,7 +10,7 @@ open Compression
 open EC
 
 let maximumCoefficient = 9
-  
+
 let polynomial_tasks =
   (0--maximumCoefficient) |> List.map ~f:(fun a ->
       (0--maximumCoefficient) |> List.map ~f:(fun b ->
@@ -37,6 +37,6 @@ let polynomial_grammar =
                     ]
 
 
-                                                             
-let _ =
+
+let _ : unit =
   exploration_compression polynomial_tasks polynomial_grammar ~keepTheBest:3 10000 1 ~alpha:10.

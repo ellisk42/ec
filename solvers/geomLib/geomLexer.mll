@@ -76,4 +76,3 @@ rule read =
     (*}*)
   (*| _ { raise (SyntaxError ("Illegal string character: " ^ Lexing.lexeme lexbuf)) }*)
   (*| eof { raise (SyntaxError ("String is not terminated")) }*)
-

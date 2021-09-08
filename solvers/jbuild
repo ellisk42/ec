@@ -1,9 +1,0 @@
-(jbuild_version 1)
-
-(executables
- ((names (solver compression helmholtz geomDrawLambdaString geomDrawFile geomTest logoTest logoDrawString logoSequenceString protonet-tester client versionDemo))
-  (modes (native))
-  (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink -w -20))
-  (libraries (core re2 yojson geomLib logoLib ocaml-protoc zmq)) ;parmap
-  (preprocess (pps (ppx_jane)))
- ))

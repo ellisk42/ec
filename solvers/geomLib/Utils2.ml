@@ -1,6 +1,5 @@
 open Vg
 open Gg
-open Plotter
 
 (* Some utils values and functions *)
 

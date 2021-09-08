@@ -30,7 +30,7 @@ From: ubuntu
     chmod 777 /container
     HOME=/container
     export HOME
-    
+
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     chmod +x Miniconda3-latest-Linux-x86_64.sh
     ./Miniconda3-latest-Linux-x86_64.sh -b  -p /usr/local/conda
@@ -39,14 +39,14 @@ From: ubuntu
 
     conda install -y  numpy dill pyzmq matplotlib protobuf scikit-learn scipy
     pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz frozendict pathos
-    
+
     conda install pytorch torchvision -c pytorch
-    
+
     opam init -y --auto-setup --root /container/.opam
     opam update
-    opam switch create 4.06.1+flambda
+    opam switch create 4.12.0+flambda --package=ocaml-variants.4.12.0+options,ocaml-option-flambda
     eval `opam config env`
-    opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq utop jbuilder
+    opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq utop dune
     #opam install ocp-indent merlin
     echo "
 #use "topfind";;
@@ -55,7 +55,7 @@ From: ubuntu
 #require "core.syntax";;
 open Core;;
 " >> /container/.ocamlinit
-    echo 'eval `opam config env`' >> /container/.bashrc  
+    echo 'eval `opam config env`' >> /container/.bashrc
 
 
 
@@ -69,6 +69,3 @@ open Core;;
     pypy3 -m pip install vmprof
     pypy3 -m pip install dill
     pypy3 -m pip install psutil
-    
-
-    

@@ -3,8 +3,7 @@ open Core
 open Utils
 open Type
 
-open Yojson.Basic
-       
+
 module PolyValue = struct
   type t =
     | List of t list
@@ -13,7 +12,7 @@ module PolyValue = struct
     | Boolean of bool
     | Character of char
     | None
-  [@@deriving compare, hash, sexp_of]
+  [@@deriving compare, hash, sexp_of, equal]
 
   let rec pack t v : t =
     match t with
@@ -35,12 +34,12 @@ module PolyValue = struct
     | Character(c) -> Printf.sprintf "'%c'" c
     | None -> "None"
 
-  let rec of_json (j : Yojson.Basic.json) : t = match j with
+  let rec of_json (j : Yojson.Basic.t) : t = match j with
     | `List(l) -> List(l |> List.map ~f:of_json)
     | `Int(i) -> Integer(i)
     | `Bool(b) -> Boolean(b)
     | _ -> assert (false)
-      
+
 end;;
 
 let make_poly_table() = Hashtbl.create (module PolyValue)

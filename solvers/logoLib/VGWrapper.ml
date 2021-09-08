@@ -19,13 +19,13 @@ let moveto_np c x y = P.sub  (P2.v x y) c
 let lineto_np c x y = P.line (P2.v x y) c
 let circle_np c x y = (Vg.P.circle (Gg.P2.v x y) 0.1) c
 
-let moveto_p = fun (c,(ox,oy)) x y ->
-  (((P.empty >> (P.sub  (P2.v x y))),0.)::c),(x,y)
+let moveto_p = fun (c,(_ox,_oy)) x y ->
+  (((P.empty |> (P.sub  (P2.v x y))),0.)::c),(x,y)
 let lineto_p = fun (c,(ox,oy)) x y ->
   let l = sqrt ((ox-.x)*.(ox-.x) +. (oy-.y)*.(oy-.y)) in
-  ((P.empty >> (P.sub  (P2.v ox oy)) >> (P.line (P2.v x y))),l)::c,(x,y)
+  ((P.empty |> (P.sub  (P2.v ox oy)) |> (P.line (P2.v x y))),l)::c,(x,y)
 let circle_p = fun (c,(ox,oy)) x y ->
-  ((P.empty >> (P.sub  (P2.v ox oy)) >> (P.circle (Gg.P2.v x y) 0.1)),0.)::c,(x,y)
+  ((P.empty |> (P.sub  (P2.v ox oy)) |> (P.circle (Gg.P2.v x y) 0.1)),0.)::c,(x,y)
 
 let rec convert_canvas c = match c with
   | [] -> (P.sub (Gg.P2.v 0. 0.) P.empty)
@@ -117,5 +117,3 @@ let display ba =
     prerr_newline ()
   done ;
   prerr_newline ()
-
-

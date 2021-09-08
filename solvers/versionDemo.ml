@@ -3,7 +3,7 @@ open Versions
 open Program
 open Utils
 
-let _ =
+let _ : unit =
   let t = new_version_table() in
   let p = "(#(lambda (lambda (* $2 (+ (lambda $2) $0)))) $0 2)" |> parse_program |> get_some in
   p |> incorporate t |> inline t |> extract t |> List.iter ~f:(fun p' ->
@@ -13,7 +13,7 @@ let _ =
 ;;
 
 
-let _ =
+let _ : unit =
   List.range 0 6 |> List.iter ~f:(fun sz ->
       let p0 = List.range 0 sz |>
                List.fold_right ~init:"(+ 1 1)" ~f:(fun _ -> Printf.sprintf "(+ 1 %s)") |>
@@ -23,7 +23,7 @@ let _ =
       List.range 1 4 |> List.iter ~f:(fun a ->
           let v = new_version_table() in
           let j = incorporate v p0 in
-          let r = List.range 0 a |>
+          let [@warning "-8"] r = List.range 0 a |>
                   List.fold_right ~init:[j] ~f:(fun _ (a :: b) -> recursive_inversion v a :: a :: b) |>
                   union v
           in
@@ -44,5 +44,3 @@ let _ =
           (*   (unique_space v r |> log_version_size v |> exp); *)
           flush_everything()
         ))
-          
-  

@@ -1,0 +1,344 @@
+name: Main workflow
+
+on:
+  [push]
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ocaml-variants.4.12.0+options,ocaml-option-flambda
+          dune-cache: true
+
+      - name: install dependencies
+        run: opam exec -- dune external-lib-deps @@default | tail -n +2 |
+          awk '{print $2}' | grep -v "\." | xargs opam depext -iy
+
+      - name: build solvers
+        run: opam exec -- make
+
+      - name: generate patch with new binaries
+        run: git diff --output=binaries_patch --binary
+
+      - name: store patch
+        uses: actions/upload-artifact@v2
+        with:
+          name: binaries_patch
+          path: binaries_patch
+          retention-days: 1
+
+      - name: remove patch
+        run: rm binaries_patch
+
+      - name: commit binaries
+        # This checks if the binaries in the repo are up to date and if not,
+        # create a new commit from the author of the last commit
+        run: |
+          git config --local user.email ${{ github.event.commits[0].author.email }}
+          git config --local user.name ${{ github.event.commits[0].author.name }}
+          git diff --quiet && git diff --staged --quiet || \
+            git commit -am "${{ github.event.commits[0].message }}; update binaries" \
+            --author=${{ github.event.commits[0].author.email }}
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        continue-on-error: true
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: run ocaml tests
+        run: opam exec -- dune runtest
+
+  create-virtualenv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - uses: syphar/restore-pip-download-cache@v1
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+
+      - run: pip install -r requirements.txt
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+
+  test-list:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: python bin/list.py -t 2 -RS 5 -i 2
+
+  test-text:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: python bin/text.py -t 2 -RS 5 -i 2
+
+  test-logo:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        continue-on-error: true
+        run: python bin/logo.py -t 5 -RS 10 --biasOptimal -i 2
+
+  test-tower:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: python bin/tower.py -t 2 -RS 5 -i 2
+
+  test-graph:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: |
+          mkdir -p tests/out
+          python bin/graphs.py -i 20 --checkpoints tests/resources/kellis_list_exp.pickle --export tests/out/test.png
+
+  test-rational:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: python bin/rational.py -i 1 -t 1 --testingTimeout 1
+          -RS 10 -R 10 --pseudoCounts 30 -l -1000000 --aic -1000000 -g
+
+  test-scientificLaws:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: |
+          mkdir experimentOutputs
+          python bin/scientificLaws.py -i 1 -t 1 -RS 10 -R 10 \
+            --pseudoCounts 30 -l -1000000 --aic -1000000 -g
+
+  test-regexes:
+    needs: [build, create-virtualenv]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download binaries patch
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries_patch
+
+      - name: Apply binaries patch
+        run: |
+          if [ -s binaries_patch ]; then
+            git apply binaries_patch
+          fi
+          rm binaries_patch
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+
+      - name: run test
+        run: python bin/regexes.py -i 1 -t 1 -RS 10 -R 10
+          --primitives reduced --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 --pseudoCounts 30
+          -l -1000000 --aic -1000000 --structurePenalty 1.5 --topK 2 --arity 3 --primitives strConst
+          --use_str_const -g

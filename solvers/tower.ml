@@ -1,6 +1,5 @@
 open Core
 
-open Client
 open Timeout
 open Task
 open Utils
@@ -12,7 +11,7 @@ type tower_state = {hand_position : int;
 let empty_tower_state =
   {hand_position = 0;
    hand_orientation = 1;}
-                   
+
 (* ttower = state -> (state, list of blocks) *)
 type tt = tower_state -> tower_state * ( (int*int*int) list)
 
@@ -48,16 +47,17 @@ let block w h =
       let (hand', rest) = k hand in
       (hand', (xOffset + hand.hand_position, w, h) :: rest)
   in
-  ignore(primitive n (ttower @> ttower) v)
+  ignore(primitive n (ttower @> ttower) v : program)
 ;;
 
-block 3 1;;
-block 1 3;;
-block 1 1;;
-block 2 1;;
-block 1 2;;
-block 4 1;;
-block 1 4;;
+let _ : unit =
+block 3 1;
+block 1 3;
+block 1 1;
+block 2 1;
+block 1 2;
+block 4 1;
+block 1 4;
 
 ignore(primitive "left" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
@@ -66,7 +66,7 @@ ignore(primitive "left" (tint @> ttower @> ttower)
                let hand' = {hand with hand_position = hand.hand_position - d} in
                let (hand'', rest) = k hand' in
                (hand'', rest)
-          in f));;
+          in f): program);
 ignore(primitive "right" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
@@ -74,34 +74,34 @@ ignore(primitive "right" (tint @> ttower @> ttower)
                let hand' = {hand with hand_position = hand.hand_position + d} in
                let (hand'', rest) = k hand' in
                (hand'', rest)
-          in f));;
+          in f): program);
 ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
-         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : tower_state) -> 
+         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : tower_state) ->
              if start >= stop then (hand,[]) else
                let (hand', thisIteration) = body start hand in
                let (hand'', laterIterations) = f (start+1) stop body hand' in
                (hand'', thisIteration @ laterIterations)
-          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : tower_state) -> 
+          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : tower_state) ->
             let (hand, body_blocks) = f 0 n b hand in
             let hand, later_blocks = k hand in
-            (hand, body_blocks @ later_blocks)));;
+            (hand, body_blocks @ later_blocks)): program);
 ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> ttower)
-         (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z));;
+         (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z): program);
 ignore(primitive "tower_embed" ((ttower @> ttower) @> ttower @> ttower)
          (fun (body : tt -> tt) (k : tt) : tt ->
             fun (hand : tower_state) ->
               let (_, bodyActions) = body empty_tower hand in
               let (hand', laterActions) = k hand in
-              (hand', bodyActions @ laterActions)));;
+              (hand', bodyActions @ laterActions)): program);
 ignore(primitive "moveHand" (tint @> ttower @> ttower)
          (fun (d : int) (k : tt) : tt ->
             fun (state : tower_state) ->
-              k {state with hand_position = state.hand_position + state.hand_orientation*d}));;
+              k {state with hand_position = state.hand_position + state.hand_orientation*d}): program);
 ignore(primitive "reverseHand" (ttower @> ttower)
          (fun (k : tt) : tt ->
             fun (state : tower_state) ->
-              k {state with hand_orientation = -1*state.hand_orientation}));;
-            
+              k {state with hand_orientation = -1*state.hand_orientation}): program);;
+
 
 let simulate_without_physics plan =
   let overlaps (x,w,h) (x',y',w',h')  =
@@ -114,7 +114,7 @@ let simulate_without_physics plan =
   in
 
   let lowest_possible_height (_,_,h) = h/2 in
-  let place_at_height (x,w,h) y = (x,y,w,h) in 
+  let place_at_height (x,w,h) y = (x,y,w,h) in
 
   let place_block world block =
     let lowest = List.filter_map world ~f:(overlaps block) |>
@@ -127,23 +127,21 @@ let simulate_without_physics plan =
     | [] -> world
     | b :: bs -> run bs (place_block world b)
   in
-  let simulated = run plan [] |> List.sort ~compare:(fun x y ->
-      if x > y then 1 else if x < y then -1 else 0
-    ) in
+  let simulated = run plan [] |> List.sort ~compare:[%compare: int * int * int * int] in
   simulated
 ;;
 
 let blocks_extent blocks =
-  if blocks = [] then 0 else
+  if List.is_empty blocks then 0 else
   let xs = blocks |> List.map ~f:(fun (x,_,_,_) -> x) in
   let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
   let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
   x1 - x0
 
 let tower_height blocks =
-  if blocks = [] then 0 else
+  if List.is_empty blocks then 0 else
     let ys = blocks |> List.map ~f:(fun (_,y,_,h) -> y + h/2) in
-    let y1 = List.fold_left ~init:(List.hd_exn ys) ~f:max ys in    
+    let y1 = List.fold_left ~init:(List.hd_exn ys) ~f:max ys in
     let ys = blocks |> List.map ~f:(fun (_,y,_,h) -> y - h/2) in
     let y0 = List.fold_left ~init:(List.hd_exn ys) ~f:min ys in
     y1 - y0
@@ -164,9 +162,9 @@ let evaluate_discrete_tower_program timeout p =
       recent_tower := Some(p);
       (* Printf.eprintf "%s\n" (string_of_program p); *)
       let p = analyze_lazy_evaluation p in
-      let new_discrete = 
+      let new_discrete =
         try
-          match run_for_interval
+          [@warning "-20"] match run_for_interval
                   timeout
                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] empty_tower_state |> snd)
           with
@@ -180,22 +178,22 @@ let evaluate_discrete_tower_program timeout p =
              (* we have to be a bit careful with exceptions *)
              (* if the synthesized program generated an exception, then we just terminate w/ false *)
              (* but if the enumeration timeout was triggered during program evaluation, we need to pass the exception on *)
-             | otherException -> begin
-                 if otherException = EnumerationTimeout then raise EnumerationTimeout else []
-               end
+             | EnumerationTimeout -> raise EnumerationTimeout
+             | _ -> []
       in
       recent_discrete := new_discrete;
       new_discrete
     end
 ;;
 
+let _ : unit =
 register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
-    name task_type examples -> 
-  assert (task_type = ttower @> ttower);
-  assert (examples = []);
+    name task_type examples ->
+  assert (equal_tp task_type (ttower @> ttower));
+  assert (List.is_empty examples);
 
   let open Yojson.Basic.Util in
-  
+
   let plan = extra |> member "plan" |> to_list |> List.map ~f:(fun command ->
       match command |> to_list with
       | [a;b;c;] -> (a |> to_int, b |> to_int, c |> to_int)
@@ -208,9 +206,8 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
     task_type = task_type ;
     log_likelihood =
       (fun p ->
-         let hit = evaluate_discrete_tower_program timeout p = plan in
+         let hit = [%equal: (int * int * int * int) list] (evaluate_discrete_tower_program timeout p) plan in
          (* Printf.eprintf "\t%b\n\n" hit; *)
          if hit then 0. else log 0.)
   })
 ;;
-

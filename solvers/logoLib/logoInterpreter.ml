@@ -20,8 +20,8 @@ let logo_NOP : turtle = fun s -> ([], s)
 let init_state () = {x = d_from_origin; y = d_from_origin; t = 0.; p = true}
 
 let flush_everything () =
-  Pervasives.flush stdout;
-  Pervasives.flush stderr
+  Stdlib.flush stdout;
+  Stdlib.flush stderr
 
 let center_logo_list (l : logo_instruction list) : logo_instruction list =
   let rec minimum = function
@@ -32,12 +32,12 @@ let center_logo_list (l : logo_instruction list) : logo_instruction list =
     | [] -> assert (false)
     | [x] -> x
     | h :: t -> max h (maximum t)
-  in 
+  in
   match l with
   | [] -> []
   | _ ->
     let xs = l |> List.map (function | (SEGMENT(x,_,x',_)) -> [x-.d_from_origin;
-                                                               x'-.d_from_origin;]) |> List.concat in 
+                                                               x'-.d_from_origin;]) |> List.concat in
     let ys = l |> List.map (function | (SEGMENT(_,y,_,y')) -> [y-.d_from_origin;
                                                                y'-.d_from_origin;]) |> List.concat in
     let x0 = xs |> minimum in
@@ -52,16 +52,16 @@ let center_logo_list (l : logo_instruction list) : logo_instruction list =
                 x'-.dx+.d_from_origin, y'-.dy+.d_from_origin))
 
 let logo_contained_in_canvas (l : logo_instruction list) =
-  let okay p = p >= 0.0 && p <= 2.*.d_from_origin in 
+  let okay p = p >= 0.0 && p <= 2.*.d_from_origin in
   List.for_all (function | (SEGMENT(a,b,c,d)) -> okay a && okay b && okay c && okay d) l
 
 
-  
+
 let pp_logo_instruction i =
   match i with
   | SEGMENT(x1,y1,x2,y2) -> Printf.eprintf "segment{%f,%f,%f,%f}"
                               x1 y1 x2 y2
-                              
+
 let pp_turtle t =
   let l,_ = (t logo_NOP) (init_state ()) in
   List.iter
@@ -72,7 +72,7 @@ let pp_turtle t =
     l ;
   prerr_newline ()
 
-let eval_turtle ?sequence (t2t : turtle -> turtle) =
+let eval_turtle ?sequence:_ (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
   let p = center_logo_list p in
   let c = ref (new_canvas ()) in
@@ -81,7 +81,7 @@ let eval_turtle ?sequence (t2t : turtle -> turtle) =
   let t = init_state () in
   moveto t.x t.y ;
   let total_cost = ref 0. in
-  let rec eval_instruction i = match i with
+  let eval_instruction i = match i with
     | SEGMENT(x1,y1,x2,y2) ->
       (total_cost := !total_cost +. (sqrt ((x1-.x2)*.(x1-.x2) +. (y1-.y2)*.(y1-.y2)));
        moveto x1 y1;
@@ -90,16 +90,16 @@ let eval_turtle ?sequence (t2t : turtle -> turtle) =
   List.iter eval_instruction p ;
   !c,!total_cost
 
-let animate_turtle ?sequence (t2t : turtle -> turtle) =
+let animate_turtle (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
   let p = center_logo_list p in
-  let draw_list p = 
+  let draw_list p =
     let c = ref (new_canvas ()) in
     let lineto x y = (c := (lineto !c x y))
     and moveto x y = (c := (moveto !c x y)) in
     let t = init_state () in
     moveto t.x t.y ;
-    let rec eval_instruction i = match i with
+    let eval_instruction i = match i with
       | SEGMENT(x1,y1,x2,y2) ->
         (moveto x1 y1; lineto x2 y2)  in
     List.iter eval_instruction p ;
@@ -108,9 +108,9 @@ let animate_turtle ?sequence (t2t : turtle -> turtle) =
   let rec map_suffixes l f = match l with
     | [] -> []
     | _ :: xs -> f l :: map_suffixes xs f
-  in 
+  in
   List.rev (map_suffixes (List.rev p) draw_list)
-  
+
 let logo_PU : turtle =
   fun s -> ([], {s with p = false})
 
@@ -121,13 +121,13 @@ let logo_RT : float -> turtle =
   fun angle -> fun s -> ([], {s with t = s.t +. angle})
 
 let logo_FW : float -> turtle =
-  let pi = 4.0 *. atan 1.0 in 
+  let pi = 4.0 *. atan 1.0 in
   fun length  ->
   fun s ->
     let x' = s.x +. (length *. cos(s.t*.2.*.pi)) in
     let y' = s.y +. (length *. sin(s.t*.2.*.pi)) in
     let s' = {s with x = x'; y = y';} in
-    let k = if s.p then [SEGMENT(s.x,s.y,x',y')] else [] in 
+    let k = if s.p then [SEGMENT(s.x,s.y,x',y')] else [] in
     (k,s')
 
 
@@ -146,7 +146,7 @@ let logo_GET : (state -> turtle) -> turtle =
 (* let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t *. 4. *. atan(1.)})], s) *)
 let logo_SET : (state -> turtle) = fun s -> fun _ -> ([], s)
 
-   
+
 
 let turtle_to_list turtle =
   let l,_ = (turtle logo_NOP) (init_state ()) in l |> center_logo_list

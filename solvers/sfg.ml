@@ -30,7 +30,7 @@ let string_of_categorized_grammar g =
                  ", the production probabilities are:\n"^
                  "logVariable = "^(Float.to_string (variable_value v))^"\n"^
                  (p |> List.map ~f:(fun (f,t,l) -> Printf.sprintf "%f\t%s\t%s" (variable_value l) (string_of_type t) (string_of_fragment f)) |> join ~separator:"\n")^"\n") |> join ~separator:"\n")
-                 
+
     in s
   | _ -> raise (Failure "string_of_categorized_grammar")
 
@@ -39,7 +39,7 @@ let categorized_of_fragment_grammar (f : fragment_grammar) =
   {logVariables = (1--number_of_productions) |> List.map ~f:(fun _ -> random_variable ());
    productionProbabilities = (1--number_of_productions) |> List.map ~f:(fun _ ->
        f.fragments |> List.map ~f:(fun (f,t,_) -> (f,t,random_variable ())))}
-  
+
 let likelihood_under_sfg (g : sfg) (request : tp) (expression : program) : variable =
   (* Any chain of applications could be broken up at any point by a
      fragment. This enumerates all of the different ways of breaking up an
@@ -74,36 +74,36 @@ let likelihood_under_sfg (g : sfg) (request : tp) (expression : program) : varia
     List.map ~f:(fun (i,p,t,k,ll) -> (i+1,p,t,k,ll-&z)) candidates
   in
 
-  
+
   let rec likelihood (context : tContext) (environment : tp list) (request : tp) (p : program) (production : int)
     : (tContext*variable) =
     let (request,context) = chaseType context request in
     match request with
-    
+
     (* a function - must start out with a sequence of lambdas *)
-    | TCon("->",[argument;return_type]) -> begin 
+    | TCon("->",[argument;return_type]) -> begin
         let newEnvironment = argument :: environment in
         match p with
-        | Abstraction(body) -> 
-          likelihood context newEnvironment return_type body production 
+        | Abstraction(body) ->
+          likelihood context newEnvironment return_type body production
         | _ -> (context, ~$ Float.neg_infinity)
       end
-      
+
     | _ -> (* not a function so must be an application *)
       (* fragments we might match with based on their type *)
       let candidates = unifying_fragments production environment request context in
-      
+
       (* The candidates are all different things that we could have possibly used *)
-            
+
       (* For each way of carving up the program into a function and a list of arguments... *)
-      possible_application_parses p |> List.map ~f:(fun (f,arguments) -> 
+      possible_application_parses p |> List.map ~f:(fun (f,arguments) ->
           List.map candidates ~f:(fun (candidate_index,candidate,unified_type,context,ll) ->
             try
               let (context, fragment_type, holes, bindings) = match f with
                 | Index(i) ->
                   if FIndex(i) = candidate then (context, List.nth_exn environment i, [], FreeMap.empty)
                   else raise FragmentFail
-                | _ -> 
+                | _ ->
                   bind_fragment context environment candidate f
               in
               (* Printf.printf "BOUND: %s & %s\n" (string_of_program f) (string_of_fragment candidate); *)
@@ -113,7 +113,7 @@ let likelihood_under_sfg (g : sfg) (request : tp) (expression : program) : varia
                 pad_type_with_arguments context (List.length arguments) request in
               let context = unify context fragment_request fragment_type in
               let (fragment_type, context) = chaseType context fragment_type in
-              
+
               let (argument_types, _) = arguments_and_return_of_type fragment_type in
               if not (List.length argument_types = List.length arguments) then
                 begin
@@ -132,13 +132,13 @@ let likelihood_under_sfg (g : sfg) (request : tp) (expression : program) : varia
 
               (* treat the holes and the bindings as though they were arguments *)
               let arguments = List.map holes ~f:(fun (_,h) -> h) @
-                              List.map (FreeMap.to_alist bindings) ~f:(fun (_,(_,binding)) -> binding) @ 
+                              List.map (FreeMap.to_alist bindings) ~f:(fun (_,(_,binding)) -> binding) @
                               arguments in
               let argument_types = List.map holes ~f:(fun (ht,_) -> ht) @
-                                   List.map (FreeMap.to_alist bindings) ~f:(fun (_,(binding,_)) -> binding) @ 
+                                   List.map (FreeMap.to_alist bindings) ~f:(fun (_,(binding,_)) -> binding) @
                                    argument_types in
 
-              let (application_likelihood, context) = 
+              let (application_likelihood, context) =
                 List.fold_right (List.zip_exn arguments argument_types)
                   ~init:(ll,context)
                   ~f:(fun (argument, argument_type) (ll,context) ->
@@ -159,8 +159,8 @@ let likelihood_under_sfg (g : sfg) (request : tp) (expression : program) : varia
               (oldContext,acc) end
           | Some(c) when is_valid (ll.data |> get_some) -> (c, log_soft_max [acc; ll])
           | Some(_) -> (oldContext, acc))
-          
-        
+
+
   in
   likelihood empty_context [] request expression 0 |> snd
 
@@ -174,5 +174,5 @@ let estimate_categorized_fragment_grammar (fg : fragment_grammar) (frontiers : f
               |> fold1 (+&) in
   let parameters = g.logVariables @ (g.productionProbabilities |> List.map ~f:(List.map ~f:(fun (_,_,q) -> q))
                                     |> List.concat) in
-  ignore(gradient_descent (~$0. -& joint) parameters);
+  ignore(gradient_descent (~$0. -& joint) parameters : unit);
   Printf.printf "%s\n" (string_of_categorized_grammar g);

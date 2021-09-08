@@ -6,7 +6,7 @@ open Utils
 let parallel_do nc actions =
   let finished_actions = ref 0 in
   let number_of_actions = List.length actions in
-  
+
   let children = ref [] in
   let actions = ref actions in
 
@@ -27,7 +27,7 @@ let parallel_do nc actions =
 
     (* wait for something to die *)
     let (p,_) = Unix.wait `My_group in
-    children := List.filter !children ~f:(fun p' -> not (p = p'));
+    children := List.filter !children ~f:(fun p' -> not (Pid.(=) p p'));
     (* Printf.printf "DEATH\n";
      *   flush_everything(); *)
     incr finished_actions
@@ -61,7 +61,7 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
           Unix.close rd;
           let start_idx = !next_idx in
           let answer    = Array.init (end_idx start_idx - start_idx + 1)
-              (fun i -> f (input (i+start_idx))) in
+              ~f:(fun i -> f (input (i+start_idx))) in
           let chan = Unix.out_channel_of_descr wt in
           Marshal.to_channel chan (start_idx, answer) [Marshal.Closures];
           Out_channel.close chan;
@@ -80,25 +80,25 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
         ~write:[] ~except:[] ~timeout:`Never () in
     List.iter ~f:(fun descr ->
         let chan = Unix.in_channel_of_descr descr in
-        let pid = List.Assoc.find_exn ~equal:(=) !in_streams descr
+        let pid = List.Assoc.find_exn ~equal:Unix.File_descr.equal !in_streams descr
         and start_idx, answer = Marshal.from_channel chan in
-        ignore (Unix.waitpid pid);
+        ignore (Unix.waitpid pid: Core.Unix.Exit_or_signal.t);
         In_channel.close chan;
-        Array.blit answer 0 output start_idx (Array.length answer);
+        Array.blit ~src:answer ~src_pos:0 ~dst:output ~dst_pos:start_idx ~len:(Array.length answer);
         total_computed := Array.length answer + !total_computed)
       recvs.read;
-    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:(=) recvs.read stream)) !in_streams;
+    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:Unix.File_descr.equal recvs.read stream)) !in_streams;
   done;
   output
 
 let parallel_map ~nc l ~f =
   let input_array = Array.of_list l in
-  let output_array = Array.create (Array.length input_array) None in
-  let output_array = 
+  let output_array = Array.create ~len:(Array.length input_array) None in
+  let output_array =
     pmap ~processes:(min (Array.length input_array) nc)
       ~bsize:1
       (fun x -> Some(f x)) (Array.get input_array) output_array
-  in 
+  in
   Out_channel.flush stdout;
   Array.to_list output_array |> List.map ~f:(safe_get_some "parallel_map")
 
@@ -106,7 +106,7 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
   if nc = 1 then begin
     actions |> List.iter ~f:(fun a -> a());
     [final()]
-  end else 
+  end else
   let chunk = match chunk with
     | 0 -> List.length actions / nc
     | x -> x
@@ -155,13 +155,13 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
         ~write:[] ~except:[] ~timeout:`Never () in
     List.iter ~f:(fun descr ->
         let chan = Unix.in_channel_of_descr descr in
-        let pid = List.Assoc.find_exn ~equal:(=) !in_streams descr
+        let pid = List.Assoc.find_exn ~equal:Unix.File_descr.equal !in_streams descr
         and (newly_completed, answer) = Marshal.from_channel chan in
-        ignore (Unix.waitpid pid);
+        ignore (Unix.waitpid pid : Core.Unix.Exit_or_signal.t);
         In_channel.close chan;
         finished_actions := !finished_actions + newly_completed;
         outputs := answer :: !outputs)
       recvs.read;
-    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:(=) recvs.read stream)) !in_streams;
+    in_streams := List.filter ~f:(fun (stream,_) -> not (List.mem ~equal:Unix.File_descr.equal recvs.read stream)) !in_streams;
   done;
   !outputs

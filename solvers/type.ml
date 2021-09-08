@@ -1,10 +1,10 @@
 open Core
-open Funarray
 
-type tp = 
+type tp =
   | TID of int
   | TCon of string * tp list * bool
-            
+[@@deriving equal]
+
 
 let is_polymorphic = function
   | TID(_) -> true
@@ -14,7 +14,7 @@ let rec tp_eq a b =
   match (a,b) with
   | (TID(x),TID(y)) -> x = y
   | (TCon(k1,as1,_),TCon(k2,as2,_)) ->
-    k1 = k2 && (type_arguments_equal as1 as2)
+    String.(=) k1 k2 && (type_arguments_equal as1 as2)
   | _ -> false
 and type_arguments_equal xs ys =
   match (xs,ys) with
@@ -47,7 +47,7 @@ let rec arguments_and_return_of_type t =
 (* return_of_type (t1 @> t2 @> ... @> T) = T *)
 let rec return_of_type t =
   match t with
-  | TCon("->",[_;q],_) -> return_of_type q 
+  | TCon("->",[_;q],_) -> return_of_type q
   | _ -> t
 
 (* arguments_of_type (t1 @> t2 @> ... @> T) = [t1;t2;...] *)
@@ -67,7 +67,8 @@ let left_of_arrow t =
   | _ -> raise (Failure "right_of_arrow")
 
 
-let rec show_type (is_return : bool) (t : tp) : string = 
+let rec show_type (is_return : bool) (t : tp) : string =
+  let open String in
   match t with
   | TID(i) -> "t"^string_of_int i
   | TCon(k,[],_) -> k
@@ -77,16 +78,16 @@ let rec show_type (is_return : bool) (t : tp) : string =
     else
       "("^(show_type false p)^" -> "^(show_type true q)^")"
   | TCon(k,a,_) -> k^"("^(String.concat ~sep:", " (List.map a ~f:(show_type true)))^")"
-                 
+
 let string_of_type = show_type true
 
-let makeTID (next, substitution) =  
+let makeTID (next, substitution) =
   (TID(next), (next + 1, Funarray.cons None substitution))
 
 let rec makeTIDs (n : int) (k : tContext) : tContext =
   if n = 0 then k else makeTIDs (n-1) (makeTID k |> snd)
 
-let bindTID i t (next, bindings) : tContext = 
+let bindTID i t (next, bindings) : tContext =
   (next, Funarray.update bindings (next - i - 1) (Some(t)))
 
 let lookupTID (next, bindings) j =
@@ -111,7 +112,7 @@ let lookupTID (next, bindings) j =
 (*     | None -> (t,context) *)
 
 let rec applyContext k t =
-  if not (is_polymorphic t) then (k,t) else 
+  if not (is_polymorphic t) then (k,t) else
   match t with
     | TCon(c,xs,_) ->
       let (k,xs) = List.fold_right xs ~init:(k,[]) ~f:(fun x (k,xs) ->
@@ -129,20 +130,21 @@ let rec applyContext k t =
 
 
 let rec occurs (i : int) (t : tp) : bool =
-  if not (is_polymorphic t) then false else 
+  if not (is_polymorphic t) then false else
   match t with
   | TID(j) -> j = i
-  | TCon(_,ts,_) -> 
-    List.exists ts (occurs i)
+  | TCon(_,ts,_) ->
+    List.exists ts ~f:(occurs i)
 
 let occursCheck = true
 
 exception UnificationFailure
 
-let rec might_unify t1 t2 = 
+let rec might_unify t1 t2 =
+  let open String in
   match (t1, t2) with
-  | (TCon(k1,as1,_), TCon(k2,as2,_)) when k1 = k2 -> 
-    List.for_all2_exn as1 as2 might_unify
+  | (TCon(k1,as1,_), TCon(k2,as2,_)) when k1 = k2 ->
+    List.for_all2_exn as1 as2 ~f:might_unify
   | (TID(_),_) -> true
   | (_,TID(_)) -> true
   | _ -> false
@@ -154,27 +156,27 @@ let rec unify context t1 t2 : tContext =
   then begin
     if tp_eq t1 t2 then context else raise UnificationFailure
   end
-  else 
+  else
     match (t1,t2) with
     | (TID(j),t) ->
-      if tp_eq t1 t2 then context 
+      if tp_eq t1 t2 then context
       else (if occurs j t then raise UnificationFailure else bindTID j t context)
     | (t,TID(j)) ->
-      if t1 = t2 then context 
+      if equal_tp t1 t2 then context
       else (if occurs j t then raise UnificationFailure else bindTID j t context)
-    | (TCon(k1,as1,_),TCon(k2,as2,_)) when k1 = k2 ->
+    | (TCon(k1,as1,_),TCon(k2,as2,_)) when String.(=) k1 k2 ->
       List.fold2_exn ~init:context as1 as2 ~f:unify
     | _ -> raise UnificationFailure
 
-let instantiate_type k t = 
+let instantiate_type k t =
   let substitution = ref [] in
   let k = ref k in
   let rec instantiate j =
-    if not (is_polymorphic j) then j else 
+    if not (is_polymorphic j) then j else
     match j with
       | TID(i) ->
         (try List.Assoc.find_exn ~equal:(fun a b -> a = b) !substitution i
-	 with Not_found->
+	 with Not_found_s _ ->
     let (t,k') = makeTID !k in
     k := k';
     substitution := (i,t)::!substitution;
@@ -193,28 +195,28 @@ let instantiate_type' context_reference t =
   let new_context, t' = instantiate_type !context_reference t in
   context_reference := new_context;
   t'
-  
+
 
 (* puts a type into normal form *)
-let canonical_type t = 
+let canonical_type t =
   let next = ref 0 in
   let substitution = ref [] in
-  let rec canon q = 
+  let rec canon q =
     match q with
     | TID(i) -> (try TID(List.Assoc.find_exn ~equal:(=) !substitution i)
-		 with Not_found ->
+		 with Not_found_s _ ->
                    substitution := (i,!next)::!substitution; next := (1+ !next); TID(!next-1))
     | TCon(k,a,_) -> kind k (List.map ~f:canon a)
   in canon t
 
-let rec next_type_variable t = 
+let rec next_type_variable t =
   match t with
   | TID(i) -> i+1
   | TCon(_,[],_) -> 0
-  | TCon(_,is,_) -> List.fold_left ~f:max ~init:0 (List.map is next_type_variable)
+  | TCon(_,is,_) -> List.fold_left ~f:max ~init:0 (List.map is ~f:next_type_variable)
 
 (* tries to instantiate a universally quantified type with a given request *)
-(* let instantiated_type universal_type requested_type = 
+(* let instantiated_type universal_type requested_type =
  *   try
  *     let (universal_type,c) = instantiate_type empty_context universal_type in
  *     let (requested_type,c) = instantiate_type c requested_type in
@@ -226,12 +228,12 @@ let rec next_type_variable t =
  *   let t = canonical_type t in
  *   let (xs,r) = arguments_and_return_of_type t in
  *   let free_variables = next_type_variable  in
- *   
- * 
+ *
+ *
  *   fun (target, context) ->
  *     if not (might_unify target r) then raise UnificationFailure else
  *       let bindings = Array.make free_variables None in
- * 
+ *
  *       let rec u k template original =
  *         match (template, original) with
  *         | (TID(templateVariable), v) -> begin
@@ -246,7 +248,9 @@ let rec next_type_variable t =
 
 
 
-let rec get_arity = function
+let rec get_arity t =
+  let open String in
+  match t with
   | TCon(a,[_;r],_) when a = "->" -> 1+get_arity r
   | _ -> 0
 
@@ -291,7 +295,7 @@ let unify_many_types ts =
       let (k',t') = instantiate_type !k t' in
       k := unify k' t' t);
   applyContext !k t |> snd
-     
+
 
 let rec deserialize_type j =
   let open Yojson.Basic.Util in
@@ -305,8 +309,7 @@ let rec deserialize_type j =
 
 
 let rec serialize_type t =
-  let open Yojson.Basic in
-  let j : json =
+  let j : Yojson.Basic.t =
   match t with
   | TID(i) -> `Assoc(["index",`Int(i)])
   | TCon(k,a,_) ->

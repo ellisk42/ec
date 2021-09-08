@@ -39,8 +39,8 @@ let rec program_to_combinator = function
           program_to_combinator (Abstraction(x)))
   | _ -> raise (Failure "program to combinator")
 
-let combinator_to_program p = 
-  let rec combinator_to_program_ = function    
+let combinator_to_program p =
+  let rec combinator_to_program_ = function
     | Primitive(_,"I") -> Abstraction(Index(0))
     | Primitive(_,"K") -> Abstraction(Abstraction(Index(1)))
     | Primitive(_,"S") -> Abstraction(Abstraction(Abstraction(Apply(Apply(Index(2),Index(0)),
@@ -83,7 +83,7 @@ let combinator_to_program p =
     | Some(p) -> repeatedly_reduce p
   in
   combinator_to_program_ p |> repeatedly_reduce
-  
+
 
 let test_combinator() =
   [cS;cI;cB;cC;cK;] |> List.iter ~f:(fun (Primitive(t,n)) ->
@@ -107,4 +107,5 @@ let test_combinator() =
 ;;
 
 
-test_combinator();;
+let _ : unit =
+  test_combinator();;

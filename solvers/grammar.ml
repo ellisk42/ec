@@ -66,7 +66,7 @@ let grammar_log_weight g p =
 let unifying_expressions g environment request context : (program*tp list*tContext*float) list =
   (* given a grammar environment requested type and typing context,
      what are all of the possible leaves that we might use?
-     These could be productions in the grammar or they could be variables. 
+     These could be productions in the grammar or they could be variables.
      Yields a sequence of:
      (leaf, argument types, context with leaf return type unified with requested type, normalized log likelihood)
   *)
@@ -80,20 +80,20 @@ let unifying_expressions g environment request context : (program*tp list*tConte
         then
           try
             let context = unify context return request in
-            let (context,t) = applyContext context t in            
+            let (context,t) = applyContext context t in
             Some((p,arguments_of_type t,context,ll))
           with UnificationFailure -> None
         else None)
   in
   let variable_candidates = match (variable_candidates, g.continuation_type) with
-      | (_ :: _, Some(t)) when t = request -> 
+      | (_ :: _, Some(t)) when equal_tp t request ->
         let terminal_indices = List.filter_map variable_candidates ~f:(fun (p,t,_,_) ->
-            if t = [] then Some(get_index_value p) else None) in
-        if terminal_indices = [] then variable_candidates else
+            if List.is_empty t  then Some(get_index_value p) else None) in
+        if List.is_empty terminal_indices then variable_candidates else
           let smallest_terminal_index = fold1 min terminal_indices in
           variable_candidates |> List.filter ~f:(fun (p,t,_,_) ->
               let okay = not (is_index p) ||
-                         not (t = []) ||
+                         not (List.is_empty t) ||
                          get_index_value p = smallest_terminal_index in
               (* if not okay then *)
               (*   Printf.eprintf "Pruning imperative index %s with request %s; environment=%s; smallest=%i\n" *)
@@ -107,7 +107,7 @@ let unifying_expressions g environment request context : (program*tp list*tConte
   let nv = List.length variable_candidates |> Float.of_int |> log in
   let variable_candidates = variable_candidates |> List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.nv)) in
 
-  let grammar_candidates = 
+  let grammar_candidates =
     g.library |> List.filter_map ~f:(fun (p,t,ll,u) ->
         try
           let return_type = return_of_type t in
@@ -141,7 +141,7 @@ let show_summary s =
           let n = n |> List.map ~f:string_of_program |> join ~separator:"," in
           Printf.sprintf "normalizer_frequency[%s] = %f;" n f)) @
      ["}"])
-                        
+
 
 let empty_likelihood_summary() = {
   normalizer_frequency = Hashtbl.Poly.create();
@@ -199,7 +199,7 @@ let make_likelihood_summary g request expression =
 
   let s = empty_likelihood_summary() in
   let context = ref empty_context in
-  
+
   let rec summarize (r : tp) (environment: tp list) (p: program) : unit =
     match r with
     (* a function - must start out with a sequence of lambdas *)
@@ -215,19 +215,19 @@ let make_likelihood_summary g request expression =
         match List.find candidates ~f:(fun (candidate,_,_,_) -> program_equal candidate f) with
         | None ->
           s.likelihood_constant <- Float.neg_infinity
-        | Some(_, argument_types, newContext, functionLikelihood) ->
+        | Some(_, argument_types, newContext, _functionLikelihood) ->
           context := newContext;
           record_likelihood_event s f (candidates |> List.map ~f:(fun (candidate,_,_,_) -> candidate));
           List.iter (List.zip_exn xs argument_types)
             ~f:(fun (x,x_t) -> summarize x_t environment x)
   in
-  
+
   summarize request [] expression;
   s
 
 let likelihood_under_grammar g request program =
   make_likelihood_summary g request program |> summary_likelihood g
-  
+
 
 
 
@@ -264,10 +264,10 @@ let prune_contextual_grammar (g : contextual_grammar) =
              try
                let k, child_type = instantiate_type empty_context child_type in
                let k, argument_type = instantiate_type k argument_type in
-               let _ = unify k child_type argument_type in
+               let _ : tContext = unify k child_type argument_type in
                true
              with UnificationFailure -> false)})
-  in 
+  in
   {no_context=g.no_context;
    variable_context=g.variable_context;
    contextual_library=
@@ -295,7 +295,7 @@ let deserialize_grammar g =
       with UnificationFailure -> raise (Failure ("Could not type "^source))
     in
     let logProbability = p |> member "logProbability" |> to_number in
-    
+
     (e,t,logProbability,compile_unifier t))
   in
   let continuation_type =
@@ -307,10 +307,9 @@ let deserialize_grammar g =
   g
 
 let serialize_grammar {logVariable; continuation_type; library} =
-  let open Yojson.Basic in
-  let j : json =
+  let j : Yojson.Basic.t =
   `Assoc(["logVariable",`Float(logVariable);
-          "productions",`List(library |> List.map ~f:(fun (e,t,l,_) ->
+          "productions",`List(library |> List.map ~f:(fun (e,_,l,_) ->
               `Assoc(["expression",`String(string_of_program e);
                       "logProbability",`Float(l)])))] @
          match continuation_type with
@@ -318,7 +317,7 @@ let serialize_grammar {logVariable; continuation_type; library} =
          | Some(it) -> ["continuationType", serialize_type it])
   in
   j
-    
+
 let deserialize_contextual_grammar j =
   let open Yojson.Basic.Util in
 
@@ -327,8 +326,8 @@ let deserialize_contextual_grammar j =
    contextual_library =
      j |> member "productions" |> to_list |> List.map ~f:(fun production ->
          let e = production |> member "program" |> to_string in
-         let e = 
-           try e |> parse_program |> get_some             
+         let e =
+           try e |> parse_program |> get_some
            with _ ->
              Printf.eprintf "Could not parse `%s'\n"
                e;
@@ -337,6 +336,6 @@ let deserialize_contextual_grammar j =
          let children = production |> member "arguments" |> to_list |> List.map ~f:deserialize_grammar in
          (e, children));} |> prune_contextual_grammar
 
-let deserialize_contextual_grammar g = 
+let deserialize_contextual_grammar g =
   try deserialize_grammar g |> make_dummy_contextual
   with _ -> deserialize_contextual_grammar g

@@ -43,7 +43,7 @@ let rec exploration_compression
     (*     fragments |> List.iter ~f:(fun f -> Printf.printf "FRAGMENT\t%s\n" (string_of_fragment f)); *)
 
     Out_channel.flush stdout;
-    
+
     let gf = time_it "Induced grammar" @@ fun _ ->
       induce_fragment_grammar ~lambda:lambda ~alpha:alpha ~beta:beta
         fragments frontiers (fragment_grammar_of_grammar g) in
@@ -57,4 +57,3 @@ let rec exploration_compression
     Out_channel.flush stdout;
 
     exploration_compression tasks gp frontier_size ~keepTheBest:keepTheBest (iterations - 1)
-    

@@ -1,5 +1,0 @@
-(jbuild_version 1)
-
-(library
-  ((name logoLib)
-   (libraries (vg vg.cairo))))

@@ -110,11 +110,11 @@ let rec get_random_var : string list -> var = fun var_list ->
         (*| n when n < cumsum_unit Indefinite -> Indefinite*)
         | n when n < cumsum_unit (Name "") ->
             begin
-                match var_list with 
+                match var_list with
                 | [] -> get_random_var var_list
                 | _ -> Name(pick_random_in_list var_list)
             end
-        | n ->
+        | _ ->
             raise (InternalGenerationError("in total_var_unit"))
     else
         match Random.float total_var_op with
@@ -143,7 +143,7 @@ let rec_generate_random : string list -> (string list * shapeprogram) =
         let var = if b then Some(get_random_var var_list) else None in
         (var_list,Turn(var))
     | n when n < cumsum_program (Embed(dummy_program)) ->
-        let l,p = helper var_list in
+        let _,p = helper var_list in
         (var_list,Embed(p))
     | n when n < cumsum_program (Concat(dummy_program,dummy_program)) ->
         let l,p = helper var_list in
@@ -196,6 +196,6 @@ let generate_random : unit -> shapeprogram =
             ([],Concat(p1,p2))
         | _ ->
             let var = get_random_var [] in
-            let l,p = rec_generate_random [] in
+            let _,p = rec_generate_random [] in
             ([], Repeat(Some var,p))
         in p
