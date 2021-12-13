@@ -7,6 +7,8 @@ from dreamcoder.utilities import *
 
 import time
 
+import itertools
+
 class GrammarFailure(Exception):
     pass
 
@@ -1294,6 +1296,161 @@ def batchLikelihood(jobs):
             response[(program, request, grammar)] = fast
     return response
 
+class PCFG():
+    def __init__(self, productions, start_symbol):
+        # productions: nonterminal -> [(log probability, constructor, [(#lambdas, nonterminal)])]
+        self.productions = productions
+        self.start_symbol = start_symbol
+
+    @staticmethod
+    def from_grammar(g, request, maximum_type=3, maximum_environment=4):
+        kinds = set()
+
+        def process_type(t):
+            if t.isArrow():
+                process_type(t.arguments[0])
+                process_type(t.arguments[1])
+            elif isinstance(t, TypeVariable):
+                return
+            else:
+                kinds.add((t.name, len(t.arguments)))
+                for a in t.arguments:
+                    process_type(a)
+
+        process_type(request)
+        for _, t, _ in g.productions:
+            process_type(t)
+
+
+        def types_of_size(s):
+            if s<=1:
+                yield from { TypeConstructor(n, []) for n, a in kinds if a==0 }
+                return 
+
+            for n, a in kinds:
+                assert a<3
+                if a==0: continue
+                if a==1:
+                    yield from { TypeConstructor(n, [t]) for t in types_of_size(s-1) }
+                if a==2:
+                    yield from { TypeConstructor(n, [t1, t2])
+                             for s1 in  range(1, s)
+                             for s2 in  range(1, s-s1)
+                             for t1 in types_of_size(s1)
+                             for t2 in types_of_size(s2) }
+
+        def size_of_type(t):
+            if isinstance(t, TypeVariable):
+                return 0
+            if t.isArrow():
+                return max(size_of_type(t.arguments[0]),
+                           size_of_type(t.arguments[1]))
+            return 1 + sum(size_of_type(a) for a in t.arguments)
+
+        environment = tuple(reversed(request.functionArguments()))
+        maximum_environment += len(environment)
+        request = request.returns()
+        possible_types = {t for s in range(1, maximum_type+1) for t in types_of_size(s)}|{request}
+
+        _instantiations = {}
+        def instantiations(t):
+            if not t.isPolymorphic:
+                return [t]
+
+            if t in _instantiations:
+                return _instantiations[t]
+            
+            t=t.canonical()
+            variables = t.free_type_variables()
+            
+            return_value = []
+            for substitution in itertools.product(possible_types, repeat=len(variables)):
+                context = Context(substitution=list(zip(range(len(variables)), substitution)))
+                new_type = t.apply(context)
+                if size_of_type(new_type) <= maximum_type:
+                    return_value.append(new_type)
+            _instantiations[t] = return_value
+            return return_value
+
+        # for _, t, p in g.productions:
+        #     print(p, t)
+        #     for i in instantiations(t):
+        #         print("\t", i)
+
+        rules = {}
+        def make_rules(request, environment):
+            if (request, environment) in rules: return
+            rules[(request, environment)] = []
+            variable_candidates = [(g.logVariable, tp, Index(i))
+                                   for i, t in enumerate(environment)
+                                   for tp  in instantiations(t)
+                                   if tp.returns()==request]
+            if g.continuationType == request:
+                variable_candidates = [min(variable_candidates, key=lambda vc: vc[-1].i)]
+            variable_candidates = [(lp-math.log(len(variable_candidates)), t, p)
+                                   for lp, t, p in variable_candidates ]
+            
+            for lp, t, p in g.productions + variable_candidates:
+                for i in instantiations(t):
+                    if i.returns() == request:
+                        arguments = i.functionArguments()
+                        argument_symbols = []
+                        for a in arguments:
+                            new_environment = tuple(list(reversed(a.functionArguments())) +\
+                                                    list(environment))
+                            argument_symbols.append((len(a.functionArguments()),
+                                                     (a.returns(), new_environment)))
+
+                        if all( len(new_environment) <= maximum_environment
+                                for _, (_, new_environment) in argument_symbols ):
+                            rules[(request, environment)].append((lp, p, argument_symbols))
+            
+            for _, p, argument_symbols in rules[(request, environment)]:
+                for _, symbol in argument_symbols:
+                    make_rules(*symbol)
+
+        make_rules(request, environment)
+        print(len(rules), "nonterminal symbols")
+        print(sum(len(productions) for productions in rules.values()), "production rules")
+        return PCFG(rules, (request, environment)).normalize()
+
+    def normalize(self):
+        def norm(distribution):
+            z = lse([x[0] for x in distribution])
+            return [(x[0]-z, *x[1:]) for x in distribution]
+        if isinstance(self.productions, list):
+            self.productions = [ norm(rs) for rs in self.productions ]
+        elif isinstance(self.productions, dict):
+            self.productions = {k:norm(rs) for k, rs in self.productions.items()}
+        else:
+            assert False
+        return self
+            
+    def number_rules(self):
+        mapping = dict(zip(self.productions.keys(), range(len(self.productions))))
+        reverse_mapping = {v:k for k,v in mapping.items() }
+
+        new_productions = [ [ (lp, k, [(nl, mapping[nt]) for nl, nt in arguments ])
+                              for lp, k, arguments in self.productions[reverse_mapping[i]] ]
+            for i in range(len(self.productions)) ]
+
+        return PCFG(new_productions, mapping[self.start_symbol])
+    
+
+    def json(self):
+        self = self.number_rules()
+        return {"rules": [ [ {"probability": lp, 
+                              "constructor": str(k),
+                              "arguments": [ {"n_lambda": nl, "nt": nt}
+                                             for nl, nt in arguments ]}
+                             for (lp, k, arguments) in rules ]
+                           for rules in self.productions ],
+                "start_symbol": self.start_symbol
+        }
+
+        
+                
+                
 if __name__ == "__main__":
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
     g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
@@ -1306,3 +1463,4 @@ if __name__ == "__main__":
         print(ll,p,ll_)
         d = abs(ll - ll_)
         assert d < 0.0001
+

@@ -1,5 +1,6 @@
 open Core
 
+open Probabilistic_grammar
 open Physics
 open Pregex
 open Tower
@@ -23,6 +24,8 @@ let load_problems channel =
     try deserialize_grammar g |> make_dummy_contextual
     with _ -> deserialize_contextual_grammar g
   in
+
+  let unrolled_grammar = j |> member "PCFG" |> deserialize_PCFG in 
 
   let timeout = try
       j |> member "programTimeout" |> to_number
@@ -111,7 +114,7 @@ let load_problems channel =
       j |> member "nc" |> to_int 
     with _ -> 1
   in
-  (tf,g,
+  (tf,g,unrolled_grammar, 
    lowerBound,upperBound,budgetIncrement,
    maxParameters,
    nc,timeout,verbose)
@@ -133,14 +136,61 @@ let export_frontiers number_enumerated tf solutions : string =
 
 let _ =
 
-  let (tf,g,
+  let (tf,g,unrolled,
        lowerBound,upperBound,budgetIncrement,
        mfp,
      nc,timeout, verbose) =
     load_problems Pervasives.stdin in
+  (* let quick_tasks = tf |> List.map ~f:(fun (t, k) -> *)
+  (*     ({name= t.name; task_type= t.task_type; *)
+  (*          log_likelihood= (fun _ -> log 0.)},k )) in *)
+  (* let slow_tasks = tf |> List.map ~f:(fun (t, k) -> *)
+  (*     ({name= t.name; task_type= t.task_type; *)
+  (*          log_likelihood= (fun p -> t.log_likelihood p; log 0.)} ), k) in *)
+  (* flush_everything(); *)
+  (* let _T = 1. in *)
+
+  let traditional_backend lowerBound upperBound ~final =
+    enumerate_programs ~final g (List.hd_exn tf |> fst).task_type lowerBound upperBound ~maxFreeParameters:mfp ~nc
+  in
+
+  let new_backend lower_bound upper_bound ~final continuation =
+    bounded_recursive_enumeration ~lower_bound ~upper_bound unrolled
+    (fun p l -> continuation (Abstraction(p)) l);
+    [final()]
+  in     
+  
+  (* let progress_without_evaluation = *)
+  (* enumerate_for_tasks traditional_backend ~lowerBound:0. ~upperBound:upperBound ~budgetIncrement:upperBound *)
+  (*     ~verbose:true ~nc ~timeout:_T quick_tasks |> snd in *)
+
+  (* flush_everything(); *)
+  (* let progress_with_evaluation = enumerate_for_tasks traditional_backend ~lowerBound:0. ~upperBound:upperBound ~budgetIncrement:upperBound *)
+  (*     ~verbose:true ~nc ~timeout:_T slow_tasks |> snd in *)
+  (* flush_everything(); *)
+  (* let enumerations_per_second=((Float.of_int progress_without_evaluation)/._T) in *)
+  (* let evaluations_per_second= 1./.(_T/.(Float.of_int progress_without_evaluation) -. _T/.(Float.of_int progress_with_evaluation)) in *)
+
+  (* if true || progress_without_evaluation > progress_with_evaluation then ( *)
+  (*   unrolled |> show_probabilistic |> Printf.eprintf "%s\n"; *)
+  (*   let fast_enumerated=ref 0 in  *)
+  (*   bounded_recursive_enumeration ~lower_bound:0. ~upper_bound:upperBound ~timeout:_T unrolled *)
+  (*     (fun p l -> Printf.eprintf "%s\t%f\t%b\n" (string_of_program p) l *)
+  (*       (l-.likelihood_PCFG unrolled p>0.001); *)
+  (*       incr fast_enumerated); *)
+    
+  (*   Printf.eprintf "How many can we enumerate if we DO NOT evaluate programs? %d\n" progress_without_evaluation;   *)
+  (* Printf.eprintf "How many can we enumerate if we DO evaluate programs? %d\n" progress_with_evaluation; *)
+  (*   Printf.eprintf "Enumerated programs per second: %f\n" enumerations_per_second; *)
+  (*   Printf.eprintf "PCFG Enumerated programs per second: %f\n" *)
+  (*     ((Float.of_int !fast_enumerated) /. _T); *)
+  (*   Printf.eprintf "Evaluations per second: %f\n" evaluations_per_second); *)
+
+  
+  
   let solutions, number_enumerated =
-    enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
-    ~verbose:verbose ~nc:nc ~timeout:timeout g tf
+    enumerate_for_tasks new_backend ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
+    ~verbose:verbose ~timeout:timeout tf ~nc
   in
   export_frontiers number_enumerated tf solutions |> print_string ;;
 

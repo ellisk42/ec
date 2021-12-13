@@ -4,7 +4,7 @@ open Funarray
 type tp = 
   | TID of int
   | TCon of string * tp list * bool
-            
+[@@deriving compare]            
 
 let is_polymorphic = function
   | TID(_) -> true

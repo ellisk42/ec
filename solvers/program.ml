@@ -35,6 +35,9 @@ let rec recursively_get_abstraction_body = function
   | Abstraction(b) -> recursively_get_abstraction_body b
   | e -> e
 
+let rec wrap_with_abstractions n e =
+  if n=0 then e else wrap_with_abstractions (n-1) (Abstraction(e))
+
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
@@ -1043,3 +1046,4 @@ ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;
+

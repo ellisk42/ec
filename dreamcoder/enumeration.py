@@ -274,6 +274,7 @@ def solveForTask_ocaml(_=None,
 
 
     message = {"DSL": g.json(),
+               "PCFG": PCFG.from_grammar(g, tasks[0].request).json(),
                "tasks": [taskMessage(t)
                          for t in tasks],
 
