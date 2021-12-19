@@ -338,6 +338,9 @@ let enumerate_for_tasks enumeration_backend ?verbose:(verbose = true)
           List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
        && !lower_bound +. budgetIncrement <= upperBound
   do
+    Printf.eprintf "%f, %f, %fs\n"
+      (!lower_bound) (!lower_bound +. budgetIncrement) (!enumeration_timeout -. Unix.time());
+    
     let number_of_enumerated_programs = ref 0 in
       let final_results =
         (* Returns a list of "final results" *)

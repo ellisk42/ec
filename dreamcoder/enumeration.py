@@ -41,6 +41,8 @@ def multicoreEnumeration(g, tasks, _=None,
 
     if not isinstance(g, dict):
         g = {t: g for t in tasks}
+    for t, _g in g.items():
+        _g.unrolled = PCFG.from_grammar(_g, t.request).json()
     task2grammar = g
 
     # If we are not evaluating on held out testing tasks:
@@ -274,7 +276,7 @@ def solveForTask_ocaml(_=None,
 
 
     message = {"DSL": g.json(),
-               "PCFG": PCFG.from_grammar(g, tasks[0].request).json(),
+               "PCFG": g.unrolled,
                "tasks": [taskMessage(t)
                          for t in tasks],
 
