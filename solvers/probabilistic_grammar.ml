@@ -95,7 +95,72 @@ and
 
 let bounded_recursive_enumeration ~lower_bound ~upper_bound (g : probabilistic_grammar) (callback : program -> float -> unit) : unit =
   bounded_recursive_enumeration ~lower_bound ~upper_bound g ~nt:(g.start_symbol) callback
-  
+
+
+let bottom_up_enumeration ?factor:(factor=10) ~lower_bound ~upper_bound (g : probabilistic_grammar) (callback : program -> float -> unit) : unit =
+  let factor = Float.of_int factor in 
+  let scale f = Int.of_float (f*.factor +. 0.5) in
+  let table =
+    g.productions |> Array.map ~f:(fun  _-> Array.create (scale upper_bound + 1) None)
+  in
+  let productions =
+    g.productions |> Array.map ~f:Array.to_list
+  in 
+  let rec populate symbol cost : program list =
+    if cost<0 then [] else 
+    match table.(symbol).(cost) with
+    | Some(x) -> x
+    | None ->
+      (let x =
+        productions.(symbol) |>
+        List.concat_map ~f:(fun {production_probability;
+                           production_constructor;
+                           production_arguments;} ->
+                       let c = cost - scale (0.-.production_probability) in
+                       applications c production_constructor production_arguments)
+      in
+      table.(symbol).(cost) <- Some(x);
+      x)
+  and applications c f arguments =
+    if c<0 then [] else
+      match c, arguments with
+      | 0, [] -> [f]
+      | _, [] -> []
+      | 0, (_::_) -> []
+      | _, [{nonterminal=a}] -> populate a c |> List.map ~f:(fun a -> Apply(f, a))
+      | _, [{nonterminal=a1};{nonterminal=a2}] ->
+        (0--c) |> List.concat_map ~f:(fun c1 ->
+            populate a1 c1 |> List.concat_map ~f:(fun a1 ->
+                populate a2 (c-c1) |> List.map ~f:(fun a2 ->
+                    Apply(Apply(f, a1), a2))))
+      | _, [{nonterminal=a1};{nonterminal=a2};{nonterminal=a3}] ->
+        (0--c) |> List.concat_map ~f:(fun c1 ->
+            populate a1 c1 |> List.concat_map ~f:(fun a1 ->
+                (0--(c-c1)) |> List.concat_map ~f:(fun c2 ->
+                    populate a2 c2 |> List.concat_map ~f:(fun a2 ->
+                        populate a3 (c-c1-c2) |> List.map ~f:(fun a3 ->
+                            Apply(Apply(Apply(f, a1), a2), a3))))))
+      | _, [{nonterminal=a1};{nonterminal=a2};{nonterminal=a3};{nonterminal=a4}] ->
+        (0--c) |> List.concat_map ~f:(fun c1 ->
+            populate a1 c1 |> List.concat_map ~f:(fun a1 ->
+                (0--(c-c1)) |> List.concat_map ~f:(fun c2 ->
+                    populate a2 c2 |> List.concat_map ~f:(fun a2 ->
+                        (0--(c-c1-c2)) |> List.concat_map ~f:(fun c3 ->
+                            populate a3 c3 |> List.concat_map ~f:(fun a3 ->
+                                populate a4 (c-c1-c2-c3) |> List.map ~f:(fun a4 ->
+                                    Apply(Apply(Apply(Apply(f, a1), a2), a3), a4))))))))
+  in 
+      
+  let rec loop c=
+    Printf.eprintf "%d/%d\n"
+      c (scale upper_bound); flush_everything();
+    populate (g.start_symbol) c |> List.iter ~f:(fun p -> callback p 0.);
+    if enumeration_timed_out() || c>=(scale upper_bound)then
+      ()
+    else
+      loop (c+1)
+  in
+  loop 0
 
 (* let possible_concrete_types ?nesting:(nesting=3) (g:grammar) : tp list = *)
 (*   let base_types = ref [] in *)

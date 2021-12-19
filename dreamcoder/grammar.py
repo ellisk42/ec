@@ -1,3 +1,4 @@
+from frozendict import frozendict
 from collections import defaultdict
 
 from dreamcoder.frontier import *
@@ -1303,7 +1304,7 @@ class PCFG():
         self.start_symbol = start_symbol
 
     @staticmethod
-    def from_grammar(g, request, maximum_type=3, maximum_environment=4):
+    def from_grammar(g, request, maximum_type=3, maximum_environment=3):
         kinds = set()
 
         def process_type(t):
@@ -1377,12 +1378,23 @@ class PCFG():
         #     for i in instantiations(t):
         #         print("\t", i)
 
+        def push_environment(tp, e):
+            e=dict(e)
+            if tp in e: e[tp]+=1
+            else: e[tp]=1
+            return frozendict(e)
+        def push_multiple_environment(ts, e):
+            for t in ts: e=push_environment(t, e)
+            return e
+                
+
         rules = {}
         def make_rules(request, environment):
             if (request, environment) in rules: return
             rules[(request, environment)] = []
             variable_candidates = [(g.logVariable, tp, Index(i))
-                                   for i, t in enumerate(environment)
+                                   for t, count in environment.items()
+                                   for i in range(count) 
                                    for tp  in instantiations(t)
                                    if tp.returns()==request]
             if g.continuationType == request:
@@ -1396,12 +1408,12 @@ class PCFG():
                         arguments = i.functionArguments()
                         argument_symbols = []
                         for a in arguments:
-                            new_environment = tuple(list(reversed(a.functionArguments())) +\
-                                                    list(environment))
+                            new_environment = push_multiple_environment(a.functionArguments(),
+                                                                        environment)
                             argument_symbols.append((len(a.functionArguments()),
                                                      (a.returns(), new_environment)))
 
-                        if all( len(new_environment) <= maximum_environment
+                        if all( sum(new_environment.values()) <= maximum_environment
                                 for _, (_, new_environment) in argument_symbols ):
                             rules[(request, environment)].append((lp, p, argument_symbols))
             
@@ -1409,10 +1421,11 @@ class PCFG():
                 for _, symbol in argument_symbols:
                     make_rules(*symbol)
 
-        make_rules(request, environment)
+        start_symbol = (request, push_multiple_environment(environment, {}))
+        make_rules(*start_symbol)
         print(len(rules), "nonterminal symbols")
         print(sum(len(productions) for productions in rules.values()), "production rules")
-        return PCFG(rules, (request, environment)).normalize()
+        return PCFG(rules, start_symbol).normalize()
 
     def normalize(self):
         def norm(distribution):

@@ -148,7 +148,7 @@ let _ =
       ({name= t.name; task_type= t.task_type;
            log_likelihood= (fun p -> t.log_likelihood p; log 0.)} ), k) in
   flush_everything();
-  let _T,_ub = 30.,24. in
+  let _T,_ub = 5.,30. in
 
   let traditional_backend lowerBound upperBound ~final =
     enumerate_programs ~final g (List.hd_exn tf |> fst).task_type lowerBound upperBound ~maxFreeParameters:mfp ~nc
@@ -177,7 +177,9 @@ let _ =
     set_enumeration_timeout _T;
     let fast_enumerated=
       let count=ref 0 in
-      bounded_recursive_enumeration ~lower_bound:0. ~upper_bound:_ub unrolled
+      bottom_up_enumeration
+        (* bounded_recursive_enumeration *)
+        ~lower_bound:0. ~upper_bound:_ub unrolled
     (fun p l -> incr count);
     !count
       (* enumerate_for_tasks new_backend ~lowerBound:0. ~upperBound:_ub ~budgetIncrement:budgetIncrement *)
