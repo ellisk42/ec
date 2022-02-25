@@ -34,6 +34,11 @@ class Program(object):
         except UnificationFailure as e:
             return False
 
+    def wrap_in_abstractions(self, n):
+        for _ in range(n):
+            self = Abstraction(self)
+        return self
+
     def betaNormalForm(self):
         n = self
         while True:
@@ -508,8 +513,9 @@ class Abstraction(Program):
             self.hashCode = hash((hash(self.body),))
         return self.hashCode
 
-        """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+        
     def __getstate__(self):
+        """Because Python3 randomizes the hash function, we need to never pickle the hash"""
         return self.body
     def __setstate__(self, state):
         self.body = state
@@ -838,8 +844,41 @@ class Hole(Program):
                                   '<HOLE>')
         return Hole.single, n
 
-
 Hole.single = Hole()
+
+class NamedHole(Program):
+    def __init__(self, n): self.name=n
+
+    def show(self, isFunction): return str(self.name)
+
+    @property
+    def isHole(self): return True
+
+    def __eq__(self, o): return isinstance(o, NamedHole) and self.name==o.name
+
+    def __hash__(self): return hash(self.name)
+
+    def evaluate(self, e):
+        raise Exception('Attempt to evaluate named hole')
+
+    def betaReduce(self):
+        raise Exception('Attempt to beta reduce named hole')
+
+    def inferType(self, context, environment, freeVariables):
+        return context.makeVariable()
+
+    def shift(self, offset, depth=0):
+        raise Exception('Attempt to shift named hl')
+
+    def walk(self, surroundingAbstractions=0): yield surroundingAbstractions, self
+
+    def walkUncurried(self, d=0): yield d, self
+
+    def size(self): return 1
+
+    @staticmethod
+    def _parse(s,n):
+        assert False
 
 
 class ShareVisitor(object):

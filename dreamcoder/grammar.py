@@ -1298,13 +1298,17 @@ def batchLikelihood(jobs):
     return response
 
 class PCFG():
-    def __init__(self, productions, start_symbol):
+    def __init__(self, productions, start_symbol, number_of_arguments):
         # productions: nonterminal -> [(log probability, constructor, [(#lambdas, nonterminal)])]
+        self.number_of_arguments = number_of_arguments
         self.productions = productions
         self.start_symbol = start_symbol
 
+    
+        
+
     @staticmethod
-    def from_grammar(g, request, maximum_type=3, maximum_environment=3):
+    def from_grammar(g, request, maximum_type=3, maximum_environment=2):
         kinds = set()
 
         def process_type(t):
@@ -1379,6 +1383,10 @@ class PCFG():
         #         print("\t", i)
 
         def push_environment(tp, e):
+            if len(e)==0:
+                return (tp,)
+            else:
+                return tuple([tp]+list(e))
             e=dict(e)
             if tp in e: e[tp]+=1
             else: e[tp]=1
@@ -1393,8 +1401,9 @@ class PCFG():
             if (request, environment) in rules: return
             rules[(request, environment)] = []
             variable_candidates = [(g.logVariable, tp, Index(i))
-                                   for t, count in environment.items()
-                                   for i in range(count) 
+                                   # for t, count in environment.items()
+                                   # for i in range(count)
+                                   for i, t in enumerate(environment) 
                                    for tp  in instantiations(t)
                                    if tp.returns()==request]
             if g.continuationType == request:
@@ -1413,7 +1422,7 @@ class PCFG():
                             argument_symbols.append((len(a.functionArguments()),
                                                      (a.returns(), new_environment)))
 
-                        if all( sum(new_environment.values()) <= maximum_environment
+                        if all( len(new_environment) <= maximum_environment
                                 for _, (_, new_environment) in argument_symbols ):
                             rules[(request, environment)].append((lp, p, argument_symbols))
             
@@ -1421,11 +1430,12 @@ class PCFG():
                 for _, symbol in argument_symbols:
                     make_rules(*symbol)
 
-        start_symbol = (request, push_multiple_environment(environment, {}))
+        start_environment = push_multiple_environment(environment, {})
+        start_symbol = (request, start_environment)
         make_rules(*start_symbol)
         print(len(rules), "nonterminal symbols")
         print(sum(len(productions) for productions in rules.values()), "production rules")
-        return PCFG(rules, start_symbol).normalize()
+        return PCFG(rules, start_symbol, len(start_environment)).normalize()
 
     def normalize(self):
         def norm(distribution):
@@ -1438,6 +1448,12 @@ class PCFG():
         else:
             assert False
         return self
+
+    def __str__(self):
+        return f"start symbol: {self.start_symbol}\n\n%s"%("\n\n".join(
+            "\n".join(f"{nt} ::= {k}\t%s\t\t{l}"%(" ".join(f"{n}x{s}" for n, s in ar ))
+                      for l, k, ar in rs)
+            for nt, rs in self.productions.items()))
             
     def number_rules(self):
         mapping = dict(zip(self.productions.keys(), range(len(self.productions))))
@@ -1447,7 +1463,9 @@ class PCFG():
                               for lp, k, arguments in self.productions[reverse_mapping[i]] ]
             for i in range(len(self.productions)) ]
 
-        return PCFG(new_productions, mapping[self.start_symbol])
+        return PCFG(new_productions, mapping[self.start_symbol], self.number_of_arguments)
+
+    
     
 
     def json(self):
@@ -1458,12 +1476,257 @@ class PCFG():
                                              for nl, nt in arguments ]}
                              for (lp, k, arguments) in rules ]
                            for rules in self.productions ],
+                "number_of_arguments": self.number_of_arguments,
                 "start_symbol": self.start_symbol
         }
 
+    def log_probability(self, program, symbol=None):
+
+        while isinstance(program, Program) and program.isAbstraction:
+            program = program.body
+            
+        if not isinstance(program, Program):
+            # assume it is a nonterminal
+            assert isinstance(program, int) and 0<=program<len(self.productions) or \
+                program in self.productions
+
+            if program == symbol:
+                return 0.
+            else:
+                return float("-inf")
+            
+            
+        if symbol is None:
+            symbol = self.start_symbol
+
+        rules = self.productions[symbol]
+
+        
+        f, xs = program.applicationParse()
+
+        lp = float("-inf")
+        for p, k, arguments in rules:
+            if f==k:
+                _lp=p+sum(self.log_probability(a, at)
+                           for a, (_, at) in zip(xs, arguments) )
+                lp = lse(lp, _lp)
+        return lp
+
+    def best_first_enumeration(self, partial=False):
+        h=PQ()
+
+        h.push(0., (0., NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)))
+
+        def next_nonterminal(expression):
+            if isinstance(expression, NamedHole):
+                return expression.name
+            
+            if expression.isAbstraction:
+                return next_nonterminal(expression.body)
+            if expression.isApplication:
+                f=next_nonterminal(expression.f)
+                if f is None:
+                    return next_nonterminal(expression.x)
+                return f
+            return None
+
+        def substitute(expression, value):
+            if isinstance(expression, NamedHole):
+                return value
+            
+            if expression.isAbstraction:
+                body = substitute(expression.body, value)
+                if body is None: return None
+                return Abstraction(body)
+            if expression.isApplication:
+                f = substitute(expression.f, value)
+                if f is None:
+                    x = substitute(expression.x, value)
+                    if x is None: return None
+                    return Application(expression.f, x)
+                return Application(f, expression.x)
+            return None
+
+        
+
+        while len(h)>0:
+            lp, e = h.popMaximum()
+            
+            nt=next_nonterminal(e)
+            
+            if nt is None:
+                yield e, lp
+            else:
+                for lpp, k, arguments in self.productions[nt]:
+                    rewrite = k
+                    for nl, at in arguments:
+                        at = NamedHole(at).wrap_in_abstractions(nl)
+                        rewrite = Application(rewrite, at)
+                    #eprint(e, ">>", substitute(e, rewrite))
+                    ep = substitute(e, rewrite)
+                    h.push(lp+lpp, (lp+lpp, ep))
+                    if partial:
+                        yield ep, lp+lpp
+
+    def split(self, nc):
+        
+        h=PQ()
+
+        h.push(0., (0., NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)))
+
+        def next_nonterminal(expression):
+            if isinstance(expression, NamedHole):
+                return expression.name
+            
+            if expression.isAbstraction:
+                return next_nonterminal(expression.body)
+            if expression.isApplication:
+                f=next_nonterminal(expression.f)
+                if f is None:
+                    return next_nonterminal(expression.x)
+                return f
+            return None
+
+        def substitute(expression, value):
+            if isinstance(expression, NamedHole):
+                return value
+            
+            if expression.isAbstraction:
+                body = substitute(expression.body, value)
+                if body is None: return None
+                return Abstraction(body)
+            if expression.isApplication:
+                f = substitute(expression.f, value)
+                if f is None:
+                    x = substitute(expression.x, value)
+                    if x is None: return None
+                    return Application(expression.f, x)
+                return Application(f, expression.x)
+            return None
+
+        
+
+        while len(h)>0:
+            lp, e = h.popMaximum()
+            
+            nt=next_nonterminal(e)
+            
+            if nt is None:
+                yield e, lp
+            else:
+                for lpp, k, arguments in self.productions[nt]:
+                    rewrite = k
+                    for nl, at in arguments:
+                        at = NamedHole(at).wrap_in_abstractions(nl)
+                        rewrite = Application(rewrite, at)
+                    #eprint(e, ">>", substitute(e, rewrite))
+                    ep = substitute(e, rewrite)
+                    h.push(lp+lpp, (lp+lpp, ep))
+                    if partial:
+                        yield ep, lp+lpp
+
+    def quantized_enumeration(self, resolution=1.5):
+        
+        self = self.number_rules()
+        
+        for i, e in enumerate(self.best_first_enumeration(partial=True)):
+            eprint(i, e)
+
+        # replace probabilities with quantized costs            
+        productions = [[ (max(int(-lp/resolution+0.5), 1), k, arguments)
+                         for lp, k, arguments in right_hand_sides ]
+                       for right_hand_sides in self.productions]
+        # for right_hand_sides in self.productions:
+        #     this_production=[]
+        #     for lp, k, arguments in right_hand_sides:
+        #         this_production.append((max(int(-lp/resolution+0.5), 1), k, arguments))
+        #     productions.append(this_production)
+
+        nonterminals = len(productions)
+
+        expressions = [ [None for _ in range(int(100/resolution))]
+                        for _ in range(nonterminals) ]
+
+        def expressions_of_size(symbol, size):
+            nonlocal expressions
+            
+            #print(symbol, size, productions[symbol])
+            if size <= 0:
+                return []
+            
+            if expressions[symbol][size] is None:
+                new=[]
+                for cost, k, arguments in productions[symbol]:
+                    if cost>size: continue
+                    
+                    if len(arguments) == 0:
+                        if cost==size:
+                            new.append(k)
+                    elif len(arguments) == 1:
+                        nl1, at1 = arguments[0]
+                        for a1 in expressions_of_size(at1, size-cost):
+                            a1 = a1.wrap_in_abstractions(nl1)
+                            new.append(Application(k, a1))
+                    elif len(arguments) == 2:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for a2 in expressions_of_size(at2, size-cost-c1):
+                                    a2 = a2.wrap_in_abstractions(nl2)
+                                    new.append(Application(Application(k, a1), a2))
+                    elif len(arguments) == 3:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for a3 in expressions_of_size(at3, size-cost-c1-c2):
+                                            a3 = a3.wrap_in_abstractions(nl3)
+                                            new.append(Application(Application(Application(k, a1), a2), a3))
+                    elif len(arguments) == 4:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        nl4, at4 = arguments[3]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for c3 in range(size-cost-c1-c2):
+                                            for a3 in expressions_of_size(at3, c3):
+                                                a3 = a3.wrap_in_abstractions(nl3)
+                                                for a4 in expressions_of_size(at3, size-cost-c1-c2-c3):
+                                                    new.append(Application(Application(Application(Application(k, a1), a2), a3), a4))
+                    else:
+                        assert False
+                #print(symbol, size, new)
+                expressions[symbol][size] = new
+                
+            return expressions[symbol][size]
+
+        t0=time.time()
+        n=0
+        for cost in range(int(100/resolution)):
+            for e in expressions_of_size(self.start_symbol, cost):                                
+                e = e.wrap_in_abstractions(self.number_of_arguments)
+                n+=1
+                #eprint((time.time()-t0)/n, n/(time.time()-t0), n, (time.time()-t0), cost, e, self.log_probability(e))
+            if n>=10000000:
+                eprint((time.time()-t0)/n, n/(time.time()-t0),
+                       n, (time.time()-t0), cost, e, self.log_probability(e))
+                return 
         
                 
-                
+def quantized_enumeration(g):
+    return g.quantized_enumeration()
 if __name__ == "__main__":
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
     g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))

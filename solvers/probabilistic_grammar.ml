@@ -14,7 +14,8 @@ type probabilistic_production ={production_probability: float;
 
 type probabilistic_grammar ={
   productions: (probabilistic_production Array.t) Array.t;
-  start_symbol: int
+  start_symbol: int;
+  number_of_arguments: int;
 }
 
 let show_probabilistic (g:probabilistic_grammar) : string =
@@ -41,7 +42,8 @@ let deserialize_PCFG j =
                                  List.map ~f:(fun ar -> {number_of_lambdas= ar |> member "n_lambda" |> to_int;
                                                          nonterminal= ar |> member "nt" |> to_int})
           }) |> Array.of_list) |> Array.of_list;
-  start_symbol= j |> member "start_symbol" |> to_int
+  start_symbol= j |> member "start_symbol" |> to_int;
+  number_of_arguments= j |> member "number_of_arguments" |> to_int;
 };;
 
 
@@ -127,40 +129,56 @@ let bottom_up_enumeration ?factor:(factor=10) ~lower_bound ~upper_bound (g : pro
       | 0, [] -> [f]
       | _, [] -> []
       | 0, (_::_) -> []
-      | _, [{nonterminal=a}] -> populate a c |> List.map ~f:(fun a -> Apply(f, a))
-      | _, [{nonterminal=a1};{nonterminal=a2}] ->
+      | _, [{nonterminal=a1;number_of_lambdas=l1}] ->
+        populate a1 c |> List.map ~f:(fun a1 ->
+            let a1=wrap_with_abstractions l1 a1 in
+            Apply(f, a1))
+      | _, [{nonterminal=a1;number_of_lambdas=l1};{nonterminal=a2;number_of_lambdas=l2}] ->
         (0--c) |> List.concat_map ~f:(fun c1 ->
             populate a1 c1 |> List.concat_map ~f:(fun a1 ->
+                let a1 = wrap_with_abstractions l1 a1 in 
                 populate a2 (c-c1) |> List.map ~f:(fun a2 ->
+                    let a2 = wrap_with_abstractions l2 a2 in 
                     Apply(Apply(f, a1), a2))))
-      | _, [{nonterminal=a1};{nonterminal=a2};{nonterminal=a3}] ->
+      | _, [{nonterminal=a1;number_of_lambdas=l1};{nonterminal=a2;number_of_lambdas=l2};{nonterminal=a3;number_of_lambdas=l3}] ->
         (0--c) |> List.concat_map ~f:(fun c1 ->
             populate a1 c1 |> List.concat_map ~f:(fun a1 ->
+                let a1 = wrap_with_abstractions l1 a1 in 
                 (0--(c-c1)) |> List.concat_map ~f:(fun c2 ->
                     populate a2 c2 |> List.concat_map ~f:(fun a2 ->
+                        let a2 = wrap_with_abstractions l2 a2 in 
                         populate a3 (c-c1-c2) |> List.map ~f:(fun a3 ->
+                            let a3 = wrap_with_abstractions l3 a3 in 
                             Apply(Apply(Apply(f, a1), a2), a3))))))
-      | _, [{nonterminal=a1};{nonterminal=a2};{nonterminal=a3};{nonterminal=a4}] ->
+      | _, [{nonterminal=a1;number_of_lambdas=l1};{nonterminal=a2;number_of_lambdas=l2};{nonterminal=a3;number_of_lambdas=l3};{nonterminal=a4;number_of_lambdas=l4}] ->
         (0--c) |> List.concat_map ~f:(fun c1 ->
             populate a1 c1 |> List.concat_map ~f:(fun a1 ->
+                let a1 = wrap_with_abstractions l1 a1 in 
                 (0--(c-c1)) |> List.concat_map ~f:(fun c2 ->
                     populate a2 c2 |> List.concat_map ~f:(fun a2 ->
+                        let a2 = wrap_with_abstractions l2 a2 in 
                         (0--(c-c1-c2)) |> List.concat_map ~f:(fun c3 ->
                             populate a3 c3 |> List.concat_map ~f:(fun a3 ->
+                                let a3 = wrap_with_abstractions l3 a3 in 
                                 populate a4 (c-c1-c2-c3) |> List.map ~f:(fun a4 ->
+                                    let a4 = wrap_with_abstractions l4 a4 in 
                                     Apply(Apply(Apply(Apply(f, a1), a2), a3), a4))))))))
   in 
-      
+
   let rec loop c=
-    Printf.eprintf "%d/%d\n"
-      c (scale upper_bound); flush_everything();
-    populate (g.start_symbol) c |> List.iter ~f:(fun p -> callback p 0.);
-    if enumeration_timed_out() || c>=(scale upper_bound)then
+    if enumeration_timed_out() || c >= scale upper_bound then
       ()
-    else
-      loop (c+1)
+    else begin
+      Printf.eprintf "%d/%d\n"
+        c (scale upper_bound); flush_everything();
+      let l = (0. -. Float.of_int c /. factor) in 
+      populate (g.start_symbol) c |>
+      List.iter ~f:(fun p ->
+          callback (wrap_with_abstractions (g.number_of_arguments) p) l);
+      loop (c+1);
+    end
   in
-  loop 0
+  loop (scale lower_bound)
 
 (* let possible_concrete_types ?nesting:(nesting=3) (g:grammar) : tp list = *)
 (*   let base_types = ref [] in *)

@@ -100,3 +100,6 @@ let tail ls =
 	let size' = size / 2 in
 	  (size', t1) :: (size', t2) :: rest
 
+let rec from_list = function
+  | [] -> empty
+  | x::xs -> cons x (from_list xs)

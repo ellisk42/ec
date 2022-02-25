@@ -37,3 +37,4 @@ val isempty : 'a funarray -> bool
 val cons : 'a -> 'a funarray -> 'a funarray
 val head : 'a funarray -> 'a
 val tail : 'a funarray -> 'a funarray
+val from_list : 'a list -> 'a funarray

@@ -26,8 +26,9 @@ def multicoreEnumeration(g, tasks, _=None,
 
      # everything that gets sent between processes will be dilled
     import dill
-
-    solvers = {"ocaml": solveForTask_ocaml,   
+    
+    solvers = {"ocaml": solveForTask_ocaml,
+               "bottom": solveForTask_ocaml,   
                "pypy": solveForTask_pypy,   
                "python": solveForTask_python}   
     assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python." 
@@ -37,13 +38,26 @@ def multicoreEnumeration(g, tasks, _=None,
       # Use an all or nothing likelihood model.
       likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout) 
       
-    solver = solvers[solver]
 
     if not isinstance(g, dict):
         g = {t: g for t in tasks}
-    for t, _g in g.items():
-        _g.unrolled = PCFG.from_grammar(_g, t.request).json()
+    
+    
+    if solver == "bottom":
+        
+        for t, _g in g.items():
+            _g.unrolled = PCFG.from_grammar(_g, t.request).json()
+            g = PCFG.from_grammar(_g, t.request)
+            callCompiled(quantized_enumeration, g)
+            assert False
+            if t.name=="bool-identify-geq-k with k=0":
+                print(PCFG.from_grammar(_g, t.request))
+                import pdb; pdb.set_trace()
+                
     task2grammar = g
+
+    solver_str = solver
+    solver = solvers[solver]
 
     # If we are not evaluating on held out testing tasks:
     # Bin the tasks by request type and grammar
@@ -82,15 +96,11 @@ def multicoreEnumeration(g, tasks, _=None,
         return sum(e.logLikelihood > -0.01 for e in f)
 
     def budgetIncrement(lb):
-        if True:
-            return 1.5
-        # Very heuristic - not sure what to do here
-        if lb < 24.:
-            return 1.
-        elif lb < 27.:
-            return 0.5
+        nonlocal solver_str
+        if solver_str=="bottom":
+            return 6
         else:
-            return 0.25
+            return 1.5
 
     def maximumFrontiers(j):
         tasks = jobs[j]
@@ -276,10 +286,8 @@ def solveForTask_ocaml(_=None,
 
 
     message = {"DSL": g.json(),
-               "PCFG": g.unrolled,
                "tasks": [taskMessage(t)
                          for t in tasks],
-
                "programTimeout": evaluationTimeout,
                "nc": CPUs,
                "timeout": timeout,
@@ -288,6 +296,9 @@ def solveForTask_ocaml(_=None,
                "budgetIncrement": budgetIncrement,
                "verbose": False,
                "shatter": 5 if len(tasks) == 1 and "turtle" in str(tasks[0].request) else 10}
+    
+    if hasattr(g, "unrolled"):
+        message["PCFG"] = g.unrolled
 
     if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
         message["maxParameters"] = tasks[0].maxParameters
@@ -320,6 +331,11 @@ def solveForTask_ocaml(_=None,
     searchTimes = {}
     for t in tasks:
         solutions = response[t.name]
+        for e in solutions:
+            p=Program.parse(e["program"])
+            try: g.logLikelihood(t.request, p)
+            except:
+                print(t, p, "TYPING ERROR")
         frontier = Frontier([FrontierEntry(program=p,
                                            logLikelihood=e["logLikelihood"],
                                            logPrior=g.logLikelihood(t.request, p))
@@ -334,7 +350,7 @@ def solveForTask_ocaml(_=None,
         # Rather it is the time to find the MAP solution
         # This is important for regression problems,
         # where we might find something with a good prior but bad likelihood early on,
-        # and only later discovered the good high likelihood program
+        # and only later discover the good high likelihood program
         else:
             searchTimes[t] = min(
                 (e["logLikelihood"] + e["logPrior"],

@@ -4,7 +4,7 @@ open Funarray
 type tp = 
   | TID of int
   | TCon of string * tp list * bool
-[@@deriving compare]            
+[@@deriving compare, hash, sexp_of]            
 
 let is_polymorphic = function
   | TID(_) -> true
@@ -93,6 +93,7 @@ let lookupTID (next, bindings) j =
   assert (j < next);
   Funarray.lookup bindings (next - j - 1)
 
+
 (* let rec chaseType (context : tContext) (t : tp) : tp*tContext =  *)
 (*   match t with *)
 (*   | TCon(s, ts) -> *)
@@ -125,6 +126,21 @@ let rec applyContext k t =
       let (k,tp') = applyContext k tp in
       let k = if tp_eq tp tp' then k else bindTID j tp' k in
       (k,tp')
+
+(* First apply the first substitution, and then apply the second substitution *)
+let compose_substitutions (next, bindings) (next', bindings') =
+  let nextnext = max next next' in
+  let new_bindings =
+    List.range ~start:`inclusive ~stop:`exclusive 0 (nextnext-1) |> List.map ~f:(fun i ->
+        let t = TID(i) in
+        let t = if i<next then applyContext (next, bindings) t |> snd else t in
+        let t = if i<next' then applyContext (next', bindings') t |> snd else t in
+        if tp_eq t (TID(i)) then
+          None
+        else
+          Some(t)) |> List.rev |> Funarray.from_list
+  in 
+  (nextnext, new_bindings)
 
 
 
@@ -183,6 +199,12 @@ let instantiate_type k t =
   in let q = instantiate t in
   (!k, q)
 
+let rec add_constant_to_type_variables c t =
+  match t with
+  | TID(n) -> TID(n+c)
+  | TCon(_, _, false) -> t
+  | TCon(k,a,true) -> TCon(k,a |> List.map ~f:(add_constant_to_type_variables c),true)
+
 
 let applyContext' k t =
   let new_context, t' = applyContext !k t in
@@ -210,8 +232,28 @@ let canonical_type t =
 let rec next_type_variable t = 
   match t with
   | TID(i) -> i+1
+  | TCon(_,_,false) -> 0      
   | TCon(_,[],_) -> 0
   | TCon(_,is,_) -> List.fold_left ~f:max ~init:0 (List.map is next_type_variable)
+
+let next_type_variable_many ts =
+  List.fold_left ~f:max ~init:0 (List.map ~f:next_type_variable ts)
+
+(* puts types into normal form *)
+let canonical_types ts = 
+  let next = ref 0 in
+  let substitution = ref [] in
+  let rec canon q = 
+    match q with
+    | TID(i) ->
+      (try TID(List.Assoc.find_exn ~equal:(=) !substitution i)
+       with Not_found ->
+         substitution := (i,!next)::!substitution;
+         next := (1 + !next);
+         TID(!next-1))
+    | TCon(_,_,false) -> q
+    | TCon(k,a,true) -> kind k (List.map ~f:canon a)
+  in ts |> List.map ~f:canon
 
 (* tries to instantiate a universally quantified type with a given request *)
 (* let instantiated_type universal_type requested_type = 
