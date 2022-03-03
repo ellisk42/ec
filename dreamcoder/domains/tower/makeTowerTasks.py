@@ -49,9 +49,9 @@ class SupervisedTower(Task):
     
     # do not pickle the image
     def __getstate__(self):
-        return self.specialTask, self.plan, self.request, self.cache, self.name, self.examples
+        return self.specialTask, self.plan, self.request, self.cache, self.name, self.examples, self.original
     def __setstate__(self, state):
-        self.specialTask, self.plan, self.request, self.cache, self.name, self.examples = state
+        self.specialTask, self.plan, self.request, self.cache, self.name, self.examples, self.original = state
         self.image = None
 
 
@@ -503,14 +503,19 @@ def dSLDemo():
     return images
             
 if __name__ == "__main__":
-    from pylab import imshow,show
+    ##
     from dreamcoder.domains.tower.tower_common import *
     
     ts = makeSupervisedTasks()
     print(len(ts),"total tasks")
+
+    
     print("maximum plan length",max(len(f.plan) for f in ts ))
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
+
+
+    from pylab import imshow,show
     SupervisedTower.exportMany("/tmp/every_tower.png",ts,shuffle=False)
     
     for j,t in enumerate(ts):

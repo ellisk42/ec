@@ -142,6 +142,9 @@ class Program(object):
     @property
     def isHole(self): return False
 
+    @property
+    def isNamedHole(self): return False
+
     @staticmethod
     def parse(s):
         s = parseSExpression(s)
@@ -852,7 +855,7 @@ class NamedHole(Program):
     def show(self, isFunction): return str(self.name)
 
     @property
-    def isHole(self): return True
+    def isNamedHole(self): return True
 
     def __eq__(self, o): return isinstance(o, NamedHole) and self.name==o.name
 
@@ -1246,6 +1249,35 @@ def untokeniseProgram(l):
     }
     s = " ".join(lookup.get(x, x) for x in l)
     return Program.parse(s)
+
+class _Abstraction():
+    def __init__(self, n, body):
+        self.n, self.body = n, body
+
+    def evaluate(self, environment):
+        return lambda *arguments: self.body.evaluate(list(arguments) + environment)
+class _Apply():
+    def __init__(self, f, *xs):
+        self.f = f
+        self.xs = xs
+
+    def evaluate(self, environment):
+        return self.f.evaluate(environment)(*[x.evaluate(environment)
+                                              for x in self.xs ])
+
+def to_fast_program(p):
+    if p.isAbstraction:
+        n=0
+        while p.isAbstraction:
+            p=p.body
+            n+=1
+        return _Abstraction(n, to_fast_program(p))
+    if p.isApplication:
+        f, xs = p.applicationParse()
+        return _Apply(to_fast_program(f),
+                      *[to_fast_program(x) for x in xs])
+    return p
+
 
 if __name__ == "__main__":
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *

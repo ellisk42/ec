@@ -245,3 +245,11 @@ class Frontier(object):
                 "\tThis is acceptable only if the likelihood model is stochastic. Took the geometric mean of the likelihoods.")
 
         return Frontier(union, self.task)
+
+    @staticmethod
+    def combineMany(fs):
+        f = fs[0]
+        for fp in fs[1:]:
+            f = f.combine(fp)
+        return f
+    

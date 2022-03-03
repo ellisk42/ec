@@ -579,7 +579,7 @@ class Grammar(object):
 
             try: context = context.unify(ft.returns(), request)                
             except UnificationFailure:
-                print("Exception: sketch is ill-typed")
+                eprint("Exception: sketch is ill-typed")
                 return #so that we can continue evaluating
                 # raise SketchEnumerationFailure() #"sketch is ill-typed"
             ft = ft.apply(context)
@@ -1433,8 +1433,8 @@ class PCFG():
         start_environment = push_multiple_environment(environment, {})
         start_symbol = (request, start_environment)
         make_rules(*start_symbol)
-        print(len(rules), "nonterminal symbols")
-        print(sum(len(productions) for productions in rules.values()), "production rules")
+        eprint(len(rules), "nonterminal symbols")
+        eprint(sum(len(productions) for productions in rules.values()), "production rules")
         return PCFG(rules, start_symbol, len(start_environment)).normalize()
 
     def normalize(self):
@@ -1456,6 +1456,9 @@ class PCFG():
             for nt, rs in self.productions.items()))
             
     def number_rules(self):
+        if isinstance(self.productions, list):
+            return self
+        
         mapping = dict(zip(self.productions.keys(), range(len(self.productions))))
         reverse_mapping = {v:k for k,v in mapping.items() }
 
@@ -1482,13 +1485,19 @@ class PCFG():
 
     def log_probability(self, program, symbol=None):
 
+        if symbol is None:
+            symbol = self.start_symbol
+
         while isinstance(program, Program) and program.isAbstraction:
             program = program.body
+
+        if isinstance(program, NamedHole):
+            program = program.name
             
         if not isinstance(program, Program):
             # assume it is a nonterminal
             assert isinstance(program, int) and 0<=program<len(self.productions) or \
-                program in self.productions
+                program in self.productions, f"failure to type production: {program}:{symbol}"
 
             if program == symbol:
                 return 0.
@@ -1496,8 +1505,7 @@ class PCFG():
                 return float("-inf")
             
             
-        if symbol is None:
-            symbol = self.start_symbol
+        
 
         rules = self.productions[symbol]
 
@@ -1570,78 +1578,71 @@ class PCFG():
 
     def split(self, nc):
         
-        h=PQ()
-
-        h.push(0., (0., NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)))
-
-        def next_nonterminal(expression):
+        
+        def expansions(expression):
             if isinstance(expression, NamedHole):
-                return expression.name
+                for _, k, arguments in self.productions[expression.name]:
+                    arguments = [NamedHole(at).wrap_in_abstractions(nl)
+                                 for nl, at in arguments ]
+                    for a in arguments:
+                        k = Application(k, a)
+                    yield k
             
             if expression.isAbstraction:
-                return next_nonterminal(expression.body)
-            if expression.isApplication:
-                f=next_nonterminal(expression.f)
-                if f is None:
-                    return next_nonterminal(expression.x)
-                return f
-            return None
-
-        def substitute(expression, value):
-            if isinstance(expression, NamedHole):
-                return value
+                for b in expansions(expression.body):
+                    yield Abstraction(b)
             
-            if expression.isAbstraction:
-                body = substitute(expression.body, value)
-                if body is None: return None
-                return Abstraction(body)
             if expression.isApplication:
-                f = substitute(expression.f, value)
-                if f is None:
-                    x = substitute(expression.x, value)
-                    if x is None: return None
-                    return Application(expression.f, x)
-                return Application(f, expression.x)
-            return None
+                
+                for f in expansions(expression.f):
+                    yield Application(f, expression.x)
+                for x in expansions(expression.x):
+                    yield Application(expression.f, x)
+
+        initial_split = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
+        while len(initial_split) < nc:
+            biggest=max(initial_split, key=lambda pp: self.log_probability(pp))
+            initial_split = list(expansions(biggest)) + [pp for pp in initial_split if pp!=biggest]
+
+        split = [[] for _ in range(nc) ]
+        for i, pp in enumerate(initial_split):
+            split[i%nc].append(pp)
+
+        return split
+
+        
+        # def quality(s):
+        #     mass = [ lse([self.log_probability(pp) for pp in pps ])
+        #              for pps in s ]
+        #     eprint(mass)
+        #     return exp(min(mass)-max(mass))
+
+        # def find_swap(s):
+        #     i = max(range(s), key=lambda i: lse([self.log_probability(pp) for pp in s[i] ]))
+            
+        # eprint(quality(split))
+        # import pdb; pdb.set_trace()
+        
 
         
 
-        while len(h)>0:
-            lp, e = h.popMaximum()
-            
-            nt=next_nonterminal(e)
-            
-            if nt is None:
-                yield e, lp
-            else:
-                for lpp, k, arguments in self.productions[nt]:
-                    rewrite = k
-                    for nl, at in arguments:
-                        at = NamedHole(at).wrap_in_abstractions(nl)
-                        rewrite = Application(rewrite, at)
-                    #eprint(e, ">>", substitute(e, rewrite))
-                    ep = substitute(e, rewrite)
-                    h.push(lp+lpp, (lp+lpp, ep))
-                    if partial:
-                        yield ep, lp+lpp
-
-    def quantized_enumeration(self, resolution=1.5):
         
+
+    def quantized_enumeration(self, resolution=0.5, skeletons=None):        
         self = self.number_rules()
-        
-        for i, e in enumerate(self.best_first_enumeration(partial=True)):
-            eprint(i, e)
+
+        if skeletons is None:
+            skeletons = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
+            skeletons = [pp for pps in self.split(10) for pp in pps ]
+            eprint(skeletons)
+        skeleton_costs=[int(-self.log_probability(pp)/resolution+0.5)
+                        for pp in skeletons ]
 
         # replace probabilities with quantized costs            
         productions = [[ (max(int(-lp/resolution+0.5), 1), k, arguments)
                          for lp, k, arguments in right_hand_sides ]
                        for right_hand_sides in self.productions]
-        # for right_hand_sides in self.productions:
-        #     this_production=[]
-        #     for lp, k, arguments in right_hand_sides:
-        #         this_production.append((max(int(-lp/resolution+0.5), 1), k, arguments))
-        #     productions.append(this_production)
-
+        
         nonterminals = len(productions)
 
         expressions = [ [None for _ in range(int(100/resolution))]
@@ -1650,7 +1651,7 @@ class PCFG():
         def expressions_of_size(symbol, size):
             nonlocal expressions
             
-            #print(symbol, size, productions[symbol])
+            
             if size <= 0:
                 return []
             
@@ -1712,31 +1713,31 @@ class PCFG():
                 
             return expressions[symbol][size]
 
-        t0=time.time()
-        n=0
-        for cost in range(int(100/resolution)):
-            for e in expressions_of_size(self.start_symbol, cost):                                
-                e = e.wrap_in_abstractions(self.number_of_arguments)
-                n+=1
-                #eprint((time.time()-t0)/n, n/(time.time()-t0), n, (time.time()-t0), cost, e, self.log_probability(e))
-            if n>=10000000:
-                eprint((time.time()-t0)/n, n/(time.time()-t0),
-                       n, (time.time()-t0), cost, e, self.log_probability(e))
-                return 
-        
-                
-def quantized_enumeration(g):
-    return g.quantized_enumeration()
-if __name__ == "__main__":
-    from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-    g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
-    g = g.randomWeights(lambda *a: random.random())
-    #p = Program.parse("(lambda (+ 1 $0))")
-    request = arrow(tint,tint)
-    for ll,_,p in g.enumeration(Context.EMPTY,[],request,
-                               12.):
-        ll_ = g.logLikelihood(request,p)
-        print(ll,p,ll_)
-        d = abs(ll - ll_)
-        assert d < 0.0001
+        def complete_skeleton(cost, skeleton):
+            if skeleton.isAbstraction:
+                for b in complete_skeleton(cost, skeleton.body):
+                    yield Abstraction(b)
+            elif skeleton.isApplication:
+                for function_cost in range(cost+1):
+                    for f in complete_skeleton(function_cost, skeleton.f):
+                        for x in complete_skeleton(cost-function_cost, skeleton.x):
+                            yield Application(f, x)
+            elif skeleton.isNamedHole:
+                yield from expressions_of_size(skeleton.name, cost)
+            else:
+                if cost==0:
+                    yield skeleton
 
+                    
+        
+
+        expressions = [ [None for _ in range(int(100/resolution))]
+                        for _ in range(nonterminals) ]
+        for cost in range(int(100/resolution)):
+            for skeleton, skeleton_cost in zip(skeletons, skeleton_costs):
+                for e in complete_skeleton(cost-skeleton_cost, skeleton):                    
+                    yield e
+
+        
+
+    
