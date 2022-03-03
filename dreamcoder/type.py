@@ -25,6 +25,9 @@ class TypeConstructor(Type):
         self.arguments = arguments
         self.isPolymorphic = any(a.isPolymorphic for a in arguments)
 
+    def free_type_variables(self):
+        return {fv for t in self.arguments for fv in t.free_type_variables() }
+
     def makeDummyMonomorphic(self, mapping=None):
         mapping = mapping if mapping is not None else {}
         return TypeConstructor(self.name,
@@ -129,6 +132,9 @@ class TypeVariable(Type):
         assert isinstance(j, int)
         self.v = j
         self.isPolymorphic = True
+
+    def free_type_variables(self):
+        return {self.v}
 
     def makeDummyMonomorphic(self, mapping=None):
         mapping = mapping if mapping is not None else {}

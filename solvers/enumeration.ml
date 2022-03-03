@@ -37,44 +37,46 @@ let serialize_frontier f =
   in
   j
 
-let violates_symmetry f a n = 
-  if not (is_base_primitive f) then false else
-    let a = application_function a in
-    if not (is_base_primitive a) then false else 
-      match (n, primitive_name f, primitive_name a) with
-      (* McCarthy primitives *)
-      | (0,"car","cons") -> true
-      | (0,"car","empty") -> true
-      | (0,"cdr","cons") -> true
-      | (0,"cdr","empty") -> true
-      | (_,"+","0") -> true
-      | (1,"-","0") -> true
-      | (0,"+","+") -> true
-      | (0,"*","*") -> true
-      | (_,"*","0") -> true
-      | (_,"*","1") -> true
-      | (0,"empty?","cons") -> true
-      | (0,"empty?","empty") -> true
-      | (0,"zero?","0") -> true
-      | (0,"zero?","1") -> true
-      | (0,"zero?","-1") -> true
-      (* bootstrap target *)
-      | (1,"map","empty") -> true
-      | (_,"zip","empty") -> true
-      | (0,"fold","empty") -> true
-      | (1,"index","empty") -> true
-      | (_,"left","left") -> true
-      | (_,"left","right") -> true
-      | (_,"right","right") -> true
-      | (_,"right","left") -> true
-      (* | (_,"tower_embed","tower_embed") -> true *)
-      | _ -> false
+let violates_symmetry f a n =
+  false
+  (* if not (is_base_primitive f) then false else *)
+  (*   let a = application_function a in *)
+  (*   if not (is_base_primitive a) then false else  *)
+  (*     match (n, primitive_name f, primitive_name a) with *)
+  (*     (\* McCarthy primitives *\) *)
+  (*     | (0,"car","cons") -> true *)
+  (*     | (0,"car","empty") -> true *)
+  (*     | (0,"cdr","cons") -> true *)
+  (*     | (0,"cdr","empty") -> true *)
+  (*     | (_,"+","0") -> true *)
+  (*     | (1,"-","0") -> true *)
+  (*     | (0,"+","+") -> true *)
+  (*     | (0,"*","*") -> true *)
+  (*     | (_,"*","0") -> true *)
+  (*     | (_,"*","1") -> true *)
+  (*     | (0,"empty?","cons") -> true *)
+  (*     | (0,"empty?","empty") -> true *)
+  (*     | (0,"zero?","0") -> true *)
+  (*     | (0,"zero?","1") -> true *)
+  (*     | (0,"zero?","-1") -> true *)
+  (*     (\* bootstrap target *\) *)
+  (*     | (1,"map","empty") -> true *)
+  (*     | (_,"zip","empty") -> true *)
+  (*     | (0,"fold","empty") -> true *)
+  (*     | (1,"index","empty") -> true *)
+  (*     | (_,"left","left") -> true *)
+  (*     | (_,"left","right") -> true *)
+  (*     | (_,"right","right") -> true *)
+  (*     | (_,"right","left") -> true *)
+  (*     (\* | (_,"tower_embed","tower_embed") -> true *\) *)
+  (*     | _ -> false *)
 
 (* For now this is disabled and is not used *)
 let violates_commutative f x y =
-    match f with
-    | "eq?" | "+" -> compare_program x y > 0
-    | _ -> false
+  false
+    (* match f with *)
+    (* | "eq?" | "+" -> compare_program x y > 0 *)
+    (* | _ -> false *)
 
 (* Best first enumeration *)
 let primitive_unknown t g = Primitive(t, "??", ref g |> magical);;
@@ -242,8 +244,11 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
       
 (* Depth first enumeration *)
 let enumeration_timeout = ref Float.max_value;;
+let enumeration_timeout_starting = ref Float.max_value;;
 let enumeration_timed_out() = Unix.time() > !enumeration_timeout;;
+let enumeration_timeout_elapsed() = Unix.time() -. !enumeration_timeout_starting;;
 let set_enumeration_timeout dt =
+  enumeration_timeout_starting := Unix.time();
   enumeration_timeout := Unix.time() +. dt;;
 
 
@@ -530,3 +535,124 @@ let test_best_enumeration() =
   let open Sys in
   enumerate_programs ~maxFreeParameters:mfp ~final:(fun () -> List.take !frontier 5) ~nc:(Sys.argv.(1) |> Int.of_string) (g |> make_dummy_contextual) request 0. (Sys.argv.(2) |> Float.of_string) k
 ;;
+
+module EnumerationRequest = struct
+  type t = tp*(tp list)
+  [@@deriving compare, hash, sexp_of]
+
+  let my_context (r:t) =
+    let (request, environment) = r in
+    let i = next_type_variable_many (request :: environment) in
+    makeTIDs i empty_context
+
+  let candidates (g:grammar) (r:t) =
+    let (request, environment) = r in
+    let k = my_context r in
+    unifying_expressions g environment request k
+
+  let my_request (r:t) =
+    let (request, environment) = r in
+    request
+
+  let my_environment (r:t) =
+    let (request, environment) = r in
+    environment
+
+  let request_unifier r0 r1 r2 =
+    (* assumes that r2 is a specialization of r1 *)
+    let t0, e0=  r0 in
+    let t1, e1 =  r1 in
+    let t2, e2 =  r2 in 
+    let i = next_type_variable_many (t0 :: t1 :: t2 :: (e0@e1@e2)) in 
+    let k = ref (unify (makeTIDs i empty_context) t2 t1) in
+    List.iter2_exn e2 e1 ~f:(fun t2 t1 -> k:=unify !k t2 t1);
+    !k
+    
+  let substitute k (r, e) : t =
+    (applyContext k r |> snd,
+     e |> List.map ~f:(fun t -> applyContext k t |> snd))
+        
+end;;
+
+let make_enumeration_table() = Hashtbl.create (module EnumerationRequest)
+
+
+let dynamic_programming_enumeration ?factor:(factor=2) ~lower_bound ~upper_bound (g : grammar) (t : tp) (callback : program -> float -> unit) : unit =
+  let factor = Float.of_int factor in 
+  let scale f = Int.of_float (f*.factor +. 0.5) in
+  let unscale c = Float.of_int c /. factor in 
+
+  let table = make_enumeration_table() in 
+  
+  let rec populate (request:EnumerationRequest.t) cost
+    (callback : program -> EnumerationRequest.t -> unit) : unit =
+    if cost<0 then () else
+      match EnumerationRequest.my_request request with
+      | TCon("->",[t1;t2],_) ->
+        populate (t2, t1 :: (EnumerationRequest.my_environment request)) cost
+          (fun p contexts -> callback (Abstraction(p)) contexts)
+      | _ -> 
+        begin
+          let candidates, vector =
+            Hashtbl.find_or_add table request ~default:(fun () -> 
+                let candidates =
+                  EnumerationRequest.candidates g request |>
+                  List.map ~f:(fun (p,arguments,k,l) ->
+                      let cost = scale (0.-.l) in
+                      let environment = EnumerationRequest.my_environment request |> List.map ~f:(fun t -> applyContext k t |> snd) in
+                      let request' = EnumerationRequest.my_request request |> applyContext k |> snd in 
+                      (p,(request',environment),k,arguments,cost))
+                in
+                (candidates, Array.create (scale upper_bound + 1) None))
+          in
+          match vector.(cost) with
+          | Some(x) -> x |> List.iter ~f:(fun (p,ks) -> callback p ks)
+          | None ->
+            (let x = ref [] in
+             candidates |> List.iter ~f:(fun (f,(request',environment'),k,arguments,my_cost) ->
+                 let cost' = cost - my_cost in
+                 applications (request',environment') cost' f arguments
+                   (fun p ks -> x:= (p,ks)::!x));
+             vector.(cost) <- Some(!x);
+             !x |> List.iter ~f:(fun (p,ks) -> callback p ks))
+        end
+  and applications request cost f arguments callback =
+
+    let environment = EnumerationRequest.my_environment request in 
+    
+    if cost<0 then () else
+      match cost, arguments with
+      | 0, [] -> callback f request
+      | _, [] -> ()
+      | 0, (_::_) -> ()
+      | _, [t1] ->
+        populate (t1, environment) cost
+          (fun a1 new_a1_request ->
+             let k = EnumerationRequest.request_unifier request (t1, environment) new_a1_request in
+             let returned_request = EnumerationRequest.substitute k request in 
+             callback (Apply(f, a1)) returned_request)
+      | _, t1::ts ->
+        (0--cost) |> List.iter ~f:(fun c1 ->
+          populate (t1, environment) c1
+          (fun a1 new_a1_request ->
+             let k = EnumerationRequest.request_unifier request (t1, environment) new_a1_request in
+             let returned_request = EnumerationRequest.substitute k request in
+             let f' = Apply(f, a1) in 
+             applications returned_request (cost-c1) f' ts callback))
+  in
+
+  
+  let rec loop c=
+    if enumeration_timed_out() || c >= scale upper_bound then
+      ()
+    else begin
+      Printf.eprintf "dp: %d/%d\n"
+        c (scale upper_bound); flush_everything();
+      let l = (0. -. Float.of_int c /. factor) in 
+      populate (t, []) c (fun p _ ->
+          callback p l);
+      loop (c+1);
+    end
+  in
+  loop (scale lower_bound)
+

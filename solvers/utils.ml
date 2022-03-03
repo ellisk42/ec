@@ -81,6 +81,13 @@ let sort_by f l = List.sort ~compare:(fun x y ->
     if x = y then 0 else
       if x > y then 1 else -1) l
 
+let rec cartesian_multi_product (xss : 'a list list) : 'a list list =
+  match xss with
+  | [] -> [[]]
+  | xs :: yss ->
+    yss |> cartesian_multi_product |> List.concat_map ~f:(fun ys ->
+        xs |> List.map ~f:(fun x -> x::ys))
+
 
 let memorize f = 
   let table = Hashtbl.Poly.create () in

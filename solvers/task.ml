@@ -298,12 +298,11 @@ type hit_result = {hit_program: string;
                    hit_prior: float;
                    hit_time: float;}
 
-let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
-    ~maxFreeParameters
+let enumerate_for_tasks enumeration_backend ?verbose:(verbose = true)
     ?budgetIncrement:(budgetIncrement = 1.)
     ?lowerBound:(lowerBound = 0.)
     ?upperBound:(upperBound = 99.)
-    ?nc:(nc=1)
+    ~nc
     ~timeout
     (* tasks and maximum frontier sizes *)
     (tf: (task*int) list)
@@ -339,12 +338,15 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
           List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
        && !lower_bound +. budgetIncrement <= upperBound
   do
+    Printf.eprintf "%f, %f, %fs\n"
+      (!lower_bound) (!lower_bound +. budgetIncrement) (!enumeration_timeout -. Unix.time());
+    
     let number_of_enumerated_programs = ref 0 in
       let final_results =
         (* Returns a list of "final results" *)
         (* Each final result is [Array.map ~f:Heap.to_list hits] *)
         (* We flatten it to get a list of arrays of heaps *)
-        enumerate_programs ~maxFreeParameters:maxFreeParameters ~nc:nc g request
+        enumeration_backend
           (!lower_bound) (!lower_bound +. budgetIncrement)
           ~final:(fun () ->
               (* Printf.eprintf "%d\n" !number_of_enumerated_programs; flush_everything(); *)

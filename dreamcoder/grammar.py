@@ -1,3 +1,4 @@
+from frozendict import frozendict
 from collections import defaultdict
 
 from dreamcoder.frontier import *
@@ -6,6 +7,8 @@ from dreamcoder.type import *
 from dreamcoder.utilities import *
 
 import time
+
+import itertools
 
 class GrammarFailure(Exception):
     pass
@@ -576,7 +579,7 @@ class Grammar(object):
 
             try: context = context.unify(ft.returns(), request)                
             except UnificationFailure:
-                print("Exception: sketch is ill-typed")
+                eprint("Exception: sketch is ill-typed")
                 return #so that we can continue evaluating
                 # raise SketchEnumerationFailure() #"sketch is ill-typed"
             ft = ft.apply(context)
@@ -1294,15 +1297,447 @@ def batchLikelihood(jobs):
             response[(program, request, grammar)] = fast
     return response
 
-if __name__ == "__main__":
-    from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-    g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
-    g = g.randomWeights(lambda *a: random.random())
-    #p = Program.parse("(lambda (+ 1 $0))")
-    request = arrow(tint,tint)
-    for ll,_,p in g.enumeration(Context.EMPTY,[],request,
-                               12.):
-        ll_ = g.logLikelihood(request,p)
-        print(ll,p,ll_)
-        d = abs(ll - ll_)
-        assert d < 0.0001
+class PCFG():
+    def __init__(self, productions, start_symbol, number_of_arguments):
+        # productions: nonterminal -> [(log probability, constructor, [(#lambdas, nonterminal)])]
+        self.number_of_arguments = number_of_arguments
+        self.productions = productions
+        self.start_symbol = start_symbol
+
+    
+        
+
+    @staticmethod
+    def from_grammar(g, request, maximum_type=3, maximum_environment=2):
+        kinds = set()
+
+        def process_type(t):
+            if t.isArrow():
+                process_type(t.arguments[0])
+                process_type(t.arguments[1])
+            elif isinstance(t, TypeVariable):
+                return
+            else:
+                kinds.add((t.name, len(t.arguments)))
+                for a in t.arguments:
+                    process_type(a)
+
+        process_type(request)
+        for _, t, _ in g.productions:
+            process_type(t)
+
+
+        def types_of_size(s):
+            if s<=1:
+                yield from { TypeConstructor(n, []) for n, a in kinds if a==0 }
+                return 
+
+            for n, a in kinds:
+                assert a<3
+                if a==0: continue
+                if a==1:
+                    yield from { TypeConstructor(n, [t]) for t in types_of_size(s-1) }
+                if a==2:
+                    yield from { TypeConstructor(n, [t1, t2])
+                             for s1 in  range(1, s)
+                             for s2 in  range(1, s-s1)
+                             for t1 in types_of_size(s1)
+                             for t2 in types_of_size(s2) }
+
+        def size_of_type(t):
+            if isinstance(t, TypeVariable):
+                return 0
+            if t.isArrow():
+                return max(size_of_type(t.arguments[0]),
+                           size_of_type(t.arguments[1]))
+            return 1 + sum(size_of_type(a) for a in t.arguments)
+
+        environment = tuple(reversed(request.functionArguments()))
+        maximum_environment += len(environment)
+        request = request.returns()
+        possible_types = {t for s in range(1, maximum_type+1) for t in types_of_size(s)}|{request}
+
+        _instantiations = {}
+        def instantiations(t):
+            if not t.isPolymorphic:
+                return [t]
+
+            if t in _instantiations:
+                return _instantiations[t]
+            
+            t=t.canonical()
+            variables = t.free_type_variables()
+            
+            return_value = []
+            for substitution in itertools.product(possible_types, repeat=len(variables)):
+                context = Context(substitution=list(zip(range(len(variables)), substitution)))
+                new_type = t.apply(context)
+                if size_of_type(new_type) <= maximum_type:
+                    return_value.append(new_type)
+            _instantiations[t] = return_value
+            return return_value
+
+        # for _, t, p in g.productions:
+        #     print(p, t)
+        #     for i in instantiations(t):
+        #         print("\t", i)
+
+        def push_environment(tp, e):
+            if len(e)==0:
+                return (tp,)
+            else:
+                return tuple([tp]+list(e))
+            e=dict(e)
+            if tp in e: e[tp]+=1
+            else: e[tp]=1
+            return frozendict(e)
+        def push_multiple_environment(ts, e):
+            for t in ts: e=push_environment(t, e)
+            return e
+                
+
+        rules = {}
+        def make_rules(request, environment):
+            if (request, environment) in rules: return
+            rules[(request, environment)] = []
+            variable_candidates = [(g.logVariable, tp, Index(i))
+                                   # for t, count in environment.items()
+                                   # for i in range(count)
+                                   for i, t in enumerate(environment) 
+                                   for tp  in instantiations(t)
+                                   if tp.returns()==request]
+            if g.continuationType == request:
+                variable_candidates = [min(variable_candidates, key=lambda vc: vc[-1].i)]
+            variable_candidates = [(lp-math.log(len(variable_candidates)), t, p)
+                                   for lp, t, p in variable_candidates ]
+            
+            for lp, t, p in g.productions + variable_candidates:
+                for i in instantiations(t):
+                    if i.returns() == request:
+                        arguments = i.functionArguments()
+                        argument_symbols = []
+                        for a in arguments:
+                            new_environment = push_multiple_environment(a.functionArguments(),
+                                                                        environment)
+                            argument_symbols.append((len(a.functionArguments()),
+                                                     (a.returns(), new_environment)))
+
+                        if all( len(new_environment) <= maximum_environment
+                                for _, (_, new_environment) in argument_symbols ):
+                            rules[(request, environment)].append((lp, p, argument_symbols))
+            
+            for _, p, argument_symbols in rules[(request, environment)]:
+                for _, symbol in argument_symbols:
+                    make_rules(*symbol)
+
+        start_environment = push_multiple_environment(environment, {})
+        start_symbol = (request, start_environment)
+        make_rules(*start_symbol)
+        eprint(len(rules), "nonterminal symbols")
+        eprint(sum(len(productions) for productions in rules.values()), "production rules")
+        return PCFG(rules, start_symbol, len(start_environment)).normalize()
+
+    def normalize(self):
+        def norm(distribution):
+            z = lse([x[0] for x in distribution])
+            return [(x[0]-z, *x[1:]) for x in distribution]
+        if isinstance(self.productions, list):
+            self.productions = [ norm(rs) for rs in self.productions ]
+        elif isinstance(self.productions, dict):
+            self.productions = {k:norm(rs) for k, rs in self.productions.items()}
+        else:
+            assert False
+        return self
+
+    def __str__(self):
+        return f"start symbol: {self.start_symbol}\n\n%s"%("\n\n".join(
+            "\n".join(f"{nt} ::= {k}\t%s\t\t{l}"%(" ".join(f"{n}x{s}" for n, s in ar ))
+                      for l, k, ar in rs)
+            for nt, rs in self.productions.items()))
+            
+    def number_rules(self):
+        if isinstance(self.productions, list):
+            return self
+        
+        mapping = dict(zip(self.productions.keys(), range(len(self.productions))))
+        reverse_mapping = {v:k for k,v in mapping.items() }
+
+        new_productions = [ [ (lp, k, [(nl, mapping[nt]) for nl, nt in arguments ])
+                              for lp, k, arguments in self.productions[reverse_mapping[i]] ]
+            for i in range(len(self.productions)) ]
+
+        return PCFG(new_productions, mapping[self.start_symbol], self.number_of_arguments)
+
+    
+    
+
+    def json(self):
+        self = self.number_rules()
+        return {"rules": [ [ {"probability": lp, 
+                              "constructor": str(k),
+                              "arguments": [ {"n_lambda": nl, "nt": nt}
+                                             for nl, nt in arguments ]}
+                             for (lp, k, arguments) in rules ]
+                           for rules in self.productions ],
+                "number_of_arguments": self.number_of_arguments,
+                "start_symbol": self.start_symbol
+        }
+
+    def log_probability(self, program, symbol=None):
+
+        if symbol is None:
+            symbol = self.start_symbol
+
+        while isinstance(program, Program) and program.isAbstraction:
+            program = program.body
+
+        if isinstance(program, NamedHole):
+            program = program.name
+            
+        if not isinstance(program, Program):
+            # assume it is a nonterminal
+            assert isinstance(program, int) and 0<=program<len(self.productions) or \
+                program in self.productions, f"failure to type production: {program}:{symbol}"
+
+            if program == symbol:
+                return 0.
+            else:
+                return float("-inf")
+            
+            
+        
+
+        rules = self.productions[symbol]
+
+        
+        f, xs = program.applicationParse()
+
+        lp = float("-inf")
+        for p, k, arguments in rules:
+            if f==k:
+                _lp=p+sum(self.log_probability(a, at)
+                           for a, (_, at) in zip(xs, arguments) )
+                lp = lse(lp, _lp)
+        return lp
+
+    def best_first_enumeration(self, partial=False):
+        h=PQ()
+
+        h.push(0., (0., NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)))
+
+        def next_nonterminal(expression):
+            if isinstance(expression, NamedHole):
+                return expression.name
+            
+            if expression.isAbstraction:
+                return next_nonterminal(expression.body)
+            if expression.isApplication:
+                f=next_nonterminal(expression.f)
+                if f is None:
+                    return next_nonterminal(expression.x)
+                return f
+            return None
+
+        def substitute(expression, value):
+            if isinstance(expression, NamedHole):
+                return value
+            
+            if expression.isAbstraction:
+                body = substitute(expression.body, value)
+                if body is None: return None
+                return Abstraction(body)
+            if expression.isApplication:
+                f = substitute(expression.f, value)
+                if f is None:
+                    x = substitute(expression.x, value)
+                    if x is None: return None
+                    return Application(expression.f, x)
+                return Application(f, expression.x)
+            return None
+
+        
+
+        while len(h)>0:
+            lp, e = h.popMaximum()
+            
+            nt=next_nonterminal(e)
+            
+            if nt is None:
+                yield e, lp
+            else:
+                for lpp, k, arguments in self.productions[nt]:
+                    rewrite = k
+                    for nl, at in arguments:
+                        at = NamedHole(at).wrap_in_abstractions(nl)
+                        rewrite = Application(rewrite, at)
+                    #eprint(e, ">>", substitute(e, rewrite))
+                    ep = substitute(e, rewrite)
+                    h.push(lp+lpp, (lp+lpp, ep))
+                    if partial:
+                        yield ep, lp+lpp
+
+    def split(self, nc):
+        
+        
+        def expansions(expression):
+            if isinstance(expression, NamedHole):
+                for _, k, arguments in self.productions[expression.name]:
+                    arguments = [NamedHole(at).wrap_in_abstractions(nl)
+                                 for nl, at in arguments ]
+                    for a in arguments:
+                        k = Application(k, a)
+                    yield k
+            
+            if expression.isAbstraction:
+                for b in expansions(expression.body):
+                    yield Abstraction(b)
+            
+            if expression.isApplication:
+                
+                for f in expansions(expression.f):
+                    yield Application(f, expression.x)
+                for x in expansions(expression.x):
+                    yield Application(expression.f, x)
+
+        initial_split = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
+        while len(initial_split) < nc:
+            biggest=max(initial_split, key=lambda pp: self.log_probability(pp))
+            initial_split = list(expansions(biggest)) + [pp for pp in initial_split if pp!=biggest]
+
+        split = [[] for _ in range(nc) ]
+        for i, pp in enumerate(initial_split):
+            split[i%nc].append(pp)
+
+        return split
+
+        
+        # def quality(s):
+        #     mass = [ lse([self.log_probability(pp) for pp in pps ])
+        #              for pps in s ]
+        #     eprint(mass)
+        #     return exp(min(mass)-max(mass))
+
+        # def find_swap(s):
+        #     i = max(range(s), key=lambda i: lse([self.log_probability(pp) for pp in s[i] ]))
+            
+        # eprint(quality(split))
+        # import pdb; pdb.set_trace()
+        
+
+        
+
+        
+
+    def quantized_enumeration(self, resolution=0.5, skeletons=None):        
+        self = self.number_rules()
+
+        if skeletons is None:
+            skeletons = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
+            skeletons = [pp for pps in self.split(10) for pp in pps ]
+            eprint(skeletons)
+        skeleton_costs=[int(-self.log_probability(pp)/resolution+0.5)
+                        for pp in skeletons ]
+
+        # replace probabilities with quantized costs            
+        productions = [[ (max(int(-lp/resolution+0.5), 1), k, arguments)
+                         for lp, k, arguments in right_hand_sides ]
+                       for right_hand_sides in self.productions]
+        
+        nonterminals = len(productions)
+
+        expressions = [ [None for _ in range(int(100/resolution))]
+                        for _ in range(nonterminals) ]
+
+        def expressions_of_size(symbol, size):
+            nonlocal expressions
+            
+            
+            if size <= 0:
+                return []
+            
+            if expressions[symbol][size] is None:
+                new=[]
+                for cost, k, arguments in productions[symbol]:
+                    if cost>size: continue
+                    
+                    if len(arguments) == 0:
+                        if cost==size:
+                            new.append(k)
+                    elif len(arguments) == 1:
+                        nl1, at1 = arguments[0]
+                        for a1 in expressions_of_size(at1, size-cost):
+                            a1 = a1.wrap_in_abstractions(nl1)
+                            new.append(Application(k, a1))
+                    elif len(arguments) == 2:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for a2 in expressions_of_size(at2, size-cost-c1):
+                                    a2 = a2.wrap_in_abstractions(nl2)
+                                    new.append(Application(Application(k, a1), a2))
+                    elif len(arguments) == 3:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for a3 in expressions_of_size(at3, size-cost-c1-c2):
+                                            a3 = a3.wrap_in_abstractions(nl3)
+                                            new.append(Application(Application(Application(k, a1), a2), a3))
+                    elif len(arguments) == 4:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        nl4, at4 = arguments[3]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for c3 in range(size-cost-c1-c2):
+                                            for a3 in expressions_of_size(at3, c3):
+                                                a3 = a3.wrap_in_abstractions(nl3)
+                                                for a4 in expressions_of_size(at3, size-cost-c1-c2-c3):
+                                                    new.append(Application(Application(Application(Application(k, a1), a2), a3), a4))
+                    else:
+                        assert False
+                #print(symbol, size, new)
+                expressions[symbol][size] = new
+                
+            return expressions[symbol][size]
+
+        def complete_skeleton(cost, skeleton):
+            if skeleton.isAbstraction:
+                for b in complete_skeleton(cost, skeleton.body):
+                    yield Abstraction(b)
+            elif skeleton.isApplication:
+                for function_cost in range(cost+1):
+                    for f in complete_skeleton(function_cost, skeleton.f):
+                        for x in complete_skeleton(cost-function_cost, skeleton.x):
+                            yield Application(f, x)
+            elif skeleton.isNamedHole:
+                yield from expressions_of_size(skeleton.name, cost)
+            else:
+                if cost==0:
+                    yield skeleton
+
+                    
+        
+
+        expressions = [ [None for _ in range(int(100/resolution))]
+                        for _ in range(nonterminals) ]
+        for cost in range(int(100/resolution)):
+            for skeleton, skeleton_cost in zip(skeletons, skeleton_costs):
+                for e in complete_skeleton(cost-skeleton_cost, skeleton):                    
+                    yield e
+
+        
+
+    

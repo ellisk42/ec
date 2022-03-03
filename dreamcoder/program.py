@@ -34,6 +34,11 @@ class Program(object):
         except UnificationFailure as e:
             return False
 
+    def wrap_in_abstractions(self, n):
+        for _ in range(n):
+            self = Abstraction(self)
+        return self
+
     def betaNormalForm(self):
         n = self
         while True:
@@ -136,6 +141,9 @@ class Program(object):
 
     @property
     def isHole(self): return False
+
+    @property
+    def isNamedHole(self): return False
 
     @staticmethod
     def parse(s):
@@ -508,8 +516,9 @@ class Abstraction(Program):
             self.hashCode = hash((hash(self.body),))
         return self.hashCode
 
-        """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+        
     def __getstate__(self):
+        """Because Python3 randomizes the hash function, we need to never pickle the hash"""
         return self.body
     def __setstate__(self, state):
         self.body = state
@@ -838,8 +847,41 @@ class Hole(Program):
                                   '<HOLE>')
         return Hole.single, n
 
-
 Hole.single = Hole()
+
+class NamedHole(Program):
+    def __init__(self, n): self.name=n
+
+    def show(self, isFunction): return str(self.name)
+
+    @property
+    def isNamedHole(self): return True
+
+    def __eq__(self, o): return isinstance(o, NamedHole) and self.name==o.name
+
+    def __hash__(self): return hash(self.name)
+
+    def evaluate(self, e):
+        raise Exception('Attempt to evaluate named hole')
+
+    def betaReduce(self):
+        raise Exception('Attempt to beta reduce named hole')
+
+    def inferType(self, context, environment, freeVariables):
+        return context.makeVariable()
+
+    def shift(self, offset, depth=0):
+        raise Exception('Attempt to shift named hl')
+
+    def walk(self, surroundingAbstractions=0): yield surroundingAbstractions, self
+
+    def walkUncurried(self, d=0): yield d, self
+
+    def size(self): return 1
+
+    @staticmethod
+    def _parse(s,n):
+        assert False
 
 
 class ShareVisitor(object):
@@ -1207,6 +1249,35 @@ def untokeniseProgram(l):
     }
     s = " ".join(lookup.get(x, x) for x in l)
     return Program.parse(s)
+
+class _Abstraction():
+    def __init__(self, n, body):
+        self.n, self.body = n, body
+
+    def evaluate(self, environment):
+        return lambda *arguments: self.body.evaluate(list(arguments) + environment)
+class _Apply():
+    def __init__(self, f, *xs):
+        self.f = f
+        self.xs = xs
+
+    def evaluate(self, environment):
+        return self.f.evaluate(environment)(*[x.evaluate(environment)
+                                              for x in self.xs ])
+
+def to_fast_program(p):
+    if p.isAbstraction:
+        n=0
+        while p.isAbstraction:
+            p=p.body
+            n+=1
+        return _Abstraction(n, to_fast_program(p))
+    if p.isApplication:
+        f, xs = p.applicationParse()
+        return _Apply(to_fast_program(f),
+                      *[to_fast_program(x) for x in xs])
+    return p
+
 
 if __name__ == "__main__":
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *

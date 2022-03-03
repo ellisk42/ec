@@ -31,23 +31,23 @@ From: ubuntu
     HOME=/container
     export HOME
     
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    chmod +x Miniconda3-latest-Linux-x86_64.sh
-    ./Miniconda3-latest-Linux-x86_64.sh -b  -p /usr/local/conda
-    rm ./Miniconda3-latest-Linux-x86_64.sh
+    wget https://repo.continuum.io/miniconda/Miniconda3-py37_4.9.2-Linux-x86_64.sh
+    chmod +x Miniconda3-py37_4.9.2-Linux-x86_64.sh
+    ./Miniconda3-py37_4.9.2-Linux-x86_64.sh -b  -p /usr/local/conda
+    rm ./Miniconda3-py37_4.9.2-Linux-x86_64.sh
     export PATH="/usr/local/conda/bin:$PATH"
 
-    conda install -y  numpy dill pyzmq matplotlib protobuf scikit-learn scipy
+    conda install -y  numpy dill pyzmq matplotlib protobuf scikit-learn scipy #vose-alias-method
+    pip install git+https://github.com/MaxHalford/vose
     pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz frozendict pathos
     
-    conda install pytorch torchvision -c pytorch
+    conda install pytorch==1.2.0 torchvision==0.4.0 cpuonly -c pytorch
     
     opam init -y --auto-setup --root /container/.opam
     opam update
     opam switch create 4.06.1+flambda
     eval `opam config env`
     opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq utop jbuilder
-    #opam install ocp-indent merlin
     echo "
 #use "topfind";;
 #thread;;
@@ -56,8 +56,6 @@ From: ubuntu
 open Core;;
 " >> /container/.ocamlinit
     echo 'eval `opam config env`' >> /container/.bashrc  
-
-
 
     wget https://downloads.python.org/pypy/pypy3.6-v7.3.3-linux64.tar.bz2
     tar xjvf pypy3.6-v7.3.3-linux64.tar.bz2
@@ -69,6 +67,8 @@ open Core;;
     pypy3 -m pip install vmprof
     pypy3 -m pip install dill
     pypy3 -m pip install psutil
-    
+    pypy3 -m pip install frozendict
+    pypy3 -m pip install numpy
+    pypy3 -m pip install pathos
 
     
