@@ -1705,10 +1705,31 @@ class PCFG():
                                             for a3 in expressions_of_size(at3, c3):
                                                 a3 = a3.wrap_in_abstractions(nl3)
                                                 for a4 in expressions_of_size(at3, size-cost-c1-c2-c3):
+                                                    a4 = a4.wrap_in_abstractions(nl4)
                                                     new.append(Application(Application(Application(Application(k, a1), a2), a3), a4))
+                    elif len(arguments) == 5:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        nl4, at4 = arguments[3]
+                        nl5, at5 = arguments[4]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for c3 in range(size-cost-c1-c2):
+                                            for a3 in expressions_of_size(at3, c3):
+                                                a3 = a3.wrap_in_abstractions(nl3)
+                                                for c4 in range(size-cost-c1-c2-c3):
+                                                    for a4 in expressions_of_size(at3, c4):
+                                                        a4 = a4.wrap_in_abstractions(nl4)
+                                                        for a5 in expressions_of_size(at3, size-cost-c1-c2-c3-c4):
+                                                            a5 = a4.wrap_in_abstractions(nl5)
+                                                            new.append(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5))
                     else:
-                        assert False
-                #print(symbol, size, new)
+                        assert False, "more than five arguments not supported for the enumeration algorithm but that is not for any good reason"
                 expressions[symbol][size] = new
                 
             return expressions[symbol][size]

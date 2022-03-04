@@ -475,8 +475,6 @@ def bottom_up_parallel_worker(g, pcfg, pps, tasks, timeout, maximumFrontiers,
             if invalid(likelihood):
                 continue
 
-            eprint(task, e)
-
             if prior is None:
                 prior = g.logLikelihood(tasks[0].request, e)
 
