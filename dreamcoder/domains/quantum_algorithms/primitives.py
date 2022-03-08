@@ -1,12 +1,13 @@
 import numpy as np
 import dreamcoder as dc
+from dreamcoder.utilities import eprint
 
 try:
     import qiskit as qk
     from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit,Aer
     backend = Aer.get_backend('unitary_simulator')
 except:
-    print("Qiskit not found. Necessary for quantum circuit plots.")
+    eprint("Qiskit not found. Necessary for quantum circuit plots.")
 # ------------------------------------------
 # Define functions that operate on unitaries
 # (written as tensors)

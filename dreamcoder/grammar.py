@@ -1433,8 +1433,8 @@ class PCFG():
         start_environment = push_multiple_environment(environment, {})
         start_symbol = (request, start_environment)
         make_rules(*start_symbol)
-        eprint(len(rules), "nonterminal symbols")
-        eprint(sum(len(productions) for productions in rules.values()), "production rules")
+        # eprint(len(rules), "nonterminal symbols")
+        # eprint(sum(len(productions) for productions in rules.values()), "production rules")
         return PCFG(rules, start_symbol, len(start_environment)).normalize()
 
     def normalize(self):
