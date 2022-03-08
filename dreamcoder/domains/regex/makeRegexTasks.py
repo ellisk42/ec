@@ -4,10 +4,11 @@ import json
 from string import printable
 
 import sys
-try:
-    from pregex import pregex
-except:
-    print("Failure to load pregex. This is only acceptable if using pypy",file=sys.stderr)
+# temp disabled because of changed requirements
+# try:
+#     # from pregex import pregex 
+# except:
+#     print("Failure to load pregex. This is only acceptable if using pypy",file=sys.stderr)
 
 from dreamcoder.task import Task
 from dreamcoder.type import tpregex, arrow

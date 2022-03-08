@@ -4,10 +4,11 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.type import arrow, tpregex
 from string import printable
 
-try:
-    from pregex import pregex
-except:
-    print("Failure to load pregex. This is only acceptable if using pypy",file=sys.stderr)
+# temp disabled because of changed requirements
+# try:
+#     from pregex import pregex
+# except:
+#     print("Failure to load pregex. This is only acceptable if using pypy",file=sys.stderr)
 
 
 # evaluation to regular regex form. then I can unflatten using Luke's stuff.

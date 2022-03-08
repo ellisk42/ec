@@ -953,7 +953,10 @@ def commandlineArguments(_=None,
                         cuda=cuda)
     if extras is not None:
         extras(parser)
-    v = vars(parser.parse_args())
+    try:
+        v = vars(parser.parse_args())
+    except SystemExit:
+        v = vars(parser.parse_args([]))
     if v["clear-recognition"] is not None:
         ECResult.clearRecognitionModel(v["clear-recognition"])
         sys.exit(0)
