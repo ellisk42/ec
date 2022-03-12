@@ -1723,9 +1723,9 @@ class PCFG():
                                             for a3 in expressions_of_size(at3, c3):
                                                 a3 = a3.wrap_in_abstractions(nl3)
                                                 for c4 in range(size-cost-c1-c2-c3):
-                                                    for a4 in expressions_of_size(at3, c4):
+                                                    for a4 in expressions_of_size(at4, c4): #this should be at4? instead of at3
                                                         a4 = a4.wrap_in_abstractions(nl4)
-                                                        for a5 in expressions_of_size(at3, size-cost-c1-c2-c3-c4):
+                                                        for a5 in expressions_of_size(at5, size-cost-c1-c2-c3-c4): # this should be at5 instead of at3
                                                             a5 = a4.wrap_in_abstractions(nl5)
                                                             new.append(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5))
                     else:
