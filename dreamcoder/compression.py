@@ -47,12 +47,12 @@ def induceGrammar(*args, **kwargs):
                 pickle.dump((args, kwargs), handle)
             eprint("For debugging purposes, the version space compression invocation has been saved to", fn)
             g, newFrontiers = callCompiled(induceGrammar_Beta, *args, **kwargs)
-        elif backend == "ocaml":
+        elif backend == "ocaml" or backend == "vs_factored":
             kwargs.pop('iteration')
             kwargs.pop('topk_use_only_likelihood')
             kwargs['topI'] = 300
             kwargs['bs'] = 1000000
-            g, newFrontiers = ocamlInduce(*args, **kwargs)
+            g, newFrontiers = ocamlInduce(*args, factored=(backend == "vs_factored"), **kwargs)
         elif backend == "memorize":
             g, newFrontiers = memorizeInduce(*args, **kwargs)
         else:
@@ -101,7 +101,8 @@ def pypyInduce(*args, **kwargs):
 def ocamlInduce(g, frontiers, _=None,
                 topK=1, pseudoCounts=1.0, aic=1.0,
                 structurePenalty=0.001, a=0, CPUs=1,
-                bs=1000000, topI=300):
+                bs=1000000, topI=300, factored=False):
+    
     # This is a dirty hack!
     # Memory consumption increases with the number of CPUs
     # And early on we have a lot of stuff to compress
@@ -134,6 +135,7 @@ def ocamlInduce(g, frontiers, _=None,
                    "structurePenalty": float(structurePenalty),
                    "CPUs": CPUs,
                    "DSL": g.json(),
+                   "factored_apply": factored, 
                    "iterations": iterations,
                    "frontiers": [f.json()
                                  for f in frontiers]}
