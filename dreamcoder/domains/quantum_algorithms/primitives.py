@@ -111,7 +111,7 @@ def cz(circuit, qubit_1, qubit_2):
 # Transform a list of qubit operations into a unitary 
 #
 full_op_names = {
-    "eye": eye,
+    # "eye": eye,
     "hadamard": hadamard,
     "cnot": cnot,
     "swap": swap,
