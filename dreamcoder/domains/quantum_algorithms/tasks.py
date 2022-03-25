@@ -33,19 +33,9 @@ class QuantumTask(dc.task.Task):
             if yh is None:
                 return dc.utilities.NEGATIVEINFINITY
             
-            
-            ## THIS IS THE BOTTLENECK! 
-            # if not np.allclose(yh, yh_true):
-            #     return dc.utilities.NEGATIVEINFINITY
             if not np.all(np.abs(yh-yh_true)<= 1e-5):
                 return dc.utilities.NEGATIVEINFINITY
                 
-            # return dc.utilities.NEGATIVEINFINITY
- 
-            # try:
-            #     np.testing.assert_almost_equal(yh, yh_true, decimal=5)
-            # except AssertionError:
-            #     return dc.utilities.NEGATIVEINFINITY
         return 0.
 
 

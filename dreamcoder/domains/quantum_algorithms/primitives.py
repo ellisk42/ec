@@ -126,10 +126,15 @@ qiskit_full_op_names = lambda QT: {
     "cz": lambda q1,q2: QT.circuit.cz(q1,q2),
 }
 
+eyes = {} #caching initial identity matrices
 def full_circuit_to_mat(full_circuit):
     n_qubit, op_list = full_circuit
     
-    tensor = eye(n_qubit)
+    if n_qubit not in eyes.keys():
+        eyes[n_qubit]=eye(n_qubit)
+    tensor = eyes[n_qubit]
+    
+    
     for op in op_list:
         
         tensor = full_op_names[op[0]](tensor, *op[1:])
