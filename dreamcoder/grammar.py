@@ -1636,7 +1636,9 @@ class PCFG():
 
         
 
-    def quantized_enumeration(self, resolution=0.5, skeletons=None):        
+    def quantized_enumeration(self, resolution=0.5, skeletons=None, observational_equivalence=True):        
+        # observational_equivalence option: if True, checks semantic equivalence of expressions and ignores duplicates
+        
         self = self.number_rules()
 
         if skeletons is None:
@@ -1760,19 +1762,24 @@ class PCFG():
                 # 4.        if: no key      -> accept and add it
                 # 5.            already key -> remove from new
                 
-                accepted_new = []
-                for proposed_expression in new:
-                    try:
-                        value = proposed_expression.evaluate([4])  # now evaluating for a single value
-                        # in principle one should evaluate it for more than one 
-                        # (to be confident enough)
-                        key = value_to_key(value=value,
-                                        output_type=proposed_expression.infer())
-                        if key not in equivalences.keys():
-                            equivalences[key] = proposed_expression
-                            accepted_new.append(proposed_expression)
-                    except dc.domains.quantum_algorithms.primitives.QuantumCircuitException as e:
-                        eprint(f"Invalid circuit will be ignored {proposed_expression}")
+                if observational_equivalence:
+                    accepted_new = []
+                    for proposed_expression in new:
+                        try:
+                            value = proposed_expression.evaluate([4])  # now evaluating for a single value
+                            # in principle one should evaluate it for more than one 
+                            # (to be confident enough)
+                            key = value_to_key(value=value,
+                                            output_type=proposed_expression.infer())
+                            if key not in equivalences.keys():
+                                equivalences[key] = proposed_expression
+                                accepted_new.append(proposed_expression)
+                            else:
+                                eprint(f"observational equivalent:{proposed_expression} to {equivalences[key]}")
+                        except dc.domains.quantum_algorithms.primitives.QuantumCircuitException as e:
+                            eprint(f"Invalid circuit will be ignored {proposed_expression}")
+                else: accepted_new = new
+                
                 expressions[symbol][size] = accepted_new
                 
             return expressions[symbol][size]
