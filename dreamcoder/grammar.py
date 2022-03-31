@@ -1,11 +1,14 @@
 from frozendict import frozendict
 from collections import defaultdict
 
+from numpy import isin
+from dreamcoder.domains.quantum_algorithms.primitives import state_circuit_to_mat
+
 from dreamcoder.frontier import *
 from dreamcoder.program import *
 from dreamcoder.type import *
 from dreamcoder.utilities import *
-
+import dreamcoder as dc
 import time
 
 import itertools
@@ -1297,6 +1300,7 @@ def batchLikelihood(jobs):
             response[(program, request, grammar)] = fast
     return response
 
+
 class PCFG():
     def __init__(self, productions, start_symbol, number_of_arguments):
         # productions: nonterminal -> [(log probability, constructor, [(#lambdas, nonterminal)])]
@@ -1304,7 +1308,11 @@ class PCFG():
         self.productions = productions
         self.start_symbol = start_symbol
 
-    
+    @property
+    def non_terminals(self):
+        if isinstance(self.productions, dict):
+            return self.productions.keys()
+        return range(len(self.productions))
         
 
     @staticmethod
@@ -1633,7 +1641,8 @@ class PCFG():
 
         if skeletons is None:
             skeletons = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
-            skeletons = [pp for pps in self.split(10) for pp in pps ]
+            # Split disabled to make it simpler
+            # skeletons = [pp for pps in self.split(10) for pp in pps ]
             eprint(skeletons)
         skeleton_costs=[int(-self.log_probability(pp)/resolution+0.5)
                         for pp in skeletons ]
@@ -1648,8 +1657,19 @@ class PCFG():
         expressions = [ [None for _ in range(int(100/resolution))]
                         for _ in range(nonterminals) ]
 
+        equivalences = {}
+        
+        def value_to_key(value, output_type):
+            if output_type == dc.domains.quantum_algorithms.primitives.tcircuit:
+                # We need to check two things
+                # Final position should be the same (otherwise we exclude all moving operations)
+                # Generated unitary should be the same
+                unitary = state_circuit_to_mat(value)
+                value = (tuple(value[0]), unitary.tobytes())
+            return value
+            
         def expressions_of_size(symbol, size):
-            nonlocal expressions
+            nonlocal expressions, equivalences
             
             
             if size <= 0:
@@ -1730,7 +1750,30 @@ class PCFG():
                                                             new.append(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5))
                     else:
                         assert False, "more than five arguments not supported for the enumeration algorithm but that is not for any good reason"
-                expressions[symbol][size] = new
+                
+                # Observational equivalence: for each proposed expresssion we may check if we already have it
+                # If we do, we remove it from the proposed new expressions
+                
+                # 1. for each expression in new
+                # 2.     calculate output 
+                # 3.     use the output as key in the dictionary
+                # 4.        if: no key      -> accept and add it
+                # 5.            already key -> remove from new
+                
+                accepted_new = []
+                for proposed_expression in new:
+                    try:
+                        value = proposed_expression.evaluate([4])  # now evaluating for a single value
+                        # in principle one should evaluate it for more than one 
+                        # (to be confident enough)
+                        key = value_to_key(value=value,
+                                        output_type=proposed_expression.infer())
+                        if key not in equivalences.keys():
+                            equivalences[key] = proposed_expression
+                            accepted_new.append(proposed_expression)
+                    except dc.domains.quantum_algorithms.primitives.QuantumCircuitException as e:
+                        eprint(f"Invalid circuit will be ignored {proposed_expression}")
+                expressions[symbol][size] = accepted_new
                 
             return expressions[symbol][size]
 

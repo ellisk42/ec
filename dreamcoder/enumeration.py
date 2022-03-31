@@ -604,4 +604,33 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
 
 
 
+import numpy as np
 
+from dreamcoder.domains.quantum_algorithms.primitives import *
+from dreamcoder.domains.quantum_algorithms.tasks import *
+import dreamcoder as dc
+
+import time
+from tqdm import trange
+def enumerate_grammar(grammar, timeout, circuit_execution_function): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
+    pcfg =  dc.grammar.PCFG.from_grammar(grammar, request=dc.type.arrow(tsize, tcircuit))
+    enum_dictionary = {}
+    t_0 = time.time()
+    for i in pcfg.quantized_enumeration():
+        if (time.time()>t_0+timeout): break
+    
+        code = dc.program.Program.parse(str(i))
+        
+        # check if it is a valid circuit
+        try:
+            circuit = code.evaluate([])(3)
+            unitary = circuit_execution_function(circuit)
+            
+            key = unitary.tobytes()
+            task = str(code)
+            c_time = time.time()
+            enum_dictionary[key]={"task":task, "circuit_3":circuit, "time": c_time-t_0}
+        except QuantumCircuitException:
+            ...
+    eprint(f"Enumerated {len(enum_dictionary)} programs")
+    return enum_dictionary

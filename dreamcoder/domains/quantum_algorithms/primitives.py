@@ -331,20 +331,20 @@ p_cast_size_to_int = dc.program.Primitive("size_to_int", dc.type.arrow(tsize, dc
 primitives = [
     #states
     p_move_next,
-    p_move_prev,
-    p_change_direction,
-    #circuits
+    # p_move_prev,
+    # p_change_direction,
+    # #circuits
     p_no_op,
     p_hadamard,
-    p_cnot,
-    # p_swap,
-    #control
-    p_iteration,
+    # p_cnot,
+    # # p_swap,
+    # #control
+    # p_iteration,
     #arithmetics
-    p_0,
-    p_inc,
-    p_dec,
-    p_cast_size_to_int
+    # p_0,
+    # p_inc,
+    # p_dec,
+    # p_cast_size_to_int
 ]
 
 
@@ -418,7 +418,7 @@ full_primitives = [
 # ------------------------------------------
 # Define GRAMMAR
 # 
-grammar = dc.grammar.Grammar.uniform(primitives)
+grammar = dc.grammar.Grammar.uniform(primitives)#, continuationType=tcircuit)
 full_grammar = dc.grammar.Grammar.uniform(full_primitives)
             
 
