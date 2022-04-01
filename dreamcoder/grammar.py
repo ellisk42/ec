@@ -1775,6 +1775,7 @@ class PCFG():
                             # in principle one should evaluate it for more than one 
                             # (to be confident enough)
                             # Also, how to decide on which other arguments to evaluate?
+                            # We need to know the types of the arguments
                             
                             key = value_to_key(value=value,
                                             output_type=proposed_expression.infer())
