@@ -2,7 +2,6 @@ from frozendict import frozendict
 from collections import defaultdict
 
 from numpy import isin
-from dreamcoder.domains.quantum_algorithms.primitives import state_circuit_to_mat
 
 from dreamcoder.frontier import *
 from dreamcoder.program import *
@@ -1666,8 +1665,13 @@ class PCFG():
                 # We need to check two things
                 # Final position should be the same (otherwise we exclude all moving operations)
                 # Generated unitary should be the same
-                unitary = state_circuit_to_mat(value)
+                unitary = dc.domains.quantum_algorithms.primitives.state_circuit_to_mat(value)
                 value = (tuple(value[0]), unitary.tobytes())
+            elif output_type ==  dc.domains.quantum_algorithms.primitives.tcircuit_full:
+                # Here we only need check the unitary
+                # (as we don't move along the circuit and have no position)
+                unitary = dc.domains.quantum_algorithms.primitives.full_circuit_to_mat(value)
+                value = unitary.tobytes()
             return value
             
         def expressions_of_size(symbol, size):
@@ -1766,18 +1770,25 @@ class PCFG():
                     accepted_new = []
                     for proposed_expression in new:
                         try:
-                            value = proposed_expression.evaluate([4])  # now evaluating for a single value
+                            value = proposed_expression.evaluate([4]*10)  
+                            # now evaluating for a single value
                             # in principle one should evaluate it for more than one 
                             # (to be confident enough)
+                            # Also, how to decide on which other arguments to evaluate?
+                            
                             key = value_to_key(value=value,
                                             output_type=proposed_expression.infer())
                             if key not in equivalences.keys():
                                 equivalences[key] = proposed_expression
                                 accepted_new.append(proposed_expression)
                             else:
-                                eprint(f"observational equivalent:{proposed_expression} to {equivalences[key]}")
+                                ...
+                                # eprint(f"observational equivalent:{proposed_expression} to {equivalences[key]}")
                         except dc.domains.quantum_algorithms.primitives.QuantumCircuitException as e:
-                            eprint(f"Invalid circuit will be ignored {proposed_expression}")
+                            ...
+                            # eprint(f"Invalid circuit will be ignored {proposed_expression}")
+                        # except IndexError as e:
+                        #     pass
                 else: accepted_new = new
                 
                 expressions[symbol][size] = accepted_new
@@ -1799,7 +1810,7 @@ class PCFG():
                 if cost==0:
                     yield skeleton
 
-                    
+
         
 
         expressions = [ [None for _ in range(int(100/resolution))]

@@ -277,6 +277,7 @@ def _repeat_help(n_times, body, new_body):
 # 
 tsize = dc.type.baseType("tsize")
 tcircuit = dc.type.baseType("tcircuit")
+tcircuit_full = dc.type.baseType("tcircuit_full")
 
 # ------------------------------------------
 # Define PRIMITIVES
@@ -331,20 +332,20 @@ p_cast_size_to_int = dc.program.Primitive("size_to_int", dc.type.arrow(tsize, dc
 primitives = [
     #states
     p_move_next,
-    # p_move_prev,
-    # p_change_direction,
+    p_move_prev,
+    p_change_direction,
     # #circuits
     p_no_op,
     p_hadamard,
-    # p_cnot,
+    p_cnot,
     # # p_swap,
     # #control
-    # p_iteration,
+    p_iteration,
     #arithmetics
-    # p_0,
-    # p_inc,
-    # p_dec,
-    # p_cast_size_to_int
+    p_0,
+    p_inc,
+    p_dec,
+    p_cast_size_to_int
 ]
 
 
@@ -385,19 +386,19 @@ def f_two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
 
 # Circuit primitives
 fp_no_op = dc.program.Primitive(name="fno_op", 
-                     ty=dc.type.arrow(tsize, tcircuit),
+                     ty=dc.type.arrow(tsize, tcircuit_full),
                      value=f_no_op)
 
 fp_hadamard = dc.program.Primitive(name="fh", 
-                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     ty=dc.type.arrow(tcircuit_full, dc.type.tint, tcircuit_full),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1: f_one_qubit_gate(old_circuit, qubit_1, "hadamard")))
 
 fp_cnot = dc.program.Primitive(name="fcnot", 
-                     ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint,tcircuit),
+                     ty=dc.type.arrow(tcircuit_full, dc.type.tint, dc.type.tint,tcircuit_full),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: f_two_qubit_gate(old_circuit, qubit_1, qubit_2, "cnot")))
 
 fp_swap = dc.program.Primitive(name="fswap", 
-                     ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
+                     ty=dc.type.arrow(tcircuit_full, dc.type.tint, dc.type.tint, tcircuit_full),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: f_two_qubit_gate(old_circuit, qubit_1, qubit_2, "swap")))
 
 

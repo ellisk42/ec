@@ -612,8 +612,7 @@ import dreamcoder as dc
 
 import time
 from tqdm import trange
-def enumerate_grammar(grammar, timeout, circuit_execution_function): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
-    pcfg =  dc.grammar.PCFG.from_grammar(grammar, request=dc.type.arrow(tsize, tcircuit))
+def enumerate_pcfg(pcfg, timeout, circuit_execution_function): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
     enum_dictionary = {}
     t_0 = time.time()
     for i in pcfg.quantized_enumeration():
