@@ -611,8 +611,9 @@ from dreamcoder.domains.quantum_algorithms.tasks import *
 import dreamcoder as dc
 
 import time
-from tqdm import trange
+
 def enumerate_pcfg(pcfg, timeout, circuit_execution_function): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
+    from tqdm import trange
     enum_dictionary = {}
     t_0 = time.time()
     for i in pcfg.quantized_enumeration():

@@ -1301,11 +1301,16 @@ def batchLikelihood(jobs):
 
 
 class PCFG():
-    def __init__(self, productions, start_symbol, number_of_arguments):
+    def __init__(self, productions, start_symbol, number_of_arguments,
+                 return_type=None, free_variable_types=None):
         # productions: nonterminal -> [(log probability, constructor, [(#lambdas, nonterminal)])]
+        # free_variable_types: nonterminal -> [types]
         self.number_of_arguments = number_of_arguments
         self.productions = productions
         self.start_symbol = start_symbol
+
+        self.return_type = return_type
+        self.free_variable_types = free_variable_types
 
     @property
     def non_terminals(self):
@@ -1442,7 +1447,10 @@ class PCFG():
         make_rules(*start_symbol)
         # eprint(len(rules), "nonterminal symbols")
         # eprint(sum(len(productions) for productions in rules.values()), "production rules")
-        return PCFG(rules, start_symbol, len(start_environment)).normalize()
+        free_variable_types = {nt: nt[1] for nt in rules }
+        return_type = {nt: nt[0] for nt in rules }
+        return PCFG(rules, start_symbol, len(start_environment),
+                    return_type=return_type, free_variable_types=free_variable_types).normalize()
 
     def normalize(self):
         def norm(distribution):
@@ -1473,7 +1481,19 @@ class PCFG():
                               for lp, k, arguments in self.productions[reverse_mapping[i]] ]
             for i in range(len(self.productions)) ]
 
-        return PCFG(new_productions, mapping[self.start_symbol], self.number_of_arguments)
+        free_variable_types = None
+        if self.free_variable_types is not None:
+            free_variable_types = [ self.free_variable_types[reverse_mapping[i]]
+                                    for i in range(len(self.productions))]
+
+        return_type = None
+        if self.return_type is not None:
+            return_type = [ self.return_type[reverse_mapping[i]]
+                            for i in range(len(self.productions))]
+            
+        return PCFG(new_productions, mapping[self.start_symbol], self.number_of_arguments,
+                    return_type=return_type, 
+                    free_variable_types=free_variable_types)
 
     
     
@@ -1637,7 +1657,7 @@ class PCFG():
 
     def quantized_enumeration(self, resolution=0.5, skeletons=None, observational_equivalence=True):        
         # observational_equivalence option: if True, checks semantic equivalence of expressions and ignores duplicates
-        
+
         self = self.number_rules()
 
         if skeletons is None:
@@ -1658,7 +1678,7 @@ class PCFG():
         expressions = [ [None for _ in range(int(100/resolution))]
                         for _ in range(nonterminals) ]
 
-        equivalences = {}
+        equivalences = {nt: {} for nt in range(nonterminals)}
         
         def value_to_key(value, output_type):
             if output_type == dc.domains.quantum_algorithms.primitives.tcircuit:
@@ -1672,8 +1692,29 @@ class PCFG():
                 # (as we don't move along the circuit and have no position)
                 unitary = dc.domains.quantum_algorithms.primitives.full_circuit_to_mat(value)
                 value = unitary.tobytes()
+            elif isinstance(value, list):
+                value = tuple(value)
             return value
+
+        def compute_signature(expression, tp, arguments):
+            possible_values = {"int": [-2, -1, 0, 1, 2, 4],
+                               "tsize": [4],
+                               "tcircuit": [dc.domains.quantum_algorithms.primitives._no_op(4)]}
             
+            outputs = []
+            for test_input in itertools.product(*(possible_values[str(a)] for a in arguments)):
+                try:
+                    o=expression.evaluate(test_input)
+                except:
+                    o=None
+                if o is None:
+                    outputs.append(None)
+                    continue
+                outputs.append(value_to_key(o, tp))
+            if all(o is None for o in outputs ):
+                return None
+            return tuple(outputs)
+                
         def expressions_of_size(symbol, size):
             nonlocal expressions, equivalences
             
@@ -1749,9 +1790,9 @@ class PCFG():
                                             for a3 in expressions_of_size(at3, c3):
                                                 a3 = a3.wrap_in_abstractions(nl3)
                                                 for c4 in range(size-cost-c1-c2-c3):
-                                                    for a4 in expressions_of_size(at4, c4): #this should be at4? instead of at3
+                                                    for a4 in expressions_of_size(at4, c4):
                                                         a4 = a4.wrap_in_abstractions(nl4)
-                                                        for a5 in expressions_of_size(at5, size-cost-c1-c2-c3-c4): # this should be at5 instead of at3
+                                                        for a5 in expressions_of_size(at5, size-cost-c1-c2-c3-c4):
                                                             a5 = a4.wrap_in_abstractions(nl5)
                                                             new.append(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5))
                     else:
@@ -1770,17 +1811,21 @@ class PCFG():
                     accepted_new = []
                     for proposed_expression in new:
                         try:
-                            value = proposed_expression.evaluate([4]*10)  
+                            key = compute_signature(proposed_expression,
+                                                    self.return_type[symbol],
+                                                    self.free_variable_types[symbol])
+                            #eprint(key, proposed_expression)
+                            #value = proposed_expression.evaluate([4]*10)
                             # now evaluating for a single value
                             # in principle one should evaluate it for more than one 
                             # (to be confident enough)
                             # Also, how to decide on which other arguments to evaluate?
                             # We need to know the types of the arguments
                             
-                            key = value_to_key(value=value,
-                                            output_type=proposed_expression.infer())
-                            if key not in equivalences.keys():
-                                equivalences[key] = proposed_expression
+                            #key = value_to_key(value=value,
+                            #                output_type=proposed_expression.infer())
+                            if key not in equivalences[symbol]:
+                                equivalences[symbol][key] = proposed_expression
                                 accepted_new.append(proposed_expression)
                             else:
                                 ...
