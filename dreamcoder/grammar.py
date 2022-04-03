@@ -1389,11 +1389,6 @@ class PCFG():
             _instantiations[t] = return_value
             return return_value
 
-        # for _, t, p in g.productions:
-        #     print(p, t)
-        #     for i in instantiations(t):
-        #         print("\t", i)
-
         def push_environment(tp, e):
             if len(e)==0:
                 return (tp,)
@@ -1442,12 +1437,67 @@ class PCFG():
                 for _, symbol in argument_symbols:
                     make_rules(*symbol)
 
+        def make_contextual_rules(request, context, environment):
+            """
+            context=none: top level
+            context=Index(0): variable parent
+            context=(primitive, n): parent is primitive, argument index is n            
+            """
+            if (request, context, environment) in rules: return
+            rules[(request, context, environment)] = []
+
+            # figure out what sub grammar we should use
+            if context is None: _g = g.noParent
+            elif context == Index(0): _g = g.variableParent
+            else: _g = g.library[context[0]][context[1]]
+                
+            variable_candidates = [(_g.logVariable, tp, Index(i))
+                                   # for t, count in environment.items()
+                                   # for i in range(count)
+                                   for i, t in enumerate(environment) 
+                                   for tp in instantiations(t)
+                                   if tp.returns()==request]
+            if g.continuationType == request:
+                variable_candidates = [min(variable_candidates, key=lambda vc: vc[-1].i)]
+            variable_candidates = [(lp-math.log(len(variable_candidates)), t, p)
+                                   for lp, t, p in variable_candidates ]
+            
+            for lp, t, p in _g.productions + variable_candidates:
+                for i in instantiations(t):
+                    if i.returns() == request:
+                        arguments = i.functionArguments()
+                        argument_symbols = []
+                        for ai, a in enumerate(arguments):
+                            new_environment = push_multiple_environment(a.functionArguments(),
+                                                                        environment)
+                            if p.isIndex:
+                                new_context = Index(0)
+                            else:
+                                new_context = (p, ai)
+                                
+                            argument_symbols.append((len(a.functionArguments()),
+                                                     (a.returns(), new_context, new_environment)))
+
+                        if all( len(new_environment) <= maximum_environment
+                                for _, (_, new_environment) in argument_symbols ):
+                            rules[(request, context, environment)].append((lp, p, argument_symbols))
+            
+            for _, p, argument_symbols in rules[(request, context, environment)]:
+                for _, symbol in argument_symbols:
+                    make_contextual_rules(*symbol)
+
         start_environment = push_multiple_environment(environment, {})
-        start_symbol = (request, start_environment)
+        if isinstance(g, ContextualGrammar):
+            start_symbol = (request, None, start_environment)
+        elif isinstance(g, Grammar):
+            start_symbol = (request, start_environment)
+        else:
+            assert False
+            
         make_rules(*start_symbol)
         # eprint(len(rules), "nonterminal symbols")
         # eprint(sum(len(productions) for productions in rules.values()), "production rules")
-        free_variable_types = {nt: nt[1] for nt in rules }
+        free_variable_types = {nt: nt[-1] for nt in rules }
         return_type = {nt: nt[0] for nt in rules }
         return PCFG(rules, start_symbol, len(start_environment),
                     return_type=return_type, free_variable_types=free_variable_types).normalize()
