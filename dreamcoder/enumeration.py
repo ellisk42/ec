@@ -623,7 +623,7 @@ def enumerate_pcfg(pcfg, timeout, circuit_execution_function): #circuit executio
         
         # check if it is a valid circuit
         try:
-            circuit = code.evaluate([])(3)
+            circuit = code.evaluate([])(dc.domains.quantum_algorithms.primitives.no_op(3))
             unitary = circuit_execution_function(circuit)
             
             key = unitary.tobytes()

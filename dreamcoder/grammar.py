@@ -1768,7 +1768,7 @@ class PCFG():
         def compute_signature(expression, tp, arguments):
             possible_values = {"int": [-2, -1, 0, 1, 2, 4],
                                "tsize": [4],
-                               "tcircuit": [dc.domains.quantum_algorithms.primitives._no_op(4)]}
+                               "tcircuit": [dc.domains.quantum_algorithms.primitives.no_op(4)]}
 
             outputs = []
             for test_input in itertools.product(*(possible_values[str(a)] for a in arguments)):

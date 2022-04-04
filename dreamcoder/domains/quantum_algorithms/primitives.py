@@ -232,8 +232,11 @@ def _move_prev(old_circuit):
 
 
 # Circuit operation
-def _no_op(n):
+def no_op(n):
     return [STATE_0(n), []]
+
+def _get_n_qubits(old_circuit):
+    return old_circuit[0][-1]
 
 def _hadamard(old_circuit):
     state, circuit = old_circuit
@@ -275,7 +278,7 @@ def _repeat_help(n_times, body, new_body):
 # ------------------------------------------
 # Define TYPES
 # 
-tsize = dc.type.baseType("tsize")
+# tsize = dc.type.baseType("tsize")
 tcircuit = dc.type.baseType("tcircuit")
 tcircuit_full = dc.type.baseType("tcircuit_full")
 
@@ -297,9 +300,13 @@ p_change_direction = dc.program.Primitive(name="minv",
                      value=_change_direction)
 
 # Circuit primitives
-p_no_op = dc.program.Primitive(name="no_op", 
-                     ty=dc.type.arrow(tsize, tcircuit),
-                     value=_no_op)
+# p_no_op = dc.program.Primitive(name="no_op", 
+#                      ty=dc.type.arrow(tsize, tcircuit),
+#                      value=_no_op)
+
+p_size = dc.program.Primitive(name="size", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint),
+                     value=_get_n_qubits)
 
 p_hadamard = dc.program.Primitive(name="h", 
                      ty=dc.type.arrow(tcircuit, tcircuit),
@@ -326,7 +333,7 @@ p_iteration = dc.program.Primitive(name="rep",
 p_0 = dc.program.Primitive("0",dc.type.tint,0)
 p_inc = dc.program.Primitive("inc", dc.type.arrow(dc.type.tint, dc.type.tint), lambda x:x+1)
 p_dec = dc.program.Primitive("dec", dc.type.arrow(dc.type.tint, dc.type.tint), lambda x:x-1)
-p_cast_size_to_int = dc.program.Primitive("size_to_int", dc.type.arrow(tsize, dc.type.tint), lambda x:x)
+# p_cast_size_to_int = dc.program.Primitive("size_to_int", dc.type.arrow(tsize, dc.type.tint), lambda x:x)
 
 
 primitives = [
@@ -335,7 +342,7 @@ primitives = [
     p_move_prev,
     p_change_direction,
     # #circuits
-    p_no_op,
+    # p_no_op,
     p_hadamard,
     p_cnot,
     # # p_swap,
@@ -345,7 +352,8 @@ primitives = [
     p_0,
     p_inc,
     p_dec,
-    p_cast_size_to_int
+    p_size
+    # p_cast_size_to_int
 ]
 
 
@@ -358,6 +366,9 @@ primitives = [
 ## Full circuit [n_qubits, [ops]]
 def f_no_op(n):
     return [n, []]
+
+def f_get_n_qubits(old_circuit):
+    return old_circuit[0]
 
 def f_one_qubit_gate(old_circuit, qubit_1,operation_name):
     n_qubit, circuit = old_circuit
@@ -385,9 +396,14 @@ def f_two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
     return [n_qubit, circuit]
 
 # Circuit primitives
-fp_no_op = dc.program.Primitive(name="fno_op", 
-                     ty=dc.type.arrow(tsize, tcircuit_full),
-                     value=f_no_op)
+# fp_no_op = dc.program.Primitive(name="fno_op", 
+#                      ty=dc.type.arrow(tsize, tcircuit_full),
+#                      value=f_no_op)
+
+fp_size = dc.program.Primitive(name="fsize", 
+                     ty=dc.type.arrow(tcircuit_full, dc.type.tint),
+                     value=f_get_n_qubits)
+
 
 fp_hadamard = dc.program.Primitive(name="fh", 
                      ty=dc.type.arrow(tcircuit_full, dc.type.tint, tcircuit_full),
@@ -404,7 +420,7 @@ fp_swap = dc.program.Primitive(name="fswap",
 
 full_primitives = [
     #circuits
-    fp_no_op,
+    # fp_no_op,
     fp_hadamard,
     fp_cnot,
     fp_swap,
@@ -412,7 +428,8 @@ full_primitives = [
     p_0,
     p_inc,
     p_dec,
-    p_cast_size_to_int
+    fp_size
+    # p_cast_size_to_int
 ]
 
 
@@ -431,7 +448,7 @@ full_grammar = dc.grammar.Grammar.uniform(full_primitives)
 def execute_quantum_algorithm(p, n_qubits, timeout=None):
     try:
         circuit =  dc.utilities.runWithTimeout(
-            lambda: p.evaluate([])(n_qubits),
+            lambda: p.evaluate([])(no_op(n_qubits)),
             timeout=timeout
         )
         return state_circuit_to_mat(circuit)
