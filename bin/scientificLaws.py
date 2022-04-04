@@ -65,11 +65,8 @@ def makeTask(name, request, law,
              D=3,
              # Maximum absolute value of a random number
              S=20.):
-    print(name)
     e = makeTrainingData(request, law,
                          N=N, D=D, S=S)
-    print(e)
-    print()
 
     def genericType(t):
         if t.name == "real":

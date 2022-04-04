@@ -26,6 +26,7 @@ For more info, see this StackOverflow answer: https://stackoverflow.com/a/212191
 import sys
 
 from dreamcoder import differentiation
+from dreamcoder import sloppy
 from dreamcoder import dreamcoder
 from dreamcoder import enumeration
 from dreamcoder import fragmentGrammar

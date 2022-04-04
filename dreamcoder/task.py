@@ -172,7 +172,6 @@ class DifferentiableTask(Task):
             cache=False)
 
     def logLikelihood(self, e, timeout=None):
-        assert timeout is None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
         if self.maxParameters is not None and len(
                 parameters) > self.maxParameters:
@@ -180,10 +179,16 @@ class DifferentiableTask(Task):
         if self.actualParameters is not None and len(
                 parameters) > self.actualParameters:
             return NEGATIVEINFINITY
+        if len(parameters):
+            assert timeout is None, "timeout not implemented for differentiable tasks, but not for any good reason."
+        
         f = e.evaluate([])
 
-        loss = sum(self.loss(self.predict(f, xs), y)
+        try:
+            loss = sum(self.loss(self.predict(f, xs), y)
                    for xs, y in self.examples) / float(len(self.examples))
+        except: return NEGATIVEINFINITY
+        
         if isinstance(loss, DN):
             try:
                 loss = loss.restartingOptimize(
@@ -201,7 +206,7 @@ class DifferentiableTask(Task):
         penalty = self.BIC * len(parameters) * math.log(len(self.examples))
 
         if self.likelihoodThreshold is not None:
-            if loss > -self.likelihoodThreshold:
+            if isinstance(loss, complex) or loss > -self.likelihoodThreshold:
                 return NEGATIVEINFINITY
             else:
                 return -penalty
