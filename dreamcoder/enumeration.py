@@ -612,24 +612,24 @@ import dreamcoder as dc
 
 import time
 
-def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
+def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op, observational_equivalence=True): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
     from tqdm import trange
     enum_dictionary = {}
     t_0 = time.time()
-    for i in pcfg.quantized_enumeration():
+    for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence):
         if (time.time()>t_0+timeout): break
-    
-        code = dc.program.Program.parse(str(i))
-        
         # check if it is a valid circuit
         try:
             circuit = code.evaluate([])(no_op(3))
             unitary = circuit_execution_function(circuit)
-            
             key = unitary.tobytes()
             task = str(code)
             c_time = time.time()
-            enum_dictionary[key]={"task":task, "circuit_3":circuit, "time": c_time-t_0}
+            
+            # If multiple programs give the same unitary
+            # we want to keep the simplest one
+            if key not in enum_dictionary:
+                enum_dictionary[key]={"task":task, "circuit_3":circuit, "time": c_time-t_0}
         except QuantumCircuitException:
             ...
     eprint(f"Enumerated {len(enum_dictionary)} programs")
