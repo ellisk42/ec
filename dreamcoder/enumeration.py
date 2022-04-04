@@ -612,7 +612,7 @@ import dreamcoder as dc
 
 import time
 
-def enumerate_pcfg(pcfg, timeout, circuit_execution_function): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
+def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
     from tqdm import trange
     enum_dictionary = {}
     t_0 = time.time()
@@ -623,7 +623,7 @@ def enumerate_pcfg(pcfg, timeout, circuit_execution_function): #circuit executio
         
         # check if it is a valid circuit
         try:
-            circuit = code.evaluate([])(dc.domains.quantum_algorithms.primitives.no_op(3))
+            circuit = code.evaluate([])(no_op(3))
             unitary = circuit_execution_function(circuit)
             
             key = unitary.tobytes()
