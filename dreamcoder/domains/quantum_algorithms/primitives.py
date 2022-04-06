@@ -417,6 +417,11 @@ fp_swap = dc.program.Primitive(name="fswap",
                      ty=dc.type.arrow(tcircuit_full, dc.type.tint, dc.type.tint, tcircuit_full),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: f_two_qubit_gate(old_circuit, qubit_1, qubit_2, "swap")))
 
+# Control
+fp_iteration = dc.program.Primitive(name="frep", 
+                     ty=dc.type.arrow(dc.type.tint, dc.type.arrow(tcircuit_full,tcircuit_full),  dc.type.arrow(tcircuit_full,tcircuit_full)),
+                     value=dc.utilities.Curried(_repeat))
+
 
 full_primitives = [
     #circuits
@@ -428,16 +433,18 @@ full_primitives = [
     p_0,
     p_inc,
     p_dec,
-    fp_size
-    # p_cast_size_to_int
+    fp_size,
+    # p_cast_size_to_int,
+    # #control
+    # fp_iteration
 ]
 
 
 # ------------------------------------------
 # Define GRAMMAR
 # 
-grammar = dc.grammar.Grammar.uniform(primitives)#, continuationType=tcircuit)
-full_grammar = dc.grammar.Grammar.uniform(full_primitives)
+grammar = dc.grammar.Grammar.uniform(primitives, continuationType=tcircuit)
+full_grammar = dc.grammar.Grammar.uniform(full_primitives, continuationType=tcircuit_full)
             
 
 

@@ -1766,10 +1766,12 @@ class PCFG():
             return value
 
         def compute_signature(expression, tp, arguments):
+            n_min = dc.domains.quantum_algorithms.tasks.QuantumTask.min_size
+            n_max = dc.domains.quantum_algorithms.tasks.QuantumTask.max_size
             possible_values = {"int": [-2, -1, 0, 1, 2, 4],
                                "tsize": [4],
-                               "tcircuit": [dc.domains.quantum_algorithms.primitives.no_op(4)],
-                               "tcircuit_full":[dc.domains.quantum_algorithms.primitives.f_no_op(4)] }
+                               "tcircuit": [dc.domains.quantum_algorithms.primitives.no_op(n_qubit) for n_qubit in range(n_min, n_max)],
+                               "tcircuit_full":[dc.domains.quantum_algorithms.primitives.f_no_op(n_qubit) for n_qubit in range(n_min, n_max)]}
 
             outputs = []
             for test_input in itertools.product(*(possible_values[str(a)] for a in arguments)):
