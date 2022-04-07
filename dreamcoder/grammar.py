@@ -1,9 +1,8 @@
 from frozendict import frozendict
 from collections import defaultdict
 
-from numpy import isin
-
 from dreamcoder.frontier import *
+from dreamcoder.sloppy import *
 from dreamcoder.program import *
 from dreamcoder.type import *
 from dreamcoder.utilities import *
@@ -1723,9 +1722,13 @@ class PCFG():
         # eprint(quality(split))
         # import pdb; pdb.set_trace()
 
-    def quantized_enumeration(self, resolution=0.5, skeletons=None, observational_equivalence=True):
-        # observational_equivalence option: if True, checks semantic equivalence of expressions and ignores duplicates
-
+    def quantized_enumeration(self, resolution=0.5, skeletons=None,
+                              observational_equivalence=True, inputs=None):
+        """
+        observational_equivalence option: if True, checks semantic equivalence of expressions and ignores duplicates
+        inputs: the example inputs to the program, which are only used for observational equivalence
+            inputs should be a list (one entry for each input output) of tuples (arity)
+        """
         self = self.number_rules()
 
         if skeletons is None:
@@ -1749,43 +1752,7 @@ class PCFG():
         # observational equivalence
         equivalences = {nt: {} for nt in range(nonterminals)}
 
-        def value_to_key(value, output_type):
-            if output_type == dc.domains.quantum_algorithms.primitives.tcircuit:
-                # We need to check two things
-                # Final position should be the same (otherwise we exclude all moving operations)
-                # Generated unitary should be the same
-                unitary = dc.domains.quantum_algorithms.primitives.state_circuit_to_mat(value)
-                value = (tuple(value[0]), unitary.tobytes())
-            elif output_type == dc.domains.quantum_algorithms.primitives.tcircuit_full:
-                # Here we only need check the unitary
-                # (as we don't move along the circuit and have no position)
-                unitary = dc.domains.quantum_algorithms.primitives.full_circuit_to_mat(value)
-                value = unitary.tobytes()
-            elif isinstance(value, list):
-                value = tuple(value)
-            return value
-
-        def compute_signature(expression, tp, arguments):
-            n_min = dc.domains.quantum_algorithms.tasks.QuantumTask.min_size
-            n_max = dc.domains.quantum_algorithms.tasks.QuantumTask.max_size
-            possible_values = {"int": [-2, -1, 0, 1, 2, 4],
-                               "tsize": [4],
-                               "tcircuit": [dc.domains.quantum_algorithms.primitives.no_op(n_qubit) for n_qubit in range(n_min, n_max)],
-                               "tcircuit_full":[dc.domains.quantum_algorithms.primitives.f_no_op(n_qubit) for n_qubit in range(n_min, n_max)]}
-
-            outputs = []
-            for test_input in itertools.product(*(possible_values[str(a)] for a in arguments)):
-                try:
-                    o = expression.evaluate(test_input)
-                except:
-                    o = None
-                if o is None:
-                    outputs.append(None)
-                    continue
-                outputs.append(value_to_key(o, tp))
-            if all(o is None for o in outputs):
-                return None
-            return tuple(outputs)
+        test_generator = Sloppy(inputs, n=5)
 
         def expressions_of_size(symbol, size):
             nonlocal expressions, equivalences
@@ -1873,19 +1840,15 @@ class PCFG():
                 if observational_equivalence:
                     accepted_new = []
                     for proposed_expression in new:
-                        try:
-                            key = compute_signature(proposed_expression,
-                                                    self.return_type[symbol],
-                                                    self.free_variable_types[symbol])
+                        key = test_generator.compute_signature(proposed_expression,
+                                                               self.return_type[symbol],
+                                                               self.free_variable_types[symbol])
 
-                            if key not in equivalences[symbol]:
-                                equivalences[symbol][key] = proposed_expression
-                                accepted_new.append(proposed_expression)
-
-                        except dc.domains.quantum_algorithms.primitives.QuantumCircuitException as e:
-                            ...
-                            # eprint(f"Invalid circuit will be ignored {proposed_expression}")
-
+                        if key not in equivalences[symbol]:
+                            equivalences[symbol][key] = proposed_expression
+                            accepted_new.append(proposed_expression)
+                            #eprint("keeping", proposed_expression)
+                        #else: eprint("discarded", proposed_expression)
                 else:
                     accepted_new = new
 
