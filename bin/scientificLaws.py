@@ -381,6 +381,7 @@ if __name__ == "__main__":
                  arrow(tpositive, tpositive, tpositive),
                  lambda a, b: a * a + b * b)
     ]
+    #tasks=[t for t in tasks if t.name=="parallel capacitors"]
     bootstrapTarget()
     equationPrimitives = [
 #        real,

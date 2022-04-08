@@ -184,10 +184,19 @@ class DifferentiableTask(Task):
         
         f = e.evaluate([])
 
-        try:
-            loss = sum(self.loss(self.predict(f, xs), y)
-                   for xs, y in self.examples) / float(len(self.examples))
-        except: return NEGATIVEINFINITY
+        if len(parameters) == 0:
+            loss = 0
+            for xs, y in self.examples:
+                try:
+                    loss += self.loss(self.predict(f, xs), y)
+                except: return NEGATIVEINFINITY
+                if isinstance(loss, complex) or loss > -self.likelihoodThreshold:
+                    return NEGATIVEINFINITY
+        else:
+            try:
+                loss = sum(self.loss(self.predict(f, xs), y)
+                           for xs, y in self.examples) / float(len(self.examples))
+            except: return NEGATIVEINFINITY
         
         if isinstance(loss, DN):
             try:
@@ -215,6 +224,12 @@ class DifferentiableTask(Task):
 
 
 def squaredErrorLoss(prediction, target):
+    if isinstance(prediction, list):
+        if len(prediction) != len(target):
+            return 99
+        return sum(squaredErrorLoss(a, b)
+                   for a, b in zip(prediction, target) )
+
     d = prediction - target
     return d * d
 

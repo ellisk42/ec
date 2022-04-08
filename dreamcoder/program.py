@@ -242,6 +242,10 @@ class Application(Program):
             self.trueBranch = None
             self.branch = None
 
+    
+    def minimumIndex(self, depth=0):
+        return min(self.f.minimumIndex(depth), self.x.minimumIndex(depth))
+
     def betaReduce(self):
         # See if either the function or the argument can be reduced
         f = self.f.betaReduce()
@@ -418,6 +422,11 @@ class Index(Program):
 
     def __hash__(self): return self.i
 
+    def minimumIndex(self, depth):
+        if self.i <= depth:
+            return self.i - depth
+        return POSITIVEINFINITY
+
     def visit(self,
               visitor,
               *arguments,
@@ -507,6 +516,9 @@ class Abstraction(Program):
 
     @property
     def isAbstraction(self): return True
+
+    def minimumIndex(self, depth):
+        return self.body.minimumIndex(depth+1)
 
     def __eq__(self, o): return isinstance(
         o, Abstraction) and o.body == self.body
@@ -606,6 +618,9 @@ class Primitive(Program):
     @property
     def isPrimitive(self): return True
 
+    def minimumIndex(self, depth):
+        return POSITIVEINFINITY
+
     def __eq__(self, o): return isinstance(
         o, Primitive) and o.name == self.name
 
@@ -684,6 +699,9 @@ class Invented(Program):
 
     @property
     def isInvented(self): return True
+
+    def minimumIndex(self, depth):
+        return POSITIVEINFINITY
 
     def show(self, isFunction): return "#%s" % (self.body.show(False))
 

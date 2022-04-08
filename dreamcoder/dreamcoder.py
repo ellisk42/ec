@@ -852,6 +852,7 @@ def commandlineArguments(_=None,
             "ocaml",
             "pypy",
             "bottom",
+            "bottom_unsound",
             "python"],
         default=solver,
         help="""Solver for enumeration.

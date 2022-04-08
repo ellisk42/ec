@@ -1389,7 +1389,7 @@ class PCFG():
                            size_of_type(t.arguments[1]))
             return 1 + sum(size_of_type(a) for a in t.arguments)
 
-        environment = tuple(reversed(request.functionArguments()))
+        environment = tuple(request.functionArguments())
         maximum_environment += len(environment)
         request = request.returns()
         possible_types = {t for s in range(1, maximum_type+1) for t in types_of_size(s)} | {request}
@@ -1420,17 +1420,19 @@ class PCFG():
                 return (tp,)
             else:
                 return tuple([tp]+list(e))
-            e = dict(e)
-            if tp in e:
-                e[tp] += 1
-            else:
-                e[tp] = 1
-            return frozendict(e)
 
         def push_multiple_environment(ts, e):
             for t in ts:
                 e = push_environment(t, e)
             return e
+
+        def purge_continuation(e):
+            if g.continuationType is None or sum(t==g.continuationType for t in e )<2:
+                return e
+            while e[-1] == g.continuationType and sum(t==g.continuationType for t in e )>1:
+                e = e[:-1]
+            return e
+            
 
         rules = {}
 
@@ -1457,6 +1459,7 @@ class PCFG():
                         for a in arguments:
                             new_environment = push_multiple_environment(a.functionArguments(),
                                                                         environment)
+                            new_environment = purge_continuation(new_environment)
                             argument_symbols.append((len(a.functionArguments()),
                                                      (a.returns(), new_environment)))
 
@@ -1501,6 +1504,8 @@ class PCFG():
                         for ai, a in enumerate(arguments):
                             new_environment = push_multiple_environment(a.functionArguments(),
                                                                         environment)
+                            new_environment = purge_continuation(new_environment)
+                            
                             if p.isIndex:
                                 new_context = Index(0)
                             else:
@@ -1723,7 +1728,7 @@ class PCFG():
         # import pdb; pdb.set_trace()
 
     def quantized_enumeration(self, resolution=0.5, skeletons=None,
-                              observational_equivalence=True, inputs=None):
+                              observational_equivalence=True, sound=True, inputs=None):
         """
         observational_equivalence option: if True, checks semantic equivalence of expressions and ignores duplicates
         inputs: the example inputs to the program, which are only used for observational equivalence
@@ -1752,7 +1757,7 @@ class PCFG():
         # observational equivalence
         equivalences = {nt: {} for nt in range(nonterminals)}
 
-        test_generator = Sloppy(inputs, n=5)
+        test_generator = Sloppy(inputs, n=5, sound=sound)
 
         def expressions_of_size(symbol, size):
             nonlocal expressions, equivalences
@@ -1847,8 +1852,8 @@ class PCFG():
                         if key not in equivalences[symbol]:
                             equivalences[symbol][key] = proposed_expression
                             accepted_new.append(proposed_expression)
-                            #eprint("keeping", proposed_expression)
-                        #else: eprint("discarded", proposed_expression)
+                            #eprint("keeping", proposed_expression, key)
+                        #else: eprint("discarded", proposed_expression, key)
                 else:
                     accepted_new = new
 
@@ -1874,6 +1879,7 @@ class PCFG():
         expressions = [[None for _ in range(int(100/resolution))]
                        for _ in range(nonterminals)]
         for cost in range(int(100/resolution)):
+            eprint(" -- Bottom up enumeration, cost", cost)
             for skeleton, skeleton_cost in zip(skeletons, skeleton_costs):
                 for e in complete_skeleton(cost-skeleton_cost, skeleton):
                     yield e

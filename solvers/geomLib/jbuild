@@ -1,13 +1,11 @@
 (jbuild_version 1)
 
-(ocamllex (lambdaLexer))
-(ocamllex (geomLexer))
+;(ocamllex (lambdaLexer))
+;(ocamllex (geomLexer))
 
-(menhir
- ((modules (lambdaParser))))
+;(menhir ((modules (lambdaParser)) (flags (--infer))))
 
-(menhir
- ((modules (geomParser))))
+;(menhir ((modules (geomParser)) (flags (--infer))))
 
 (library
   ((name geomLib)

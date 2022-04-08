@@ -28,7 +28,8 @@ def multicoreEnumeration(g, tasks, _=None,
     import dill
     
     solvers = {"ocaml": solveForTask_ocaml,
-               "bottom": solveForTask_bottom,   
+               "bottom": solveForTask_bottom,
+               "bottom_unsound": solveForTask_bottom,   
                "pypy": solveForTask_pypy,   
                "python": solveForTask_python}   
     assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python." 
@@ -43,9 +44,11 @@ def multicoreEnumeration(g, tasks, _=None,
         g = {t: g for t in tasks}
     
     
-    if solver == "bottom":
+    if "bottom" in solver:
         for t, _g in g.items():
             _g.unrolled = PCFG.from_grammar(_g, t.request).number_rules()
+            # eprint(PCFG.from_grammar(_g, t.request))
+            # assert False
                 
     task2grammar = g
 
@@ -90,8 +93,8 @@ def multicoreEnumeration(g, tasks, _=None,
 
     def budgetIncrement(lb):
         nonlocal solver_str
-        if solver_str=="bottom":
-            return 6
+        if "bottom" in solver_str:
+            return 100
         else:
             return 1.5
 
@@ -158,6 +161,7 @@ def multicoreEnumeration(g, tasks, _=None,
                        (request, len(jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
                 stopwatches[j].start()
                 parallelCallback(wrapInThread(solver),
+                                 solver=solver_str, 
                                  q=q, g=g, ID=nextID,
                                  elapsedTime=stopwatches[j].elapsed,
                                  CPUs=allocation[j],
@@ -254,6 +258,7 @@ def wrapInThread(f):
 
 
 def solveForTask_ocaml(_=None,
+                       solver="ocaml",
                        elapsedTime=0.,
                        CPUs=1,
                        g=None, tasks=None,
@@ -352,12 +357,13 @@ def solveForTask_ocaml(_=None,
     return frontiers, searchTimes, pc
 
 def solveForTask_pypy(_=None,
+                      solver="pypy", 
                       elapsedTime=0.,
-                      g=None, task=None,
+                      g=None, tasks=None, CPUs=1, 
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False):
+                      evaluationTimeout=None, maximumFrontiers=None, testing=False):
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -369,6 +375,7 @@ def solveForTask_pypy(_=None,
                         lowerBound=lowerBound, upperBound=upperBound)
 
 def solveForTask_python(_=None,
+                        solver="python", 
                         elapsedTime=0.,
                         g=None, tasks=None,
                         lowerBound=None, upperBound=None, budgetIncrement=None,
@@ -386,6 +393,7 @@ def solveForTask_python(_=None,
                              lowerBound=lowerBound, upperBound=upperBound)
 
 def solveForTask_bottom(_=None,
+                        solver="bottom", 
                         elapsedTime=0.,
                         g=None, tasks=None,
                         lowerBound=None, upperBound=None, budgetIncrement=None,
@@ -397,6 +405,7 @@ def solveForTask_bottom(_=None,
     if compile_me:
         return callCompiled(solveForTask_bottom,
                             elapsedTime=elapsedTime,
+                            solver=solver, 
                             g=g, tasks=tasks,
                             lowerBound=None, upperBound=None, budgetIncrement=None,
                             timeout=timeout,
@@ -428,7 +437,7 @@ def solveForTask_bottom(_=None,
     splits = pcfg.split(CPUs)
 
     results = parallelMap(CPUs, 
-                          lambda pps: bottom_up_parallel_worker(g, pcfg, pps, tasks, timeout, maximumFrontiers, evaluationTimeout=evaluationTimeout),
+                          lambda pps: bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFrontiers, evaluationTimeout=evaluationTimeout),
                           splits)
     number_of_programs = sum(np for _, np in results )
     eprint("Enumerated", number_of_programs, "programs")
@@ -447,7 +456,7 @@ def solveForTask_bottom(_=None,
     
 
 
-def bottom_up_parallel_worker(g, pcfg, pps, tasks, timeout, maximumFrontiers,
+def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFrontiers,
                               evaluationTimeout=None):
     from time import time
     
@@ -460,7 +469,19 @@ def bottom_up_parallel_worker(g, pcfg, pps, tasks, timeout, maximumFrontiers,
 
     totalNumberOfPrograms=0
 
-    for e in pcfg.quantized_enumeration(skeletons=pps):
+    inputs = [ xs for t in tasks for xs, y in t.examples ]
+    contained=set()    
+    deduplicated = []
+    for xs in inputs:
+        if str(xs) not in contained:
+            deduplicated.append(xs)
+            contained.add(str(xs))
+    random.shuffle(deduplicated)
+    inputs=deduplicated[:10] # FIXME
+
+    for e in pcfg.quantized_enumeration(skeletons=pps,
+                                        inputs=inputs, observational_equivalence=True,
+                                        sound="unsound" not in solver):
         totalNumberOfPrograms+=1
         
         if time()-starting>timeout:
