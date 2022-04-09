@@ -11,13 +11,44 @@ import dreamcoder as dc
 
 
 class Sloppy():
-    def __init__(self, inputs, n=6):
+    def __init__(self, inputs, n=6, sound=True):
+        self.sound = sound
         self.inputs = inputs
         self.next_symbol = 0
         self._test_inputs = {}
         self.n=n
 
+    def unique_symbol(self):
+        self.next_symbol += 1
+        return self.next_symbol
+
     def compute_signature(self, expression, tp, arguments):
+        outputs = []
+        if self.sound:
+            for i in expression.freeVariables():
+                #illegal?
+                if i < len(arguments) - len(self.inputs[0]):
+                    return self.unique_symbol()
+            
+            for test_input in self.inputs:
+                environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
+                try:
+                    o = expression.evaluate(environment)
+                except:
+                    o = None
+                if o is None:
+                    outputs.append(None)
+                    continue
+                try:
+                    outputs.append(self.value_to_key(o, tp))
+                    hash(outputs[-1])
+                except:
+                    eprint(expression, tp, environment, o, test_input)
+                    assert False
+            if all(o is None for o in outputs):
+                return None
+            return tuple(outputs)
+            
         outputs = []
         for test_input in self.test_inputs(arguments):
             try:
@@ -27,7 +58,11 @@ class Sloppy():
             if o is None:
                 outputs.append(None)
                 continue
-            outputs.append(self.value_to_key(o, tp))
+            try:
+                outputs.append(self.value_to_key(o, tp))
+            except:
+                eprint(expression, tp, o, test_input)
+                assert False
         if all(o is None for o in outputs):
             return None
         return tuple(outputs)
@@ -93,4 +128,7 @@ class Sloppy():
         elif isinstance(output_type, TypeConstructor) and output_type.name=="list":
             value = tuple(self.value_to_key(v, output_type.arguments[0])
                           for v in value )
+        
         return value
+
+    

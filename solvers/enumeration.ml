@@ -38,38 +38,37 @@ let serialize_frontier f =
   j
 
 let violates_symmetry f a n =
-  false
-  (* if not (is_base_primitive f) then false else *)
-  (*   let a = application_function a in *)
-  (*   if not (is_base_primitive a) then false else  *)
-  (*     match (n, primitive_name f, primitive_name a) with *)
-  (*     (\* McCarthy primitives *\) *)
-  (*     | (0,"car","cons") -> true *)
-  (*     | (0,"car","empty") -> true *)
-  (*     | (0,"cdr","cons") -> true *)
-  (*     | (0,"cdr","empty") -> true *)
-  (*     | (_,"+","0") -> true *)
-  (*     | (1,"-","0") -> true *)
-  (*     | (0,"+","+") -> true *)
-  (*     | (0,"*","*") -> true *)
-  (*     | (_,"*","0") -> true *)
-  (*     | (_,"*","1") -> true *)
-  (*     | (0,"empty?","cons") -> true *)
-  (*     | (0,"empty?","empty") -> true *)
-  (*     | (0,"zero?","0") -> true *)
-  (*     | (0,"zero?","1") -> true *)
-  (*     | (0,"zero?","-1") -> true *)
-  (*     (\* bootstrap target *\) *)
-  (*     | (1,"map","empty") -> true *)
-  (*     | (_,"zip","empty") -> true *)
-  (*     | (0,"fold","empty") -> true *)
-  (*     | (1,"index","empty") -> true *)
-  (*     | (_,"left","left") -> true *)
-  (*     | (_,"left","right") -> true *)
-  (*     | (_,"right","right") -> true *)
-  (*     | (_,"right","left") -> true *)
-  (*     (\* | (_,"tower_embed","tower_embed") -> true *\) *)
-  (*     | _ -> false *)
+  if not (is_base_primitive f) then false else
+    let a = application_function a in
+    if not (is_base_primitive a) then false else
+      match (n, primitive_name f, primitive_name a) with
+      (* McCarthy primitives *)
+      | (0,"car","cons") -> true
+      | (0,"car","empty") -> true
+      | (0,"cdr","cons") -> true
+      | (0,"cdr","empty") -> true
+      | (_,"+","0") -> true
+      | (1,"-","0") -> true
+      | (0,"+","+") -> true
+      | (0,"*","*") -> true
+      | (_,"*","0") -> true
+      | (_,"*","1") -> true
+      | (0,"empty?","cons") -> true
+      | (0,"empty?","empty") -> true
+      | (0,"zero?","0") -> true
+      | (0,"zero?","1") -> true
+      | (0,"zero?","-1") -> true
+      (* bootstrap target *)
+      | (1,"map","empty") -> true
+      | (_,"zip","empty") -> true
+      | (0,"fold","empty") -> true
+      | (1,"index","empty") -> true
+      | (_,"left","left") -> true
+      | (_,"left","right") -> true
+      | (_,"right","right") -> true
+      | (_,"right","left") -> true
+      (* | (_,"tower_embed","tower_embed") -> true *)
+      | _ -> false
 
 (* For now this is disabled and is not used *)
 let violates_commutative f x y =
