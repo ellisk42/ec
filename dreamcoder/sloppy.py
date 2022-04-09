@@ -75,6 +75,7 @@ class Sloppy():
             else:
                 test_inputs.append(list(sloppy))
         self._test_inputs[tuple(arguments)] = test_inputs
+        print(arguments, test_inputs)
         return test_inputs
     
     def value_to_key(self, value, output_type):

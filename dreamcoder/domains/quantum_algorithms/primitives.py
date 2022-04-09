@@ -240,7 +240,7 @@ def _get_n_qubits(old_circuit):
 
 def _hadamard(old_circuit):
     state, circuit = old_circuit
-    circuit.append( ["hadamard", state[POS]])
+    circuit = circuit + [["hadamard", state[POS]]]
     return [state, circuit]
 
 def _cnot(old_circuit):
@@ -250,7 +250,7 @@ def _cnot(old_circuit):
     if second_qubit<0 or second_qubit >= state[N]:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit.append(["cnot", state[POS], second_qubit])
+    circuit = circuit +[ ["cnot", state[POS], second_qubit]]
     return [state, circuit]
 
 def _swap(old_circuit):
@@ -260,8 +260,7 @@ def _swap(old_circuit):
     if second_qubit<0 or second_qubit >= state[N]:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit.append(["swap", state[POS], second_qubit])
-    return [state, circuit]
+    circuit = circuit + [["swap", state[POS], second_qubit]]
 
 # Control
 def _repeat(n_times,body):
@@ -376,7 +375,7 @@ def f_one_qubit_gate(old_circuit, qubit_1,operation_name):
     if qubit_1<0 or qubit_1 >= n_qubit:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit.append([operation_name, qubit_1])
+    circuit = circuit + [[operation_name, qubit_1]]
     return [n_qubit, circuit]
 
 def f_two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
@@ -392,7 +391,7 @@ def f_two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
     if qubit_1 == qubit_2:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit.append([operation_name, qubit_1, qubit_2])
+    circuit = circuit + [[operation_name, qubit_1, qubit_2]]
     return [n_qubit, circuit]
 
 # Circuit primitives

@@ -621,7 +621,8 @@ def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op, observation
     n_min = QuantumTask.min_size
     n_max =  QuantumTask.max_size
     
-    for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence):
+    for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence,
+                                           inputs=[[no_op(3)],[no_op(4)]]):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
         try: 
