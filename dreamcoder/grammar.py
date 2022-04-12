@@ -1515,7 +1515,7 @@ class PCFG():
                                                      (a.returns(), new_context, new_environment)))
 
                         if all( len(new_environment) <= maximum_environment
-                                for _, (_, new_environment) in argument_symbols ):
+                                for _, (_, _, new_environment) in argument_symbols ):
                             rules[(request, context, environment)].append((lp, p, argument_symbols))
             
             for _, p, argument_symbols in rules[(request, context, environment)]:
@@ -1525,16 +1525,21 @@ class PCFG():
         start_environment = push_multiple_environment(environment, {})
         if isinstance(g, ContextualGrammar):
             start_symbol = (request, None, start_environment)
+            make_contextual_rules(*start_symbol)
         elif isinstance(g, Grammar):
             start_symbol = (request, start_environment)
+            make_rules(*start_symbol)
         else:
             assert False
-            
-        make_rules(*start_symbol)
+
         # eprint(len(rules), "nonterminal symbols")
         # eprint(sum(len(productions) for productions in rules.values()), "production rules")
         free_variable_types = {nt: nt[-1] for nt in rules }
         return_type = {nt: nt[0] for nt in rules }
+        eprint("pcfg compilation: distinct non terminals", len(rules),
+               "; distinct environments", len({ (r[0], tuple(sorted(map(str, r[-1]))))
+                                              for r in rules}))
+        
         return PCFG(rules, start_symbol, len(start_environment),
                     return_type=return_type, free_variable_types=free_variable_types).normalize()
 

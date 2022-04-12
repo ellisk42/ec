@@ -29,7 +29,8 @@ def multicoreEnumeration(g, tasks, _=None,
     
     solvers = {"ocaml": solveForTask_ocaml,
                "bottom": solveForTask_bottom,
-               "bottom_unsound": solveForTask_bottom,   
+               "bottom_unsound": solveForTask_bottom,
+               "bottom_simple": solveForTask_bottom,   
                "pypy": solveForTask_pypy,   
                "python": solveForTask_python}   
     assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python." 
@@ -480,7 +481,8 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
     inputs=deduplicated[:10] # FIXME
 
     for e in pcfg.quantized_enumeration(skeletons=pps,
-                                        inputs=inputs, observational_equivalence=True,
+                                        inputs=inputs,
+                                        observational_equivalence=(solver!="bottom_simple"),
                                         sound="unsound" not in solver):
         totalNumberOfPrograms+=1
         
@@ -490,6 +492,7 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
         prior = None
 
         for n in range(len(tasks)):
+            
             task = tasks[n]
 
             likelihood = task.logLikelihood(e, evaluationTimeout)
@@ -510,6 +513,11 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
 
             if time() - starting > timeout:
                 break
+
+        # do we have enough perfect hits
+        if all( sum( entry.logLikelihood>-0.01 for _, entry in hits[n] ) >= maximumFrontiers[n]
+                for n in range(len(tasks))):
+            break
 
     # incorporate search time in frontier entry
     for n in range(len(tasks)):

@@ -853,6 +853,7 @@ def commandlineArguments(_=None,
             "pypy",
             "bottom",
             "bottom_unsound",
+            "bottom_simple",
             "python"],
         default=solver,
         help="""Solver for enumeration.
