@@ -22,33 +22,35 @@ class Sloppy():
         self.next_symbol += 1
         return self.next_symbol
 
-    def compute_signature(self, expression, tp, arguments):
+    def sound_signature(self, expression, tp, arguments):
         outputs = []
-        if self.sound:
-            for i in expression.freeVariables():
-                #illegal?
-                if i < len(arguments) - len(self.inputs[0]):
-                    return self.unique_symbol()
-            
-            for test_input in self.inputs:
-                environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
-                try:
-                    o = expression.evaluate(environment)
-                except:
-                    o = None
-                if o is None:
-                    outputs.append(None)
-                    continue
-                try:
-                    outputs.append(self.value_to_key(o, tp))
-                    hash(outputs[-1])
-                except:
-                    eprint(expression, tp, environment, o, test_input)
-                    assert False
-            if all(o is None for o in outputs):
-                return None
-            return tuple(outputs)
-            
+        for i in expression.freeVariables():
+            #illegal?
+            if i < len(arguments) - len(self.inputs[0]):
+                return self.unique_symbol()
+
+        for test_input in self.inputs:
+            environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
+            try:
+                o = expression.evaluate(environment)
+            except:
+                o = None
+            if o is None:
+                outputs.append(None)
+                continue
+            try:
+                outputs.append(self.value_to_key(o, tp))
+                hash(outputs[-1])
+            except:
+                eprint(expression, tp, environment, o, test_input)
+                assert False
+        if all(o is None for o in outputs):
+            return None
+        return tuple(outputs)
+
+    def compute_signature(self, expression, tp, arguments):
+        if self.sound: return self.sound_signature(expression, tp, arguments)
+        
         outputs = []
         for test_input in self.test_inputs(arguments):
             try:
@@ -109,6 +111,8 @@ class Sloppy():
                     test_inputs.append(list(sloppy) + list(reversed(input_tuple)))
             else:
                 test_inputs.append(list(sloppy))
+        test_inputs = random.sample(test_inputs, min(len(self.inputs),
+                                                     len(test_inputs)))
         self._test_inputs[tuple(arguments)] = test_inputs
         print(arguments, test_inputs)
         return test_inputs
