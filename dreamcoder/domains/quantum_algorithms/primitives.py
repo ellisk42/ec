@@ -127,19 +127,26 @@ qiskit_full_op_names = lambda QT: {
 }
 
 eyes = {} #caching initial identity matrices
+full_circuit_cache = {}
 def full_circuit_to_mat(full_circuit):
-    n_qubit, op_list = full_circuit
-    
-    if n_qubit not in eyes.keys():
-        eyes[n_qubit]=eye(n_qubit)
-    tensor = eyes[n_qubit]
-    
-    
-    for op in op_list:
-        
-        tensor = full_op_names[op[0]](tensor, *op[1:])
-        
-    return tensor_to_mat(tensor)
+    t_full_circuit = tuple(full_circuit)
+    try:
+        if t_full_circuit not in full_circuit_cache:
+            n_qubit, op_list = full_circuit
+            
+            if n_qubit not in eyes.keys():
+                eyes[n_qubit]=eye(n_qubit)
+            tensor = eyes[n_qubit]
+            
+            
+            for op in op_list:
+                
+                tensor = full_op_names[op[0]](tensor, *op[1:])
+                
+            full_circuit_cache[t_full_circuit] = tensor_to_mat(tensor)
+    except TypeError as e:
+        ...
+    return full_circuit_cache[t_full_circuit]
 
 def state_circuit_to_mat(circuit):
     return full_circuit_to_mat([circuit[0][-1], circuit[1]])
@@ -206,42 +213,42 @@ N = 2
 
 DIR_NEXT = 1
 DIR_PREV = -1
-STATE_0 = lambda n_qubits: [0,DIR_NEXT,n_qubits]
+STATE_0 = lambda n_qubits: (0,DIR_NEXT,n_qubits)
 
 # State operations
 def _change_direction(old_circuit):
-    state, circuit = old_circuit
+    state, circuit = list(old_circuit[0]), old_circuit[1]
     state[DIR] *= -1
-    return [state, circuit]
+    return (tuple(state), circuit)
 
 def _move_next(old_circuit):
-    state, circuit = old_circuit
+    state, circuit = list(old_circuit[0]), old_circuit[1]
     if state[POS] >=state[N]-1:
         raise QuantumCircuitException("Invalid selected qubit")
     
     state[POS] += 1
-    return [state, circuit]
+    return (list(state), circuit)
 
 def _move_prev(old_circuit):
-    state, circuit = old_circuit
+    state, circuit = list(old_circuit[0]), old_circuit[1]
     if state[POS] <=0:
         raise QuantumCircuitException("Invalid selected qubit")
         
     state[POS] -= 1
-    return [state, circuit]
+    return (tuple(state), circuit)
 
 
 # Circuit operation
 def no_op(n):
-    return [STATE_0(n), []]
+    return (STATE_0(n), ())
 
 def _get_n_qubits(old_circuit):
     return old_circuit[0][-1]
 
 def _hadamard(old_circuit):
     state, circuit = old_circuit
-    circuit = circuit + [["hadamard", state[POS]]]
-    return [state, circuit]
+    circuit = circuit + (("hadamard", state[POS]),)
+    return (state, circuit)
 
 def _cnot(old_circuit):
     state, circuit = old_circuit
@@ -250,8 +257,8 @@ def _cnot(old_circuit):
     if second_qubit<0 or second_qubit >= state[N]:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit = circuit +[ ["cnot", state[POS], second_qubit]]
-    return [state, circuit]
+    circuit = circuit +(("cnot", state[POS], second_qubit),)
+    return (state, circuit)
 
 def _swap(old_circuit):
 
@@ -260,7 +267,7 @@ def _swap(old_circuit):
     if second_qubit<0 or second_qubit >= state[N]:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit = circuit + [["swap", state[POS], second_qubit]]
+    circuit = circuit + (("swap", state[POS], second_qubit),)
 
 # Control
 def _repeat(n_times,body):
@@ -364,7 +371,7 @@ primitives = [
 # Full c ircuit operation
 ## Full circuit [n_qubits, [ops]]
 def f_no_op(n):
-    return [n, []]
+    return (n, ())
 
 def f_get_n_qubits(old_circuit):
     return old_circuit[0]
@@ -375,8 +382,8 @@ def f_one_qubit_gate(old_circuit, qubit_1,operation_name):
     if qubit_1<0 or qubit_1 >= n_qubit:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit = circuit + [[operation_name, qubit_1]]
-    return [n_qubit, circuit]
+    circuit = circuit + ((operation_name, qubit_1),)
+    return (n_qubit, circuit)
 
 def f_two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
     # operation_name = "cnot" or some other gate name
@@ -391,8 +398,8 @@ def f_two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
     if qubit_1 == qubit_2:
         raise QuantumCircuitException("Invalid selected qubit")
     
-    circuit = circuit + [[operation_name, qubit_1, qubit_2]]
-    return [n_qubit, circuit]
+    circuit = circuit + ((operation_name, qubit_1, qubit_2),)
+    return (n_qubit, circuit)
 
 # Circuit primitives
 # fp_no_op = dc.program.Primitive(name="fno_op", 
