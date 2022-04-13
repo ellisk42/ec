@@ -23,6 +23,9 @@ class Sloppy():
         return self.next_symbol
 
     def sound_signature(self, expression, tp, arguments):
+        if self.inputs is None: 
+            raise Exception("No example inputs provided in Sloppy!")
+        
         outputs = []
         for i in expression.freeVariables():
             #illegal?
