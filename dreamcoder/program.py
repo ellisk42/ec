@@ -39,10 +39,10 @@ class Program(object):
             self = Abstraction(self)
         return self
 
-    def betaNormalForm(self):
+    def betaNormalForm(self, reduceInventions=True):
         n = self
         while True:
-            np = n.betaReduce()
+            np = n.betaReduce(reduceInventions=reduceInventions)
             if np is None: return n
             n = np
 
@@ -246,11 +246,11 @@ class Application(Program):
     def minimumIndex(self, depth=0):
         return min(self.f.minimumIndex(depth), self.x.minimumIndex(depth))
 
-    def betaReduce(self):
+    def betaReduce(self, reduceInventions=True):
         # See if either the function or the argument can be reduced
-        f = self.f.betaReduce()
+        f = self.f.betaReduce(reduceInventions=reduceInventions)
         if f is not None: return Application(f,self.x)
-        x = self.x.betaReduce()
+        x = self.x.betaReduce(reduceInventions=reduceInventions)
         if x is not None: return Application(self.f,x)
 
         # Neither of them could be reduced. Is this not a redex?
@@ -463,7 +463,7 @@ class Index(Program):
                 raise ShiftFailure()
             return Index(i)
 
-    def betaReduce(self): return None
+    def betaReduce(self, reduceInventions=True): return None
 
     def isBetaLong(self): return True
 
@@ -561,8 +561,8 @@ class Abstraction(Program):
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)
 
-    def betaReduce(self):
-        b = self.body.betaReduce()
+    def betaReduce(self, reduceInventions=True):
+        b = self.body.betaReduce(reduceInventions=reduceInventions)
         if b is None: return None
         return Abstraction(b)
 
@@ -642,7 +642,7 @@ class Primitive(Program):
 
     def evaluate(self, environment): return self.value
 
-    def betaReduce(self): return None
+    def betaReduce(self, reduceInventions=True): return None
 
     def isBetaLong(self): return True
 
@@ -733,7 +733,10 @@ class Invented(Program):
 
     def evaluate(self, e): return self.body.evaluate([])
 
-    def betaReduce(self): return self.body
+    def betaReduce(self, reduceInventions=True):
+        if reduceInventions:
+            return self.body
+        return None
 
     def isBetaLong(self): return True
 
@@ -1299,5 +1302,8 @@ def to_fast_program(p):
 
 if __name__ == "__main__":
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-    e = Program.parse("(#(lambda (?? (+ 1 $0))) (lambda (?? (+ 1 $0))) (lambda (?? (+ 1 $0))) - * (+ +))")
-    eprint(e)
+    e1 = Program.parse("(lambda (+ 1 $0))")
+    e2 = Program.parse("(lambda (* $0 $0))")
+    e3=Abstraction(Application(e1, Application(e2, Index(0))))
+    eprint(e3)
+    eprint(e3.betaReduce())
