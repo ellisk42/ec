@@ -642,7 +642,9 @@ import dreamcoder as dc
 import time
 
 
-def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op, observational_equivalence=True): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
+def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op, 
+                   observational_equivalence=True,
+                   sound=False): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
     from tqdm import trange
     enum_dictionary = {}
     t_0 = time.time()
