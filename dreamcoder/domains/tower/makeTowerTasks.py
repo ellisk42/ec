@@ -22,7 +22,7 @@ class SupervisedTower(Task):
         self.original = program
         state, self.plan = program.evaluate([])(_empty_tower)(TowerState())
         self.hand = state.hand
-        super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
+        super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [((_empty_tower, ),self.plan)],
                                               features=[])
         self.specialTask = ("supervisedTower",
                             {"plan": self.plan})

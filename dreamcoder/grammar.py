@@ -1334,7 +1334,7 @@ def batchLikelihood(jobs):
 
 class PCFG():
     def __init__(self, productions, start_symbol, number_of_arguments,
-                 return_type=None, free_variable_types=None):
+                 return_type=None, free_variable_types=None, continuationType=None):
         # productions: nonterminal -> [(log probability, constructor, [(#lambdas, nonterminal)])]
         # free_variable_types: nonterminal -> [types]
         self.number_of_arguments = number_of_arguments
@@ -1343,6 +1343,7 @@ class PCFG():
 
         self.return_type = return_type
         self.free_variable_types = free_variable_types
+        self.continuationType = continuationType
 
     @staticmethod
     def from_grammar(g, request, maximum_type=3, maximum_environment=2):
@@ -1541,7 +1542,8 @@ class PCFG():
                                               for r in rules}))
         
         return PCFG(rules, start_symbol, len(start_environment),
-                    return_type=return_type, free_variable_types=free_variable_types).normalize()
+                    return_type=return_type, free_variable_types=free_variable_types,
+                    continuationType=g.continuationType).normalize()
 
     def normalize(self):
         def norm(distribution):
@@ -1582,13 +1584,17 @@ class PCFG():
             return_type = [self.return_type[reverse_mapping[i]]
                            for i in range(len(self.productions))]
 
+        eprint(self)
+        
+
         return PCFG(new_productions, mapping[self.start_symbol], self.number_of_arguments,
                     return_type=return_type,
-                    free_variable_types=free_variable_types)
+                    free_variable_types=free_variable_types,
+                    continuationType=self.continuationType)
 
     def json(self):
         self = self.number_rules()
-        return {"rules": [[{"probability": lp,
+        data = {"rules": [[{"probability": lp,
                             "constructor": str(k),
                             "arguments": [{"n_lambda": nl, "nt": nt}
                                           for nl, nt in arguments]}
@@ -1597,6 +1603,9 @@ class PCFG():
                 "number_of_arguments": self.number_of_arguments,
                 "start_symbol": self.start_symbol
                 }
+        if self.continuationType is not None:
+            data["continuation_type"] = self.continuationType.json()
+        return data
 
     def log_probability(self, program, symbol=None):
 
@@ -1762,7 +1771,7 @@ class PCFG():
         # observational equivalence
         equivalences = {nt: {} for nt in range(nonterminals)}
 
-        test_generator = Sloppy(inputs, n=5, sound=sound)
+        test_generator = Sloppy(inputs, n=5, sound=sound, continuationType=self.continuationType)
 
         def expressions_of_size(symbol, size):
             nonlocal expressions, equivalences
