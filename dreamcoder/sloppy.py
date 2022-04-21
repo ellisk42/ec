@@ -62,7 +62,7 @@ class Sloppy():
             try:
                 o = expression.evaluate(environment)
             except Exception as e:
-                eprint("generated exception", e)
+                # eprint("generated exception", e)
                 o = None
             if o is None:
                 outputs.append(None)
@@ -145,7 +145,7 @@ class Sloppy():
         test_inputs = random.sample(test_inputs, min(len(self.inputs),
                                                      len(test_inputs)))
         self._test_inputs[tuple(arguments)] = test_inputs
-        print(arguments, test_inputs)
+        # print(arguments, test_inputs)
         return test_inputs
     
     def value_to_key(self, value, output_type):
