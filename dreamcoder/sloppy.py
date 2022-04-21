@@ -11,7 +11,8 @@ import dreamcoder as dc
 
 
 class Sloppy():
-    def __init__(self, inputs, n=6, sound=True):
+    def __init__(self, inputs, n=6, sound=True, continuationType=None):
+        self.continuationType=continuationType
         self.sound = sound
         self.inputs = inputs
         self.next_symbol = 0
@@ -25,18 +26,43 @@ class Sloppy():
     def sound_signature(self, expression, tp, arguments):
         if self.inputs is None: 
             raise Exception("No example inputs provided in Sloppy!")
+
+        # eprint()
+        # eprint(expression, tp, arguments)
+        # for i in expression.freeVariables():
+        #     eprint("free ", i, arguments[i])
+            
         
         outputs = []
         for i in expression.freeVariables():
             #illegal?
-            if i < len(arguments) - len(self.inputs[0]):
+            if self.continuationType is None and i < len(arguments) - len(self.inputs[0]) or\
+               (self.continuationType is not None and self.continuationType!=arguments[i]):
+                #eprint("invalid")
                 return self.unique_symbol()
+        #eprint("good work")
 
         for test_input in self.inputs:
-            environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
+            if self.continuationType is None:
+                environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
+            if self.continuationType is not None:
+                environment = [None]*len(arguments)
+                continuation_value = None
+                for argument_type, input_data in zip(arguments, test_input):
+                    if argument_type == self.continuationType:
+                        continuation_value = input_data
+                        break
+                assert continuation_value is not None
+                #eprint("continuation_value", continuation_value)
+                
+                for i in range(len(arguments)):
+                    if arguments[i] == self.continuationType:
+                        environment[i] = continuation_value
+                
             try:
                 o = expression.evaluate(environment)
-            except:
+            except Exception as e:
+                eprint("generated exception", e)
                 o = None
             if o is None:
                 outputs.append(None)
@@ -47,11 +73,13 @@ class Sloppy():
             except:
                 eprint(expression, tp, environment, o, test_input)
                 assert False
+        #eprint("output", tuple(outputs))
         if all(o is None for o in outputs):
             return None
         return tuple(outputs)
 
     def compute_signature(self, expression, tp, arguments):
+        
         if self.sound: return self.sound_signature(expression, tp, arguments)
         
         outputs = []
@@ -132,6 +160,10 @@ class Sloppy():
             # (as we don't move along the circuit and have no position)
             unitary = dc.domains.quantum_algorithms.primitives.full_circuit_to_mat(value)
             value = unitary.tobytes()
+
+        elif str(output_type)=="tower":
+            state, plan = value(dc.domains.tower.towerPrimitives.TowerState())
+            value = (state.hand, state.orientation, tuple(plan))
         elif isinstance(output_type, TypeConstructor) and output_type.name=="list":
             value = tuple(self.value_to_key(v, output_type.arguments[0])
                           for v in value )
