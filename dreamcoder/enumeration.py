@@ -644,7 +644,8 @@ import time
 
 def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op, 
                    observational_equivalence=True,
-                   sound=False): #circuit execution function either full_circuit_to_mat or state_circuit_to_mat
+                   sound=False): 
+    #circuit execution function is either full_circuit_to_mat or state_circuit_to_mat
     from tqdm import trange
     enum_dictionary = {}
     t_0 = time.time()
@@ -653,7 +654,8 @@ def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op,
     n_max =  QuantumTask.max_size
     
     for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence,
-                                           inputs=[[no_op(3)],[no_op(4)]]):
+                                           inputs=[[no_op(3)],[no_op(4)]],
+                                           sound=sound):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
         try: 
