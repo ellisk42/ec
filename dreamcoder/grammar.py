@@ -1771,7 +1771,10 @@ class PCFG():
         # observational equivalence
         equivalences = {nt: {} for nt in range(nonterminals)}
 
-        test_generator = Sloppy(inputs, n=5, sound=sound, continuationType=self.continuationType)
+        request = arrow(*reversed(self.free_variable_types[self.start_symbol]),
+                        self.return_type[self.start_symbol])
+        test_generator = Sloppy(inputs, n=5, sound=sound, continuationType=self.continuationType,
+                                request=request)
 
         def expressions_of_size(symbol, size):
             nonlocal expressions, equivalences
@@ -1867,7 +1870,8 @@ class PCFG():
                             equivalences[symbol][key] = proposed_expression
                             accepted_new.append(proposed_expression)
                             #eprint("keeping", proposed_expression, key)
-                        #else: eprint("discarded", proposed_expression, key)
+                        # elif tint in self.free_variable_types[symbol]:
+                        #     eprint("discarded", self.free_variable_types[symbol], proposed_expression, key)
                 else:
                     accepted_new = new
 
