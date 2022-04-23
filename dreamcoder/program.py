@@ -164,6 +164,7 @@ class Program(object):
             if e[0] == '$': return Index(int(e[1:]))
             if e in Primitive.GLOBALS: return Primitive.GLOBALS[e]
             if e == '??' or e == '?': return FragmentVariable.single
+            if e[0] == '?': return NamedHole(e)
             if e == '<HOLE>': return Hole.single
             raise ParseFailure((s,e))
         return p(s)
@@ -771,7 +772,7 @@ class FragmentVariable(Program):
         return context.makeVariable()
 
     def shift(self, offset, depth=0):
-        raise Exception('Attempt to shift fragment variable')
+        return self
 
     def substitute(self, old, new):
         if self == old:
@@ -871,7 +872,11 @@ class NamedHole(Program):
         return context.makeVariable()
 
     def shift(self, offset, depth=0):
-        raise Exception('Attempt to shift named hl')
+        return self
+
+    def substitute(self, old, new):
+        if self==old: return new
+        return self
 
     def walk(self, surroundingAbstractions=0): yield surroundingAbstractions, self
 
@@ -882,6 +887,10 @@ class NamedHole(Program):
     @staticmethod
     def _parse(s,n):
         assert False
+        while n < len(s) and s[n].isspace(): n += 1
+        n = Program.parseConstant(s,n,
+                                  '??')
+        return Hole.single, n
 
 
 class ShareVisitor(object):
