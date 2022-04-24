@@ -191,6 +191,20 @@ class VersionTable():
                 yield from self.extract(e)
         else: assert False
 
+    def extractSmallest(self,j, **size_parameters):
+        l = self.expressions[j]
+        if l.isAbstraction:
+                return Abstraction(self.extractSmallest(l.body, **size_parameters))
+        elif l.isApplication:
+            return Application(self.extractSmallest(l.f, **size_parameters),
+                               self.extractSmallest(l.x, **size_parameters))
+        elif l.isIndex or l.isPrimitive or l.isInvented:
+            return l
+        elif l.isUnion:
+            return min([self.extractSmallest(e) for e in l],
+                       key=lambda expression: expression.size(**size_parameters))
+        else: assert False
+
     def reachable(self, heads):
         visited = set()
         def visit(j):

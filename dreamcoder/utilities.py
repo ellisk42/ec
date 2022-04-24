@@ -932,6 +932,16 @@ def diffuseImagesOutward(imageCoordinates, labelCoordinates, d,
         constrainRadii()
     return d
 
+def memoize(f):
+    import frozendict
+    memo = {}
+    def helper(*arguments, **keywords):
+        k=tuple([arguments]+[frozendict.frozendict(keywords)])
+        if k not in memo:            
+            memo[k] = f(*arguments, **keywords)
+        return memo[k]
+    return helper
+
 if __name__ == "__main__":
     def f(n):
         if n == 0: return None

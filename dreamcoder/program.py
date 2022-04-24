@@ -380,7 +380,8 @@ class Application(Program):
         yield from self.f.walk(surroundingAbstractions)
         yield from self.x.walk(surroundingAbstractions)
 
-    def size(self): return self.f.size() + self.x.size()
+    def size(self, **miscellaneous): return self.f.size(**miscellaneous) +\
+        self.x.size(**miscellaneous) + miscellaneous.get("application", 0)
 
     @staticmethod
     def _parse(s,n):
@@ -471,7 +472,7 @@ class Index(Program):
 
     def walkUncurried(self, d=0): yield d, self
 
-    def size(self): return 1
+    def size(self, **m): return 1
 
     def free(self, surroundingAbstractions):
         '''Is this index a free variable, given that it has surroundingAbstractions lambda's around it?'''
@@ -579,7 +580,7 @@ class Abstraction(Program):
         yield d, self
         yield from self.body.walkUncurried(d + 1)
 
-    def size(self): return self.body.size()
+    def size(self, **m): return self.body.size(**m) + m.get("abstraction",0)
 
     @staticmethod
     def _parse(s,n):
@@ -649,7 +650,7 @@ class Primitive(Program):
 
     def walkUncurried(self, d=0): yield d, self
 
-    def size(self): return 1
+    def size(self, **m): return 1
 
     @staticmethod
     def _parse(s,n):
@@ -737,7 +738,7 @@ class Invented(Program):
 
     def walkUncurried(self, d=0): yield d, self
 
-    def size(self): return 1
+    def size(self,  **m): return 1
 
     @staticmethod
     def _parse(s,n):
@@ -800,7 +801,7 @@ class FragmentVariable(Program):
 
     def walkUncurried(self, d=0): yield d, self
 
-    def size(self): return 1
+    def size(self, **m): return m.get("??", 1)
 
     @staticmethod
     def _parse(s,n):
@@ -839,7 +840,7 @@ class Hole(Program):
 
     def walkUncurried(self, d=0): yield d, self
 
-    def size(self): return 1
+    def size(self, **m): return m.get("<HOLE>", 1)
 
     @staticmethod
     def _parse(s,n):
@@ -882,7 +883,7 @@ class NamedHole(Program):
 
     def walkUncurried(self, d=0): yield d, self
 
-    def size(self): return 1
+    def size(self, **m): return m["named"]
 
     @staticmethod
     def _parse(s,n):
