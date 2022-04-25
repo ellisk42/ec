@@ -7,7 +7,7 @@ class QuantumTask(dc.task.Task):
     last_algorithm_evaluations = {}
 
     min_size = 3
-    max_size = 6
+    max_size = 6 # exclusive bound
 
     def __init__(self, name, target_algorithm):
         self.target_algorithm = target_algorithm
