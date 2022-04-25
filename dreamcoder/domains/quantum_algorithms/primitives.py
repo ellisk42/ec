@@ -227,7 +227,7 @@ def _move_next(old_circuit):
         raise QuantumCircuitException("Invalid selected qubit")
     
     state[POS] += 1
-    return (list(state), circuit)
+    return (tuple(state), circuit)
 
 def _move_prev(old_circuit):
     state, circuit = list(old_circuit[0]), old_circuit[1]
@@ -279,6 +279,14 @@ def _repeat_help(n_times, body, new_body):
     if n_times==1:
         return new_body
     return _repeat_help(n_times-1, body, lambda b: new_body(body(b)))
+
+def _embed(body):
+    def body_new(*kargs):
+        state, circuit = kargs[0] # old_circuit
+        new_state, new_circuit = body(*kargs)
+        return (state, new_circuit)
+    return body_new
+    
 
 
 # ------------------------------------------
@@ -335,6 +343,11 @@ p_iteration = dc.program.Primitive(name="rep",
                      ty=dc.type.arrow(dc.type.tint, dc.type.arrow(tcircuit,tcircuit),  dc.type.arrow(tcircuit,tcircuit)),
                      value=dc.utilities.Curried(_repeat))
 
+p_embed = dc.program.Primitive(name="emb", 
+                     ty=dc.type.arrow(dc.type.arrow(tcircuit,tcircuit),  dc.type.arrow(tcircuit,tcircuit)),
+                     value=dc.utilities.Curried(_embed))
+
+
 # Arithmetics
 p_0 = dc.program.Primitive("0",dc.type.tint,0)
 p_inc = dc.program.Primitive("inc", dc.type.arrow(dc.type.tint, dc.type.tint), lambda x:x+1)
@@ -354,6 +367,7 @@ primitives = [
     # # p_swap,
     # #control
     p_iteration,
+    p_embed,
     #arithmetics
     p_0,
     p_inc,
