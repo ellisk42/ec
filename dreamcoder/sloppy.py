@@ -11,7 +11,8 @@ import dreamcoder as dc
 
 
 class Sloppy():
-    def __init__(self, inputs, n=6, sound=True, continuationType=None):
+    def __init__(self, inputs, n=6, sound=True, continuationType=None,
+                 request=None):
         self.continuationType=continuationType
         self.sound = sound
         self.inputs = inputs
@@ -19,9 +20,16 @@ class Sloppy():
         self._test_inputs = {}
         self.n=n
 
+        if continuationType is not None:
+            assert all( len(xs)==1 for xs in inputs ), "for no good reason we require continuation types to only have one argument. ask Kevin to fix this later"
+            self.continuation_values = [ [ k
+                                           for k, t in zip(input_data, request.functionArguments())
+                                           if t==continuationType][0]
+                                        for input_data in self.inputs ]
+
     def unique_symbol(self):
         self.next_symbol += 1
-        return self.next_symbol
+        return self.next_symbol    
 
     def sound_signature(self, expression, tp, arguments):
         if self.inputs is None: 
@@ -32,7 +40,6 @@ class Sloppy():
         # for i in expression.freeVariables():
         #     eprint("free ", i, arguments[i])
             
-        
         outputs = []
         for i in expression.freeVariables():
             #illegal?
@@ -42,27 +49,29 @@ class Sloppy():
                 return self.unique_symbol()
         #eprint("good work")
 
-        for test_input in self.inputs:
-            if self.continuationType is None:
-                environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
-            if self.continuationType is not None:
-                environment = [None]*len(arguments)
-                continuation_value = None
-                for argument_type, input_data in zip(arguments, test_input):
-                    if argument_type == self.continuationType:
-                        continuation_value = input_data
-                        break
-                assert continuation_value is not None
-                #eprint("continuation_value", continuation_value)
-                
-                for i in range(len(arguments)):
-                    if arguments[i] == self.continuationType:
-                        environment[i] = continuation_value
-                
+        if tuple(arguments) not in self._test_inputs:
+            environments = []
+
+            for ti, test_input in enumerate(self.inputs):
+                if self.continuationType is None:
+                    environment = [None]*(len(arguments) - len(test_input))+list(reversed(test_input))
+                if self.continuationType is not None:
+                    environment = [None]*len(arguments)
+
+                    for i in range(len(arguments)):
+                        if arguments[i] == self.continuationType:
+                            environment[i] = self.continuation_values[ti]
+
+                environments.append(environment)
+            self._test_inputs[tuple(arguments)] = environments
+        else:
+            environments = self._test_inputs[tuple(arguments)]
+
+        
+        for environment in environments:
             try:
                 o = expression.evaluate(environment)
             except Exception as e:
-                # eprint("generated exception", e)
                 o = None
             if o is None:
                 outputs.append(None)
@@ -101,9 +110,11 @@ class Sloppy():
         return tuple(outputs)
 
     def possible_values(self, tp):
+        if tp==self.continuationType:
+            return ["CONTINUATION"]
         if str(tp) == "int":
-            return random.choices(range(-10,0), k=n//2-2) +\
-                random.choices(range(10), k=n//2-1) +\
+            return random.choices(range(-10,0), k=10//2-2) +\
+                random.choices(range(2, 10), k=10//2-1) +\
                 [-1,0,1]
         if str(tp) == "bool":
             return [False,True]
@@ -130,7 +141,7 @@ class Sloppy():
         if tuple(arguments) in self._test_inputs:
             return self._test_inputs[tuple(arguments)]
 
-        if self.inputs is not None:
+        if self.inputs is not None and self.continuationType is None:
             # drop the last arguments because they correspond to the inputs
             number_of_arguments = len(self.inputs[0])
             arguments = arguments[:-number_of_arguments]
@@ -138,14 +149,21 @@ class Sloppy():
         test_inputs=[]
         for sloppy in itertools.product(*(self.possible_values(a) for a in arguments)):
             if self.inputs is not None:
-                for input_tuple in self.inputs:
-                    test_inputs.append(list(sloppy) + list(reversed(input_tuple)))
+                for ti, input_tuple in enumerate(self.inputs):
+                    if self.continuationType is None:
+                        test_inputs.append(list(sloppy) + list(reversed(input_tuple)))
+                    else:
+                        # insert the continuation objects
+                        test_inputs.append(\
+                                    [self.continuation_values[ti] if xx=="CONTINUATION" else xx
+                                     for xx in sloppy ])               
             else:
                 test_inputs.append(list(sloppy))
-        test_inputs = random.sample(test_inputs, min(len(self.inputs),
+        test_inputs = random.sample(test_inputs, min(max(2, len(self.inputs)),
                                                      len(test_inputs)))
+
+        
         self._test_inputs[tuple(arguments)] = test_inputs
-        # print(arguments, test_inputs)
         return test_inputs
     
     def value_to_key(self, value, output_type):
