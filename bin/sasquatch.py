@@ -11,8 +11,15 @@ bootstrapTarget_extra()
 
 class MatchFailure(Exception): pass
 
+import argparse
+parser = argparse.ArgumentParser(description = "")
+parser.add_argument("--version", "-v", default=False, action="store_true")
+parser.add_argument("--a", "-a", default=1, type=int)
+arguments = parser.parse_args()
+
+
 UNKNOWN=Program.parse("??")
-EXPANSIONS=[Index(n) for n in range(4) ] + [Application(UNKNOWN, UNKNOWN), Abstraction(UNKNOWN)] + [Program.parse(pr) for pr in ["fold", "cons", "empty", "+", "1", "0", "2", "?1", "?2"]]
+EXPANSIONS=[Program.parse(pr) for pr in ["fold", "cons", "empty", "+", "1", "0", "2", "?1", "?2"]]+[Index(n) for n in range(4) ] + [Application(UNKNOWN, UNKNOWN), Abstraction(UNKNOWN)]
 
 def refinements(template):
     if template.isAbstraction:
@@ -77,11 +84,13 @@ def match(template, program, depth=0, bindings=None):
 
     if template.isApplication:
         f, xs = template.applicationParse()
-        if False and isinstance(f, NamedHole):
+        if isinstance(f, NamedHole):
             eprint("In order to match, we are going to have to write the expression:")
             eprint(program)
             eprint("In terms of the following variables:")
             eprint(xs)
+            eprint(f)
+            assert False
 
             body = program.shift(len(xs))
             for n, x in enumerate(reversed(xs)):
@@ -152,7 +161,7 @@ def check(template, program):
     eprint(application.betaNormalForm())
 
 @memoize
-def match_version(template, j, depth=0):
+def match_version(template, j):
     global table, saved_matches
 
 
@@ -161,15 +170,21 @@ def match_version(template, j, depth=0):
     if program.isUnion:
         return {substitution
                 for i in program.elements
-                for substitution in match_version(template, i, depth)
+                for substitution in match_version(template, i)
                 if not any(k==table.empty for k in substitution.values() )}
     
     
 
     if template.isAbstraction:
+        matches = set()
         if program.isAbstraction:
-            return match_version(template.body, program.body, depth+1)
-        return set()
+            body_matches=match_version(template.body, program.body)
+            for bindings in body_matches:
+                new_bindings = { k: table.shiftFree(v, -1)
+                                 for k,v in bindings.items() }
+                if not any(j==table.empty for j in new_bindings.values() ):
+                    matches.add(frozendict(new_bindings))
+        return matches
 
     if template.isIndex or template.isPrimitive or template.isInvented:
         if program==template:
@@ -178,8 +193,8 @@ def match_version(template, j, depth=0):
 
     if template.isApplication:
         if program.isApplication:
-            function_substitutions = match_version(template.f, program.f, depth)
-            argument_substitutions = match_version(template.x, program.x, depth)
+            function_substitutions = match_version(template.f, program.f)
+            argument_substitutions = match_version(template.x, program.x)
 
             possibilities=[]
             for fs in function_substitutions:
@@ -201,7 +216,7 @@ def match_version(template, j, depth=0):
             return []
 
     if isinstance(template, NamedHole):
-        j=table.shiftFree(j, -depth)
+        #j=table.shiftFree(j, -depth)
         if j==table.empty:
             return []
         return [frozendict({template.name:j})]
@@ -273,15 +288,15 @@ def get_one(s):
 def optimistic_version(template, corpus):
     global table
     
-    corpus_size=0
+    total_corpus_size=0
     terrible=True
     for j in corpus:
         # original size
-        corpus_size += version_size(j)
+        corpus_size = version_size(j)
         
         bindings = match_version(template, j)
         # eprint()
-        # eprint()
+        # eprint(bindings)
         # for b in bindings:
         #     for v, binding in b.items():
         #         eprint(v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
@@ -296,65 +311,101 @@ def optimistic_version(template, corpus):
                                for b in bindings )
             corpus_size -= 1  # we have to put down the symbol for the function
             corpus_size -= .01*len(get_one(bindings)) # and one application for each argument
+
+            # eprint("corpus_size", corpus_size, "=",version_size(j), "-", 
+            #        min( sum(version_size(binding)
+            #                             for v, binding in b.items())
+            #                        for b in bindings ),
+            #        "+ 1 +", .01*len(get_one(bindings)))
+        else:
+            corpus_size=0
+            # eprint("corpus_size", corpus_size, "=",version_size(j))
+
+        total_corpus_size+=corpus_size
+
+    #eprint("total corpus_size", total_corpus_size)
     if terrible: return NEGATIVEINFINITY
-    return corpus_size
+    return total_corpus_size
 
 def best_constant_abstraction(corpus):
     possibilities = {e for p in corpus for _, e in  p.walk()}
     return max(possibilities, key=lambda e: utility(e, corpus))
+
+def master_utility(template, corpus):
+    if arguments.version:
+        global table
+        return utility_version(template, [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ])
+    else:
+        return utility(template, corpus)
+
+def master_optimistic(template, corpus):
+    if arguments.version:
+        global table
+        return optimistic_version(template, [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ]) - template.size(named=1, application=.01, abstraction=.01, fragmentVariable=0)
+    else:
+        return optimistic(template, corpus)
     
 
-check("(lambda (+ ?1 $0))", "(lambda (+ $9 $0))")
-check("(lambda (+ ?1 ?2))", "(lambda (+ $9 $7))")
+# check("(lambda (+ ?1 $0))", "(lambda (+ $9 $0))")
+# check("(lambda (+ ?1 ?2))", "(lambda (+ $9 $7))")
 
-check("(fold empty $0 (lambda (lambda (cons (?1 $0 5) $1))))",
-      "(fold empty $0 (lambda (lambda (cons (+ 1 $0) $1))))")
+# check("(fold empty $0 (lambda (lambda (cons (?1 $0 5) $1))))",
+#       "(fold empty $0 (lambda (lambda (cons (+ 1 $0) $1))))")
 
 corpus = [Program.parse(program)
-          for program in ["(fold empty $0 (lambda (lambda (cons (+ $0 2) $1))))",
-                          "(fold empty $0 (lambda (lambda (cons (* 2 $0) $1))))",
-                          "(fold empty $0 (lambda (lambda (cons (if (eq? $0 1) 5 7) $1))))",
-                          "(fold empty $0 (lambda (lambda (cons (* $0 $0) $1))))"
+          for program in ["(lambda (fold empty $0 (lambda (lambda (cons (+ 1 $0) $1)))))",
+                          "(lambda (fold empty $0 (lambda (lambda (cons (* 2 $0) $1)))))",
+                          "(lambda (fold empty $0 (lambda (lambda (cons (if (eq? $0 1) 5 7) $1)))))",
+                          "(lambda (fold empty $0 (lambda (lambda (cons (* $0 $0) $1)))))"
           ] ]
 
 table=None
 
-def compress(corpus, a=0):
+def compress(corpus):
     global table
-    table = VersionTable(typed=False, factored=True)
+    table = VersionTable(typed=False, #factored=True,
+                         identity=False)
 
     with timing("constructed version spaces"):
-        indices = [ table.superVersionSpace(table.incorporate(p), a) for p in corpus ]
+        indices = [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ]
 
     eprint("testing target")
-    target=Program.parse("(fold empty $0 (lambda (lambda (cons (?1 $0) $1))))")
-    eprint(target,utility_version(target, indices))
-    #assert False
+    target=Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (?1 ??) $1)))))")
+    eprint(target,master_utility(target, corpus))
+
+    eprint("testing distracter")
+    target=Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ 1 $0) $1)))))")
+    eprint(target,master_utility(target, corpus))
+
+    starttime = time.time()
     
     best=best_constant_abstraction(corpus)
-    best_utility=utility(best, corpus)
+    best_utility=master_utility(best, corpus)
     p0=Program.parse("??")
     q=PQ()
-    q.push(optimistic_version(p0, indices), p0)
+    q.push(master_optimistic(p0, corpus), p0)
+    #eprint("initial_best_utility", best_utility)
     while len(q):
         p=q.popMaximum()
-        #eprint(p, utility_version(p, indices))
+        #eprint(p, master_optimistic(p, corpus))
         r=refinements(p)
         if len(r)==0:
-            u = utility_version(p, indices)
+            u = master_utility(p, corpus)
             if u>best_utility:
-                eprint("best found so far", p, u)
+                eprint(int(time.time()-starttime), "best found so far", p, u)
                 best_utility, best = u, p
         else:
             for pp in r:
                 if bad_refinement(pp):
                     continue
-                u = optimistic_version(pp, indices)
+                u = master_optimistic(pp, corpus)
                 if u is None or u<best_utility:
                     continue
                 q.push(u, pp)
 
 
 
-compress(corpus, 1)
+compress(corpus)
+
+
 
