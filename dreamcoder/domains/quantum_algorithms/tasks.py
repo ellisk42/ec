@@ -14,7 +14,7 @@ class QuantumTask(dc.task.Task):
         self.target_algorithm_evaluations = {n: full_circuit_to_mat(target_algorithm(n)) for n in range(self.min_size, self.max_size)}
 
         super(QuantumTask, self).__init__(name=name,
-                                          request=dc.type.arrow(dc.type.tint, tcircuit),
+                                          request=dc.type.arrow(tcircuit, tcircuit),
                                           examples=[],
                                           features=[])
 
