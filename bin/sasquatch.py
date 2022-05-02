@@ -15,6 +15,7 @@ import argparse
 parser = argparse.ArgumentParser(description = "")
 parser.add_argument("--version", "-v", default=False, action="store_true")
 parser.add_argument("--a", "-a", default=1, type=int)
+parser.add_argument("--inferior", "-i", default=False, action="store_true")
 arguments = parser.parse_args()
 
 
@@ -250,9 +251,7 @@ def utility(template, corpus):
     return corpus_size - template.size(named=1, application=.01, abstraction=.01)
 
 def utility_version(template, corpus):
-    basic = optimistic_version(template, corpus)
-    if basic==None: return NEGATIVEINFINITY
-    return basic - template.size(named=1, application=.01, abstraction=.01)
+    return optimistic_version(template, corpus) - template.size(named=1, application=.01, abstraction=.01, fragmentVariable=1)
 
 def optimistic(template, corpus):
     corpus_size=0
@@ -285,32 +284,45 @@ def get_one(s):
     for x in s: return x
     assert False
     
-def optimistic_version(template, corpus):
+def optimistic_version(template, corpus, verbose=False):
     global table
     
     total_corpus_size=0
-    terrible=True
+    number_of_matches=0
+
+    inferior_abstraction_checker=None
+    
     for j in corpus:
         # original size
         corpus_size = version_size(j)
         
         bindings = match_version(template, j)
-        # eprint()
-        # eprint(bindings)
-        # for b in bindings:
-        #     for v, binding in b.items():
-        #         eprint(v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
+        if verbose:
+            eprint()
+            eprint(bindings)
+            for b in bindings:
+                for v, binding in b.items():
+                    eprint(v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
 
         if len(bindings)>0:
-            terrible=False
-            
+            number_of_matches+=1
+
+            best_binding = min(bindings,
+                               key=lambda b: sum(version_size(binding) for v, binding in b.items()))
 
             # we still pay the cost for each of the arguments
-            corpus_size -= min( sum(version_size(binding)
-                                    for v, binding in b.items())
-                               for b in bindings )
+            corpus_size -= sum(version_size(binding)
+                               for v, binding in best_binding.items())
             corpus_size -= 1  # we have to put down the symbol for the function
             corpus_size -= .01*len(get_one(bindings)) # and one application for each argument
+
+            if arguments.inferior:
+                if inferior_abstraction_checker is None:
+                    inferior_abstraction_checker = best_binding
+                else:
+                    inferior_abstraction_checker = { v: table.intersection(best_binding[v],
+                                                                        inferior_abstraction_checker[v])
+                                                    for v in best_binding}
 
             # eprint("corpus_size", corpus_size, "=",version_size(j), "-", 
             #        min( sum(version_size(binding)
@@ -323,8 +335,13 @@ def optimistic_version(template, corpus):
 
         total_corpus_size+=corpus_size
 
+    if arguments.inferior and inferior_abstraction_checker is not None:
+        if any( v!=table.empty for v in inferior_abstraction_checker.values() ):
+            #eprint("inferior", template)
+            return NEGATIVEINFINITY
+
     #eprint("total corpus_size", total_corpus_size)
-    if terrible: return NEGATIVEINFINITY
+    if number_of_matches<2: return NEGATIVEINFINITY
     return total_corpus_size
 
 def best_constant_abstraction(corpus):
@@ -338,12 +355,18 @@ def master_utility(template, corpus):
     else:
         return utility(template, corpus)
 
-def master_optimistic(template, corpus):
+def master_optimistic(template, corpus, verbose=False, coefficient=0.0001):
     if arguments.version:
         global table
-        return optimistic_version(template, [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ]) - template.size(named=1, application=.01, abstraction=.01, fragmentVariable=0)
+        return optimistic_version(template, [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ], verbose=verbose) - coefficient*template.size(named=1, application=.01, abstraction=.01, fragmentVariable=1)
     else:
         return optimistic(template, corpus)
+
+def master_pessimistic(template, corpus, verbose=False, coefficient=1):
+    if not arguments.version: assert False
+
+    
+        
     
 
 # check("(lambda (+ ?1 $0))", "(lambda (+ $9 $0))")
@@ -369,24 +392,30 @@ def compress(corpus):
     with timing("constructed version spaces"):
         indices = [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ]
 
-    eprint("testing target")
-    target=Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (?1 ??) $1)))))")
-    eprint(target,master_utility(target, corpus))
+    candidates=["((lambda ??) ??)", "(lambda (?? ??))"]
+    for candidate in candidates:
+        candidate=Program.parse(candidate)
+        eprint("testing ", candidate)
+    
+        eprint(master_optimistic(candidate, corpus, verbose=True))
 
-    eprint("testing distracter")
-    target=Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ 1 $0) $1)))))")
-    eprint(target,master_utility(target, corpus))
+    
 
     starttime = time.time()
     
     best=best_constant_abstraction(corpus)
     best_utility=master_utility(best, corpus)
+    eprint("best starting", best, best_utility)
+    if best_utility<0:
+        best_utility=0
+        best=None
     p0=Program.parse("??")
     q=PQ()
     q.push(master_optimistic(p0, corpus), p0)
     #eprint("initial_best_utility", best_utility)
     while len(q):
         p=q.popMaximum()
+        
         #eprint(p, master_optimistic(p, corpus))
         r=refinements(p)
         if len(r)==0:
@@ -402,6 +431,7 @@ def compress(corpus):
                 if u is None or u<best_utility:
                     continue
                 q.push(u, pp)
+                
 
 
 
