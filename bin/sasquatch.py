@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser(description = "")
 parser.add_argument("--version", "-v", default=False, action="store_true")
 parser.add_argument("--a", "-a", default=1, type=int)
 parser.add_argument("--inferior", "-i", default=False, action="store_true")
+parser.add_argument("--thorough", "-t", default=False, action="store_true")
 arguments = parser.parse_args()
 
 
