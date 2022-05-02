@@ -1783,6 +1783,7 @@ class PCFG():
                 return []
 
             if expressions[symbol][size] is None:
+                assert size==1 or expressions[symbol][size-1] is not None, "this should never happen - talk to Kevin"
                 new = []
                 for cost, k, arguments in productions[symbol]:
                     if cost > size:
