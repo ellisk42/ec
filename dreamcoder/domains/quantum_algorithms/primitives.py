@@ -154,13 +154,15 @@ def state_circuit_to_mat(circuit):
 
 ## Qiskit implementation, which natively also includes plotting 
 class QiskitTester():
-    def __init__(self,circuit):
-        if type(circuit[0]) is int:
-            self.unitary_matrix = full_circuit_to_mat(circuit) # full_circuit
-        else:
-            self.unitary_matrix = state_circuit_to_mat(circuit) # state_circuit
-        self.unitary_tensor = mat_to_tensor(self.unitary_matrix)
-        self.n_qubits = get_qubit_number(self.unitary_tensor)
+    def __init__(self,circuit=None):
+        if type(circuit) != int:
+            if type(circuit[0]) is int:
+                self.unitary_matrix = full_circuit_to_mat(circuit) # full_circuit
+            else:
+                self.unitary_matrix = state_circuit_to_mat(circuit) # state_circuit
+            self.unitary_tensor = mat_to_tensor(self.unitary_matrix)
+            self.n_qubits = get_qubit_number(self.unitary_tensor)
+        else: self.n_qubits = circuit
         self.qreg_q = QuantumRegister(self.n_qubits, 'q')
         self.circuit = QuantumCircuit(self.qreg_q)
         
