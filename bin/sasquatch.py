@@ -163,9 +163,17 @@ def check(template, program):
     eprint(application.betaNormalForm())
 
 @memoize
-def match_version(template, j):
-    global table, saved_matches
+def match_version_comprehensive(template, j):
+    assert False
 
+@memoize
+def match_version(template, j):
+    """
+    template: program
+    j: version space index
+    returns: set(dict(fv->index))
+    """
+    global table, saved_matches
 
     program = table.expressions[j]
 
@@ -182,7 +190,8 @@ def match_version(template, j):
         if program.isAbstraction:
             body_matches=match_version(template.body, program.body)
             for bindings in body_matches:
-                new_bindings = { k: table.shiftFree(v, -1)
+                #for k,v in bindings.items(): eprint("shifting", table.extractSmallest(v), table.extractSmallest(table.shiftFree(v, 1)))
+                new_bindings = { k: table.shiftFree(v, 1)
                                  for k,v in bindings.items() }
                 if not any(j==table.empty for j in new_bindings.values() ):
                     matches.add(frozendict(new_bindings))
@@ -378,7 +387,7 @@ def master_pessimistic(template, corpus, verbose=False, coefficient=1):
 
 corpus = [Program.parse(program)
           for program in ["(lambda (fold empty $0 (lambda (lambda (cons (+ 1 $0) $1)))))",
-                          "(lambda (fold empty $0 (lambda (lambda (cons (* 2 $0) $1)))))",
+                          "(lambda (fold empty $0 (lambda (lambda (cons (* $0 2) $1)))))",
                           "(lambda (fold empty $0 (lambda (lambda (cons (if (eq? $0 1) 5 7) $1)))))",
                           "(lambda (fold empty $0 (lambda (lambda (cons (* $0 $0) $1)))))"
           ] ]
@@ -393,7 +402,8 @@ def compress(corpus):
     with timing("constructed version spaces"):
         indices = [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ]
 
-    candidates=["((lambda ??) ??)", "(lambda (?? ??))"]
+    candidates=[#"((lambda ??) ??)", "(lambda (?? ??))",
+                "(lambda (fold empty $0 (lambda (lambda (cons (?1 $0) $1)))))"]
     for candidate in candidates:
         candidate=Program.parse(candidate)
         eprint("testing ", candidate)
@@ -401,7 +411,7 @@ def compress(corpus):
         eprint(master_optimistic(candidate, corpus, verbose=True))
 
     
-
+    
     starttime = time.time()
     
     best=best_constant_abstraction(corpus)
