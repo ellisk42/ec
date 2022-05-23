@@ -172,8 +172,11 @@ class QiskitTester():
     def __enter__(self):
         return self
     
+    def get_result(self, circuit):
+         return np.array(qk.execute(circuit, backend).result().get_unitary()).T
+    
     def __exit__(self,*args, **kwargs):
-        self.result = np.array(qk.execute(self.circuit, backend).result().get_unitary()).T
+        self.result = self.get_result(self.circuit)
         
     def __str__(self) -> str:
         return self.circuit.__str__()
