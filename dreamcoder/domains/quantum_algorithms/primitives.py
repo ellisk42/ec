@@ -151,6 +151,11 @@ def full_circuit_to_mat(full_circuit):
 def state_circuit_to_mat(circuit):
     return full_circuit_to_mat([circuit[0][-1], circuit[1]])
 
+# ---------------------------------------------------------------------------------
+# Transpiler configuration
+from qiskit.transpiler.synthesis import solovay_kitaev
+skd = solovay_kitaev.SolovayKitaevDecomposition()
+basis_gates=['h',"cx",'t',"tdg"] 
 
 ## Qiskit implementation, which natively also includes plotting 
 class QiskitTester():
@@ -192,6 +197,17 @@ class QiskitTester():
             eprint(self.unitary_matrix)
             eprint(self.result)
             eprint(e)
+            
+    def get_transpiled(self, circuit):
+        transpiled=qk.transpile(circuit, backend)
+        circuit2 = pm.run(transpiled)
+        discretized = skd(circuit2)
+        return qk.transpile(discretized,backend, basis_gates)
+    
+    def transpile(self):
+        return self.get_transpiled(self.circuit)
+    
+    
 
 
 def print_circuit(full_circuit, filename=None):
@@ -208,6 +224,70 @@ def print_circuit(full_circuit, filename=None):
 
 
 
+with QiskitTester(1) as QT:
+    QT.circuit.t(0)
+    QT.circuit.t(0)
+qk.circuit.equivalence_library.StandardEquivalenceLibrary.add_equivalence(qk.circuit.library.SGate(),QT.circuit)
+
+with QiskitTester(1) as QT:
+    QT.circuit.tdg(0)
+    QT.circuit.tdg(0)
+qk.circuit.equivalence_library.StandardEquivalenceLibrary.add_equivalence(qk.circuit.library.SdgGate(),QT.circuit)
+
+class ParametricSubstitution(qk.transpiler.TransformationPass):
+    def run(self, dag):
+        # iterate over all operations
+        for node in dag.op_nodes():
+            print(node.op.name, node.op.params)
+            # if we hit a RYY or RZZ gate replace it
+            
+            if node.op.name in ["cp"]:
+                replacement = QuantumCircuit(2)
+                replacement.p(node.op.params[0]/2,0)
+                replacement.cx(0,1)
+                replacement.p(-node.op.params[0]/2,1)
+                replacement.cx(0,1)
+                replacement.p(node.op.params[0]/2,1)
+
+                # replace the node with our new decomposition
+                dag.substitute_node_with_dag(node, qk.converters.circuit_to_dag(replacement))
+                                
+            
+            if node.op.name in ["p"] and node.op.params[0]==np.pi/2:
+
+                # calculate the replacement
+                replacement = QuantumCircuit(1)
+                replacement.s([0])
+
+                # replace the node with our new decomposition
+                dag.substitute_node_with_dag(node, qk.converters.circuit_to_dag(replacement))
+                
+            elif node.op.name in ["p"] and node.op.params[0]==3*np.pi/2:
+    
+                # calculate the replacement
+                replacement = QuantumCircuit(1)
+                replacement.tdg([0])
+                replacement.tdg([0])
+
+                # replace the node with our new decomposition
+                dag.substitute_node_with_dag(node, qk.converters.circuit_to_dag(replacement))
+                               
+            elif node.op.name in ["p"] and node.op.params[0]==5*np.pi/2:
+        
+                # calculate the replacement
+                replacement = QuantumCircuit(1)
+                replacement.t([0])
+                replacement.t([0])
+
+                # replace the node with our new decomposition
+                dag.substitute_node_with_dag(node, qk.converters.circuit_to_dag(replacement))
+                               
+                               
+        return dag
+pm = qk.transpiler.PassManager()
+pm.append(ParametricSubstitution())
+
+# ------------------------------------------ End of Qiskit code
 
 # ------------------------------------------
 # Define functions for primitives (to act on circuits)
