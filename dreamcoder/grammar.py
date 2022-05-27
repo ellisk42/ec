@@ -1537,9 +1537,9 @@ class PCFG():
         # eprint(sum(len(productions) for productions in rules.values()), "production rules")
         free_variable_types = {nt: nt[-1] for nt in rules }
         return_type = {nt: nt[0] for nt in rules }
-        eprint("pcfg compilation: distinct non terminals", len(rules),
-               "; distinct environments", len({ (r[0], tuple(sorted(map(str, r[-1]))))
-                                              for r in rules}))
+        # eprint("pcfg compilation: distinct non terminals", len(rules),
+        #        "; distinct environments", len({ (r[0], tuple(sorted(map(str, r[-1]))))
+        #                                       for r in rules}))
         
         return PCFG(rules, start_symbol, len(start_environment),
                     return_type=return_type, free_variable_types=free_variable_types,
@@ -1584,7 +1584,7 @@ class PCFG():
             return_type = [self.return_type[reverse_mapping[i]]
                            for i in range(len(self.productions))]
 
-        eprint(self)
+        # eprint(self)
         
 
         return PCFG(new_productions, mapping[self.start_symbol], self.number_of_arguments,

@@ -123,6 +123,7 @@ class Sloppy():
         if str(tp) == "tsize":
             return [4]
         if str(tp) == "tcircuit":
+            assert False
             return [dc.domains.quantum_circuits.primitives.no_op(4)]
         if isinstance(tp, TypeConstructor):
             if tp.name=="list":

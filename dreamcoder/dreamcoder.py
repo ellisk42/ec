@@ -901,7 +901,7 @@ def commandlineArguments(_=None,
         "--taskBatchSize",
         dest="taskBatchSize",
         help="Number of tasks to train on during wake. Defaults to all tasks if None.",
-        default=None,
+        default=taskBatchSize,
         type=int)
     parser.add_argument(
         "--taskReranker",

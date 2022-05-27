@@ -13,7 +13,7 @@ class QuantumTask(dc.task.Task):
 
         super(QuantumTask, self).__init__(name=name,
                                           request=dc.type.arrow(tcircuit, tcircuit),
-                                          examples=[],
+                                          examples=[((no_op(4),),(self.target_circuit_evaluation,),)],
                                           features=[])
 
     def logLikelihood(self, e, timeout=None):
