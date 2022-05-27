@@ -650,11 +650,11 @@ def enumerate_pcfg(pcfg, timeout,
     
     # How to choose circuit size when enumerating?
     for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence,
-                                           inputs=[[no_op(3)],[no_op(4)],[no_op(5)]],
+                                           inputs=[[no_op(1)],[no_op(2)],[no_op(3)]],
                                            sound=sound):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
-        for n_qubit in [1,2,3,4,5]:
+        for n_qubit in [1,2,3]:
             try: 
                 
                 circuit = code.evaluate([])(no_op(n_qubit))

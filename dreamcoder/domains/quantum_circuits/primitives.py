@@ -4,6 +4,7 @@ import dreamcoder as dc
 from dreamcoder.utilities import eprint
 
 try:
+    import matplotlib.pyplot as plt
     import qiskit as qk
     from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit,Aer
     backend = Aer.get_backend('unitary_simulator')
@@ -16,11 +17,17 @@ try:
 
     ## Qiskit implementation, which natively also includes plotting 
     class QiskitTester():
-        def __init__(self,n_qubits=None):
+        def __init__(self,n_qubits=None,circuit=None):
             self.n_qubits = n_qubits
             self.qreg_q = QuantumRegister(self.n_qubits, 'q')
             self.circuit = QuantumCircuit(self.qreg_q)
-            
+            if circuit!=None:
+                self.unitary_matrix = circuit_to_mat(circuit) # full_circuit
+                self.unitary_tensor = mat_to_tensor(self.unitary_matrix)
+                self.n_qubits = get_qubit_number(self.unitary_tensor)
+                if self.n_qubits!=n_qubits:
+                    raise Exception("Duplicate inconsistent arguments!")
+                
         def q(self,q_num):
             return self.n_qubits -1- q_num
         
@@ -203,11 +210,66 @@ mat_hadamard = np.array([[1,1],
                          [1,-1]], dtype=np.float16)/np.sqrt(2)
 tensor_hadamard = mat_to_tensor(mat_hadamard)
 
+mat_t = np.array([[1,0],
+                  [0,(1+1j)/np.sqrt(2)]])
+tensor_t = mat_to_tensor(mat_t)
+
+mat_tdg =np.array([[1,0],
+                  [0,(1-1j)/np.sqrt(2)]])
+tensor_tdg = mat_to_tensor(mat_tdg)
+
+mat_x = np.array([[0,1],
+                  [1,-0]], dtype=np.float16)
+tensor_x = mat_to_tensor(mat_x)
+
+mat_y = np.array([[0,1j],
+                  [1j,0]])
+tensor_y = mat_to_tensor(mat_y)
+
+mat_z = np.array([[1,0],
+                  [0,-1]], dtype=np.float16)
+tensor_z = mat_to_tensor(mat_z)
+
+mat_s = np.array([[1,0],
+                  [0,1j]])
+tensor_s = mat_to_tensor(mat_s)
+
+mat_sx = np.array([[1+1j,1-1j],
+                  [1-1j,1+1j]])/2
+tensor_sx = mat_to_tensor(mat_sx)
+
+mat_sxdg = np.array([[1-1j,1+1j],
+                  [1+1j,1-1j]])/2
+tensor_sxdg = mat_to_tensor(mat_sxdg)
+
+
+
+
+mat_cy = np.array([[1,0,0,0],
+                     [0,1,0,0],
+                     [0,0,0,1j],
+                     [0,0,-1j,0]])
+tensor_cy = mat_to_tensor(mat_cy)
+
+
 mat_cz = np.array([[1,0,0,0],
                      [0,1,0,0],
                      [0,0,1,0],
                      [0,0,0,-1]], dtype=np.float16)
 tensor_cz = mat_to_tensor(mat_cz)
+
+mat_cs = np.array([[1,0,0,0],
+                     [0,1,0,0],
+                     [0,0,1,0],
+                     [0,0,0,1j]])
+tensor_cs = mat_to_tensor(mat_cs)
+
+
+mat_iswap = np.array([[1,0,0,0],
+                     [0,0,1j,0],
+                     [0,1j,0,0],
+                     [0,0,0,1]])
+tensor_iswap = mat_to_tensor(mat_iswap)
 
 # ------------------------------------------
 # Apply a gate on all given qubits
@@ -219,17 +281,49 @@ def eye(n):
 def hadamard(circuit, qubit_1):
     return tensor_contraction(circuit, tensor_hadamard, [qubit_1])
 
+def t(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_t, [qubit_1])
+
+def tdg(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_tdg, [qubit_1])
+
+def s(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_s, [qubit_1])
+
+def x(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_x, [qubit_1])
+
+def y(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_y, [qubit_1])
+
+def z(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_z, [qubit_1])
+
+def sx(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_sx, [qubit_1])
+
+def sxdg(circuit, qubit_1):
+    return tensor_contraction(circuit, tensor_sxdg, [qubit_1])
+
 
 def cnot(circuit, qubit_1, qubit_2):
     return tensor_contraction(circuit, tensor_cnot, [qubit_1, qubit_2])
+
+def cy(circuit, qubit_1, qubit_2):
+    return tensor_contraction(circuit, tensor_cy, [qubit_1, qubit_2])
+
+def cz(circuit, qubit_1, qubit_2):
+    return tensor_contraction(circuit, tensor_cz, [qubit_1, qubit_2])
+
+def cs(circuit, qubit_1, qubit_2):
+    return tensor_contraction(circuit, tensor_cs, [qubit_1, qubit_2])
 
 
 def swap(circuit, qubit_1, qubit_2):
     return tensor_contraction(circuit, tensor_swap, [qubit_1, qubit_2])
 
-
-def cz(circuit, qubit_1, qubit_2):
-    return tensor_contraction(circuit, tensor_cz, [qubit_1, qubit_2])
+def iswap(circuit, qubit_1, qubit_2):
+    return tensor_contraction(circuit, tensor_iswap, [qubit_1, qubit_2])
 
 
 # ------------------------------------------
@@ -238,9 +332,20 @@ def cz(circuit, qubit_1, qubit_2):
 full_op_names = {
     # "eye": eye,
     "hadamard": hadamard,
+    "t": t,
+    "tdg": tdg,
+    "s": s,
+    "x": x,
+    "y": y,
+    "z": z,
+    "sx": sx,
+    "sxdg": sxdg,
     "cnot": cnot,
+    "cy": cy,
+    "cz": cz,
+    "cs": cs,
     "swap": swap,
-    "cz": cz
+    "iswap":iswap
 }
 
 qiskit_full_op_names = lambda QT: {
@@ -268,6 +373,7 @@ def circuit_to_mat(full_circuit):
                 
             full_circuit_cache[t_full_circuit] = tensor_to_mat(tensor)
     except TypeError as e:
+        print(e)
         ...
     return full_circuit_cache[t_full_circuit]
 
@@ -365,13 +471,65 @@ p_hadamard = dc.program.Primitive(name="h",
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "hadamard")))
 
+p_t = dc.program.Primitive(name="t", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "t")))
+
+p_tdg = dc.program.Primitive(name="tdg", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "tdg")))
+
+p_s = dc.program.Primitive(name="s", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "s")))
+
+p_sx = dc.program.Primitive(name="sx", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "sx")))
+
+p_sxdg = dc.program.Primitive(name="sxdg", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "sxdg")))
+
+
+
+p_x = dc.program.Primitive(name="x", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "x")))
+
+p_y = dc.program.Primitive(name="y", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "y")))
+
+p_z = dc.program.Primitive(name="z", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "z")))
+
+
 p_cnot = dc.program.Primitive(name="cnot", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint,tcircuit),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cnot")))
 
+p_cy = dc.program.Primitive(name="cy", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cy")))
+
+p_cz = dc.program.Primitive(name="cz", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cz")))
+
+
+p_cs = dc.program.Primitive(name="cs", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cs")))
+
 p_swap = dc.program.Primitive(name="swap", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
                      value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "swap")))
+
+p_iswap = dc.program.Primitive(name="iswap", 
+                     ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
+                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "iswap")))
 
 # Control
 p_iteration = dc.program.Primitive(name="rep", 
@@ -382,8 +540,20 @@ p_iteration = dc.program.Primitive(name="rep",
 full_primitives = [
     #circuits
     p_hadamard,
+    p_t,
+    p_tdg,
+    p_s,
+    p_x,
+    p_y,
+    p_z,
+    p_sx,
+    p_sxdg,
     p_cnot,
+    p_cy,
+    p_cz,
+    p_cs,
     p_swap,
+    p_iswap,
     #arithmetics
     p_0,
     p_inc,
@@ -396,6 +566,8 @@ full_primitives = [
 primitives = [
     #circuits
     p_hadamard,
+    p_t,
+    p_tdg,
     p_cnot,
     #arithmetics
     p_0,
