@@ -6,8 +6,9 @@ import frozendict
 from dreamcoder.program import *
 from dreamcoder.vs import *
 from dreamcoder.domains.list.listPrimitives import *
-basePrimitives()
-bootstrapTarget_extra()
+
+
+basic_primitives = list(set(McCarthyPrimitives()+bootstrapTarget_extra()+basePrimitives()+[Program.parse(str(ii)) for ii in range(10) ]))
 
 class MatchFailure(Exception): pass
 
@@ -22,7 +23,7 @@ arguments = parser.parse_args()
 
 
 UNKNOWN=Program.parse("??")
-EXPANSIONS=[Program.parse(pr) for pr in ["fold", "cons", "empty", "+", "1", "0", "2", "?1", "?2"]]+[Index(n) for n in range(4) ] + [Application(UNKNOWN, UNKNOWN), Abstraction(UNKNOWN)]
+EXPANSIONS=[Program.parse(pr) for pr in ["?1", "?2", "?3"]]+basic_primitives+[Index(n) for n in range(4) ] + [Application(UNKNOWN, UNKNOWN), Abstraction(UNKNOWN)]
 
 def refinements(template):
     if template.isAbstraction:
@@ -415,7 +416,7 @@ def master_utility(template, corpus):
     else:
         return utility(template, corpus)
 
-def master_optimistic(template, corpus, verbose=False, coefficient=0.99):
+def master_optimistic(template, corpus, verbose=False, coefficient=0.01):
     if arguments.version:
         return optimistic_version(template, corpus, verbose=verbose) - coefficient*template.size(named=1, application=.01, abstraction=.01, fragmentVariable=1)
     else:
@@ -434,12 +435,27 @@ def master_pessimistic(template, corpus, verbose=False, coefficient=1):
 # check("(fold empty $0 (lambda (lambda (cons (?1 $0 5) $1))))",
 #       "(fold empty $0 (lambda (lambda (cons (+ 1 $0) $1))))")
 
-corpus = [Program.parse(program)
+easy_corpus = [Program.parse(program)
           for program in ["(lambda (fold $0 empty (lambda (lambda (cons (+ 1 $1) $0)))))",
                           "(lambda (fold $0 empty (lambda (lambda (cons (* $1 2) $0)))))",
                           "(lambda (fold $0 empty (lambda (lambda (cons (if (eq? $1 1) 5 7) $0)))))",
                           "(lambda (fold $0 empty (lambda (lambda (cons (* $1 $1) $0)))))"
           ] ]
+fold_corpus = [Program.parse(program)
+          for program in ["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (car $0) (cons (car $0) ($1 (cdr $0)))))))))",
+                          "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))",
+                          "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))",
+                          "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (cons 0 empty) (cons (car $0) ($1 (cdr $0))))))))",
+                          "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (empty? empty) (if (car $0) ($1 (cdr $0)) (eq? 1 0)))))))",
+                          
+          ] ]
+unfold_corpus = [Program.parse(program)
+          for program in ["(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (- 0 $0) ($1 (+ 1 $0))))))))",
+                          "(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) empty (cons (car $0) ($1 (cdr $0))))))))", 
+                          "(lambda (fix1 $0 (lambda (lambda (if (eq? $0 0) empty (cons (+ $0 1) ($1 (- $0 1))))))))",
+                          "(lambda (fix1 $0 (lambda (lambda (if (eq? $0 0) empty (cons (- 0 $0) ($1 (+ $0 1))))))))"
+          ] ]
+corpus = unfold_corpus
 
 table=None
 
@@ -452,7 +468,8 @@ def compress(corpus):
         indices = [ table.superVersionSpace(table.incorporate(p), arguments.a) for p in corpus ]
 
     candidates=[#"((lambda ??) ??)", "(lambda (?? ??))",
-                "(lambda (fold $0 empty (lambda (lambda (cons (?1 $1) $0)))))"]
+                #"(lambda (fold $0 empty (lambda (lambda (cons (?1 $1) $0)))))"
+        ]
     for candidate in candidates:
         candidate=Program.parse(candidate)
         eprint("testing ", candidate)
@@ -473,15 +490,17 @@ def compress(corpus):
     q=PQ()
     q.push(master_optimistic(p0, corpus), p0)
     #eprint("initial_best_utility", best_utility)
+    pops=0
     while len(q):
         p=q.popMaximum()
+        pops+=1
         
-        #eprint(p, master_optimistic(p, corpus))
+        eprint(p, master_optimistic(p, corpus))
         r=refinements(p)
         if len(r)==0:
             u = master_utility(p, corpus)
             if u>best_utility:
-                eprint(int(time.time()-starttime), "best found so far", p, u)
+                eprint(int(time.time()-starttime), "sec", pops, "pops", "best found so far", p, u)
                 best_utility, best = u, p
         else:
             for pp in r:
@@ -495,7 +514,7 @@ def compress(corpus):
 
 
 if arguments.old:
-    induceGrammar_Beta(Grammar.uniform(list(set(McCarthyPrimitives()+bootstrapTarget_extra()+basePrimitives()+[Program.parse(str(ii)) for ii in range(10) ]))),
+    induceGrammar_Beta(Grammar.uniform(basic_primitives),
                    [Frontier.dummy(p, tp=None) for p in corpus],
                    CPUs=1,
                    a=arguments.a,
