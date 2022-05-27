@@ -635,41 +635,38 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
 
 import numpy as np
 
-from dreamcoder.domains.quantum_algorithms.primitives import *
-from dreamcoder.domains.quantum_algorithms.tasks import *
+from dreamcoder.domains.quantum_circuits.primitives import *
+from dreamcoder.domains.quantum_circuits.tasks import *
 import dreamcoder as dc
 
 import time
 
 
-def enumerate_pcfg(pcfg, timeout, circuit_execution_function, no_op, 
+def enumerate_pcfg(pcfg, timeout,
                    observational_equivalence=True,
                    sound=False): 
-    #circuit execution function is either full_circuit_to_mat or state_circuit_to_mat
-    from tqdm import trange
     enum_dictionary = {}
     t_0 = time.time()
     
-    n_min = QuantumTask.min_size
-    n_max =  QuantumTask.max_size
-    
+    # How to choose circuit size when enumerating?
     for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence,
-                                           inputs=[[no_op(3)],[no_op(4)]],
+                                           inputs=[[no_op(3)],[no_op(4)],[no_op(5)]],
                                            sound=sound):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
-        try: 
-            circuits = [code.evaluate([])(no_op(n_qubit)) for n_qubit in range(n_min,n_max)]
-            unitaries = [circuit_execution_function(circuit) for circuit in circuits]
-            key = tuple([unitary.tobytes() for unitary in unitaries])
-            task = str(code)
-            c_time = time.time()
-            
-            # If multiple programs give the same unitary
-            # we want to keep the simplest one
-            if key not in enum_dictionary:
-                enum_dictionary[key]={"task":task, "circuits":circuits, "time": c_time-t_0}
-        except QuantumCircuitException:
-            ...
+        for n_qubit in [3,4,5]:
+            try: 
+                circuit = code.evaluate([])(no_op(n_qubit))
+                unitary = circuit_to_mat(circuit)
+                key = unitary.tobytes() 
+                task = str(code)
+                c_time = time.time()
+                
+                # If multiple programs give the same unitary
+                # we want to keep the simplest one
+                if key not in enum_dictionary:
+                    enum_dictionary[key]={"code":code, "circuit":circuit, "time": c_time-t_0}
+            except QuantumCircuitException:
+                ...
     eprint(f"Enumerated {len(enum_dictionary)} programs")
     return enum_dictionary

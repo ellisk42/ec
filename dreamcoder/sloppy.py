@@ -123,9 +123,7 @@ class Sloppy():
         if str(tp) == "tsize":
             return [4]
         if str(tp) == "tcircuit":
-            return [dc.domains.quantum_algorithms.primitives.no_op(4)]
-        if str(tp) == "tcircuit_full":
-            return [dc.domains.quantum_algorithms.primitives.f_no_op(4)]
+            return [dc.domains.quantum_circuits.primitives.no_op(4)]
         if isinstance(tp, TypeConstructor):
             if tp.name=="list":
                 return [ [ random.choice(self.possible_values(tp.arguments[0]))
@@ -167,25 +165,16 @@ class Sloppy():
         return test_inputs
     
     def value_to_key(self, value, output_type):
-        if output_type == dc.domains.quantum_algorithms.primitives.tcircuit:
-            # We need to check two things
-            # Final position should be the same (otherwise we exclude all moving operations)
-            # Generated unitary should be the same
-            unitary = dc.domains.quantum_algorithms.primitives.state_circuit_to_mat(value)
-            value = (tuple(value[0]), unitary.tobytes())
-        elif output_type == dc.domains.quantum_algorithms.primitives.tcircuit_full:
+        if output_type == dc.domains.quantum_circuits.primitives.tcircuit:
             # Here we only need check the unitary
-            # (as we don't move along the circuit and have no position)
-            unitary = dc.domains.quantum_algorithms.primitives.full_circuit_to_mat(value)
+            unitary = dc.domains.quantum_circuits.primitives.circuit_to_mat(value)
             value = unitary.tobytes()
-
         elif str(output_type)=="tower":
             state, plan = value(dc.domains.tower.towerPrimitives.TowerState())
             value = (state.hand, state.orientation, tuple(plan))
         elif isinstance(output_type, TypeConstructor) and output_type.name=="list":
             value = tuple(self.value_to_key(v, output_type.arguments[0])
                           for v in value )
-        
         return value
 
     
