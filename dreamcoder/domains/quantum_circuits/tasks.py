@@ -30,9 +30,11 @@ class QuantumTask(dc.task.Task):
         if yh is None:
             return dc.utilities.NEGATIVEINFINITY
         
-        if not np.all(np.abs(yh-yh_true)<= 1e-4):
-            return dc.utilities.NEGATIVEINFINITY
-                
+        try:
+            if not np.all(np.abs(yh-yh_true)<= 1e-4):
+                return dc.utilities.NEGATIVEINFINITY
+        except ValueError:
+            return dc.utilities.NEGATIVEINFINITY 
         return 0.
 
 

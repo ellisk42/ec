@@ -654,9 +654,19 @@ def enumerate_pcfg(pcfg, timeout,
                                            sound=sound):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
-        for n_qubit in [3,4,5]:
+        for n_qubit in [1,2,3,4,5]:
             try: 
+                
                 circuit = code.evaluate([])(no_op(n_qubit))
+
+                n_qubit, gates_list = circuit
+                max_qubit = 0
+                for op in gates_list:
+                    for n in op[1:]:
+                        max_qubit = max(max_qubit,n)
+                if max_qubit +1< n_qubit:
+                    raise QuantumCircuitException
+
                 unitary = circuit_to_mat(circuit)
                 key = unitary.tobytes() 
                 task = str(code)
