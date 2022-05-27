@@ -6,7 +6,7 @@ import frozendict
 from dreamcoder.program import *
 from dreamcoder.vs import *
 from dreamcoder.domains.list.listPrimitives import *
-
+from colorama import Fore
 
 basic_primitives = list(set(McCarthyPrimitives()+bootstrapTarget_extra()+basePrimitives()+[Program.parse(str(ii)) for ii in range(10) ]))
 
@@ -23,6 +23,7 @@ arguments = parser.parse_args()
 
 
 UNKNOWN=Program.parse("??")
+UNKNOWN.parent=None
 EXPANSIONS=[Program.parse(pr) for pr in ["?1", "?2", "?3"]]+basic_primitives+[Index(n) for n in range(4) ] + [Application(UNKNOWN, UNKNOWN), Abstraction(UNKNOWN)]
 
 def refinements(template):
@@ -199,9 +200,13 @@ def optimistic_version(template, corpus, verbose=False):
     number_of_matches=0
 
     inferior_abstraction_checker=None
-    
+
     for program in corpus:
-        bindings = match_version_comprehensive(template, program)
+        if template is UNKNOWN or template.parent is UNKNOWN or id(program) in template.parent.matches:
+            bindings = match_version_comprehensive(template, program)
+        else:
+            bindings = []
+            
         if verbose:
             eprint()
             eprint(bindings)
@@ -211,6 +216,7 @@ def optimistic_version(template, corpus, verbose=False):
 
         if len(bindings)>0:
             number_of_matches+=1
+            if template is not UNKNOWN: template.matches.add(id(program))
 
             bindings = list(bindings)
 
@@ -473,6 +479,8 @@ def compress(corpus):
     for candidate in candidates:
         candidate=Program.parse(candidate)
         eprint("testing ", candidate)
+
+        candidate.parent = UNKNOWN
     
         eprint(master_optimistic(candidate, corpus, verbose=True))
 
@@ -480,33 +488,38 @@ def compress(corpus):
     
     starttime = time.time()
     
-    best=best_constant_abstraction(corpus)
-    best_utility=master_utility(best, corpus)
-    eprint("best starting", best, best_utility)
-    if best_utility<0:
-        best_utility=0
-        best=None
-    p0=Program.parse("??")
+    # best=best_constant_abstraction(corpus)
+    # best.parent = UNKNOWN
+    # best_utility=master_utility(best, corpus)
+    # eprint("best starting", best, best_utility)
+    # if best_utility<0:
+    best_utility=0
+    best=None
+    p0=UNKNOWN
     q=PQ()
     q.push(master_optimistic(p0, corpus), p0)
     #eprint("initial_best_utility", best_utility)
     pops=0
+    utility_calculations=1
     while len(q):
         p=q.popMaximum()
         pops+=1
         
-        eprint(p, master_optimistic(p, corpus))
+        #eprint(p, master_optimistic(p, corpus))
         r=refinements(p)
         if len(r)==0:
             u = master_utility(p, corpus)
             if u>best_utility:
-                eprint(int(time.time()-starttime), "sec", pops, "pops", "best found so far", p, u)
+                eprint(Fore.GREEN, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far", p, u, '\033[0m')
                 best_utility, best = u, p
         else:
             for pp in r:
                 if bad_refinement(pp):
                     continue
+                pp.parent=p
+                pp.matches=set()
                 u = master_optimistic(pp, corpus)
+                utility_calculations+=1
                 if u is None or u<best_utility:
                     continue
                 q.push(u, pp)
