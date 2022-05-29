@@ -13,8 +13,9 @@ class QuantumTask(dc.task.Task):
 
         super(QuantumTask, self).__init__(name=name,
                                           request=dc.type.arrow(tcircuit, tcircuit),
-                                          examples=[((no_op(4),),(self.target_circuit_evaluation,),)],
+                                          examples=[((no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],
                                           features=[])
+        # Example should set max circuit size?
 
     def logLikelihood(self, e, timeout=None):
         if QuantumTask.last_circuit is not e:

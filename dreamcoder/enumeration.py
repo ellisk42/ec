@@ -648,35 +648,27 @@ def enumerate_pcfg(pcfg, timeout,
     enum_dictionary = {}
     t_0 = time.time()
     
+    n_qubit = 5
     # How to choose circuit size when enumerating?
     for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence,
-                                           inputs=[[no_op(1)],[no_op(2)],[no_op(3)]],
+                                           inputs=[[no_op(n_qubit)]], # why do we need this?
                                            sound=sound):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
-        for n_qubit in [1,2,3]:
-            try: 
-                
-                circuit = code.evaluate([])(no_op(n_qubit))
+        try: 
+            
+            circuit = code.evaluate([])(no_op(n_qubit))
 
-                n_qubit, gates_list = circuit
-                max_qubit = 0
-                for op in gates_list:
-                    for n in op[1:]:
-                        max_qubit = max(max_qubit,n)
-                if max_qubit +1< n_qubit:
-                    raise QuantumCircuitException
-
-                unitary = circuit_to_mat(circuit)
-                key = unitary.tobytes() 
-                task = str(code)
-                c_time = time.time()
-                
-                # If multiple programs give the same unitary
-                # we want to keep the simplest one
-                if key not in enum_dictionary:
-                    enum_dictionary[key]={"code":code, "circuit":circuit, "time": c_time-t_0}
-            except QuantumCircuitException:
-                ...
+            unitary = circuit_to_mat(circuit)
+            key = unitary.tobytes() 
+            task = str(code)
+            c_time = time.time()
+            
+            # If multiple programs give the same unitary
+            # we want to keep the simplest one
+            if key not in enum_dictionary:
+                enum_dictionary[key]={"code":code, "circuit":circuit, "time": c_time-t_0}
+        except QuantumCircuitException:
+            ...
     eprint(f"Enumerated {len(enum_dictionary)} programs")
     return enum_dictionary
