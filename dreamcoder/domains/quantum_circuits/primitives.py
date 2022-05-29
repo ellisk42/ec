@@ -356,40 +356,18 @@ qiskit_full_op_names = lambda QT: {
     "cz": lambda q1,q2: QT.circuit.cz(QT.q(q1),QT.q(q2)),
 }
 
-def get_n_qubit(full_circuit):
-    n_qubit_old, op_list = full_circuit
-
-    # Find smallest and largest used qubit
-    q_min = 0
-    q_max = 0
-    for op in op_list:
-        q_min = min([q_min,*op[1:]])
-        q_max = max([q_max,*op[1:]])
-
-    # if q_min is not zero, translate the minimum
-    l = []
-    if q_min !=0:
-        for op in op_list:
-            l.append((op[0], *tuple(map(lambda x: x-q_min, op[1:]))))
-    n_qubit = q_max - q_min    +1 # number of qubit is largest index + 1
-
-    if n_qubit_old!=-1 and n_qubit>n_qubit_old:
-        raise QuantumCircuitException("Invalid circuit size")
-    return n_qubit , tuple(l) 
-
-
 eyes = {} #caching initial identity matrices
 full_circuit_cache = {}
 def circuit_to_mat(full_circuit):
     t_full_circuit = tuple(full_circuit)
     try:
         if t_full_circuit not in full_circuit_cache:
-            n_qubit, op_list = get_n_qubit(full_circuit) # we ignore saved number
+            n_qubit, op_list = full_circuit
+            
             if n_qubit not in eyes.keys():
                 eyes[n_qubit]=eye(n_qubit)
             tensor = eyes[n_qubit]
             
-            print(op_list)
             for op in op_list:
                 tensor = full_op_names[op[0]](tensor, *op[1:])
                 
@@ -456,35 +434,31 @@ def no_op(n):
     return (n, ())
 
 def get_n_qubits(old_circuit):
-    # return old_circuit[0]
-    return get_n_qubit(old_circuit)[0]
+    return old_circuit[0]
 
 def one_qubit_gate(old_circuit, qubit_1,operation_name):
     n_qubit, circuit = old_circuit
         
-    # if qubit_1<0 or qubit_1 >= n_qubit:
-    #     raise QuantumCircuitException("Invalid selected qubit")
-    circuit = circuit + ((operation_name, qubit_1),)
+    if qubit_1<0 or qubit_1 >= n_qubit:
+        raise QuantumCircuitException("Invalid selected qubit")
     
-    get_n_qubit((n_qubit,circuit)) # check circuit size
+    circuit = circuit + ((operation_name, qubit_1),)
     return (n_qubit, circuit)
 
 def two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
     # operation_name = "cnot" or some other gate name
     n_qubit, circuit = old_circuit
     
-    # if qubit_1<0 or qubit_1 >= n_qubit:
-    #     raise QuantumCircuitException("Invalid selected qubit")
+    if qubit_1<0 or qubit_1 >= n_qubit:
+        raise QuantumCircuitException("Invalid selected qubit")
     
-    # if qubit_2<0 or qubit_2 >= n_qubit:
-    #     raise QuantumCircuitException("Invalid selected qubit")
+    if qubit_2<0 or qubit_2 >= n_qubit:
+        raise QuantumCircuitException("Invalid selected qubit")
    
     if qubit_1 == qubit_2:
         raise QuantumCircuitException("Invalid selected qubit")
     
     circuit = circuit + ((operation_name, qubit_1, qubit_2),)
-    
-    get_n_qubit((n_qubit,circuit)) # check circuit size
     return (n_qubit, circuit)
 
 # Circuit primitives
@@ -596,10 +570,10 @@ primitives = [
     p_tdg,
     p_cnot,
     #arithmetics
-    p_0,
-    p_inc,
-    p_dec,
-    p_size,
+    # p_0,
+    # p_inc,
+    # p_dec,
+    # p_size,
     # #control
     # fp_iteration
 ]

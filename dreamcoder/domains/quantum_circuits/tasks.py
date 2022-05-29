@@ -12,10 +12,9 @@ class QuantumTask(dc.task.Task):
         self.target_circuit_evaluation = circuit_to_mat(target_circuit)
 
         super(QuantumTask, self).__init__(name=name,
-                                          request=dc.type.arrow(tcircuit, tcircuit),
-                                          examples=[((no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],
+                                          request=dc.type.arrow(*[dc.type.tint], tcircuit, tcircuit),
+                                          examples=[((*np.arange(self.n_qubits),no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],
                                           features=[])
-        # Example should set max circuit size?
 
     def logLikelihood(self, e, timeout=None):
         if QuantumTask.last_circuit is not e:
@@ -38,10 +37,12 @@ class QuantumTask(dc.task.Task):
             return dc.utilities.NEGATIVEINFINITY 
         return 0.
 
-
+n_qubit_tasks = 4
 def makeTasks():
-
-    pcfg_full = dc.grammar.PCFG.from_grammar(full_grammar, request=dc.type.arrow(tcircuit, tcircuit))
+    
+    pcfg_full = dc.grammar.PCFG.from_grammar(full_grammar, request=dc.type.arrow(
+                                                                                dc.type.arrow(*[dc.type.tint]*n_qubit_tasks,tcircuit), 
+                                                                                tcircuit))
     tasks = dc.enumeration.enumerate_pcfg(pcfg_full,
                                 timeout=1, 
                                 observational_equivalence=True,
