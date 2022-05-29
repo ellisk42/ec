@@ -359,6 +359,7 @@ qiskit_full_op_names = lambda QT: {
 eyes = {} #caching initial identity matrices
 full_circuit_cache = {}
 def circuit_to_mat(full_circuit):
+    eprint(full_circuit)
     t_full_circuit = tuple(full_circuit)
     try:
         if t_full_circuit not in full_circuit_cache:
@@ -555,10 +556,10 @@ full_primitives = [
     p_swap,
     p_iswap,
     #arithmetics
-    p_0,
-    p_inc,
-    p_dec,
-    p_size,
+    # p_0,
+    # p_inc,
+    # p_dec,
+    # p_size,
     # #control
     # fp_iteration
 ]
@@ -591,12 +592,18 @@ grammar = dc.grammar.Grammar.uniform(primitives, continuationType=tcircuit)
 # 
 def execute_quantum_algorithm(p, n_qubits, timeout=None):
     try:
-        circuit =  dc.utilities.runWithTimeout(
-            lambda: p.evaluate([])(no_op(n_qubits)),
-            timeout=timeout
-        )
+        eprint(p,n_qubits) #it may not have as many inputs?? WHY?
+        circuit = p.evaluate([])
+        for arg in (*np.arange(n_qubits),no_op(n_qubits)):
+            circuit = circuit(arg)
+        # circuit =  dc.utilities.runWithTimeout(
+        #     lambda: p.evaluate([])(no_op(n_qubits)),
+        #     timeout=timeout
+        # )  TIMEOUT DISABLED
         return circuit_to_mat(circuit)
     except dc.utilities.RunWithTimeout: return None
-    except: return None
+    except Exception as e: 
+        eprint(e)
+        return None
     
     

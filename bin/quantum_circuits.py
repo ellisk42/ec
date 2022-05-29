@@ -22,9 +22,9 @@ if __name__ == '__main__':
         topK=2,
         maximumFrontier=5,
         extras=None,
-        solver="bottom_simple", 
+        solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=8,#-g
+        enumerationTimeout=15,#-g
         taskBatchSize=20,
         taskReranker="randomShuffle", #defualt
         compressor="pypy")   #ocaml, python, pypy  

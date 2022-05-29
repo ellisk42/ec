@@ -39,9 +39,8 @@ class QuantumTask(dc.task.Task):
 
 n_qubit_tasks = 4
 def makeTasks():
-    
     pcfg_full = dc.grammar.PCFG.from_grammar(full_grammar, request=dc.type.arrow(
-                                                                                dc.type.arrow(*[dc.type.tint]*n_qubit_tasks,tcircuit), 
+                                                                                *[dc.type.tint]*n_qubit_tasks,tcircuit, 
                                                                                 tcircuit))
     tasks = dc.enumeration.enumerate_pcfg(pcfg_full,
                                 timeout=1, 
@@ -50,7 +49,7 @@ def makeTasks():
     
     quantumTasks = []
     for idx, task in enumerate(tasks.values()):
-        quantumTasks.append(QuantumTask(f"t_{idx:03d}", task["circuit"]))
+        quantumTasks.append(QuantumTask(f"t_{idx:03d}_{task['code']}", task["circuit"]))
     return quantumTasks
 
 

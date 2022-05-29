@@ -479,7 +479,6 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
             contained.add(str(xs))
     random.shuffle(deduplicated)
     inputs=deduplicated[:10] # FIXME
-
     for e in pcfg.quantized_enumeration(skeletons=pps,
                                         inputs=inputs,
                                         observational_equivalence=(solver!="bottom_simple"),
@@ -655,9 +654,10 @@ def enumerate_pcfg(pcfg, timeout,
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
         try: 
+            circuit = code.evaluate([])
+            for arg in (*np.arange(n_qubit),no_op(n_qubit)):
+                circuit = circuit(arg)
             
-            circuit = code.evaluate([])(*np.arange(n_qubit),no_op(n_qubit))
-
             n_qubit, gates_list = circuit
             max_qubit = 0
             for op in gates_list:
