@@ -26,7 +26,7 @@ def main(arguments):
     global primitives
     
     g0 = grammar
-    tasks = makeTasks()
+    tasks = makeTasks() 
     
     # what about checkpoints
     
@@ -42,5 +42,5 @@ def main(arguments):
                            **arguments)
     for result in generator:
         continue
-    
+    return outputDirectory
     pass

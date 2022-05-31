@@ -73,7 +73,7 @@ try:
                 op_names[op[0]](*op[1:])
                 
             # pip install pylatexenc for mpl draw
-            QT.circuit.draw(output="mpl", filename=filename) if filename is not None else eprint(QT) 
+            QT.circuit.draw(output="mpl", filename=filename) if filename is not None else print(QT) 
             plt.show()
             
 

@@ -29,6 +29,9 @@ if __name__ == '__main__':
         taskReranker="randomShuffle", #defualt
         compressor="pypy")   #ocaml, python, pypy  
     main(arguments)
+    
+    # resume the checkpoint
+    # test on all the task set (which we should also save)
 
 # -g (no neural network
 # --solver python  (or pypy)

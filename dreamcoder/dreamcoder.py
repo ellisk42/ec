@@ -727,6 +727,7 @@ def commandlineArguments(_=None,
                          structurePenalty=0.001, a=0,
                          taskBatchSize=None, taskReranker="default",
                          extras=None,
+                         resume=None,
                          storeTaskMetrics=False,
                         rewriteTaskMetrics=True):
     if cuda is None:
@@ -737,7 +738,7 @@ def commandlineArguments(_=None,
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--resume",
                         help="Resumes EC algorithm from checkpoint. You can either pass in the path of a checkpoint, or you can pass in the iteration to resume from, in which case it will try to figure out the path.",
-                        default=None,
+                        default=resume,
                         type=str)
     parser.add_argument("-i", "--iterations",
                         help="default: %d" % iterations,
