@@ -540,7 +540,8 @@ def sortBootstrap():
 
 def exportTasks():
     import sys
-    import pickle as pickle
+    import dill as pickle
+
 
     n_examples = 15
     if len(sys.argv) > 1:

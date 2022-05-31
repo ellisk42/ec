@@ -19,15 +19,15 @@ try:
     class QiskitTester():
         def __init__(self,n_qubits=None,circuit=None):
             self.n_qubits = n_qubits
-            self.qreg_q = QuantumRegister(self.n_qubits, 'q')
-            self.circuit = QuantumCircuit(self.qreg_q)
             if circuit!=None:
                 self.unitary_matrix = circuit_to_mat(circuit) # full_circuit
                 self.unitary_tensor = mat_to_tensor(self.unitary_matrix)
                 self.n_qubits = get_qubit_number(self.unitary_tensor)
-                if self.n_qubits!=n_qubits:
-                    raise Exception("Duplicate inconsistent arguments!")
+            else: 
+                self.n_qubits = n_qubits
                 
+            self.qreg_q = QuantumRegister(self.n_qubits, 'q')
+            self.circuit = QuantumCircuit(self.qreg_q)
         def q(self,q_num):
             return self.n_qubits -1- q_num
         
@@ -66,7 +66,7 @@ try:
         
 
     def print_circuit(full_circuit, filename=None):
-        with QiskitTester(full_circuit) as QT:
+        with QiskitTester(circuit=full_circuit) as QT:
             n_qubit, op_list = full_circuit
             op_names = qiskit_full_op_names(QT)
             for op in op_list:
@@ -351,6 +351,8 @@ full_op_names = {
 qiskit_full_op_names = lambda QT: {
     "eye": lambda q1: QT.circuit.id(QT.q(q1)),
     "hadamard": lambda q1: QT.circuit.h(QT.q(q1)),
+    "t": lambda q1: QT.circuit.t(QT.q(q1)),
+    "tdg": lambda q1: QT.circuit.tdg(QT.q(q1)),
     "cnot":  lambda q1,q2: QT.circuit.cnot(QT.q(q1),QT.q(q2)),
     "swap": lambda q1,q2: QT.circuit.swap(QT.q(q1),QT.q(q2)),
     "cz": lambda q1,q2: QT.circuit.cz(QT.q(q1),QT.q(q2)),
@@ -359,7 +361,7 @@ qiskit_full_op_names = lambda QT: {
 eyes = {} #caching initial identity matrices
 full_circuit_cache = {}
 def circuit_to_mat(full_circuit):
-    eprint(full_circuit)
+    # eprint(full_circuit)
     t_full_circuit = tuple(full_circuit)
     try:
         if t_full_circuit not in full_circuit_cache:
@@ -582,8 +584,8 @@ primitives = [
 # ------------------------------------------
 # Define GRAMMAR
 # 
-full_grammar = dc.grammar.Grammar.uniform(full_primitives, continuationType=tcircuit)
-grammar = dc.grammar.Grammar.uniform(primitives, continuationType=tcircuit)
+full_grammar = dc.grammar.Grammar.uniform(full_primitives)
+grammar = dc.grammar.Grammar.uniform(primitives)
             
 
 # ------------------------------------------
@@ -592,7 +594,7 @@ grammar = dc.grammar.Grammar.uniform(primitives, continuationType=tcircuit)
 # 
 def execute_quantum_algorithm(p, n_qubits, timeout=None):
     try:
-        eprint(p,n_qubits) #it may not have as many inputs?? WHY?
+        # eprint(p,n_qubits) #it may not have as many inputs?? WHY?
         circuit = p.evaluate([])
         for arg in (*np.arange(n_qubits),no_op(n_qubits)):
             circuit = circuit(arg)
@@ -603,7 +605,7 @@ def execute_quantum_algorithm(p, n_qubits, timeout=None):
         return circuit_to_mat(circuit)
     except dc.utilities.RunWithTimeout: return None
     except Exception as e: 
-        eprint(e)
+        # eprint(e)
         return None
     
     

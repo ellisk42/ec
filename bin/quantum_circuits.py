@@ -12,7 +12,7 @@ from dreamcoder.utilities import numberOfCPUs
 if __name__ == '__main__': 
     arguments = commandlineArguments(
         featureExtractor=None, # it was TowerCNN
-        CPUs=1,#numberOfCPUs(),
+        CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3,
         iterations=10,
@@ -24,7 +24,7 @@ if __name__ == '__main__':
         extras=None,
         solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=15,#-g
+        enumerationTimeout=150,#-g
         taskBatchSize=20,
         taskReranker="randomShuffle", #defualt
         compressor="pypy")   #ocaml, python, pypy  

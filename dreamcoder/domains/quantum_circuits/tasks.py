@@ -12,7 +12,7 @@ class QuantumTask(dc.task.Task):
         self.target_circuit_evaluation = circuit_to_mat(target_circuit)
 
         super(QuantumTask, self).__init__(name=name,
-                                          request=dc.type.arrow(*[dc.type.tint], tcircuit, tcircuit),
+                                          request=dc.type.arrow(*([dc.type.tint]*self.n_qubits), tcircuit, tcircuit),
                                           examples=[((*np.arange(self.n_qubits),no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],
                                           features=[])
 
@@ -24,9 +24,12 @@ class QuantumTask(dc.task.Task):
         if  QuantumTask.last_circuit_evaluation is None:
             QuantumTask.last_circuit_evaluation = execute_quantum_algorithm(e, self.n_qubits, timeout)
 
-        yh = QuantumTask.last_circuit_evaluation
         yh_true = self.target_circuit_evaluation
-
+        
+        yh = QuantumTask.last_circuit_evaluation
+        # TO DISABLE CACHING (for testing)
+        # yh =  execute_quantum_algorithm(e, self.n_qubits, timeout)
+        
         if yh is None:
             return dc.utilities.NEGATIVEINFINITY
         
@@ -37,7 +40,7 @@ class QuantumTask(dc.task.Task):
             return dc.utilities.NEGATIVEINFINITY 
         return 0.
 
-n_qubit_tasks = 4
+n_qubit_tasks = 3
 def makeTasks():
     pcfg_full = dc.grammar.PCFG.from_grammar(full_grammar, request=dc.type.arrow(
                                                                                 *[dc.type.tint]*n_qubit_tasks,tcircuit, 

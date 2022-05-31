@@ -7,7 +7,7 @@ import sys
 import os
 import subprocess
 import math
-import pickle as pickle
+import dill as pickle
 from itertools import chain
 import heapq
 
@@ -40,8 +40,23 @@ class ConstantFunction:
     def __init__(self,v): self.v = v
     def __call__(self,*a,**k): return self.v
 
+class bcolors:
+        HEADER = '\033[95m'
+        OKBLUE = '\033[94m'
+        OKCYAN = '\033[96m'
+        OKGREEN = '\033[92m'
+        WARNING = '\033[93m'
+        FAIL = '\033[91m'
+        ENDC = '\033[0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
+        
 def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+    from inspect import currentframe, getframeinfo
+    frameinfo = getframeinfo(currentframe().f_back)
+    
+    print(f"{bcolors.OKBLUE}{frameinfo.filename.split('/')[-1]}:{frameinfo.lineno}{bcolors.ENDC} >",
+          *args, file=sys.stderr, **kwargs)
     flushEverything()
 
 
@@ -186,7 +201,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     if seedRandom:
         PARALLELBASESEED = random.random()
 
-    from multiprocessing import Pool
+    from pathos.multiprocessing import Pool
 
     # Randomize the order in case easier ones come earlier or later
     permutation = list(range(n))
@@ -304,7 +319,7 @@ def callFork(f, *arguments, **kw):
     """Forks a new process to execute the call. Blocks until the call completes."""
     global FORKPARAMETERS
 
-    from multiprocessing import Pool
+    from pathos.multiprocessing import Pool
 
     workers = Pool(1)
     ys = workers.map(forkCallBack, [[f, arguments, kw]])
@@ -569,8 +584,8 @@ def testTrainSplit(x, trainingFraction, seed=0):
 
 
 def numberOfCPUs():
-    import multiprocessing
-    return multiprocessing.cpu_count()
+    import pathos.multiprocessing
+    return pathos.multiprocessing.cpu_count()
 
 
 def loadPickle(f):

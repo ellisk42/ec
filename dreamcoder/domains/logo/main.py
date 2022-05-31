@@ -2,7 +2,7 @@ from collections import OrderedDict
 import datetime
 import json
 import os
-import pickle
+import dill as pickle
 import random as random
 import subprocess
 import sys

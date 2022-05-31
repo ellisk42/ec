@@ -2,7 +2,8 @@ import dill
 import sys
 import time
 import traceback
-import pickle as pickle
+import dill as pickle
+
 
 try:
     import binutil  # required to import from dreamcoder modules

@@ -489,6 +489,9 @@ def ecIterator(grammar, tasks,
 
             graphPrimitives(result, "%s_primitives_%d_"%(outputPrefix,j))
             
+            # Dump all results for future analysis?
+            with open( "%s_dumped_results_%d_"%(outputPrefix,j),"wb") as f:
+                pickle.dump(result,f)
 
         yield result
 

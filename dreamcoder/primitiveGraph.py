@@ -7,7 +7,7 @@ def graphPrimitives(result, prefix, view=False):
         eprint("You are missing the graphviz library - cannot graph primitives!")
         return
     
-
+    
     primitives = { p
                    for g in result.grammars
                    for p in g.primitives

@@ -22,8 +22,9 @@ def multicoreEnumeration(g, tasks, _=None,
     # library. This is because we need to be able to kill workers.
     #from multiprocess import Process, Queue
 
-    from multiprocessing import Queue
-
+    from pathos.helpers import mp as multiprocess
+    Queue = multiprocess.Queue
+    
      # everything that gets sent between processes will be dilled
     import dill
     
@@ -402,7 +403,7 @@ def solveForTask_bottom(_=None,
                         CPUs=1,
                         likelihoodModel=None,
                         evaluationTimeout=None, maximumFrontiers=None, testing=False,
-                        compile_me=True):
+                        compile_me=False):
     if compile_me:
         return callCompiled(solveForTask_bottom,
                             elapsedTime=elapsedTime,
@@ -526,6 +527,11 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
     frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
                                     task=tasks[n])
                  for n in range(len(tasks))}
+    # for task in frontiers:
+    #     print(dir(task))
+    #     for i in dir(task):
+    #         print(i,getattr(task,i))
+      
     # This is subtle:
     # The search time we report is actually not be minimum time to find any solution
     # Rather it is the time to find the MAP solution

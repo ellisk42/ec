@@ -21,7 +21,7 @@ class Sloppy():
         self.n=n
 
         if continuationType is not None:
-            # assert all( len(xs)==1 for xs in inputs ), "for no good reason we require continuation types to only have one argument. ask Kevin to fix this later"
+            assert all( len(xs)==1 for xs in inputs ), "for no good reason we require continuation types to only have one argument. ask Kevin to fix this later"
             self.continuation_values = [ [ k
                                            for k, t in zip(input_data, request.functionArguments())
                                            if t==continuationType][0]

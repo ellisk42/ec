@@ -1,7 +1,8 @@
 import datetime
 import json
 import os
-import pickle
+import dill as pickle
+
 import subprocess
 import sys
 
