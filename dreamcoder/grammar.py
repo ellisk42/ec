@@ -1561,7 +1561,7 @@ class PCFG():
         return f"start symbol: {self.start_symbol}\n\n%s" % ("\n\n".join(
             "\n".join(f"{nt} ::= {k}\t%s\t\t{l}" % (" ".join(f"{n}x{s}" for n, s in ar))
                       for l, k, ar in rs)
-            for nt, rs in self.productions.items()))
+            for nt, rs in (self.productions.items() if isinstance(self.productions, dict) else enumerate(self.productions))))
 
     def number_rules(self):
         if isinstance(self.productions, list):
@@ -1698,6 +1698,8 @@ class PCFG():
 
     def split(self, nc):
 
+        infinite = self.infinite_productions()
+
         def expansions(expression):
             if isinstance(expression, NamedHole):
                 for _, k, arguments in self.productions[expression.name]:
@@ -1718,13 +1720,24 @@ class PCFG():
                 for x in expansions(expression.x):
                     yield Application(expression.f, x)
 
+        def finished(term):
+            return len(list(expansions(term)))==0 or \
+                all( not infinite[subterm.name]
+                     for _, subterm in term.walk() if isinstance(subterm, NamedHole))
+
         initial_split = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
+        constants = []
         while len(initial_split) < nc:
             biggest = max(initial_split, key=lambda pp: self.log_probability(pp))
-            initial_split = list(expansions(biggest)) + [pp for pp in initial_split if pp != biggest]
+
+            new_skeletons = list(expansions(biggest))
+            constants.extend([ns for ns in new_skeletons if finished(ns) ])
+            initial_split = [ns for ns in new_skeletons if not finished(ns) ] + [pp for pp in initial_split if pp != biggest]
 
         split = [[] for _ in range(nc)]
         for i, pp in enumerate(initial_split):
+            split[i % nc].append(pp)
+        for i, pp in enumerate(constants):
             split[i % nc].append(pp)
 
         return split
@@ -1740,6 +1753,45 @@ class PCFG():
 
         # eprint(quality(split))
         # import pdb; pdb.set_trace()
+
+    def infinite_productions(self):
+        """For which productions is the set of generated programs infinite?"""
+        edges=set()
+        vertices=set()
+        if isinstance(self.productions, list):
+            for nt, right_hand_sides in enumerate(self.productions):
+                vertices.add(nt)
+                for lp, k, arguments in right_hand_sides:
+                    for _, ntp in arguments:
+                        edges.add((nt, ntp))
+        else:
+            for nt, right_hand_sides in self.productions.items():
+                vertices.add(nt)
+                for lp, k, arguments in right_hand_sides:
+                    for _, ntp in arguments:
+                        edges.add((nt, ntp))
+                        
+
+        def cycles(v, history):
+            if v in history:
+                return True
+            return any(cycles(destination, [v]+history)
+                       for target, destination in edges if target==v)
+
+        infinite={nt: cycles(nt, [])
+                  for nt in vertices }
+        # everything which is incident on infinite becomes infinite
+        # iterate until saturation
+        while True:
+            changed=False
+            for source, destination in edges:
+                if infinite[destination] and not infinite[source]:
+                    changed=True
+                    infinite[source]=True
+            if not changed:
+                return infinite
+        
+        
 
     def quantized_enumeration(self, resolution=0.5, skeletons=None,
                               observational_equivalence=True, sound=True, inputs=None):
@@ -1922,8 +1974,6 @@ class PCFG():
         expressions = [[None for _ in range(int(100/resolution))]
                        for _ in range(nonterminals)]
         for cost in range(int(100/resolution)):
-            # if cost>100:
-            eprint(skeletons)
             eprint(" -- Bottom up enumeration, cost", cost)
             for skeleton, skeleton_cost in zip(skeletons, skeleton_costs):
                 for e in complete_skeleton(cost-skeleton_cost, skeleton):
