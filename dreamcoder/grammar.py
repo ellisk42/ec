@@ -1930,7 +1930,7 @@ class PCFG():
                                                         for c5 in range(size-cost-c1-c2-c3-c4):
                                                             for a5 in expressions_of_size(at5, c5):
                                                                 a5= a5.wrap_in_abstractions(nl5)
-                                                                for a6 in expressions_of_size(at5, size-cost-c1-c2-c3-c4-c5):
+                                                                for a6 in expressions_of_size(at6, size-cost-c1-c2-c3-c4-c5):
                                                                     a6 = a4.wrap_in_abstractions(nl6)
                                                                     new.append(Application(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5),a6))
                     else:
