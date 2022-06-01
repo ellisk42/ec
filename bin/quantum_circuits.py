@@ -8,6 +8,18 @@ from dreamcoder.domains.quantum_circuits.main import main
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 
+import sys
+sys.path.append("../")
+
+import dreamcoder as dc
+
+from dreamcoder.domains.quantum_circuits.primitives import primitives, grammar
+from dreamcoder.domains.quantum_circuits.tasks import makeTasks
+
+import os
+import datetime
+
+
 
 if __name__ == '__main__': 
     arguments = commandlineArguments(
