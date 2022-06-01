@@ -436,7 +436,7 @@ def solveForTask_bottom(_=None,
 
     pcfg = PCFG.from_grammar(g, request).number_rules() # a pcfg
 
-    splits = pcfg.split(32)#CPUs)
+    splits = pcfg.split(CPUs)
 
     results = parallelMap(CPUs, 
                           lambda pps: bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFrontiers, evaluationTimeout=evaluationTimeout),
