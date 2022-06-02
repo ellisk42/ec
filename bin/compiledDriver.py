@@ -2,7 +2,7 @@ import dill
 import sys
 import time
 import traceback
-import dill as pickle
+import pickle as pickle
 
 
 try:

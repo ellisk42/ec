@@ -36,7 +36,9 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None):
-    from pathos.multiprocessing import Pool
+    # from pathos.multiprocessing import Pool
+    from multiprocessing import Pool
+    
     requests = list({t.request for t in tasks})
     inputs = {r: list({tuplify(xs)
                        for t in tasks if t.request == r

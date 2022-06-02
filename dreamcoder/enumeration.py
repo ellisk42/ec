@@ -22,8 +22,9 @@ def multicoreEnumeration(g, tasks, _=None,
     # library. This is because we need to be able to kill workers.
     #from multiprocess import Process, Queue
 
-    from pathos.helpers import mp as multiprocess
-    Queue = multiprocess.Queue
+    # from pathos.helpers import mp as multiprocess
+    # Queue = multiprocess.Queue
+    from multiprocessing import Queue
     
      # everything that gets sent between processes will be dilled
     import dill

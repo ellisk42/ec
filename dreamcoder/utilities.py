@@ -7,7 +7,7 @@ import sys
 import os
 import subprocess
 import math
-import dill as pickle
+import pickle as pickle
 from itertools import chain
 import heapq
 
@@ -201,7 +201,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     if seedRandom:
         PARALLELBASESEED = random.random()
 
-    from pathos.multiprocessing import Pool
+    from multiprocessing import Pool
 
     # Randomize the order in case easier ones come earlier or later
     permutation = list(range(n))
@@ -211,10 +211,9 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     # Batch size of jobs as they are sent to processes
     if chunksize is None:
         chunksize = max(1, n // (numberOfCPUs * 2))
-    pool = Pool(numberOfCPUs, maxtasksperchild=maxtasksperchild)
-    ys = pool.map(parallelMapCallBack, permutation,
+    with Pool(numberOfCPUs, maxtasksperchild=maxtasksperchild) as pool:
+        ys = pool.map(parallelMapCallBack, permutation,
                   chunksize=chunksize)
-    pool.terminate()
 
     PARALLELMAPDATA = None
     PARALLELBASESEED = None
@@ -319,7 +318,7 @@ def callFork(f, *arguments, **kw):
     """Forks a new process to execute the call. Blocks until the call completes."""
     global FORKPARAMETERS
 
-    from pathos.multiprocessing import Pool
+    from multiprocessing import Pool
 
     workers = Pool(1)
     ys = workers.map(forkCallBack, [[f, arguments, kw]])
@@ -415,7 +414,7 @@ def callCompiled(f, *arguments, **keywordArguments):
 
     # Use absolute paths.
     compiled_driver_file = os.path.join(get_root_dir(), 'bin', 'compiledDriver.py')
-    p = subprocess.Popen(['pypy3'] + pypyArgs + [compiled_driver_file],
+    p = subprocess.Popen(['python'] + pypyArgs + [compiled_driver_file],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
@@ -584,8 +583,8 @@ def testTrainSplit(x, trainingFraction, seed=0):
 
 
 def numberOfCPUs():
-    import pathos.multiprocessing
-    return pathos.multiprocessing.cpu_count()
+    import multiprocessing
+    return multiprocessing.cpu_count()
 
 
 def loadPickle(f):

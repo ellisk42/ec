@@ -36,7 +36,7 @@ if __name__ == '__main__':
         extras=None,
         solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=150,#-g
+        enumerationTimeout=300,#-g
         taskBatchSize=20,
         taskReranker="randomShuffle", #defualt
         compressor="pypy")   #ocaml, python, pypy  
