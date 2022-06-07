@@ -1198,7 +1198,7 @@ class EtaLongVisitor(object):
         assert len(e.freeVariables()) == 0
         
         if self.request is None:
-            eprint("WARNING: request not specified for etaexpansion")
+            # eprint("WARNING: request not specified for etaexpansion")
             self.request = e.infer()
         self.context = MutableContext()
         el = e.visit(self, self.request, [])

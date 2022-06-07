@@ -211,6 +211,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     # Batch size of jobs as they are sent to processes
     if chunksize is None:
         chunksize = max(1, n // (numberOfCPUs * 2))
+        
     with Pool(numberOfCPUs, maxtasksperchild=maxtasksperchild) as pool:
         ys = pool.map(parallelMapCallBack, permutation,
                   chunksize=chunksize)
@@ -414,7 +415,7 @@ def callCompiled(f, *arguments, **keywordArguments):
 
     # Use absolute paths.
     compiled_driver_file = os.path.join(get_root_dir(), 'bin', 'compiledDriver.py')
-    p = subprocess.Popen(['python'] + pypyArgs + [compiled_driver_file],
+    p = subprocess.Popen(['pypy3'] + pypyArgs + [compiled_driver_file],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 

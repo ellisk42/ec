@@ -27,18 +27,18 @@ if __name__ == '__main__':
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3,
-        iterations=10,
+        iterations=20,
         a=3,
-        structurePenalty=1,
+        structurePenalty=1, # increase regularization 3 4 (it was 1)
         pseudoCounts=10,
         topK=2,
         maximumFrontier=5,
         extras=None,
         solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=300,#-g
-        taskBatchSize=20,
-        taskReranker="randomShuffle", #defualt
+        enumerationTimeout=100,#-g
+        # taskBatchSize=20,
+        # taskReranker="randomShuffle", #defualt
         compressor="pypy")   #ocaml, python, pypy  
     main(arguments)
     

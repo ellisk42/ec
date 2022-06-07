@@ -85,13 +85,15 @@ class Grammar(object):
     def __len__(self): return len(self.productions)
 
     def __str__(self):
-        def productionKey(xxx_todo_changeme):
-            (l, t, p) = xxx_todo_changeme
+        def productionKey(primitive):
+            (l, t, p) = primitive  #likelihood, type, program_object
             return not isinstance(p, Primitive), l is not None and -l
+        
         if self.continuationType is not None:
             lines = ["continuation : %s" % self.continuationType]
         else:
             lines = []
+            
         lines += ["%f\tt0\t$_" % self.logVariable]
         for l, t, p in sorted(self.productions, key=productionKey):
             if l is not None:
