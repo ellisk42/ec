@@ -27,26 +27,25 @@ if __name__ == '__main__':
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3,
-        iterations=20,
+        iterations=40,
         a=3,
-        structurePenalty=1, # increase regularization 3 4 (it was 1)
+        structurePenalty=6, # increase regularization 3 4 (it was 1) look at a few [1,15]
         pseudoCounts=10,
         topK=2,
         maximumFrontier=5,
         extras=None,
         solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=100,#-g
-        # taskBatchSize=20,
-        # taskReranker="randomShuffle", #defualt
+        enumerationTimeout=750,#-g  #600
+        taskBatchSize=200,
+        taskReranker="randomShuffle", #defualt
         compressor="pypy")   #ocaml, python, pypy  
     main(arguments)
     
-    # resume the checkpoint
-    # test on all the task set (which we should also save)
+    
 
+    # resume the checkpoint
 # -g (no neural network
 # --solver python  (or pypy)
 
 # python bin/quantum_algorithms.py -t 5 --compressor=pypy
-## TASKS

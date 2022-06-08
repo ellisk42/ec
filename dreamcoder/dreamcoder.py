@@ -418,7 +418,6 @@ def ecIterator(grammar, tasks,
 
         tasksHitTopDown = {f.task for f in topDownFrontiers if not f.empty}
         result.hitsAtEachWake.append(len(tasksHitTopDown))
-
         reportMemory()
 
         # Combine topDownFrontiers from this task batch with all frontiers.
@@ -452,11 +451,13 @@ def ecIterator(grammar, tasks,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
 
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
-            
+        
         # Record the new topK solutions
         result.taskSolutions = {f.task: f.topK(topK)
                                 for f in result.allFrontiers.values()}
+        
         for f in result.allFrontiers.values(): result.recordFrontier(f)
+        
         result.learningCurve += [
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f
@@ -474,6 +475,7 @@ def ecIterator(grammar, tasks,
         else:
             eprint("Skipping consolidation.")
             result.grammars.append(grammar)
+
             
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
@@ -729,7 +731,8 @@ def commandlineArguments(_=None,
                          extras=None,
                          resume=None,
                          storeTaskMetrics=False,
-                        rewriteTaskMetrics=True):
+                        rewriteTaskMetrics=True,
+                        noConsolidation=False):
     if cuda is None:
         cuda = torch.cuda.is_available()
     print("CUDA is available?:", torch.cuda.is_available())
@@ -821,6 +824,7 @@ def commandlineArguments(_=None,
     parser.add_argument("--no-consolidation",
                         dest="noConsolidation",
                         action="store_true",
+                        default=noConsolidation,
                         help="""Disable DSL updating.""")
     parser.add_argument(
         "--testingTimeout",
@@ -961,7 +965,7 @@ def commandlineArguments(_=None,
         extras(parser)
     try:
         v = vars(parser.parse_args())
-    except SystemExit:
+    except SystemExit as e:
         v = vars(parser.parse_args([]))
     if v["clear-recognition"] is not None:
         ECResult.clearRecognitionModel(v["clear-recognition"])

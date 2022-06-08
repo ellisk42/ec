@@ -34,7 +34,7 @@ def main(arguments):
     outputDirectory = "experimentOutputs/quantum/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
     
-    evaluationTimeout = 0.1
+    evaluationTimeout = 10 # at the moment it is disabled
     generator = dc.dreamcoder.ecIterator(g0, tasks,
                            testingTasks=[],
                            outputPrefix="%s/quantum"%outputDirectory,
