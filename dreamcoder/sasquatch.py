@@ -9,7 +9,10 @@ UNKNOWN=None
 
 @memoize(1)
 def version_size(table, j):
-    return table.extractSmallest(j, named=None, application=.01, abstraction=.01).size(named=None, application=.01, abstraction=.01)
+    expression = table.extractSmallest(j, named=None, application=.01, abstraction=.01)
+    if expression is None:
+        return POSITIVEINFINITY
+    return expression.size(named=None, application=.01, abstraction=.01)
 
 @memoize(1,2)
 def match_version_comprehensive(table, template, program, rewriting_steps):
@@ -151,6 +154,8 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
             bindings_utilities = [ subexpression_cost - \
                                    (sum(version_size(table, binding) for v, binding in b.items()) + 1 + .01*len(b))
                                    for subexpression_cost, b in bindings ]
+            #except AttributeError: import pdb; pdb.set_trace()
+            
             best_binding, corpus_size_delta = max(zip(bindings, bindings_utilities),
                                                    key=lambda bu: bu[1])
             best_binding = best_binding[1]  # strip off the program size
@@ -352,9 +357,14 @@ def sasquatch_grammar_induction(g0, frontiers,
             j = rewrite_with_invention(table, best, invention, rewriting_steps, program)
             rw = table.extractSmallest(j, named=None, application=.01, abstraction=.01)
 
-            assert program==rw.betaNormalForm()
-            rw = EtaLongVisitor(request).execute(rw)
-            assert program==rw.betaNormalForm()
+            assert program.betaNormalForm()==rw.betaNormalForm()
+
+            try:
+                rw = EtaLongVisitor(request).execute(rw)
+            except:
+                import pdb; pdb.set_trace()
+                
+            assert program.betaNormalForm()==rw.betaNormalForm()
 
             return rw
 
@@ -378,7 +388,7 @@ def sasquatch_grammar_induction(g0, frontiers,
 
         if newScore > oldScore:
             eprint("Score can be improved to", newScore)
-            g0, frontiers = g, rewritten_frontiers
+            g0, frontiers, oldScore = g, rewritten_frontiers, newScore
         else:
             eprint("Score does not actually improve, finishing")
             break

@@ -191,18 +191,32 @@ class VersionTable():
                 yield from self.extract(e)
         else: assert False
 
-    def extractSmallest(self,j, **size_parameters):
+    def extractSmallest(self,j, canBeLambda=True, **size_parameters):
         l = self.expressions[j]
         if l.isAbstraction:
-                return Abstraction(self.extractSmallest(l.body, **size_parameters))
+            if not canBeLambda:
+                return None
+            b=self.extractSmallest(l.body, canBeLambda=True, **size_parameters)
+            if b is None:
+                return None
+            return Abstraction(b)
         elif l.isApplication:
-            return Application(self.extractSmallest(l.f, **size_parameters),
-                               self.extractSmallest(l.x, **size_parameters))
+            f = self.extractSmallest(l.f, canBeLambda=False, **size_parameters)
+            x = self.extractSmallest(l.x, canBeLambda=True, **size_parameters)
+            if f is None or x is None:
+                return None
+            return Application(f, x)
         elif l.isIndex or l.isPrimitive or l.isInvented:
             return l
         elif l.isUnion:
-            return min([self.extractSmallest(e) for e in l],
-                       key=lambda expression: expression.size(**size_parameters))
+            possibilities = [sm
+                             for e in l
+                             for sm in [self.extractSmallest(e, canBeLambda=canBeLambda)]
+                             if sm is not None]
+            if possibilities:
+                return min(possibilities,
+                           key=lambda expression: expression.size(**size_parameters))
+            return None
         else: assert False
 
     def reachable(self, heads):

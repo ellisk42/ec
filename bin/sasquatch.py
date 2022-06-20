@@ -461,7 +461,7 @@ unfold_corpus = [Program.parse(program)
                           "(lambda (fix1 $0 (lambda (lambda (if (eq? $0 0) empty (cons (+ $0 1) ($1 (- $0 1))))))))",
                           "(lambda (fix1 $0 (lambda (lambda (if (eq? $0 0) empty (cons (- 0 $0) ($1 (+ $0 1))))))))"
           ] ]
-corpus = unfold_corpus
+corpus = unfold_corpus+fold_corpus
 
 table=None
 
