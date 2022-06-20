@@ -28,6 +28,7 @@ import sys
 from dreamcoder import differentiation
 from dreamcoder import dreamcoder
 from dreamcoder import enumeration
+from dreamcoder import sasquatch
 from dreamcoder import fragmentGrammar
 from dreamcoder import fragmentUtilities
 from dreamcoder import frontier

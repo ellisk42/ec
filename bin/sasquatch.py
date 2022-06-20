@@ -73,7 +73,7 @@ def usages(template):
 
 """version space approach"""
 
-@memoize
+@memoize()
 def match_version_comprehensive(template, program):
     """
     template: program
@@ -110,7 +110,7 @@ def match_version_comprehensive(template, program):
     
     
 
-@memoize
+@memoize()
 def match_version(template, j):
     """
     template: program
@@ -184,7 +184,7 @@ def match_version(template, j):
 def utility_version(template, corpus):
     return optimistic_version(template, corpus) - template.size(named=1, application=.01, abstraction=.01, fragmentVariable=1)
 
-@memoize
+@memoize()
 def version_size(j):
     global table
     return table.extractSmallest(j, named=None, application=.01, abstraction=.01).size(named=None, application=.01, abstraction=.01)
@@ -533,7 +533,13 @@ if arguments.old:
                    a=arguments.a,
                    structurePenalty=0.5)
 else:
+    eprint("running the old stuff")
     compress(corpus)
+    from dreamcoder.sasquatch import sasquatch_grammar_induction
+    g0 = Grammar.uniform(basic_primitives)
+    sasquatch_grammar_induction(g0, [Frontier.dummy(p, tp=None) for p in corpus],
+                                a=3,
+                                inferior=arguments.inferior)
 
 
 

@@ -932,15 +932,40 @@ def diffuseImagesOutward(imageCoordinates, labelCoordinates, d,
         constrainRadii()
     return d
 
-def memoize(f):
-    import frozendict
-    memo = {}
-    def helper(*arguments, **keywords):
-        k=tuple([arguments]+[frozendict.frozendict(keywords)])
-        if k not in memo:            
-            memo[k] = f(*arguments, **keywords)
-        return memo[k]
-    return helper
+def memoize(*keys):
+    def decorator(f):
+        import frozendict
+        memo = {}
+
+        def clear_caching():
+            memo.clear()
+
+        if len(keys)==0:
+            def helper(*arguments, **keywords):
+                k=tuple([arguments]+[frozendict.frozendict(keywords)])
+                if k not in memo:            
+                    memo[k] = f(*arguments, **keywords)
+                return memo[k]
+            helper.clear=clear_caching
+            return helper
+
+        integer_keys = [kk for kk in keys if isinstance(kk, int)]
+        string_keys = [kk for kk in keys if isinstance(kk, str)]
+        
+        assert len(integer_keys) + len(string_keys) == len(keys)
+
+        def helper(*arguments, **keywords):
+            k=[arguments[kk] for kk in integer_keys]
+            if string_keys:
+                k.append(frozendict.frozendict({sk:keywords[sk] for sk in string_keys}))
+            k=tuple(k)
+            if k not in memo:            
+                memo[k] = f(*arguments, **keywords)
+            return memo[k]
+        
+        helper.clear=clear_caching
+        return helper
+    return decorator
 
 if __name__ == "__main__":
     def f(n):
