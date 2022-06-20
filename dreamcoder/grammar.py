@@ -1858,6 +1858,9 @@ class PCFG():
                                 a1 = a1.wrap_in_abstractions(nl1)
                                 for a2 in expressions_of_size(at2, size-cost-c1):
                                     a2 = a2.wrap_in_abstractions(nl2)
+                                    ## TODO: CHECK IF REPEATED ARGUMENTS
+                                    ## BUT ONLY IF TYPE IS CIRCUIT WIRE! not in any case
+                                    # if len(set([str(a1),str(a2)]))==2:
                                     new.append(Application(Application(k, a1), a2))
                     elif len(arguments) == 3:
                         nl1, at1 = arguments[0]
@@ -1871,6 +1874,7 @@ class PCFG():
                                         a2 = a2.wrap_in_abstractions(nl2)
                                         for a3 in expressions_of_size(at3, size-cost-c1-c2):
                                             a3 = a3.wrap_in_abstractions(nl3)
+                                            # if len(set([str(a1),str(a2),str(a3)]))==3:
                                             new.append(Application(Application(Application(k, a1), a2), a3))
                     elif len(arguments) == 4:
                         nl1, at1 = arguments[0]
@@ -1888,6 +1892,7 @@ class PCFG():
                                                 a3 = a3.wrap_in_abstractions(nl3)
                                                 for a4 in expressions_of_size(at3, size-cost-c1-c2-c3):
                                                     a4 = a4.wrap_in_abstractions(nl4)
+                                                    # if len(set([str(a1),str(a2),str(a3),str(a4)]))==4:
                                                     new.append(Application(Application(Application(Application(k, a1), a2), a3), a4))
                     elif len(arguments) == 5:
                         nl1, at1 = arguments[0]
@@ -1909,6 +1914,7 @@ class PCFG():
                                                         a4 = a4.wrap_in_abstractions(nl4)
                                                         for a5 in expressions_of_size(at5, size-cost-c1-c2-c3-c4):
                                                             a5 = a4.wrap_in_abstractions(nl5)
+                                                            # if len(set([str(a1),str(a2),str(a3),str(a4), str(a5)]))==5:
                                                             new.append(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5))
                     elif len(arguments) == 6:
                         nl1, at1 = arguments[0]
@@ -1932,8 +1938,9 @@ class PCFG():
                                                         for c5 in range(size-cost-c1-c2-c3-c4):
                                                             for a5 in expressions_of_size(at5, c5):
                                                                 a5= a5.wrap_in_abstractions(nl5)
-                                                                for a6 in expressions_of_size(at5, size-cost-c1-c2-c3-c4-c5):
+                                                                for a6 in expressions_of_size(at6, size-cost-c1-c2-c3-c4-c5):
                                                                     a6 = a4.wrap_in_abstractions(nl6)
+                                                                    # if len(set([str(a1),str(a2),str(a3),str(a4), str(a5),str(a6)]))==6:
                                                                     new.append(Application(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5),a6))
                     else:
                         assert False, "more than six arguments not supported for the enumeration algorithm but that is not for any good reason. If you need more, please write another loop."

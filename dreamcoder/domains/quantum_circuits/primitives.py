@@ -546,66 +546,76 @@ p_tdg = dc.program.Primitive(name="tdg",
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
                      value=dc.utilities.Curried(tdg_func))
 
+def s_func(old_circuit, qubit_1): return one_qubit_gate(old_circuit, qubit_1, "s")
 p_s = dc.program.Primitive(name="s", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "s")))
+                     value=dc.utilities.Curried(s_func))
 
+def sx_func(old_circuit, qubit_1): return one_qubit_gate(old_circuit, qubit_1, "sx")
 p_sx = dc.program.Primitive(name="sx", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "sx")))
+                     value=dc.utilities.Curried(sx_func))
 
+def sxdg_func(old_circuit, qubit_1): return one_qubit_gate(old_circuit, qubit_1, "sxdg")
 p_sxdg = dc.program.Primitive(name="sxdg", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "sxdg")))
+                     value=dc.utilities.Curried(sxdg_func))
 
 
-
+def x_func(old_circuit, qubit_1): return one_qubit_gate(old_circuit, qubit_1, "x")
 p_x = dc.program.Primitive(name="x", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "x")))
+                     value=dc.utilities.Curried(x_func))
 
+def y_func(old_circuit, qubit_1): return one_qubit_gate(old_circuit, qubit_1, "y")
 p_y = dc.program.Primitive(name="y", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "y")))
+                     value=dc.utilities.Curried(y_func))
 
+def z_func(old_circuit, qubit_1): return one_qubit_gate(old_circuit, qubit_1, "z")
 p_z = dc.program.Primitive(name="z", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1: one_qubit_gate(old_circuit, qubit_1, "z")))
+                     value=dc.utilities.Curried(z_func))
 
 def cnot_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "cnot")
 p_cnot = dc.program.Primitive(name="cnot", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint,tcircuit),
                      value=dc.utilities.Curried(cnot_func))
 
+def cy_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "cy")
 p_cy = dc.program.Primitive(name="cy", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cy")))
+                     value=dc.utilities.Curried(cy_func))
 
+def cz_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "cz")
 p_cz = dc.program.Primitive(name="cz", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cz")))
+                     value=dc.utilities.Curried(cz_func))
 
-
+def cs_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "cs")
 p_cs = dc.program.Primitive(name="cs", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "cs")))
+                     value=dc.utilities.Curried(cs_func))
 
+def ch_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "ch")
 p_ch = dc.program.Primitive(name="ch", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "ch")))
+                     value=dc.utilities.Curried(ch_func))
 
+def swap_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "swap")
 p_swap = dc.program.Primitive(name="swap", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "swap")))
+                     value=dc.utilities.Curried(swap_func))
 
+def iswap_func(old_circuit, qubit_1,qubit_2): return two_qubit_gate(old_circuit, qubit_1, qubit_2, "iswap")
 p_iswap = dc.program.Primitive(name="iswap", 
                      ty=dc.type.arrow(tcircuit, dc.type.tint, dc.type.tint, tcircuit),
-                     value=dc.utilities.Curried(lambda old_circuit, qubit_1, qubit_2: two_qubit_gate(old_circuit, qubit_1, qubit_2, "iswap")))
+                     value=dc.utilities.Curried(iswap_func))
 
 # Control
-p_iteration = dc.program.Primitive(name="rep", 
-                     ty=dc.type.arrow(dc.type.tint, dc.type.arrow(tcircuit,tcircuit),  dc.type.arrow(tcircuit,tcircuit)),
-                     value=dc.utilities.Curried(_repeat))
+# p_iteration = dc.program.Primitive(name="rep", 
+#                      ty=dc.type.arrow(dc.type.tint, dc.type.arrow(tcircuit,tcircuit),  dc.type.arrow(tcircuit,tcircuit)),
+#                      value=dc.utilities.Curried(_repeat))
 
 
 full_primitives = [

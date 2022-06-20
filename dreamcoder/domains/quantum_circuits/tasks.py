@@ -53,17 +53,20 @@ class QuantumTask(dc.task.Task):
             if not np.all(np.abs(yh/s1-yh_true/s_true)<= 1e-3):
                 return dc.utilities.NEGATIVEINFINITY
             
+            # # Without phase equivalence
+            # if not np.all(np.abs(yh-yh_true)<= 1e-3):
+            #     return dc.utilities.NEGATIVEINFINITY
         except ValueError:
             return dc.utilities.NEGATIVEINFINITY 
         return 0.
 
 n_qubit_tasks = 3
-def makeTasks():
+def makeTasks(task_enumeration_timeout=6):
     pcfg_full = dc.grammar.PCFG.from_grammar(full_grammar, request=dc.type.arrow(
                                                                                 *[dc.type.tint]*n_qubit_tasks,tcircuit, 
                                                                                 tcircuit))
     tasks = dc.enumeration.enumerate_pcfg(pcfg_full,
-                                timeout=1.5, 
+                                timeout=task_enumeration_timeout, 
                                 observational_equivalence=True,
                                 sound=True)
     

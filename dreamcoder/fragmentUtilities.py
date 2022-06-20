@@ -401,5 +401,9 @@ def proposeFragmentsFromFrontiers(frontiers, a, CPUs=1):
                 entry.program, a) for fp in proposeFragmentsFromFragment(f)}, frontiers)
     allFragments = Counter(f for frontierFragments in fragmentsFromEachFrontier
                            for f in frontierFragments)
-    return [fragment for fragment, frequency in allFragments.items()
+    candidates = [fragment for fragment, frequency in allFragments.items()
             if frequency >= 2 and fragment.wellTyped() and nontrivial(fragment)]
+    
+    
+    
+    return candidates

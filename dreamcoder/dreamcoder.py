@@ -680,7 +680,7 @@ def consolidate(result, grammar, _=None, topK=None, arity=None, pseudoCounts=Non
         for e in f.normalize().topK(5):
             eprint("%.02f\t%s" % (e.logPosterior, e.program))
         eprint()
-
+    
     # First check if we have supervision at the program level for any task that was not solved
     needToSupervise = {f.task for f in result.allFrontiers.values()
                        if f.task.supervision is not None and f.empty}
