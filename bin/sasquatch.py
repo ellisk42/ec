@@ -476,68 +476,10 @@ unfold_corpus = [Program.parse(program)
           ] ]
 corpus = unfold_corpus+fold_corpus
 
-origami_corpus = [ Frontier.combineMany([Frontier.dummy(Program.parse(p), tp=p.infer().makeDummyMonomorphic())
-                                         for p in codes ])
-    for codes in [
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))",
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (+ (if (empty? (cdr $0)) 0 ($1 (cdr $0))) 1)))))", 
-"(lambda (fix1 $0 (lambda (lambda (+ 1 (if (empty? (cdr $0)) 0 ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) 1 (+ 1 ($1 (cdr $0))))))))"], 
+origami_corpus = [fs[0] for t,fs in loadPickle("origami_checkpoint.pickle").frontiersOverTime.items() ]
 
-["(lambda (fix1 $0 (lambda (lambda (if (eq? $0 0) empty (cons (+ 1 $0) ($1 (- $0 1))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (+ $0 1) ($1 (- $0 1))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (+ 1 $0) ($1 (- $0 1))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (gt? $0 0) (cons (+ $0 1) ($1 (- $0 1))) empty)))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (gt? $0 0) (cons (+ 1 $0) ($1 (- $0 1))) empty)))))"], 
 
-["(lambda (fix1 $0 (lambda (lambda (if (eq? $0 0) empty (cons (- 0 $0) ($1 (+ 1 $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (- 0 $0) ($1 (+ $0 1))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (- 0 $0) ($1 (+ 1 $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (gt? 0 $0) (cons (- 0 $0) ($1 (+ $0 1))) empty)))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (gt? 0 $0) (cons (- 0 $0) ($1 (+ 1 $0))) empty)))))"], 
 
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (car $0) ($1 (cdr (cdr $0)))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (car $0) ($1 (cdr (cdr $0)))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? (if (empty? $0) empty $0)) empty (cons (car $0) ($1 (cdr (cdr $0)))))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) empty (cons (car $0) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (car $0) (if (empty? (cdr (cdr $0))) empty ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) (cdr $0) (cons (car $0) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cdr (if (empty? (cdr $0)) $0 (cons 0 (cons (car $0) ($1 (cdr $0))))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cdr (if (empty? (cdr $0)) $0 (cons 1 (cons (car $0) ($1 (cdr $0))))))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (car $0) (cons (car $0) ($1 (cdr $0)))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (car $0) (cons (car $0) ($1 (cdr $0)))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (car $0) (cons (car $0) (if (empty? (cdr $0)) empty ($1 (cdr $0)))))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) (car $0)))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (+ (car $0) (if (empty? (cdr $0)) 0 ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (+ (if (empty? (cdr $0)) 0 ($1 (cdr $0))) (car $0))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) (car $0) (+ ($1 (cdr $0)) (car $0)))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (cons 0 empty) (cons (car $0) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (cons 0 $0) (cons (car $0) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (car $0) (if (empty? (cdr $0)) (cons 0 empty) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (cons (- 1 1) empty) (cons (car $0) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (if (empty? $0) 0 (car $0)) (if (empty? $0) empty ($1 (cdr $0))))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $0)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (+ (car $0) (car $0)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (+ (car $0) (car $0)) (if (empty? (cdr $0)) empty ($1 (cdr $0))))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) 1) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ 1 (car $0)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (+ (car $0) 1) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (+ 1 (car $0)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (+ (car $0) 1) (if (empty? (cdr $0)) empty ($1 (cdr $0))))))))"], 
-
-["(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (- 0 (car $0)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (- 0 (car $0)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (cons (- 0 (car $0)) (if (empty? (cdr $0)) empty ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (- 1 (+ (car $0) 1)) ($1 (cdr $0))))))))", 
-"(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (- 1 (+ 1 (car $0))) ($1 (cdr $0))))))))"]]]
 
 table=None
 
@@ -615,6 +557,8 @@ else:
     g0 = Grammar.uniform(basic_primitives)
     sasquatch_grammar_induction(g0, [f.topK(1)
                                      for f in origami_corpus],
+                                structurePenalty=1,
+                                pseudoCounts=30,
                                 a=3,
                                 inferior=arguments.inferior)
 

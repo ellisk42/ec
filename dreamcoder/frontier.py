@@ -63,6 +63,12 @@ class Frontier(object):
     @staticmethod
     def dummy(program, logLikelihood=0., logPrior=0., tp=None):
         """Creates a dummy frontier containing just this program"""
+        if isinstance(program, list):
+            extra_programs = program[1:]
+            program=program[0]
+        else:
+            extra_programs=[]
+            
         if not tp:
             tp = program.infer().negateVariables()
 
@@ -72,9 +78,10 @@ class Frontier(object):
              str(program)),
             tp,
             [])
-        f = Frontier([FrontierEntry(program=program,
+        f = Frontier([FrontierEntry(program=pp,
                                     logLikelihood=logLikelihood,
-                                    logPrior=logPrior)],
+                                    logPrior=logPrior)
+                      for pp in [program]+extra_programs ],
                      task=t)
         Frontier.DUMMYFRONTIERCOUNTER += 1
         return f
