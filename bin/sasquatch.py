@@ -533,11 +533,12 @@ if arguments.old:
                    a=arguments.a,
                    structurePenalty=0.5)
 else:
-    eprint("running the old stuff")
-    compress(corpus)
+    # eprint("running the old stuff")
+    # compress(corpus)
     from dreamcoder.sasquatch import sasquatch_grammar_induction
     g0 = Grammar.uniform(basic_primitives)
-    sasquatch_grammar_induction(g0, [Frontier.dummy(p, tp=None) for p in corpus],
+    sasquatch_grammar_induction(g0, [Frontier.dummy(p, tp=p.infer().makeDummyMonomorphic())
+                                     for p in corpus],
                                 a=3,
                                 inferior=arguments.inferior)
 

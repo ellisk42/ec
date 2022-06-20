@@ -219,6 +219,40 @@ def bad_refinement(template):
                 return True
     return False
 
+def rewrite_with_invention(table, template, invention, rewriting_steps, program):
+    """
+    Returns the version space of all ways that the program could be rewritten with the invention
+    """
+    if not hasattr(program, "super_index"):
+        program.super_index = table.superVersionSpace(table.incorporate(program), rewriting_steps)
+    j = program.super_index
+    
+    root = match_version(table, template, j)
+
+    possibilities = [j]
+
+    def substitution2application(s):
+        a = table.incorporate(invention)
+        for i in reversed(range(len(s))):
+            a = table.apply(a, s[f"?{i+1}"])
+        return a
+    
+    possibilities.extend([ substitution2application(substitution)
+                           for substitution in root])
+    
+    if program.isAbstraction:
+        possibilities.append(table.abstract(rewrite_with_invention(table, template, invention, rewriting_steps, program.body)))
+
+    if program.isIndex or program.isPrimitive or program.isInvented:
+        possibilities.append(table.incorporate(program))
+
+    if program.isApplication:
+        possibilities.append(table.apply(
+            rewrite_with_invention(table, template, invention, rewriting_steps, program.f),
+            rewrite_with_invention(table, template, invention, rewriting_steps, program.x)))
+    
+    return table.union(possibilities)
+
 def sasquatch_grammar_induction(g0, frontiers,
                                 _=None,
                                 pseudoCounts=1.,
@@ -298,10 +332,58 @@ def sasquatch_grammar_induction(g0, frontiers,
                     if u is None or u<best_utility:
                         continue
                     q.push(u, pp)
+
+        if best is None:
+            eprint("No invention looks promising so we are done")
+            break
+
+        # ?1 |-> $0
+        # ?2 |-> $1
+        # ?3 |-> $2
+        # etc
+        invention = best
+        for ii in range(arity):
+            invention = invention.substitute(Program.parse(f"?{ii+1}"), Index(ii))
+        invention = Invented(invention.wrap_in_abstractions(invention.numberOfFreeVariables))
+        eprint("Template", best, "corresponds to the invention", invention)
+        eprint(invention.infer())
+
+        def rewrite(program, request):
+            j = rewrite_with_invention(table, best, invention, rewriting_steps, program)
+            rw = table.extractSmallest(j, named=None, application=.01, abstraction=.01)
+
+            assert program==rw.betaNormalForm()
+            rw = EtaLongVisitor(request).execute(rw)
+            assert program==rw.betaNormalForm()
+
+            return rw
+
+        rewritten_frontiers = [ Frontier([ FrontierEntry(rewrite(fe.program, frontier.task.request),
+                                                         logPrior=0.,
+                                                         logLikelihood=fe.logLikelihood)
+                                           for fe in frontier],
+                                         task=frontier.task)
+                                for frontier in frontiers ]
+        g = Grammar.uniform([invention] + g0.primitives, continuationType=g0.continuationType).\
+            insideOutside(rewritten_frontiers,
+                          pseudoCounts=pseudoCounts)
+        
+        rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
+
+        newScore = objective(g, rewritten_frontiers)
+
         version_size.clear()
         match_version_comprehensive.clear()
         match_version.clear()
+
+        if newScore > oldScore:
+            eprint("Score can be improved to", newScore)
+            g0, frontiers = g, rewritten_frontiers
+        else:
+            eprint("Score does not actually improve, finishing")
+            break
+            
+            
         
-        assert False
-
-
+        
+        

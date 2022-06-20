@@ -1160,7 +1160,7 @@ class EtaLongVisitor(object):
         else: assert False, "Not in beta long form: %s"%e
 
         self.context.unify(request, ft.returns())
-        ft = ft.applyMutable(self.context)
+        ft = ft.applyMutable(self.context)            
 
         xt = ft.functionArguments()
         if len(xs) != len(xt): raise EtaExpandFailure()
