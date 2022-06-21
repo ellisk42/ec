@@ -464,7 +464,11 @@ class Grammar(object):
 
     def frontierMDL(self, frontier):
         return max( e.logLikelihood + self.logLikelihood(frontier.task.request, e.program)
-                    for e in frontier )                
+                    for e in frontier )
+
+    def frontierMarginal(self, frontier):
+        return lse([e.logLikelihood + self.logLikelihood(frontier.task.request, e.program)
+                    for e in frontier])
 
 
     def enumeration(self,context,environment,request,upperBound,

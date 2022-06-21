@@ -555,7 +555,7 @@ else:
     # compress(corpus)
     from dreamcoder.sasquatch import sasquatch_grammar_induction
     g0 = Grammar.uniform(basic_primitives)
-    sasquatch_grammar_induction(g0, [f.topK(1)
+    sasquatch_grammar_induction(g0, [f #.topK(1)
                                      for f in origami_corpus],
                                 structurePenalty=1,
                                 pseudoCounts=30,

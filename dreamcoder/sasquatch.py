@@ -129,56 +129,63 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
 
     inferior_abstraction_checker=None
 
-    for program in corpus:
-        if template is UNKNOWN or template.parent is UNKNOWN or id(program) in template.parent.matches:
-            bindings = match_version_comprehensive(table, template, program, rewriting_steps)
-        else:
-            bindings = []
+    for frontier in corpus:
+        # how big is the smallest program which solves the task, without doing any compression?
+        baseline_task_size = min(version_size(table, table.incorporate(program))
+                                 for program in frontier)
+
+        # list of (binding, utility) pairs
+        # utility: baseline_task_size - task_size_with_program_rewritten_with_this_invention
+        bindings_utilities = [(None, 0.)]
+        
+        for program in frontier:
             
-        if verbose:
-            eprint()
-            eprint(bindings)
-            for subcost, b in bindings:
-                for v, binding in b.items():
-                    eprint(subcost, v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
-
-        if len(bindings)>0:
-            number_of_matches+=1
-            if template is not UNKNOWN: template.matches.add(id(program))
-
-            bindings = list(bindings)
-
-            # we have to put down the symbol for the function,
-            # and one application for each argument,
-            # hence  + 1 + .01*len(b)
-            bindings_utilities = [ subexpression_cost - \
-                                   (sum(version_size(table, binding) for v, binding in b.items()) + 1 + .01*len(b))
-                                   for subexpression_cost, b in bindings ]
-            #except AttributeError: import pdb; pdb.set_trace()
+            if True or template is UNKNOWN or template.parent is UNKNOWN or id(program) in template.parent.matches:
+                bindings = match_version_comprehensive(table, template, program, rewriting_steps)
+            else:
+                bindings = []
             
-            best_binding, corpus_size_delta = max(zip(bindings, bindings_utilities),
-                                                   key=lambda bu: bu[1])
-            best_binding = best_binding[1]  # strip off the program size
+            if verbose:
+                eprint()
+                eprint(bindings)
+                for subcost, b in bindings:
+                    for v, binding in b.items():
+                        eprint(subcost, v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
 
-            if inferior:
-                if inferior_abstraction_checker is None:
-                    inferior_abstraction_checker = best_binding
-                else:
-                    inferior_abstraction_checker = { v: table.intersection(best_binding[v],
-                                                                           inferior_abstraction_checker[v])
-                                                    for v in best_binding}
+            if len(bindings)>0:
+                #if template is not UNKNOWN: template.matches.add(id(program))
 
-            # eprint("corpus_size", corpus_size, "=",version_size(j), "-", 
-            #        min( sum(version_size(binding)
-            #                             for v, binding in b.items())
-            #                        for b in bindings ),
-            #        "+ 1 +", .01*len(get_one(bindings)))
-        else:
-            corpus_size_delta=0
-            # eprint("corpus_size", corpus_size, "=",version_size(j))
+                bindings = list(bindings)
+
+                # we have to put down the symbol for the function,
+                # and one application for each argument,
+                # hence  + 1 + .01*len(b)
+                size_of_original_program = version_size(table, table.incorporate(program))
+                for subexpression_cost, b in bindings:
+                    size_of_invention_application = sum(version_size(table, binding) for v, binding in b.items()) + 1 + .01*len(b)
+                    size_of_thing_invention_is_replacing = subexpression_cost
+                    size_of_rewritten_program = size_of_original_program - size_of_thing_invention_is_replacing + size_of_invention_application
+                    bindings_utilities.append((b, baseline_task_size - size_of_rewritten_program))
+            
+
+        
+        best_binding, corpus_size_delta = max(bindings_utilities,
+                                              key=lambda bu: bu[1])
+        if best_binding is None:
+            continue
+        
 
         total_corpus_size+=corpus_size_delta
+        number_of_matches+=1
 
+        if inferior:
+            if inferior_abstraction_checker is None:
+                inferior_abstraction_checker = best_binding
+            else:
+                inferior_abstraction_checker = { v: table.intersection(best_binding[v],
+                                                                       inferior_abstraction_checker[v])
+                                                 for v in best_binding}
+        
     if inferior and inferior_abstraction_checker is not None:
         if any( v!=table.empty for v in inferior_abstraction_checker.values() ):
             #eprint("inferior", template)
@@ -277,9 +284,9 @@ def sasquatch_grammar_induction(g0, frontiers,
     eprint("Inducing a grammar from", len(frontiers), "frontiers")
 
     def objective(g, fs):
-        ll = sum(g.frontierMDL(f) for f in fs )
+        ll = sum(g.frontierMarginal(f) for f in fs )
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
-        return ll - sp - aic*len(g.productions)
+        return ll - sp - aic*len(g.productions)    
 
     with timing("Estimated initial grammar production probabilities"):
         g0 = g0.insideOutside(frontiers, pseudoCounts)
@@ -289,11 +296,12 @@ def sasquatch_grammar_induction(g0, frontiers,
     while True:
         table = VersionTable(typed=False, identity=False)
         with timing("constructed %d-step version spaces"%rewriting_steps):
-            indices = [[table.superVersionSpace(table.incorporate(e.program), rewriting_steps)
-                        for e in f]
-                       for f in frontiers ]
-            corpus = [e.program for f in frontiers for e in f ] # FIXME
-            eprint("Enumerated %d distinct version spaces"%len(table.expressions))
+            for f in frontiers:
+                for e in f:
+                    table.superVersionSpace(table.incorporate(e.program), rewriting_steps)
+        eprint("Enumerated %d distinct version spaces"%len(table.expressions))
+
+        corpus = [ [e.program for e in f] for f in frontiers  ]
 
         UNKNOWN=Program.parse("??")
         UNKNOWN.parent=None
@@ -311,6 +319,9 @@ def sasquatch_grammar_induction(g0, frontiers,
         p0=UNKNOWN
         q=PQ()
         q.push(utility(table, p0, corpus, rewriting_steps, inferior=inferior), p0)
+
+        # p1=Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) ?1 (?2 (car $0) ($1 (cdr $0))))))))")
+        # q.push(999999999991, p1)
 
         pops=0
         utility_calculations=1
@@ -389,6 +400,14 @@ def sasquatch_grammar_induction(g0, frontiers,
         if newScore > oldScore:
             eprint("Score can be improved to", newScore)
             g0, frontiers, oldScore = g, rewritten_frontiers, newScore
+            eprint("New library function occurs in",
+                   sum(str(invention) in str(frontier.bestPosterior.program)
+                       for frontier in frontiers ),
+                   "MAP solutions:")
+            for frontier in frontiers:
+                if str(invention) in str(frontier.bestPosterior.program):
+                    eprint(frontier.task.name, "\t", frontier.bestPosterior.program)
+            eprint()
         else:
             eprint("Score does not actually improve, finishing")
             break
