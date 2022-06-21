@@ -140,7 +140,7 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
         
         for program in frontier:
             
-            if True or template is UNKNOWN or template.parent is UNKNOWN or id(program) in template.parent.matches:
+            if template is UNKNOWN or template.parent is UNKNOWN or id(program) in template.parent.matches:
                 bindings = match_version_comprehensive(table, template, program, rewriting_steps)
             else:
                 bindings = []
@@ -153,7 +153,7 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
                         eprint(subcost, v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
 
             if len(bindings)>0:
-                #if template is not UNKNOWN: template.matches.add(id(program))
+                if template is not UNKNOWN: template.matches.add(id(program))
 
                 bindings = list(bindings)
 
@@ -274,7 +274,8 @@ def sasquatch_grammar_induction(g0, frontiers,
                                 topK=20,
                                 topI=50,
                                 structurePenalty=1.,
-                                inferior=False, 
+                                inferior=False,
+                                rerank=True, 
                                 CPUs=1):
     global UNKNOWN
     arity = a
@@ -286,7 +287,46 @@ def sasquatch_grammar_induction(g0, frontiers,
     def objective(g, fs):
         ll = sum(g.frontierMarginal(f) for f in fs )
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
-        return ll - sp - aic*len(g.productions)    
+        return ll - sp - aic*len(g.productions)
+
+    def rewrite(program, request, template, invention):
+        vs = rewrite_with_invention(table, template, invention, rewriting_steps, program)
+        smallest = table.extractSmallest(vs, named=None, application=.01, abstraction=.01)
+        try:
+            return EtaLongVisitor(request).execute(smallest)
+        except EtaExpandFailure:
+            return program
+            
+
+    def rewrite_and_score(grammar, frontiers, template):
+        # ?1 |-> $0
+        # ?2 |-> $1
+        # ?3 |-> $2
+        # etc
+        invention = template
+        for ii in range(arity):
+            invention = invention.substitute(Program.parse(f"?{ii+1}"), Index(ii))
+        invention = Invented(invention.wrap_in_abstractions(invention.numberOfFreeVariables))
+
+        rewritten_frontiers = [ Frontier([ FrontierEntry(rewrite(fe.program, frontier.task.request,
+                                                                 template, invention),
+                                                         logPrior=0.,
+                                                         logLikelihood=fe.logLikelihood)
+                                           for fe in frontier],
+                                         task=frontier.task)
+                                for frontier in frontiers ]
+        g = Grammar.uniform([invention] + grammar.primitives,
+                            continuationType=grammar.continuationType).\
+            insideOutside(rewritten_frontiers,
+                          pseudoCounts=pseudoCounts)
+        
+        rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
+
+        newScore = objective(g, rewritten_frontiers)
+
+        return g, invention, rewritten_frontiers, newScore
+
+        
 
     with timing("Estimated initial grammar production probabilities"):
         g0 = g0.insideOutside(frontiers, pseudoCounts)
@@ -315,6 +355,7 @@ def sasquatch_grammar_induction(g0, frontiers,
 
         starttime = time.time()
         best_utility=0
+        best_score=oldScore
         best=None
         p0=UNKNOWN
         q=PQ()
@@ -333,9 +374,18 @@ def sasquatch_grammar_induction(g0, frontiers,
             r=refinements(p, EXPANSIONS)
             if len(r)==0:
                 u = utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1)
-                if u>best_utility:
-                    eprint(Fore.GREEN, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far", p, u, '\033[0m')
-                    best_utility, best = u, p
+                newScore = rewrite_and_score(g0, frontiers, p)[-1]
+                
+                if (rerank and newScore>best_score) or \
+                   ((not rerank) and u>best_utility): 
+                    color = Fore.GREEN
+                    best = p
+                else:
+                    color = Fore.YELLOW if u>0 else Fore.RED
+                eprint(color, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far", p, "utility", u, "probabilistic score", newScore, '\033[0m')
+
+                best_utility = max(u, best_utility)
+                best_score = max(newScore, best_score)
             else:
                 for pp in r:
                     if bad_refinement(pp):
@@ -343,7 +393,7 @@ def sasquatch_grammar_induction(g0, frontiers,
                     pp.parent=p
                     pp.matches=set()
                     u = utility(table, pp, corpus, rewriting_steps, inferior=inferior,
-                                coefficient=0.01)
+                                coefficient=1)
                     utility_calculations+=1
                     if u is None or u<best_utility:
                         continue
@@ -353,45 +403,7 @@ def sasquatch_grammar_induction(g0, frontiers,
             eprint("No invention looks promising so we are done")
             break
 
-        # ?1 |-> $0
-        # ?2 |-> $1
-        # ?3 |-> $2
-        # etc
-        invention = best
-        for ii in range(arity):
-            invention = invention.substitute(Program.parse(f"?{ii+1}"), Index(ii))
-        invention = Invented(invention.wrap_in_abstractions(invention.numberOfFreeVariables))
-        eprint("Template", best, "corresponds to the invention", invention)
-        eprint(invention.infer())
-
-        def rewrite(program, request):
-            j = rewrite_with_invention(table, best, invention, rewriting_steps, program)
-            rw = table.extractSmallest(j, named=None, application=.01, abstraction=.01)
-
-            assert program.betaNormalForm()==rw.betaNormalForm()
-
-            try:
-                rw = EtaLongVisitor(request).execute(rw)
-            except:
-                import pdb; pdb.set_trace()
-                
-            assert program.betaNormalForm()==rw.betaNormalForm()
-
-            return rw
-
-        rewritten_frontiers = [ Frontier([ FrontierEntry(rewrite(fe.program, frontier.task.request),
-                                                         logPrior=0.,
-                                                         logLikelihood=fe.logLikelihood)
-                                           for fe in frontier],
-                                         task=frontier.task)
-                                for frontier in frontiers ]
-        g = Grammar.uniform([invention] + g0.primitives, continuationType=g0.continuationType).\
-            insideOutside(rewritten_frontiers,
-                          pseudoCounts=pseudoCounts)
-        
-        rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
-
-        newScore = objective(g, rewritten_frontiers)
+        g, invention, rewritten_frontiers, newScore = rewrite_and_score(g0, frontiers, best)
 
         version_size.clear()
         match_version_comprehensive.clear()
