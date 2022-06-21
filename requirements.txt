@@ -14,7 +14,7 @@ kiwisolver==1.1.0
 matplotlib==3.1.0
 multiprocess==0.70.7
 nltk==3.4.1
-numpy==1.16.4
+numpy==1.22.0
 pathos==0.2.3
 Pillow==6.0.0
 pox==0.2.5
