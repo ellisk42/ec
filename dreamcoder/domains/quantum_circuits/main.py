@@ -26,7 +26,7 @@ def main(arguments):
     global primitives
     
     g0 = grammar
-    tasks = makeTasks(3.5) 
+    tasks = makeTasks(4) #15
     
     # what about checkpoints
     
@@ -58,7 +58,7 @@ def main(arguments):
     for result in generator: ...
 
     # FULL GRAMMAR on TEST
-    generator = dc.dreamcoder.ecIterator(full_grammar, tasks,
+    generator = dc.dreamcoder.ecIterator(full_grammar, test_tasks,
                     testingTasks=[],
                     outputPrefix=f"{outputDirectory}/quantum_full",
                     **arguments)
