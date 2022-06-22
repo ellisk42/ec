@@ -404,7 +404,7 @@ def solveForTask_bottom(_=None,
                         CPUs=1,
                         likelihoodModel=None,
                         evaluationTimeout=None, maximumFrontiers=None, testing=False,
-                        compile_me=True):
+                        compile_me=False):
     if compile_me:
         return callCompiled(solveForTask_bottom,
                             elapsedTime=elapsedTime,
@@ -661,20 +661,11 @@ def enumerate_pcfg(pcfg, timeout,
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
         try: 
-            circuit = code.evaluate([])
-            for arg in (*np.arange(n_qubit),no_op(n_qubit)):
-                circuit = circuit(arg)
-            
-            n_qubit, gates_list = circuit
-            max_qubit = 0
-            for op in gates_list:
-                for n in op[1:]:
-                    max_qubit = max(max_qubit,n)
-            if max_qubit +1< n_qubit:
-                raise QuantumCircuitException
-
+            arguments = (*np.arange(n_qubit),no_op(n_qubit))
+            circuit = execute_program(code, arguments )
             unitary = circuit_to_mat(circuit)
-            key = unitary.tobytes() 
+            
+            key = dc.domains.quantum_circuits.primitives.hash_complex_array(unitary)
             task = str(code)
             c_time = time.time()
             
@@ -682,7 +673,7 @@ def enumerate_pcfg(pcfg, timeout,
             # we want to keep the simplest one
             if key not in enum_dictionary:
                 enum_dictionary[key]={"code":code, "circuit":circuit, "time": c_time-t_0}
-        except QuantumCircuitException:
+        except QuantumCircuitException as e:
             ...
     eprint(f"Enumerated {len(enum_dictionary)} programs")
     return enum_dictionary

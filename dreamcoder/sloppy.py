@@ -170,7 +170,7 @@ class Sloppy():
         if output_type == dc.domains.quantum_circuits.primitives.tcircuit:
             # Here we only need check the unitary
             unitary = dc.domains.quantum_circuits.primitives.circuit_to_mat(value)
-            value = unitary.tobytes()
+            value = dc.domains.quantum_circuits.primitives.hash_complex_array(unitary)
         elif str(output_type)=="tower":
             state, plan = value(dc.domains.tower.towerPrimitives.TowerState())
             value = (state.hand, state.orientation, tuple(plan))

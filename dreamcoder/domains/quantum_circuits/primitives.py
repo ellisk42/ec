@@ -3,6 +3,9 @@ import numpy as np
 import dreamcoder as dc
 from dreamcoder.utilities import eprint
 
+# If true, allow only gates between neighbouring qubits
+GLOBAL_LIMITED_CONNECTIVITY = False
+
 try:
     import matplotlib.pyplot as plt
     import qiskit as qk
@@ -213,7 +216,7 @@ mat_swap = np.array([[1,0,0,0],
 tensor_swap = mat_to_tensor(mat_swap)
 
 mat_eye = np.array([[1,0],
-                    [0,1]])
+                    [0,1]],dtype=np.complex64)
 tensor_eye = mat_to_tensor(mat_eye)
 
 mat_hadamard = np.array([[1,1],
@@ -406,7 +409,16 @@ def circuit_to_mat(full_circuit):
             for op in op_list:
                 tensor = full_op_names[op[0]](tensor, *op[1:])
                 
-            full_circuit_cache[t_full_circuit] = tensor_to_mat(tensor)
+                
+            mat = tensor_to_mat(tensor)
+            
+            # normalize extra circuit phase
+            s1 = np.sum(mat)
+            if s1 ==0:
+                idx = np.where((mat).round(3)!=0)
+                s1 = mat[idx[0][0], idx[1][0]]
+            full_circuit_cache[t_full_circuit] = mat/s1
+            
     except TypeError as e:
         print(e)
         ...
@@ -505,6 +517,12 @@ def two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
    
     if qubit_1 == qubit_2:
         raise QuantumCircuitException("Invalid selected qubit")
+    
+
+    if GLOBAL_LIMITED_CONNECTIVITY and abs(qubit_1-qubit_2)!=1:
+        # eprint("REJECTED")
+        raise QuantumCircuitException("Invalid selected qubit: connectivity limited to neighbouring qubits!")
+        
     
     circuit = circuit + ((operation_name, qubit_1, qubit_2),)
     return (n_qubit, circuit)
@@ -689,3 +707,16 @@ def execute_quantum_algorithm(p, n_qubits, timeout=None):
         return None
     
     
+
+def execute_program(program,arguments):
+    circuit = program.evaluate([])
+    for arg in arguments:
+        circuit = circuit(arg)
+    return circuit
+
+
+def hash_complex_array(mat):
+    mat_real, mat_imag = np.real(mat).round(5), np.imag(mat).round(5)
+    mat_real[mat_real==0]=0
+    mat_imag[mat_imag==0]=0
+    return mat_real.tobytes(), mat_imag.tobytes()
