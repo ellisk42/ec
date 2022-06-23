@@ -1986,4 +1986,7 @@ class PCFG():
             eprint(" -- Bottom up enumeration, cost", cost)
             for skeleton, skeleton_cost in zip(skeletons, skeleton_costs):
                 for e in complete_skeleton(cost-skeleton_cost, skeleton):
+                    # ENUMERATED_LIST.append(e)
                     yield e # return also the unitaries
+
+ENUMERATED_LIST = []

@@ -15,6 +15,7 @@ try: #pypy will fail
     import torch.nn as nn
     import torch.nn.functional as F
     from sklearn.model_selection import train_test_split
+    import dill as pickle
 except: pass
 
 
@@ -28,16 +29,16 @@ def main(arguments):
     outputDirectory = "experimentOutputs/quantum/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
     
-    tasks = makeTasks(2) #15
+    tasks = makeTasks(5) #15
     train_tasks, test_tasks = train_test_split(tasks, test_size=0.5)
 
-    # check LIMITED_CONNECTIVITY
+    # # check LIMITED_CONNECTIVITY
     if arguments["limited_connectivity"]: 
         dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = True
         dc.utilities.eprint("Limited qubit connectivity enforced")
     del arguments["limited_connectivity"]
     
-    # TRAIN
+    # # TRAIN
     g0 = grammar
     generator = dc.dreamcoder.ecIterator(g0, train_tasks,
                            testingTasks=[],
@@ -46,13 +47,21 @@ def main(arguments):
                            **arguments)
     for result in generator: ...
     
+    
     arguments["noConsolidation"]=True
     arguments["iterations"]=1
     del arguments["taskBatchSize"]
     del arguments["taskReranker"]
     
     # # # TEST
+    # final grammar
     g0 = result.grammars[-1]
+    # or load from file
+    # with open("experimentOutputs/quantum/long_grammar","rb") as f:
+    #     g0 = pickle.load(f)
+    # with open("experimentOutputs/quantum/long_test_tasks","rb") as f:
+    #     test_tasks = pickle.load(f)
+    
     generator = dc.dreamcoder.ecIterator(g0, test_tasks,
                         testingTasks=[],
                         outputPrefix=f"{outputDirectory}/quantum_test",

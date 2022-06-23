@@ -25,10 +25,10 @@ def quantum_extras(parser):
 if __name__ == '__main__': 
     arguments = commandlineArguments(
         featureExtractor=None, # it was TowerCNN
-        CPUs=1,#numberOfCPUs(),
+        CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3,
-        iterations=10,#40
+        iterations=50,#40
         a=3,
         structurePenalty=6, # increase regularization 3 4 (it was 1) look at a few [1,15]
         pseudoCounts=10,
@@ -36,7 +36,7 @@ if __name__ == '__main__':
         maximumFrontier=5,
         solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=10,#-g  #1000
+        enumerationTimeout=600,#-g  #1000
         taskBatchSize=200,
         taskReranker="randomShuffle", #defualt
         compressor="pypy",

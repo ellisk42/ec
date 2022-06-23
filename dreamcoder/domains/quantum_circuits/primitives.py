@@ -4,7 +4,7 @@ import dreamcoder as dc
 from dreamcoder.utilities import eprint
 
 # If true, allow only gates between neighbouring qubits
-GLOBAL_LIMITED_CONNECTIVITY = False
+global GLOBAL_LIMITED_CONNECTIVITY
 
 try:
     import matplotlib.pyplot as plt
@@ -522,7 +522,6 @@ def two_qubit_gate(old_circuit, qubit_1, qubit_2, operation_name):
     if GLOBAL_LIMITED_CONNECTIVITY and abs(qubit_1-qubit_2)!=1:
         # eprint("REJECTED")
         raise QuantumCircuitException("Invalid selected qubit: connectivity limited to neighbouring qubits!")
-        
     
     circuit = circuit + ((operation_name, qubit_1, qubit_2),)
     return (n_qubit, circuit)
