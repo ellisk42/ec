@@ -10,7 +10,7 @@ class QuantumTask(dc.task.Task):
     def __init__(self, name, target_circuit):
         self.n_qubits, self.target_circuit = target_circuit
         self.target_circuit_evaluation = circuit_to_mat(target_circuit)
-
+        
         super(QuantumTask, self).__init__(name=name,
                                           request=dc.type.arrow(*([dc.type.tint]*self.n_qubits), tcircuit, tcircuit),
                                           examples=[((*np.arange(self.n_qubits),no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],

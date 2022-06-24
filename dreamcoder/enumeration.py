@@ -404,7 +404,7 @@ def solveForTask_bottom(_=None,
                         CPUs=1,
                         likelihoodModel=None,
                         evaluationTimeout=None, maximumFrontiers=None, testing=False,
-                        compile_me=True):
+                        compile_me=False): # Premature optimization is root of all evil
     if compile_me:
         return callCompiled(solveForTask_bottom,
                             elapsedTime=elapsedTime,

@@ -415,7 +415,7 @@ def circuit_to_mat(full_circuit):
             # normalize extra circuit phase
             s1 = np.sum(mat)
             if s1 ==0:
-                idx = np.where((mat).round(3)!=0)
+                idx = np.where((mat).round(5)!=0)
                 s1 = mat[idx[0][0], idx[1][0]]
             full_circuit_cache[t_full_circuit] = mat/s1
             

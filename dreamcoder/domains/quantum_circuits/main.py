@@ -29,7 +29,7 @@ def main(arguments):
     outputDirectory = "experimentOutputs/quantum/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
     
-    tasks = makeTasks(5) #15
+    tasks = makeTasks(30) #15
     train_tasks, test_tasks = train_test_split(tasks, test_size=0.5)
 
     # # check LIMITED_CONNECTIVITY
