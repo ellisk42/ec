@@ -28,7 +28,7 @@ if __name__ == '__main__':
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3,
-        iterations=100,#40
+        iterations=50,#40
         a=3,
         structurePenalty=6, # increase regularization 3 4 (it was 1) look at a few [1,15]
         pseudoCounts=10,
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         solver="bottom", 
         useRecognitionModel=False,
         enumerationTimeout=300,#-g  #1000
-        taskBatchSize=50, # smaller should be faster
+        taskBatchSize=30, # smaller should be faster
         taskReranker="randomShuffle", #defualt
         compressor="pypy",
         extras=quantum_extras)   #ocaml, python, pypy  
