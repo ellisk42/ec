@@ -25,7 +25,7 @@ def quantum_extras(parser):
 if __name__ == '__main__': 
     arguments = commandlineArguments(
         featureExtractor=None, # it was TowerCNN
-        CPUs=numberOfCPUs(),
+        CPUs=1,#numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3,
         iterations=50,#40
@@ -36,7 +36,7 @@ if __name__ == '__main__':
         maximumFrontier=5,
         solver="bottom", 
         useRecognitionModel=False,
-        enumerationTimeout=300,#-g  #1000
+        enumerationTimeout=30,#-g  #1000
         taskBatchSize=30, # smaller should be faster
         taskReranker="randomShuffle", #defualt
         compressor="pypy",

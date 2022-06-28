@@ -481,6 +481,12 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
             contained.add(str(xs))
     random.shuffle(deduplicated)
     inputs=deduplicated[:10] # FIXME
+    
+    # Quantum Circuits:
+    # Instead of checking if the program is a solution for each task,
+    # look if the produced unitary is in the task dictionary
+    tasks_hash = {hash_complex_array(task.target_circuit_evaluation):idx for idx, task in enumerate(tasks)}
+    
     for e in pcfg.quantized_enumeration(skeletons=pps,
                                         inputs=inputs,
                                         observational_equivalence=(solver!="bottom_simple"),
@@ -492,7 +498,9 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
 
         prior = None
 
-        for n in range(len(tasks)):
+        circuit = execute_quantum_algorithm(e,dc.domains.quantum_circuits.tasks.n_qubit_tasks)
+        n = tasks_hash.get(hash_complex_array(circuit),None)
+        if n is not None:    
             
             task = tasks[n]
             likelihood = task.logLikelihood(e, evaluationTimeout)

@@ -30,8 +30,8 @@ def main(arguments):
     outputDirectory = "experimentOutputs/quantum/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
     
-    tasks = makeTasks(30) #15
-    n_train = int(len(tasks)/20)
+    # tasks = makeTasks(30) #15
+    # n_train = int(len(tasks)/20)
     
     # total_indices= np.arange(len(tasks))
                                 
@@ -85,8 +85,11 @@ def main(arguments):
 
     # FULL GRAMMAR on TEST
     # dc.grammar.ENUMERATED_LIST = []
+    with open("experimentOutputs/quantum/20k_task_dataset","rb") as f:
+        test_tasks = pickle.load(f)
+    
     dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
-    generator = dc.dreamcoder.ecIterator(full_grammar, tasks,
+    generator = dc.dreamcoder.ecIterator(full_grammar, test_tasks,
                     testingTasks=[],
                     outputPrefix=f"{outputDirectory}/quantum_full",
                     **arguments)

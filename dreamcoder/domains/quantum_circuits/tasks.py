@@ -54,7 +54,8 @@ class QuantumTask(dc.task.Task):
             #     return dc.utilities.NEGATIVEINFINITY
             
             # # Without phase equivalence: already implemented when calculating unitary
-            if not np.all(np.abs(yh-yh_true)<= 1e-3):
+            
+            if np.any(np.abs(yh-yh_true)>= 1e-3):
                 return dc.utilities.NEGATIVEINFINITY
         except ValueError:
             return dc.utilities.NEGATIVEINFINITY 

@@ -170,7 +170,7 @@ def mat_to_tensor(mat):
 
 
 def get_qubit_number(tensor):
-    return int(len(tensor.shape)/2)
+    return len(tensor.shape)//2
 
 
 def tensor_to_mat(tensor):
@@ -689,24 +689,15 @@ grammar = dc.grammar.Grammar.uniform(primitives)
 # Function to execute algorithms (which are functions)
 # Maybe it should return a function?
 # 
+arguments = (*np.arange(3),no_op(3))
 def execute_quantum_algorithm(p, n_qubits, timeout=None):
     try:
-        # eprint(p,n_qubits) #it may not have as many inputs?? WHY?
-        circuit = p.evaluate([])
-        for arg in (*np.arange(n_qubits),no_op(n_qubits)):
-            circuit = circuit(arg)
-        # circuit =  dc.utilities.runWithTimeout(
-        #     lambda: p.evaluate([])(no_op(n_qubits)),
-        #     timeout=timeout
-        # )  TIMEOUT DISABLED
+        circuit = execute_program(p, arguments)
         return circuit_to_mat(circuit)
-    except dc.utilities.RunWithTimeout: return None
-    except Exception as e: 
+    except: 
         # eprint(e)
         return None
     
-    
-
 def execute_program(program,arguments):
     circuit = program.evaluate([])
     for arg in arguments:
@@ -715,6 +706,8 @@ def execute_program(program,arguments):
 
 
 def hash_complex_array(mat):
+    if mat is None:
+        return None,None
     mat_real, mat_imag = np.real(mat).round(5), np.imag(mat).round(5)
     mat_real[mat_real==0]=0
     mat_imag[mat_imag==0]=0
