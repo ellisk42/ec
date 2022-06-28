@@ -230,8 +230,8 @@ def multicoreEnumeration(g, tasks, _=None,
             eprint("Unknown message result:", message.result)
             assert False
 
-    eprint("We enumerated this many programs, for each task:\n\t",
-           list(taskToNumberOfPrograms.values()))
+    # eprint("We enumerated this many programs, for each task:\n\t",
+    #        list(taskToNumberOfPrograms.values()))
 
     return [frontiers[t] for t in tasks], bestSearchTime
 
@@ -438,7 +438,7 @@ def solveForTask_bottom(_=None,
     pcfg = PCFG.from_grammar(g, request).number_rules() # a pcfg
 
     splits = pcfg.split(CPUs)
-
+    
     results = parallelMap(CPUs, 
                           lambda pps: bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFrontiers, evaluationTimeout=evaluationTimeout),
                           splits)
@@ -495,7 +495,6 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
         for n in range(len(tasks)):
             
             task = tasks[n]
-
             likelihood = task.logLikelihood(e, evaluationTimeout)
             if invalid(likelihood):
                 continue

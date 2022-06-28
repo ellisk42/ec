@@ -1808,7 +1808,7 @@ class PCFG():
             skeletons = [NamedHole(self.start_symbol).wrap_in_abstractions(self.number_of_arguments)]
             # Split for parallelization not compatible with observational equivalence
             # skeletons = [pp for pps in self.split(10) for pp in pps ]
-            eprint(skeletons)
+            # eprint(skeletons)
         skeleton_costs = [int(-self.log_probability(pp)/resolution+0.5)
                           for pp in skeletons]
 
@@ -1987,6 +1987,7 @@ class PCFG():
             for skeleton, skeleton_cost in zip(skeletons, skeleton_costs):
                 for e in complete_skeleton(cost-skeleton_cost, skeleton):
                     # ENUMERATED_LIST.append(e)
+                    # eprint(e, skeleton,skeleton_cost)
                     yield e # return also the unitaries
 
 ENUMERATED_LIST = []
