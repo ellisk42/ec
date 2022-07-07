@@ -4,6 +4,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
+from click import argument
 from dreamcoder.domains.quantum_circuits.main import main
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
@@ -20,27 +21,35 @@ import os
 import datetime
 
 def quantum_extras(parser):
-    parser.add_argument("--limited-connectivity",action='store_true')
+    parser.add_argument("--limitedConnectivity",action='store_true')
+    parser.add_argument("--outputDirectory",default="default", type=str)
 
 if __name__ == '__main__': 
+    
     arguments = commandlineArguments(
-        featureExtractor=None, # it was TowerCNN
-        CPUs=1,#numberOfCPUs(),
-        helmholtzRatio=0.5,
-        recognitionTimeout=3,
-        iterations=50,#40
-        a=3,
-        structurePenalty=6, # increase regularization 3 4 (it was 1) look at a few [1,15]
-        pseudoCounts=10,
-        topK=2,
-        maximumFrontier=5,
-        solver="bottom", 
-        useRecognitionModel=False,
-        enumerationTimeout=30,#-g  #1000
+        CPUs=numberOfCPUs(),
+        iterations=4,#40
+        enumerationTimeout=25,#-g  #1000
         taskBatchSize=30, # smaller should be faster
         taskReranker="randomShuffle", #defualt
+        structurePenalty=6, # increase regularization 3 4 (it awas 1) look at a few [1,15]
+        pseudoCounts=10, #increase 100 test a few values
+        solver="bottom", 
         compressor="pypy",
+        useRecognitionModel=False,
+        featureExtractor=None, # it was TowerCNN
+        helmholtzRatio=0.5,
+        recognitionTimeout=3,
+        a=3,
+        topK=2,
+        maximumFrontier=5,
         extras=quantum_extras)   #ocaml, python, pypy  
+    
+    if arguments["resume"] is not None and arguments["resume"][-1]=="/":
+        import glob
+        filenames = sorted(glob.glob(f"{arguments['resume']}quantum_train_*.pickle"))
+        arguments["resume"] =filenames[-1]
+        print(filenames)
     main(arguments)
     
     

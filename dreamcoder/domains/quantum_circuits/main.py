@@ -20,88 +20,111 @@ try: #pypy will fail
 except: pass
 
 
+def get_tasks(enumeration_timeout, label):
+    if os.path.exists(f"experimentOutputs/quantum/{label}_train_tasks"):
+        dc.utilities.eprint(f"Loading task dataset {label}.")
+        with open(f"experimentOutputs/quantum/{label}_train_tasks","rb") as f:
+            train_tasks=pickle.load(f)
+
+        with open(f"experimentOutputs/quantum/{label}_test_tasks","rb") as f:
+            test_tasks=pickle.load(f)
+        
+        with open(f"experimentOutputs/quantum/{label}_tasks","rb") as f:
+            tasks=pickle.load(f)
+        
+    else: 
+        dc.utilities.eprint("No task dataset found, generating a new one.")
+        
+        tasks = makeTasks(enumeration_timeout) 
+        n_train = int(len(tasks)/20)
+        
+        total_indices= np.arange(len(tasks))
+        probs = np.array([task.name[6:].count("(") for task in tasks],dtype=float)
+        for i in np.arange(np.max(probs)+1):
+            m = probs[probs==i].sum()
+            probs[probs==i]/=m
+        weight=probs/probs.sum()
+        
+        indices = set(np.random.choice(total_indices, n_train,p=weight))
+        # remaining_indices = set(total_indices) - indices
+        
+        train_tasks = [tasks[i] for i in indices]
+        test_tasks = [task for task in tasks if task not in train_tasks]
+        
+        with open(f"experimentOutputs/quantum/{label}_train_tasks","wb") as f:
+            pickle.dump(train_tasks,f)
+
+        with open(f"experimentOutputs/quantum/{label}_test_tasks","wb") as f:
+            pickle.dump(test_tasks,f)
+        
+        with open(f"experimentOutputs/quantum/{label}_tasks","wb") as f:
+            pickle.dump(tasks,f)
+        
+    return tasks, train_tasks, test_tasks
+
+
+def test_grammar(grammar, tasks, arguments, path_and_label):
+    arguments= arguments.copy()
+    dc.utilities.eprint(f"Testing extracted grammar on {len(tasks)} tasks.")
+    arguments["noConsolidation"]=True
+    arguments["iterations"]=1
+    del arguments["taskBatchSize"]
+    del arguments["taskReranker"]
+    del arguments["resume"]
+    
+    # or load from file
+    # with open("experimentOutputs/quantum/long_grammar","rb") as f:
+    #     g0 = pickle.load(f)
+    
+    generator = dc.dreamcoder.ecIterator(grammar, tasks,
+                        testingTasks=[],
+                        outputPrefix=path_and_label,
+                        **arguments)
+    for result in generator: ...
+
 def main(arguments):
     """
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on a set of quantum-algorithm tasks.
     """   
+    initial_arguments = arguments.copy()
+    command_string = sys.argv[0]
     dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
     timestamp = datetime.datetime.now().isoformat()
-    outputDirectory = "experimentOutputs/quantum/%s"%timestamp
+    
+    if arguments["resume"] is None: 
+        outputDirectory = "experimentOutputs/quantum/%s"%timestamp
+    else: outputDirectory = "/".join(arguments["resume"].split("/")[:-1])
+    del arguments["outputDirectory"]
     os.system("mkdir -p %s"%outputDirectory)
     
-    # tasks = makeTasks(30) #15
-    # n_train = int(len(tasks)/20)
-    
-    # total_indices= np.arange(len(tasks))
-                                
-    # weight = 1/np.log2(total_indices+2).astype(int)
-    # weight/=sum(weight)
-    # indices = set(np.random.choice(total_indices, n_train,p=weight))
-    # remaining_indices = set(total_indices) - indices
+    # Get quantum task dataset
+    tasks, train_tasks, test_tasks = get_tasks(15, "short")
 
-    # train_tasks = [tasks[i] for i in indices]
-    # test_tasks = [tasks[i] for i in remaining_indices]
-    
-    
-    # train_tasks, test_tasks = train_test_split(tasks, test_size=0.5)
 
-    # # check LIMITED_CONNECTIVITY
-    if arguments["limited_connectivity"]: 
+    # check LIMITED_CONNECTIVITY
+    if arguments["limitedConnectivity"]: 
         dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = True
         dc.utilities.eprint("Limited qubit connectivity enforced")
-    del arguments["limited_connectivity"]
+    del arguments["limitedConnectivity"]
     
-    # # TRAIN
-    # g0 = grammar
-    # generator = dc.dreamcoder.ecIterator(g0, train_tasks,
-    #                        testingTasks=[],
-    #                        outputPrefix=f"{outputDirectory}/quantum_train",
-    #                     #    evaluationTimeout=10,
-    #                        **arguments)
-    # for result in generator: ...
-    
-    
-    arguments["noConsolidation"]=True
-    arguments["iterations"]=1
-    del arguments["taskBatchSize"]
-    del arguments["taskReranker"]
-    
-    # # # TEST
-    # final grammar
-    # g0 = result.grammars[-1]
-    # or load from file
-    # with open("experimentOutputs/quantum/long_grammar","rb") as f:
-    #     g0 = pickle.load(f)
-    # with open("experimentOutputs/quantum/long_test_tasks","rb") as f:
-    #     test_tasks = pickle.load(f)
-    
-    # generator = dc.dreamcoder.ecIterator(g0, tasks,
-    #                     testingTasks=[],
-    #                     outputPrefix=f"{outputDirectory}/quantum_test",
-    #                     **arguments)
-    # for result in generator: ...
+
+    # TRAIN
+    g0 = grammar
+    generator = dc.dreamcoder.ecIterator(g0, train_tasks,
+                           testingTasks=[],
+                           outputPrefix=f"{outputDirectory}/quantum_train",
+                           **arguments)
+    for result in generator:          
+        # TEST at each step
+        test_grammar(result.grammars[-1], 
+                     test_tasks, 
+                     arguments, 
+                     f"{outputDirectory}/quantum_test_{len(result.grammars)-1}")
 
 
     # FULL GRAMMAR on TEST
-    # dc.grammar.ENUMERATED_LIST = []
-    with open("experimentOutputs/quantum/20k_task_dataset","rb") as f:
-        test_tasks = pickle.load(f)
-    
     dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
-    generator = dc.dreamcoder.ecIterator(full_grammar, test_tasks,
-                    testingTasks=[],
-                    outputPrefix=f"{outputDirectory}/quantum_full",
-                    **arguments)
-    for result in generator: ...
-    
-    # for p in dc.grammar.ENUMERATED_LIST:
-    #     dc.utilities.eprint(p)
-    
-    # with open(f"{outputDirectory}/enumerated", "wb") as f:
-    #     dc.utilities.eprint("exporting primitive list?")
-    #     pickle.dump(dc.grammar.ENUMERATED_LIST, f)
-        
-    
-    return outputDirectory
+    test_grammar(full_grammar, test_tasks, arguments, f"{outputDirectory}/quantum_full")
 
+    return outputDirectory
