@@ -113,6 +113,8 @@ def match_version(table, template, j):
         #j=table.shiftFree(j, -depth)
         if j==table.empty:
             return []
+        if table.extractSmallest(j, named=None, application=.01, abstraction=.01) is None:
+            return []
         return [frozendict({template.name:j})]
 
     if isinstance(template, FragmentVariable):
@@ -140,20 +142,16 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
         
         for program in frontier:
             
-            if template is UNKNOWN or template.parent is UNKNOWN or id(program) in template.parent.matches:
+            if template is UNKNOWN or (not hasattr(template,"parent")) or template.parent is UNKNOWN or id(program) in template.parent.matches:
                 bindings = match_version_comprehensive(table, template, program, rewriting_steps)
             else:
                 bindings = []
             
-            if verbose:
-                eprint()
-                eprint(bindings)
-                for subcost, b in bindings:
-                    for v, binding in b.items():
-                        eprint(subcost, v, table.extractSmallest(binding, named=None, application=.01, abstraction=.01))
-
             if len(bindings)>0:
-                if template is not UNKNOWN: template.matches.add(id(program))
+                if template is not UNKNOWN:
+                    if not hasattr(template,"matches"):
+                        template.matches=set()
+                    template.matches.add(id(program))
 
                 bindings = list(bindings)
 
@@ -166,6 +164,8 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
                     size_of_thing_invention_is_replacing = subexpression_cost
                     size_of_rewritten_program = size_of_original_program - size_of_thing_invention_is_replacing + size_of_invention_application
                     bindings_utilities.append((b, baseline_task_size - size_of_rewritten_program))
+                    
+                        
             
 
         
@@ -173,6 +173,13 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
                                               key=lambda bu: bu[1])
         if best_binding is None:
             continue
+
+        if verbose:
+            eprint()
+            eprint(best_binding)
+            eprint(program)
+            eprint(corpus_size_delta, "  ".join([str(table.extractSmallest(best_binding[k], named=None, application=.01, abstraction=.01))
+                    for k in sorted(best_binding.keys()) ]))
         
 
         total_corpus_size+=corpus_size_delta
@@ -187,9 +194,11 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
                                                  for v in best_binding}
         
     if inferior and inferior_abstraction_checker is not None:
-        if any( v!=table.empty for v in inferior_abstraction_checker.values() ):
-            #eprint("inferior", template)
-            return NEGATIVEINFINITY
+        # we are inferior if there is any non-empty binding intersection which could be inlined
+        for v in inferior_abstraction_checker.values():
+            if v!=table.empty:
+                if table.has_closed_inhabitant(v):
+                    return NEGATIVEINFINITY
 
     #eprint("total corpus_size", total_corpus_size)
     if number_of_matches<2: return NEGATIVEINFINITY
@@ -212,6 +221,24 @@ def refinements(template, expansions):
 
     if isinstance(template, FragmentVariable):
         return expansions
+
+def is_refinement_of(template, refinement):
+    if isinstance(template, FragmentVariable):
+        return True
+    
+    if template.isAbstraction:
+        if refinement.isAbstraction:
+            return is_refinement_of(template.body, refinement.body)
+        return False
+    
+    if template.isApplication:
+        if refinement.isApplication:
+            return is_refinement_of(template.f, refinement.f) and is_refinement_of(template.x, refinement.x)
+        return False
+
+    if template.isPrimitive or template.isIndex or template.isInvented or template.isNamedHole:
+        return template==refinement
+    assert False
 
 def bad_refinement(template):
     previous=None
@@ -237,6 +264,7 @@ def rewrite_with_invention(table, template, invention, rewriting_steps, program)
     """
     if not hasattr(program, "super_index"):
         program.super_index = table.superVersionSpace(table.incorporate(program), rewriting_steps)
+
     j = program.super_index
     
     root = match_version(table, template, j)
@@ -275,7 +303,8 @@ def sasquatch_grammar_induction(g0, frontiers,
                                 topI=50,
                                 structurePenalty=1.,
                                 inferior=False,
-                                rerank=True, 
+                                rerank=True,
+                                slack=0,
                                 CPUs=1):
     global UNKNOWN
     arity = a
@@ -285,7 +314,19 @@ def sasquatch_grammar_induction(g0, frontiers,
     eprint("Inducing a grammar from", len(frontiers), "frontiers")
 
     def objective(g, fs):
-        ll = sum(g.frontierMarginal(f) for f in fs )
+        g = Grammar.uniform(g.primitives,
+                            continuationType=g.continuationType)
+        fs = [g.rescoreFrontier(f) for f in fs]
+        g = g.insideOutside(fs,
+                            pseudoCounts=pseudoCounts,
+                            iterations=10)
+        ll = sum(g.frontierMDL(f) for f in fs )
+
+        # for f in fs:
+        #     eprint(g.frontierMarginal(f))
+        #     eprint(f.summarizeFull())
+        #     eprint()
+        # eprint(ll)
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
         return ll - sp - aic*len(g.productions)
 
@@ -294,7 +335,7 @@ def sasquatch_grammar_induction(g0, frontiers,
         smallest = table.extractSmallest(vs, named=None, application=.01, abstraction=.01)
         try:
             return EtaLongVisitor(request).execute(smallest)
-        except EtaExpandFailure:
+        except (EtaExpandFailure,UnificationFailure):
             return program
             
 
@@ -316,23 +357,26 @@ def sasquatch_grammar_induction(g0, frontiers,
                                          task=frontier.task)
                                 for frontier in frontiers ]
         g = Grammar.uniform([invention] + grammar.primitives,
-                            continuationType=grammar.continuationType).\
-            insideOutside(rewritten_frontiers,
-                          pseudoCounts=pseudoCounts)
-        
-        rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
+                            continuationType=grammar.continuationType)
 
         newScore = objective(g, rewritten_frontiers)
 
-        return g, invention, rewritten_frontiers, newScore
+        actual_utility = sum( min(fe.program.size(named=None, application=.01, abstraction=.01)
+                                  for fe in frontier )
+                              for frontier in frontiers)
+        actual_utility -= sum( min(fe.program.size(named=None, application=.01, abstraction=.01)
+                                  for fe in frontier )
+                              for frontier in rewritten_frontiers)
+        
+        actual_utility -= invention.body.size(named=None, application=.01, abstraction=.01)
+
+        return g, invention, rewritten_frontiers, actual_utility, newScore
 
         
-
-    with timing("Estimated initial grammar production probabilities"):
-        g0 = g0.insideOutside(frontiers, pseudoCounts)
     oldScore = objective(g0, frontiers)
     eprint("Starting grammar induction score",oldScore)
 
+    is_first=True
     while True:
         table = VersionTable(typed=False, identity=False)
         with timing("constructed %d-step version spaces"%rewriting_steps):
@@ -361,20 +405,40 @@ def sasquatch_grammar_induction(g0, frontiers,
         q=PQ()
         q.push(utility(table, p0, corpus, rewriting_steps, inferior=inferior), p0)
 
-        # p1=Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) ?1 (?2 (car $0) ($1 (cdr $0))))))))")
+        # giving it filter
+        # filter is not learned because there is a bad version of filter which has a higher utility but lower probabilistic score
+        # if not is_first:
+        #     p1=Program.parse("(#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) ?1 (lambda (lambda (if (?2 $0) $1 (cons $0 $1)))) empty)")
+        #     q.push(999999999991, p1)
+        # is_first=False
+
+        # giving it index
+        p_index=Program.parse("(car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) ?1) (lambda (lambda (cdr $1))) ?2))")
+        # q.push(999999999991, p_index)
+        
+        # giving it the bad fold
+        # this is generated because it thinks that curry is a valid way of compressing
+        # p1=Program.parse("(lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $0 ?1 ?2))")
+        # q.push(999999999991, p1)
+
+        # giving it the bad map
+        # p1=Program.parse("(lambda (#(lambda (lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $1 (lambda (lambda (cons ($2 $0) $1))) empty))) $0 ?1))")
         # q.push(999999999991, p1)
 
         pops=0
         utility_calculations=1
         while len(q):
             p=q.popMaximum()
+            assert not bad_refinement(p)
             pops+=1
 
             #eprint(p, master_optimistic(p, corpus))
             r=refinements(p, EXPANSIONS)
             if len(r)==0:
-                u = utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1)
-                newScore = rewrite_and_score(g0, frontiers, p)[-1]
+                unadjusted_utility = utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1)
+                rewritten_stuff = rewrite_and_score(g0, frontiers, p)
+                newScore, new_grammar, u = rewritten_stuff[-1], rewritten_stuff[0], rewritten_stuff[-2]
+                the_type = new_grammar.productions[0][1]
                 
                 if (rerank and newScore>best_score) or \
                    ((not rerank) and u>best_utility): 
@@ -382,9 +446,12 @@ def sasquatch_grammar_induction(g0, frontiers,
                     best = p
                 else:
                     color = Fore.YELLOW if u>0 else Fore.RED
-                eprint(color, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far", p, "utility", u, "probabilistic score", newScore, '\033[0m')
+                eprint(color, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far:\n\t", p, ":", the_type, "\nutility", u, f"(adjusted from {unadjusted_utility})", "probabilistic score", newScore, '\033[0m')
+                utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1, verbose=True)
+                eprint()
+                
 
-                best_utility = max(u, best_utility)
+                best_utility = max(min(unadjusted_utility, u), best_utility)
                 best_score = max(newScore, best_score)
             else:
                 for pp in r:
@@ -395,7 +462,10 @@ def sasquatch_grammar_induction(g0, frontiers,
                     u = utility(table, pp, corpus, rewriting_steps, inferior=inferior,
                                 coefficient=1)
                     utility_calculations+=1
-                    if u is None or u<best_utility:
+                    if u is None or u+slack<best_utility:
+                        # if is_refinement_of(pp, p_index):
+                        #     import pdb; pdb.set_trace()
+                            
                         continue
                     q.push(u, pp)
 
@@ -403,7 +473,7 @@ def sasquatch_grammar_induction(g0, frontiers,
             eprint("No invention looks promising so we are done")
             break
 
-        g, invention, rewritten_frontiers, newScore = rewrite_and_score(g0, frontiers, best)
+        g, invention, rewritten_frontiers, actual_utility, newScore = rewrite_and_score(g0, frontiers, best)
 
         version_size.clear()
         match_version_comprehensive.clear()
@@ -423,6 +493,11 @@ def sasquatch_grammar_induction(g0, frontiers,
         else:
             eprint("Score does not actually improve, finishing")
             break
+
+    frontiers = {f.task: f for f in frontiers}
+    frontiers = [frontiers.get(f.task, f)
+                 for f in originalFrontiers]
+    return g0, frontiers
             
             
         

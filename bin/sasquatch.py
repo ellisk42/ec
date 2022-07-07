@@ -19,6 +19,9 @@ parser.add_argument("--a", "-a", default=1, type=int)
 parser.add_argument("--old", default=False, action="store_true")
 parser.add_argument("--inferior", "-i", default=False, action="store_true")
 parser.add_argument("--thorough", "-t", default=False, action="store_true")
+parser.add_argument("--rerank", "-r", default=False, action="store_true")
+parser.add_argument("--slack", "-s", default=0, type=int)
+parser.add_argument("--iteration", default=0, type=int)
 arguments = parser.parse_args()
 
 
@@ -476,9 +479,17 @@ unfold_corpus = [Program.parse(program)
           ] ]
 corpus = unfold_corpus+fold_corpus
 
-origami_corpus = [fs[0] for t,fs in loadPickle("origami_checkpoint.pickle").frontiersOverTime.items() ]
+origami_iteration=arguments.iteration
+origami_checkpoint=loadPickle("origami_checkpoint.pickle")
+origami_corpus = [fs[origami_iteration] for t,fs in origami_checkpoint.frontiersOverTime.items() ]
+origami_grammar = origami_checkpoint.grammars[origami_iteration]
 
-
+# for i in range(1, 5):
+#     g, g0 = origami_checkpoint.grammars[i], origami_checkpoint.grammars[i-1]
+#     new_inventions = [(p,t) for _,t,p in g.productions if p  not in g0.primitives]
+#     for p,t in new_inventions:
+#         eprint(i, t, "\t", p)
+# assert False
 
 
 table=None
@@ -553,14 +564,32 @@ if arguments.old:
 else:
     # eprint("running the old stuff")
     # compress(corpus)
+    eprint()
+    eprint()
+    eprint()
+    eprint("RUNNING", arguments.a, arguments.iteration)
     from dreamcoder.sasquatch import sasquatch_grammar_induction
-    g0 = Grammar.uniform(basic_primitives)
-    sasquatch_grammar_induction(g0, [f #.topK(1)
-                                     for f in origami_corpus],
-                                structurePenalty=1,
-                                pseudoCounts=30,
-                                a=3,
-                                inferior=arguments.inferior)
+    g0 = origami_grammar #Grammar.uniform(basic_primitives)
+    t0 = time.time()
+    g, frontiers = sasquatch_grammar_induction(g0, [f #.topK(1)
+                                                    for f in origami_corpus
+                                                    #if "index" in f.task.name
+    ],
+                                               structurePenalty=1,
+                                               pseudoCounts=30,
+                                               slack=arguments.slack, 
+                                               a=3,
+                                               rewriting_steps=arguments.a, 
+                                               inferior=arguments.inferior,
+                                               rerank=arguments.rerank)
+    new_inventions = [(p,t) for _,t,p in g.productions if p  not in g0.primitives]
+    eprint("new primitives:")
+    for p,t in new_inventions:
+        eprint(t, "\t", p)
+    eprint(time.time()-t0, "seconds")
+    eprint()
+    eprint()
+    eprint()
 
 
 

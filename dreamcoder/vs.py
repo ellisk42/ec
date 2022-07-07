@@ -58,6 +58,7 @@ class VersionTable():
         self.inhabitantTable = []
         # Table containing (minimum cost, set of minimum cost programs NOT starting w/ abstraction)
         self.functionInhabitantTable = []
+        self._has_closed_inhabitant = {}
         self.superCache = {}
 
         self.overlapTable = {}
@@ -404,6 +405,33 @@ class VersionTable():
             
         self.functionInhabitantTable[j] = (cost, members)
         return cost, members
+
+    def has_closed_inhabitant(self,j,c=0):
+        if j in self._has_closed_inhabitant:
+            return self._has_closed_inhabitant[j]
+        
+        if j==self.empty: return False
+        if j==self.universe: return True
+
+        l = self.expressions[j]
+
+        return_value = None
+
+        if l.isUnion:
+            return_value = any(self.has_closed_inhabitant(e, c)
+                               for e in l )
+        elif l.isApplication:
+            return_value = self.has_closed_inhabitant(l.f,c) and self.has_closed_inhabitant(l.x,c)
+        elif l.isAbstraction:
+            return_value = self.has_closed_inhabitant(l.body,c+1)
+        elif l.isIndex:
+            return_value = l.i < c
+        else:
+            assert l.isPrimitive or l.isInvented
+            return_value = True
+
+        self._has_closed_inhabitant[j] = return_value
+        return return_value
 
     def shiftFree(self,j,n,c=0):
         if n == 0: return j
