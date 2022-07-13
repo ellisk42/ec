@@ -413,7 +413,7 @@ def circuit_to_mat(full_circuit):
             mat = tensor_to_mat(tensor)
             
             # normalize extra circuit phase
-            s1 = np.sum(mat)
+            s1 = np.sum(mat.round(5))
             if s1 ==0:
                 idx = np.where((mat).round(5)!=0)
                 s1 = mat[idx[0][0], idx[1][0]]
@@ -689,7 +689,7 @@ grammar = dc.grammar.Grammar.uniform(primitives)
 # Function to execute algorithms (which are functions)
 # Maybe it should return a function?
 # 
-arguments = (*np.arange(3),no_op(3))
+arguments = (*range(3),no_op(3))
 def execute_quantum_algorithm(p, n_qubits, timeout=None):
     try:
         circuit = execute_program(p, arguments)

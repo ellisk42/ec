@@ -28,8 +28,8 @@ if __name__ == '__main__':
     
     arguments = commandlineArguments(
         CPUs=numberOfCPUs(),
-        iterations=4,#40
-        enumerationTimeout=25,#-g  #1000
+        iterations=100,#40
+        enumerationTimeout=100,#-g  #1000
         taskBatchSize=30, # smaller should be faster
         taskReranker="randomShuffle", #defualt
         structurePenalty=6, # increase regularization 3 4 (it awas 1) look at a few [1,15]
@@ -47,9 +47,9 @@ if __name__ == '__main__':
     
     if arguments["resume"] is not None and arguments["resume"][-1]=="/":
         import glob
-        filenames = sorted(glob.glob(f"{arguments['resume']}quantum_train_*.pickle"))
+        filenames = glob.glob(f"{arguments['resume']}quantum_train_*.pickle")
+        filenames.sort(key=lambda x: int(x.split("it=")[1].split("_")[0]))
         arguments["resume"] =filenames[-1]
-        print(filenames)
     main(arguments)
     
     

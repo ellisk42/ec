@@ -81,25 +81,25 @@ def test_grammar(grammar, tasks, arguments, path_and_label):
                         outputPrefix=path_and_label,
                         **arguments)
     for result in generator: ...
+    return result
 
 def main(arguments):
     """
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on a set of quantum-algorithm tasks.
     """   
-    initial_arguments = arguments.copy()
-    command_string = sys.argv[0]
     dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
     timestamp = datetime.datetime.now().isoformat()
     
     if arguments["resume"] is None: 
         outputDirectory = "experimentOutputs/quantum/%s"%timestamp
-    else: outputDirectory = "/".join(arguments["resume"].split("/")[:-1])
+    else:
+        outputDirectory = "/".join(arguments["resume"].split("/")[:-1])
     del arguments["outputDirectory"]
     os.system("mkdir -p %s"%outputDirectory)
     
     # Get quantum task dataset
-    tasks, train_tasks, test_tasks = get_tasks(15, "short")
+    tasks, train_tasks, test_tasks = get_tasks(50, "medium")
 
 
     # check LIMITED_CONNECTIVITY
@@ -115,15 +115,18 @@ def main(arguments):
                            testingTasks=[],
                            outputPrefix=f"{outputDirectory}/quantum_train",
                            **arguments)
+    
     for result in generator:          
         # TEST at each step
-        test_grammar(result.grammars[-1], 
+        test_result = test_grammar(result.grammars[-1], 
                      test_tasks, 
                      arguments, 
                      f"{outputDirectory}/quantum_test_{len(result.grammars)-1}")
-
+        with open(f"{outputDirectory}/solved_test.txt", "a") as f:
+            f.write(f"{test_result.learningCurve[-1]}\n")
 
     # FULL GRAMMAR on TEST
+    dc.utilities.eprint("Consistency check: enumerating full grammar (should solve all tasks)")
     dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
     test_grammar(full_grammar, test_tasks, arguments, f"{outputDirectory}/quantum_full")
 
