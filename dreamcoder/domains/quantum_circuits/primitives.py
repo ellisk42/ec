@@ -351,6 +351,7 @@ def iswap(circuit, qubit_1, qubit_2):
     return tensor_contraction(circuit, tensor_iswap, [qubit_1, qubit_2])
 
 
+
 # ------------------------------------------
 # Transform a list of qubit operations into a unitary 
 #
@@ -460,23 +461,29 @@ def qiskit_circuit_to_mat(full_circuit):
 
 
 
+# Control
+def _repeat(old_circuit, start_qubit, n_times, direction,body):
+    #direction = +/- 1
+    if n_times <= 0:
+        raise QuantumCircuitException("Invalid repetition number.")
+    return   _repeat_help(old_circuit, start_qubit, n_times, direction, body,  lambda x, y: body(x)(y))
+
+def _repeat_help(old_circuit, start_qubit, n_times, direction, body, new_body):
+    if n_times==1:
+        return new_body(old_circuit,start_qubit)
+    
+    def new_func(new_circuit, starting_qubit):
+        return body(new_body(new_circuit,start_qubit))(starting_qubit)
+    
+    return _repeat_help(old_circuit,start_qubit + direction, n_times-1, direction, body, new_func )
+
+
+
 # ------------------------------------------
 # Define functions for primitives (to act on circuits)
 #
 # tsize = dc.type.baseType("tsize")
 tcircuit = dc.type.baseType("tcircuit")
-
-
-# Control
-def _repeat(n_times,body):
-    if n_times <= 0:
-        raise QuantumCircuitException("Invalid repetition number.")
-    return   _repeat_help(n_times, body, body)
-
-def _repeat_help(n_times, body, new_body):
-    if n_times==1:
-        return new_body
-    return _repeat_help(n_times-1, body, lambda b: new_body(body(b)))
 
 
 
@@ -631,9 +638,15 @@ p_iswap = dc.program.Primitive(name="iswap",
                      value=dc.utilities.Curried(iswap_func))
 
 # Control
-# p_iteration = dc.program.Primitive(name="rep", 
-#                      ty=dc.type.arrow(dc.type.tint, dc.type.arrow(tcircuit,tcircuit),  dc.type.arrow(tcircuit,tcircuit)),
-#                      value=dc.utilities.Curried(_repeat))
+# def _repeat(old_circuit, start_qubit, n_times, direction, body):
+p_iteration = dc.program.Primitive(name="rep", 
+                     ty=dc.type.arrow(tcircuit,     # old_circuit
+                                      dc.type.tint, # start_qubit
+                                      dc.type.tint, # n_times
+                                      dc.type.tint, # direction
+                                      dc.type.arrow(tcircuit, dc.type.tint, tcircuit),  # body: tcircuit, starting_qubit -> t_circuit
+                                      tcircuit), # return
+                     value=dc.utilities.Curried(_repeat))
 
 
 full_primitives = [
@@ -676,7 +689,7 @@ primitives = [
     # p_dec,
     # p_size,
     # #control
-    # fp_iteration
+    p_iteration
 ]
 
 # ------------------------------------------
