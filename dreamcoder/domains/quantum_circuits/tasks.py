@@ -13,7 +13,7 @@ class QuantumTask(dc.task.Task):
         
         super(QuantumTask, self).__init__(name=name,
                                           request=dc.type.arrow(*([dc.type.tint]*self.n_qubits), tcircuit, tcircuit),
-                                          examples=[((*np.arange(self.n_qubits),no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],
+                                          examples=[((*range(self.n_qubits),no_op(self.n_qubits),),(self.target_circuit_evaluation,),)],
                                           features=[])
 
     def logLikelihood(self, e, timeout=None):
@@ -61,11 +61,10 @@ class QuantumTask(dc.task.Task):
             return dc.utilities.NEGATIVEINFINITY 
         return 0.
 
-n_qubit_tasks = 3
 def makeTasks(task_enumeration_timeout=6):
     pcfg_full = dc.grammar.PCFG.from_grammar(full_grammar, request=dc.type.arrow(
-                                                                                *[dc.type.tint]*n_qubit_tasks,tcircuit, 
-                                                                                tcircuit))
+                                                                                *[dc.type.tint]*dc.domains.quantum_circuits.primitives.GLOBAL_NQUBIT_TASK,
+                                                                                tcircuit, tcircuit))
     tasks = dc.enumeration.enumerate_pcfg(pcfg_full,
                                 timeout=task_enumeration_timeout, 
                                 observational_equivalence=True,

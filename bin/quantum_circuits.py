@@ -23,14 +23,15 @@ import datetime
 def quantum_extras(parser):
     parser.add_argument("--limitedConnectivity",action='store_true')
     parser.add_argument("--outputDirectory",default="default", type=str)
+    parser.add_argument("--nqubit",default=3, type=int)
 
 if __name__ == '__main__': 
     
     arguments = commandlineArguments(
         CPUs=numberOfCPUs(),
         iterations=100,#40
-        enumerationTimeout=100,#-g  #1000
-        taskBatchSize=30, # smaller should be faster
+        enumerationTimeout=150,#-g  #1000
+        taskBatchSize=25, # smaller should be faster
         taskReranker="randomShuffle", #defualt
         structurePenalty=6, # increase regularization 3 4 (it awas 1) look at a few [1,15]
         pseudoCounts=10, #increase 100 test a few values

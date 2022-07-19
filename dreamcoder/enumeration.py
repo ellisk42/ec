@@ -498,7 +498,7 @@ def bottom_up_parallel_worker(solver, g, pcfg, pps, tasks, timeout, maximumFront
 
         prior = None
 
-        circuit = execute_quantum_algorithm(e,dc.domains.quantum_circuits.tasks.n_qubit_tasks)
+        circuit = execute_quantum_algorithm(e,dc.domains.quantum_circuits.primitives.GLOBAL_NQUBIT_TASK)
         n = tasks_hash.get(hash_complex_array(circuit),None)
         if n is not None:    
             
@@ -661,14 +661,14 @@ def enumerate_pcfg(pcfg, timeout,
     enum_dictionary = {}
     t_0 = time.time()
     
-    n_qubit = n_qubit_tasks
+    n_qubit = dc.domains.quantum_circuits.primitives.GLOBAL_NQUBIT_TASK
     for code in pcfg.quantized_enumeration(observational_equivalence=observational_equivalence,
-                                           inputs=[(*np.arange(n_qubit), no_op(n_qubit),)],
+                                           inputs=[(*range(n_qubit), no_op(n_qubit),)],
                                            sound=sound):
         if (time.time()>t_0+timeout): break
         # check if it is a valid circuit
         try: 
-            arguments = (*np.arange(n_qubit),no_op(n_qubit))
+            arguments = (*range(n_qubit),no_op(n_qubit))
             circuit = execute_program(code, arguments )
             unitary = circuit_to_mat(circuit)
             

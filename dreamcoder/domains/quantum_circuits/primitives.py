@@ -5,6 +5,7 @@ from dreamcoder.utilities import eprint
 
 # If true, allow only gates between neighbouring qubits
 global GLOBAL_LIMITED_CONNECTIVITY
+global GLOBAL_N_QUBIT_TASK
 
 try:
     import matplotlib.pyplot as plt
@@ -689,8 +690,8 @@ grammar = dc.grammar.Grammar.uniform(primitives)
 # Function to execute algorithms (which are functions)
 # Maybe it should return a function?
 # 
-arguments = (*range(3),no_op(3))
 def execute_quantum_algorithm(p, n_qubits, timeout=None):
+    arguments = (*range(GLOBAL_NQUBIT_TASK),no_op(GLOBAL_NQUBIT_TASK))
     try:
         circuit = execute_program(p, arguments)
         return circuit_to_mat(circuit)

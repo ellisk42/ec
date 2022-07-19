@@ -36,7 +36,7 @@ def get_tasks(enumeration_timeout, label):
         dc.utilities.eprint("No task dataset found, generating a new one.")
         
         tasks = makeTasks(enumeration_timeout) 
-        n_train = int(len(tasks)/20)
+        n_train = int(len(tasks)/30)
         
         total_indices= np.arange(len(tasks))
         probs = np.array([task.name[6:].count("(") for task in tasks],dtype=float)
@@ -88,9 +88,9 @@ def main(arguments):
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on a set of quantum-algorithm tasks.
     """   
-    dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
-    timestamp = datetime.datetime.now().isoformat()
     
+    # Create experiment directory
+    timestamp = datetime.datetime.now().isoformat()
     if arguments["resume"] is None: 
         outputDirectory = "experimentOutputs/quantum/%s"%timestamp
     else:
@@ -98,9 +98,17 @@ def main(arguments):
     del arguments["outputDirectory"]
     os.system("mkdir -p %s"%outputDirectory)
     
+    # Dump arguments
+    with open(f"{outputDirectory}/arguments.pickle", "wb") as f:
+        pickle.dump(arguments,f)
+        
+    dc.domains.quantum_circuits.primitives.GLOBAL_LIMITED_CONNECTIVITY = False
+    dc.domains.quantum_circuits.primitives.GLOBAL_NQUBIT_TASK = int(arguments["nqubit"])
+    del arguments["nqubit"]
+    
+    
     # Get quantum task dataset
-    tasks, train_tasks, test_tasks = get_tasks(50, "medium")
-
+    tasks, train_tasks, test_tasks = get_tasks(50, "medium_5qubit")
 
     # check LIMITED_CONNECTIVITY
     if arguments["limitedConnectivity"]: 
