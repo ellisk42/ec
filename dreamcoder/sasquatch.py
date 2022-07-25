@@ -7,6 +7,8 @@ from colorama import Fore
 
 UNKNOWN=None
 
+p_index=None
+        
 @memoize(1)
 def version_size(table, j):
     expression = table.extractSmallest(j, named=None, application=.01, abstraction=.01)
@@ -135,10 +137,12 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
         # how big is the smallest program which solves the task, without doing any compression?
         baseline_task_size = min(version_size(table, table.incorporate(program))
                                  for program in frontier)
+        if verbose:
+            print("this frontier has baseline solution size", baseline_task_size)
 
-        # list of (binding, utility) pairs
+        # list of (binding, utility, source program) pairs
         # utility: baseline_task_size - task_size_with_program_rewritten_with_this_invention
-        bindings_utilities = [(None, 0.)]
+        bindings_utilities = [(None, 0., None)]
         
         for program in frontier:
             
@@ -163,21 +167,21 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
                     size_of_invention_application = sum(version_size(table, binding) for v, binding in b.items()) + 1 + .01*len(b)
                     size_of_thing_invention_is_replacing = subexpression_cost
                     size_of_rewritten_program = size_of_original_program - size_of_thing_invention_is_replacing + size_of_invention_application
-                    bindings_utilities.append((b, baseline_task_size - size_of_rewritten_program))
+                    bindings_utilities.append((b, baseline_task_size - size_of_rewritten_program, program))
                     
                         
             
 
         
-        best_binding, corpus_size_delta = max(bindings_utilities,
-                                              key=lambda bu: bu[1])
+        best_binding, corpus_size_delta, best_program = max(bindings_utilities,
+                                                            key=lambda bu: bu[1])
         if best_binding is None:
             continue
 
         if verbose:
             eprint()
             eprint(best_binding)
-            eprint(program)
+            eprint(best_program)
             eprint(corpus_size_delta, "  ".join([str(table.extractSmallest(best_binding[k], named=None, application=.01, abstraction=.01))
                     for k in sorted(best_binding.keys()) ]))
         
@@ -198,6 +202,8 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
         for v in inferior_abstraction_checker.values():
             if v!=table.empty:
                 if table.has_closed_inhabitant(v):
+                    if is_refinement_of(template, p_index):
+                        import pdb; pdb.set_trace()
                     return NEGATIVEINFINITY
 
     #eprint("total corpus_size", total_corpus_size)
@@ -314,13 +320,15 @@ def sasquatch_grammar_induction(g0, frontiers,
     eprint("Inducing a grammar from", len(frontiers), "frontiers")
 
     def objective(g, fs):
+        """returns probabilistic score. by design depends only on the symbolic structure of the grammar and frontiers, and does not depend on the present probabilities, which are re estimated in the process of computing this objective.
+        also returns the new grammar with reestimated probabilities via the inside outside algorithm"""
         g = Grammar.uniform(g.primitives,
                             continuationType=g.continuationType)
         fs = [g.rescoreFrontier(f) for f in fs]
         g = g.insideOutside(fs,
                             pseudoCounts=pseudoCounts,
-                            iterations=10)
-        ll = sum(g.frontierMDL(f) for f in fs )
+                            iterations=1)
+        ll = sum(g.frontierMarginal(f) for f in fs )
 
         # for f in fs:
         #     eprint(g.frontierMarginal(f))
@@ -328,9 +336,11 @@ def sasquatch_grammar_induction(g0, frontiers,
         #     eprint()
         # eprint(ll)
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
-        return ll - sp - aic*len(g.productions)
+        #assert False
+        return ll - sp - aic*len(g.productions), g
 
     def rewrite(program, request, template, invention):
+        
         vs = rewrite_with_invention(table, template, invention, rewriting_steps, program)
         smallest = table.extractSmallest(vs, named=None, application=.01, abstraction=.01)
         try:
@@ -359,7 +369,7 @@ def sasquatch_grammar_induction(g0, frontiers,
         g = Grammar.uniform([invention] + grammar.primitives,
                             continuationType=grammar.continuationType)
 
-        newScore = objective(g, rewritten_frontiers)
+        newScore, g = objective(g, rewritten_frontiers)
 
         actual_utility = sum( min(fe.program.size(named=None, application=.01, abstraction=.01)
                                   for fe in frontier )
@@ -370,10 +380,12 @@ def sasquatch_grammar_induction(g0, frontiers,
         
         actual_utility -= invention.body.size(named=None, application=.01, abstraction=.01)
 
+        rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
+
         return g, invention, rewritten_frontiers, actual_utility, newScore
 
         
-    oldScore = objective(g0, frontiers)
+    oldScore, _ = objective(g0, frontiers)
     eprint("Starting grammar induction score",oldScore)
 
     is_first=True
@@ -413,8 +425,9 @@ def sasquatch_grammar_induction(g0, frontiers,
         # is_first=False
 
         # giving it index
+        global p_index
         p_index=Program.parse("(car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) ?1) (lambda (lambda (cdr $1))) ?2))")
-        # q.push(999999999991, p_index)
+        #q.push(999999999991, p_index)
         
         # giving it the bad fold
         # this is generated because it thinks that curry is a valid way of compressing
@@ -479,6 +492,13 @@ def sasquatch_grammar_induction(g0, frontiers,
         match_version_comprehensive.clear()
         match_version.clear()
 
+        for frontier in frontiers+rewritten_frontiers:
+            for entry in frontier:
+                for _, subexpression in entry.program.walk():
+                    if hasattr(subexpression, "super_index"):
+                        delattr(subexpression, "super_index")
+                
+
         if newScore > oldScore:
             eprint("Score can be improved to", newScore)
             g0, frontiers, oldScore = g, rewritten_frontiers, newScore
@@ -487,6 +507,7 @@ def sasquatch_grammar_induction(g0, frontiers,
                        for frontier in frontiers ),
                    "MAP solutions:")
             for frontier in frontiers:
+                eprint(frontier.summarizeFull())
                 if str(invention) in str(frontier.bestPosterior.program):
                     eprint(frontier.task.name, "\t", frontier.bestPosterior.program)
             eprint()

@@ -407,8 +407,8 @@ class VersionTable():
         return cost, members
 
     def has_closed_inhabitant(self,j,c=0):
-        if j in self._has_closed_inhabitant:
-            return self._has_closed_inhabitant[j]
+        if (j,c) in self._has_closed_inhabitant:
+            return self._has_closed_inhabitant[(j,c)]
         
         if j==self.empty: return False
         if j==self.universe: return True
@@ -429,8 +429,8 @@ class VersionTable():
         else:
             assert l.isPrimitive or l.isInvented
             return_value = True
-
-        self._has_closed_inhabitant[j] = return_value
+            
+        self._has_closed_inhabitant[(j,c)] = return_value
         return return_value
 
     def shiftFree(self,j,n,c=0):

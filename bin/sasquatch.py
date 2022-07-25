@@ -573,7 +573,7 @@ else:
     t0 = time.time()
     g, frontiers = sasquatch_grammar_induction(g0, [f #.topK(1)
                                                     for f in origami_corpus
-                                                    #if "index" in f.task.name
+                                                    if "index" in f.task.name
     ],
                                                structurePenalty=1,
                                                pseudoCounts=30,
