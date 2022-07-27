@@ -1,4 +1,5 @@
 
+
 import numpy as np
 import dreamcoder as dc
 from dreamcoder.utilities import eprint
@@ -466,11 +467,20 @@ def _repeat(old_circuit, start_qubit, n_times, direction,body):
     #direction = +/- 1
     if n_times <= 0:
         raise QuantumCircuitException("Invalid repetition number.")
+    
+    if not isinstance(old_circuit, tuple) and not isinstance(old_circuit, list):
+        raise QuantumCircuitException("Invalid input circuit")
     return   _repeat_help(old_circuit, start_qubit, n_times, direction, body,  lambda x, y: body(x)(y))
 
 def _repeat_help(old_circuit, start_qubit, n_times, direction, body, new_body):
     if n_times==1:
-        return new_body(old_circuit,start_qubit)
+        try:
+            final_output = new_body(old_circuit,start_qubit)
+        except Exception as e:
+            raise QuantumCircuitException("INVALID")
+        if not isinstance(final_output, tuple) and not isinstance(final_output, list):
+            raise QuantumCircuitException("Invalid body signature")
+        return final_output
     
     def new_func(new_circuit, starting_qubit):
         return body(new_body(new_circuit,start_qubit))(starting_qubit)
@@ -484,7 +494,8 @@ def _repeat_help(old_circuit, start_qubit, n_times, direction, body, new_body):
 #
 # tsize = dc.type.baseType("tsize")
 tcircuit = dc.type.baseType("tcircuit")
-
+tnumber = dc.type.baseType("tnumber")
+titerable = dc.type.arrow(tcircuit, dc.type.tint, tcircuit)
 
 
 
@@ -493,9 +504,15 @@ tcircuit = dc.type.baseType("tcircuit")
 # 
 
 # Arithmetics
-p_0 = dc.program.Primitive("0",dc.type.tint,0)
-p_inc = dc.program.Primitive("inc", dc.type.arrow(dc.type.tint, dc.type.tint), lambda x:x+1)
-p_dec = dc.program.Primitive("dec", dc.type.arrow(dc.type.tint, dc.type.tint), lambda x:x-1)
+p_0 = dc.program.Primitive("0",tnumber,0)
+
+def plus(x):
+    return x+1
+        
+def minus(x):
+    return x-1
+p_inc = dc.program.Primitive("inc", dc.type.arrow(tnumber, tnumber), plus)
+p_dec = dc.program.Primitive("dec", dc.type.arrow(tnumber, tnumber), minus)
 
 ## Full circuit [n_qubits, [ops]]
 def no_op(n):
@@ -642,9 +659,9 @@ p_iswap = dc.program.Primitive(name="iswap",
 p_iteration = dc.program.Primitive(name="rep", 
                      ty=dc.type.arrow(tcircuit,     # old_circuit
                                       dc.type.tint, # start_qubit
-                                      dc.type.tint, # n_times
-                                      dc.type.tint, # direction
-                                      dc.type.arrow(tcircuit, dc.type.tint, tcircuit),  # body: tcircuit, starting_qubit -> t_circuit
+                                      tnumber, # n_times
+                                      tnumber, # direction
+                                      titerable,  # body: tcircuit, starting_qubit -> t_circuit
                                       tcircuit), # return
                      value=dc.utilities.Curried(_repeat))
 
@@ -678,18 +695,17 @@ full_primitives = [
 
 primitives = [
     #circuits
-    # p_eye, # remove it!
     p_hadamard,
     p_t,
     p_tdg,
     p_cnot,
-    #arithmetics
+    # #control
+    # p_iteration,
+    # #arithmetics
     # p_0,
     # p_inc,
     # p_dec,
     # p_size,
-    # #control
-    p_iteration
 ]
 
 # ------------------------------------------
@@ -713,6 +729,8 @@ def execute_quantum_algorithm(p, n_qubits, timeout=None):
         return None
     
 def execute_program(program,arguments):
+    if "rep" in str(program):
+        eprint(program)
     circuit = program.evaluate([])
     for arg in arguments:
         circuit = circuit(arg)

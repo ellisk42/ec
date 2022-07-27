@@ -654,7 +654,6 @@ import dreamcoder as dc
 
 import time
 
-
 def enumerate_pcfg(pcfg, timeout,
                    observational_equivalence=True,
                    sound=False): 
@@ -675,7 +674,8 @@ def enumerate_pcfg(pcfg, timeout,
             key = dc.domains.quantum_circuits.primitives.hash_complex_array(unitary)
             task = str(code)
             c_time = time.time()
-            
+            # if "rep" in str(code):
+            #     eprint("YES. There is one!")
             # If multiple programs give the same unitary
             # we want to keep the simplest one
             if key not in enum_dictionary:

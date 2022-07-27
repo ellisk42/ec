@@ -36,7 +36,7 @@ def get_tasks(enumeration_timeout, label):
         dc.utilities.eprint("No task dataset found, generating a new one.")
         
         tasks = makeTasks(enumeration_timeout) 
-        n_train = int(len(tasks)/30)
+        n_train = 1000 # int(len(tasks)/30)
         
         total_indices= np.arange(len(tasks))
         probs = np.array([task.name[6:].count("(") for task in tasks],dtype=float)
@@ -45,7 +45,7 @@ def get_tasks(enumeration_timeout, label):
             probs[probs==i]/=m
         weight=probs/probs.sum()
         
-        indices = set(np.random.choice(total_indices, n_train,p=weight))
+        indices = set(np.random.choice(total_indices, n_train,p=weight, replace=False))
         # remaining_indices = set(total_indices) - indices
         
         train_tasks = [tasks[i] for i in indices]
@@ -108,7 +108,7 @@ def main(arguments):
     
     
     # Get quantum task dataset
-    tasks, train_tasks, test_tasks = get_tasks(50, "medium_5qubit")
+    tasks, train_tasks, test_tasks = get_tasks(50, "medium_3qubit")
 
     # check LIMITED_CONNECTIVITY
     if arguments["limitedConnectivity"]: 

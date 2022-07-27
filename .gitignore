@@ -33,3 +33,4 @@ tests/out/
 .DS_Store
 .ipynb_checkpoints
 logs
+old_logs
