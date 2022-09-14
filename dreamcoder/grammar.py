@@ -442,7 +442,7 @@ class Grammar(object):
                 f = f.normalize()
                 for e in f:
                     _, eu = e.program
-                    u += math.exp(e.logPosterior) * eu
+                    u = u + math.exp(e.logPosterior) * eu
 
             lv = math.log(u.actualVariables + pseudoCounts) - \
                  math.log(u.possibleVariables + pseudoCounts)

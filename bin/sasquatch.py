@@ -571,9 +571,9 @@ else:
     from dreamcoder.sasquatch import sasquatch_grammar_induction
     g0 = origami_grammar #Grammar.uniform(basic_primitives)
     t0 = time.time()
-    g, frontiers = sasquatch_grammar_induction(g0, [f #.topK(1)
+    g, frontiers = sasquatch_grammar_induction(g0, [f
                                                     for f in origami_corpus
-                                                    if "index" in f.task.name
+#                                                    if "zip" in f.task.name
     ],
                                                structurePenalty=1,
                                                pseudoCounts=30,

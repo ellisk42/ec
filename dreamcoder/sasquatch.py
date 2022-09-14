@@ -137,8 +137,6 @@ def utility(table, template, corpus, rewriting_steps, verbose=False, inferior=Fa
         # how big is the smallest program which solves the task, without doing any compression?
         baseline_task_size = min(version_size(table, table.incorporate(program))
                                  for program in frontier)
-        if verbose:
-            print("this frontier has baseline solution size", baseline_task_size)
 
         # list of (binding, utility, source program) pairs
         # utility: baseline_task_size - task_size_with_program_rewritten_with_this_invention
@@ -322,20 +320,39 @@ def sasquatch_grammar_induction(g0, frontiers,
     def objective(g, fs):
         """returns probabilistic score. by design depends only on the symbolic structure of the grammar and frontiers, and does not depend on the present probabilities, which are re estimated in the process of computing this objective.
         also returns the new grammar with reestimated probabilities via the inside outside algorithm"""
+        verbose = False
+        
+        if verbose:eprint("calculating objective")
         g = Grammar.uniform(g.primitives,
                             continuationType=g.continuationType)
+    
+        if verbose:eprint("grammar productions", [g.expression2likelihood[ke] for ke in sorted(g.expression2likelihood.keys(), key=str)] )
         fs = [g.rescoreFrontier(f) for f in fs]
+        if verbose:
+            eprint("rescored frontiers")
+            for f in fs:
+                eprint(g.frontierMarginal(f))
+                eprint(f.summarizeFull())
+                eprint()
+            # with open("/tmp/test.pickle", "wb") as handle: # 
+            #     pickle.dump((g, fs, pseudoCounts), handle)
         g = g.insideOutside(fs,
                             pseudoCounts=pseudoCounts,
                             iterations=1)
-        ll = sum(g.frontierMarginal(f) for f in fs )
+        if verbose: eprint("grammar productions, after inside outside", [g.expression2likelihood[ke] for ke in sorted(g.expression2likelihood.keys(), key=str)] )
+        ll = sum(g.frontierMDL(f) for f in fs )
 
-        # for f in fs:
-        #     eprint(g.frontierMarginal(f))
-        #     eprint(f.summarizeFull())
-        #     eprint()
-        # eprint(ll)
+        if verbose:
+            for f in fs:
+                eprint(g.frontierMarginal(f))
+                eprint(f.summarizeFull())
+                eprint()
+            eprint("overall likelihood", ll)
+
+            eprint("")
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
+        eprint(ll, sp)
+        
         #assert False
         return ll - sp - aic*len(g.productions), g
 
@@ -343,8 +360,11 @@ def sasquatch_grammar_induction(g0, frontiers,
         
         vs = rewrite_with_invention(table, template, invention, rewriting_steps, program)
         smallest = table.extractSmallest(vs, named=None, application=.01, abstraction=.01)
+        if not rerank: return smallest
+        
         try:
-            return EtaLongVisitor(request).execute(smallest)
+            rw = EtaLongVisitor(request).execute(smallest)
+            return rw
         except (EtaExpandFailure,UnificationFailure):
             return program
             
@@ -357,7 +377,9 @@ def sasquatch_grammar_induction(g0, frontiers,
         invention = template
         for ii in range(arity):
             invention = invention.substitute(Program.parse(f"?{ii+1}"), Index(ii))
-        invention = Invented(invention.wrap_in_abstractions(invention.numberOfFreeVariables))
+        invention = invention.wrap_in_abstractions(invention.numberOfFreeVariables)
+        #invention = EtaLongVisitor(invention.infer()).execute(invention)
+        invention = Invented(invention)
 
         rewritten_frontiers = [ Frontier([ FrontierEntry(rewrite(fe.program, frontier.task.request,
                                                                  template, invention),
@@ -366,11 +388,16 @@ def sasquatch_grammar_induction(g0, frontiers,
                                            for fe in frontier],
                                          task=frontier.task)
                                 for frontier in frontiers ]
+
+        
         g = Grammar.uniform([invention] + grammar.primitives,
                             continuationType=grammar.continuationType)
-
-        newScore, g = objective(g, rewritten_frontiers)
-
+        if rerank:
+            newScore, g = objective(g, rewritten_frontiers)
+            rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
+        else:
+            newScore = 0. # not using probabilities so whatever
+            
         actual_utility = sum( min(fe.program.size(named=None, application=.01, abstraction=.01)
                                   for fe in frontier )
                               for frontier in frontiers)
@@ -379,8 +406,6 @@ def sasquatch_grammar_induction(g0, frontiers,
                               for frontier in rewritten_frontiers)
         
         actual_utility -= invention.body.size(named=None, application=.01, abstraction=.01)
-
-        rewritten_frontiers = [g.rescoreFrontier(f) for f in rewritten_frontiers]
 
         return g, invention, rewritten_frontiers, actual_utility, newScore
 
@@ -438,6 +463,13 @@ def sasquatch_grammar_induction(g0, frontiers,
         # p1=Program.parse("(lambda (#(lambda (lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $1 (lambda (lambda (cons ($2 $0) $1))) empty))) $0 ?1))")
         # q.push(999999999991, p1)
 
+        # giving it the bad zip
+        p_bad_zip = Program.parse("(#(lambda (lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $1 (lambda (lambda (cons ($2 $0) $1))) empty))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) (#(lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $0 (lambda (lambda (+ 1 $1))) 0)) ?1)) (lambda (?2 (#(lambda (lambda (car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) $1) (lambda (lambda (cdr $1))) $0)))) $0))))")
+
+        p_good_zip = Program.parse("(lambda (#(lambda (lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $1 (lambda (lambda (cons ($2 $0) $1))) empty))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) (#(lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $0 (lambda (lambda (+ 1 $1))) 0)) $0)) (lambda (?1 (#(lambda (lambda (car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) $1) (lambda (lambda (cdr $1))) $0)))) $0 ?2) (#(lambda (lambda (car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) $1) (lambda (lambda (cdr $1))) $0)))) $0 $1)))))")
+        # q.push(999999999991, p_good_zip)
+        # q.push(99999999999, p_bad_zip)
+
         pops=0
         utility_calculations=1
         while len(q):
@@ -450,21 +482,28 @@ def sasquatch_grammar_induction(g0, frontiers,
             if len(r)==0:
                 unadjusted_utility = utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1)
                 rewritten_stuff = rewrite_and_score(g0, frontiers, p)
-                newScore, new_grammar, u = rewritten_stuff[-1], rewritten_stuff[0], rewritten_stuff[-2]
+                #assert False
+                newScore, new_grammar, adjusted_utility = rewritten_stuff[-1], rewritten_stuff[0], rewritten_stuff[-2]
                 the_type = new_grammar.productions[0][1]
-                
+
+                if rerank:
+                    u = adjusted_utility
+                else:
+                    u = unadjusted_utility
+                    
                 if (rerank and newScore>best_score) or \
-                   ((not rerank) and u>best_utility): 
+                   ((not rerank) and u > best_utility): 
                     color = Fore.GREEN
                     best = p
                 else:
                     color = Fore.YELLOW if u>0 else Fore.RED
-                eprint(color, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far:\n\t", p, ":", the_type, "\nutility", u, f"(adjusted from {unadjusted_utility})", "probabilistic score", newScore, '\033[0m')
-                utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1, verbose=True)
+                eprint(color, int(time.time()-starttime), "sec", pops, "pops", utility_calculations, "utility calculations", "best found so far:\n\t", p, ":", the_type, "\nutility", u, f"(adjusted from {unadjusted_utility})", "probabilistic score", newScore, "structure penalty", structurePenalty * sum(primitiveSize(p) for p in new_grammar.primitives), '\033[0m')
+                #utility(table, p, corpus, rewriting_steps, inferior=False, coefficient=1, verbose=True)
                 eprint()
+                #assert False
                 
 
-                best_utility = max(min(unadjusted_utility, u), best_utility)
+                best_utility = max(u, best_utility)
                 best_score = max(newScore, best_score)
             else:
                 for pp in r:
@@ -499,15 +538,18 @@ def sasquatch_grammar_induction(g0, frontiers,
                         delattr(subexpression, "super_index")
                 
 
-        if newScore > oldScore:
-            eprint("Score can be improved to", newScore)
+        if (rerank and newScore > oldScore) or (not rerank and best_utility > 0):
+            if rerank:
+                eprint("Score can be improved to", newScore)
+            else:
+                eprint("Utility can be improved by", best_utility)
+                
             g0, frontiers, oldScore = g, rewritten_frontiers, newScore
             eprint("New library function occurs in",
                    sum(str(invention) in str(frontier.bestPosterior.program)
                        for frontier in frontiers ),
                    "MAP solutions:")
             for frontier in frontiers:
-                eprint(frontier.summarizeFull())
                 if str(invention) in str(frontier.bestPosterior.program):
                     eprint(frontier.task.name, "\t", frontier.bestPosterior.program)
             eprint()
