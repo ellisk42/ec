@@ -1,0 +1,197 @@
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import np. This is only okay when doing pypy compression.
+Failure loading recognition - only acceptable if using pypy 
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import np. This is only okay when doing pypy compression.
+Failure loading recognition - only acceptable if using pypy 
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import np. This is only okay when doing pypy compression.
+Failure to load pregex. This is only acceptable if using pypy
+Failure to load pregex. This is only acceptable if using pypy
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import np. This is only okay when doing pypy compression.
+WARNING: Could not import recognition. This is only okay when doing pypy compression.
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import np. This is only okay when doing pypy compression.
+WARNING: Could not import torch. This is only okay when doing pypy compression.
+WARNING: Could not import np. This is only okay when doing pypy compression.
+DEPRECATION NOTICE: this module (dreamcoder.ec) will be deleted soon, please update your code to import from dreamcoder.dreamcoder instead
+
+
+
+RUNNING 1 0
+Inducing a grammar from 11 frontiers
+-315.94268536476443 13.0
+Starting grammar induction score -341.94268536476443
+constructed 1-step version spaces in 0.4 seconds
+Enumerated 25511 distinct version spaces
+[32m 103 sec 644 pops 11619 utility calculations best found so far:
+	 (lambda (fix1 $0 (lambda (lambda (if (?1 $0) empty (cons (?2 $0) ($1 (?3 $0)))))))) : (t0 -> t0) -> (t0 -> t1) -> (t0 -> bool) -> t0 -> list(t1) 
+utility 38.50999999999998 (adjusted from 38.50999999999998) probabilistic score 0.0 structure penalty 17.8 [0m
+
+[33m 117 sec 725 pops 13042 utility calculations best found so far:
+	 (lambda (fix1 $0 (lambda (lambda (if (?1 $0) ?2 (?3 (car $0) ($1 (cdr $0)))))))) : (t0 -> t1 -> t1) -> t1 -> (list(t0) -> bool) -> list(t0) -> t1 
+utility 33.44999999999999 (adjusted from 33.44999999999999) probabilistic score 0.0 structure penalty 17.8 [0m
+
+[33m 121 sec 763 pops 13715 utility calculations best found so far:
+	 (lambda (fix1 $0 (lambda (lambda (if (empty? $0) ?1 (?2 (car $0) ($1 (cdr $0)))))))) : (t0 -> t1 -> t1) -> t1 -> list(t0) -> t1 
+utility 31.409999999999986 (adjusted from 31.409999999999986) probabilistic score 0.0 structure penalty 18.7 [0m
+
+[33m 150 sec 1020 pops 18300 utility calculations best found so far:
+	 (if ?1 empty (cons ?2 ?3)) : list(t0) -> t0 -> bool -> list(t0) 
+utility 10.109999999999998 (adjusted from 10.109999999999998) probabilistic score 0.0 structure penalty 16.3 [0m
+
+[33m 151 sec 1032 pops 18487 utility calculations best found so far:
+	 (lambda (fix1 $0 ?1)) : ((t0 -> t1) -> t0 -> t1) -> t0 -> t1 
+utility 8.189999999999996 (adjusted from 8.189999999999996) probabilistic score 0.0 structure penalty 14.2 [0m
+
+[33m 152 sec 1041 pops 18629 utility calculations best found so far:
+	 (if (empty? ?1) empty ?2) : list(t0) -> list(t1) -> list(t0) 
+utility 7.079999999999998 (adjusted from 7.079999999999998) probabilistic score 0.0 structure penalty 16.2 [0m
+
+[33m 152 sec 1042 pops 18629 utility calculations best found so far:
+	 (if (empty? ?1) ?1 ?2) : list(t0) -> list(t0) -> list(t0) 
+utility 7.079999999999998 (adjusted from 7.079999999999998) probabilistic score 0.0 structure penalty 15.3 [0m
+
+[33m 154 sec 1058 pops 18884 utility calculations best found so far:
+	 (if ?1 empty ?2) : list(t0) -> bool -> list(t0) 
+utility 4.049999999999999 (adjusted from 4.049999999999999) probabilistic score 0.0 structure penalty 15.2 [0m
+
+[33m 154 sec 1059 pops 18884 utility calculations best found so far:
+	 (if (empty? ?1) ?2 ?3) : t0 -> t0 -> list(t1) -> t0 
+utility 4.049999999999999 (adjusted from 4.049999999999999) probabilistic score 0.0 structure penalty 15.3 [0m
+
+[33m 154 sec 1065 pops 18971 utility calculations best found so far:
+	 (if (?1 ?2) empty ?3) : list(t0) -> t1 -> (t1 -> bool) -> list(t0) 
+utility 3.039999999999999 (adjusted from 3.039999999999999) probabilistic score 0.0 structure penalty 15.3 [0m
+
+[33m 155 sec 1077 pops 19151 utility calculations best found so far:
+	 (if (?1 empty?) empty ?2) : list(t0) -> ((list(t1) -> bool) -> bool) -> list(t0) 
+utility 0.9600000000000009 (adjusted from 0.9600000000000009) probabilistic score 0.0 structure penalty 16.2 [0m
+
+Utility can be improved by 38.50999999999998
+New library function occurs in 7 MAP solutions:
+countdown 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) (lambda (- $0 1)) (+ 1) (eq? 0))
+weird count 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) (+ 1) (- 0) (eq? 0))
+take every other 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) (lambda (cdr (cdr $0))) car (lambda (empty? (if (empty? $0) empty $0))))
+drop last element 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr car (lambda (empty? (cdr $0))))
+map double 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda (+ (car $0) (car $0))) empty?)
+map increment 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda (+ (car $0) 1)) empty?)
+map negation 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda (- 0 (car $0))) empty?)
+
+constructed 1-step version spaces in 0.1 seconds
+Enumerated 19375 distinct version spaces
+[32m 65 sec 731 pops 13775 utility calculations best found so far:
+	 (lambda (fix1 $0 (lambda (lambda (?1 (car $0) (if (empty? (cdr $0)) ?2 ($1 (cdr $0)))))))) : t0 -> (t1 -> t0 -> t0) -> list(t1) -> t0 
+utility 9.129999999999997 (adjusted from 9.129999999999997) probabilistic score 0.0 structure penalty 24.5 [0m
+
+[33m 82 sec 1013 pops 18936 utility calculations best found so far:
+	 (+ 1) : int -> int 
+utility 2.0299999999999994 (adjusted from 2.0299999999999994) probabilistic score 0.0 structure penalty 19.8 [0m
+
+[33m 83 sec 1017 pops 18992 utility calculations best found so far:
+	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr) : (list(t0) -> t1) -> (list(t0) -> bool) -> list(t0) -> list(t1) 
+utility 2.0299999999999994 (adjusted from 2.0299999999999994) probabilistic score 0.0 structure penalty 19.8 [0m
+
+[33m 84 sec 1036 pops 19325 utility calculations best found so far:
+	 (lambda (fix1 $0 ?1)) : ((t0 -> t1) -> t0 -> t1) -> t0 -> t1 
+utility 1.049999999999999 (adjusted from 1.049999999999999) probabilistic score 0.0 structure penalty 19.0 [0m
+
+[33m 84 sec 1041 pops 19400 utility calculations best found so far:
+	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr ?1) : (list(t0) -> t1) -> (list(t0) -> bool) -> list(t0) -> list(t1) 
+utility 1.0199999999999996 (adjusted from 1.0199999999999996) probabilistic score 0.0 structure penalty 19.9 [0m
+
+Utility can be improved by 9.129999999999997
+New library function occurs in 5 MAP solutions:
+sum 	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) 0 +)
+append constant 0 	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) (cons 0 empty) cons)
+map double 	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) empty (lambda (cons (+ $0 $0))))
+map increment 	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) empty (lambda (cons (+ $0 1))))
+map negation 	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) empty (lambda (cons (- 0 $0))))
+
+constructed 1-step version spaces in 0.1 seconds
+Enumerated 17458 distinct version spaces
+[32m 64 sec 725 pops 14091 utility calculations best found so far:
+	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda (?1 (car $0))) empty?) : (t0 -> t1) -> list(t0) -> list(t1) 
+utility 2.039999999999999 (adjusted from 2.039999999999999) probabilistic score 0.0 structure penalty 28.7 [0m
+
+[33m 65 sec 735 pops 14261 utility calculations best found so far:
+	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) empty (lambda (cons (?1 $0)))) : (t0 -> t1) -> list(t0) -> list(t1) 
+utility 2.0299999999999994 (adjusted from 2.0299999999999994) probabilistic score 0.0 structure penalty 27.7 [0m
+
+[33m 71 sec 797 pops 15406 utility calculations best found so far:
+	 (+ 1) : int -> int 
+utility 1.0199999999999996 (adjusted from 1.0199999999999996) probabilistic score 0.0 structure penalty 26.5 [0m
+
+[33m 71 sec 800 pops 15443 utility calculations best found so far:
+	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) empty) : (t0 -> list(t1) -> list(t1)) -> list(t0) -> list(t1) 
+utility 1.0199999999999996 (adjusted from 1.0199999999999996) probabilistic score 0.0 structure penalty 26.5 [0m
+
+[33m 73 sec 837 pops 16137 utility calculations best found so far:
+	 (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0)))))))))) empty ?1) : (t0 -> list(t1) -> list(t1)) -> list(t0) -> list(t1) 
+utility 0.009999999999999787 (adjusted from 0.009999999999999787) probabilistic score 0.0 structure penalty 26.6 [0m
+
+Utility can be improved by 2.039999999999999
+New library function occurs in 3 MAP solutions:
+map double 	 (#(lambda (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda ($1 (car $0))) empty?)) (lambda (+ $0 $0)))
+map increment 	 (#(lambda (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda ($1 (car $0))) empty?)) (+ 1))
+map negation 	 (#(lambda (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda ($1 (car $0))) empty?)) (- 0))
+
+constructed 1-step version spaces in 0.1 seconds
+Enumerated 17018 distinct version spaces
+[32m 61 sec 628 pops 12868 utility calculations best found so far:
+	 (+ 1) : int -> int 
+utility 2.0299999999999994 (adjusted from 2.0299999999999994) probabilistic score 0.0 structure penalty 30.7 [0m
+
+[31m 69 sec 737 pops 15008 utility calculations best found so far:
+	 (lambda (+ $0 1)) : int -> int 
+utility 0.0 (adjusted from 0.0) probabilistic score 0.0 structure penalty 30.8 [0m
+
+Utility can be improved by 2.0299999999999994
+New library function occurs in 4 MAP solutions:
+length int 	 (lambda (fix1 $0 (lambda (lambda (#(+ 1) (if (empty? (cdr $0)) 0 ($1 (cdr $0))))))))
+countdown 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) (lambda (- $0 1)) #(+ 1) (eq? 0))
+weird count 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) #(+ 1) (- 0) (eq? 0))
+map increment 	 (#(lambda (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda ($1 (car $0))) empty?)) #(+ 1))
+
+constructed 1-step version spaces in 0.1 seconds
+Enumerated 16213 distinct version spaces
+[32m 70 sec 708 pops 15179 utility calculations best found so far:
+	 (- 0) : int -> int 
+utility 0.009999999999999787 (adjusted from 0.009999999999999787) probabilistic score 0.0 structure penalty 32.7 [0m
+
+[33m 70 sec 715 pops 15305 utility calculations best found so far:
+	 (eq? 0) : int -> bool 
+utility 0.009999999999999787 (adjusted from 0.009999999999999787) probabilistic score 0.0 structure penalty 32.7 [0m
+
+Utility can be improved by 0.009999999999999787
+New library function occurs in 2 MAP solutions:
+weird count 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) #(+ 1) #(- 0) (eq? 0))
+map negation 	 (#(lambda (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda ($1 (car $0))) empty?)) #(- 0))
+
+constructed 1-step version spaces in 0.1 seconds
+Enumerated 15738 distinct version spaces
+[32m 73 sec 698 pops 15670 utility calculations best found so far:
+	 (eq? 0) : int -> bool 
+utility 0.009999999999999787 (adjusted from 0.009999999999999787) probabilistic score 0.0 structure penalty 34.7 [0m
+
+Utility can be improved by 0.009999999999999787
+New library function occurs in 2 MAP solutions:
+countdown 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) (lambda (- $0 1)) #(+ 1) #(eq? 0))
+weird count 	 (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) #(+ 1) #(- 0) #(eq? 0))
+
+constructed 1-step version spaces in 0.1 seconds
+Enumerated 15665 distinct version spaces
+No invention looks promising so we are done
+new primitives:
+int -> bool 	 #(eq? 0)
+int -> int 	 #(- 0)
+int -> int 	 #(+ 1)
+(t0 -> t1) -> list(t0) -> list(t1) 	 #(lambda (#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0))))))))))) cdr (lambda ($1 (car $0))) empty?))
+t0 -> (t1 -> t0 -> t0) -> list(t1) -> t0 	 #(lambda (lambda (lambda (fix1 $0 (lambda (lambda ($3 (car $0) (if (empty? (cdr $0)) $4 ($1 (cdr $0))))))))))
+(t0 -> t0) -> (t0 -> t1) -> (t0 -> bool) -> t0 -> list(t1) 	 #(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (if ($3 $0) empty (cons ($4 $0) ($1 ($5 $0)))))))))))
+610.4839630126953 seconds
+
+
+
