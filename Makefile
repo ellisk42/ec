@@ -1,4 +1,4 @@
-claim-5:
+claim-5: clean
 	./claim-5.sh
 	./analyze.sh
 
