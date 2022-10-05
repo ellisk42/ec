@@ -1,5 +1,6 @@
 claim-5:
 	./claim-5.sh
+	./analyze.sh
 
 claim-5-viz:
 	./analyze.sh
