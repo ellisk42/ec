@@ -9,7 +9,7 @@ test-1:
 	pypy3 bin/sasquatch.py -v -a 0 -i -t --iteration 0
 
 test-2:
-	pypy3 bin/sasquatch.py -v -a 1 -i -t --iteration 0 -r
+	pypy3 bin/sasquatch.py -v -a 1 -i -t --iteration 3 -r
 
 clean:
 	rm -rf artifact_out/*
