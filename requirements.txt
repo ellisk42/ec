@@ -1,6 +1,6 @@
 Box2D-kengz==2.3.3
 cairocffi==1.0.2
-certifi==2019.3.9
+certifi==2022.12.7
 cffi==1.12.3
 chardet==3.0.4
 colorama==0.4.1
