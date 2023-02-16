@@ -49,7 +49,7 @@ let () =
           Hashtbl.replace generated l (cost,name) ;
           save p c name cost
         end
-      end with Not_found ->
+      end with | Not_found | Not_found_s _ ->
       begin
         let name = gen_name () in
         Hashtbl.add generated l (cost,name) ;
