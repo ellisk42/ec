@@ -4,15 +4,17 @@ import os
 import pickle
 import subprocess
 import sys
+from typing import List
+import stitch_core
 
 from dreamcoder.fragmentGrammar import FragmentGrammar
 from dreamcoder.frontier import Frontier, FrontierEntry
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program, Invented
 from dreamcoder.utilities import eprint, timing, callCompiled, get_root_dir
-from dreamcoder.vs import induceGrammar_Beta
+from dreamcoder.vs import induceGrammar_Beta, RewriteWithInventionVisitor
 from dreamcoder.translation import serialize_language_alignments
-
+from dreamcoder.type import Type
 
 def induceGrammar(*args, **kwargs):
     if sum(not f.empty for f in args[1]) == 0:
@@ -22,6 +24,8 @@ def induceGrammar(*args, **kwargs):
         backend = kwargs.pop("backend", "pypy")
         if backend == "pypy":
             g, newFrontiers = callCompiled(pypyInduce, *args, **kwargs)
+        elif backend == "python":
+            g, newFrontiers = pypyInduce(*args, **kwargs)
         elif backend == "rust":
             g, newFrontiers = rustInduce(*args, **kwargs)
         elif backend == "vs":
@@ -40,6 +44,9 @@ def induceGrammar(*args, **kwargs):
             kwargs['topI'] = 300
             kwargs['bs'] = 1000000
             g, newFrontiers = ocamlInduce(*args, **kwargs)
+        elif backend == "stitch":
+            grammar, frontiers = args
+            g, newFrontiers = stitchInduce(grammar, frontiers, **kwargs)
         else:
             assert False, "unknown compressor"
     return g, newFrontiers
@@ -256,3 +263,56 @@ def rustInduce(g0, frontiers, _=None,
             frontiers,
             resp["frontiers"])]
     return g, newFrontiers
+
+
+def stitchInduce(grammar: Grammar, frontiers: List[Frontier], **kwargs):
+    """Compresses the library, generating a new grammar based on the frontiers, using Stitch."""
+
+    def grammar_from_json(grammar_json: dict) -> Grammar:
+        """Creates a grammar object from a JSON representation of the grammar."""
+        grammar = grammar_json['DSL']
+        grammar = Grammar(grammar["logVariable"],
+            [(l, p.infer(), p)
+                for production in grammar["productions"]
+                for l in [production["logProbability"]]
+                for p in [Program.parse(production["expression"])]],
+            continuationType=Type.fromjson(grammar["continuationType"]) if "continuationType" in grammar else None)
+        return grammar
+
+    # Parse the arguments for the Stitch compressor.
+    dreamcoder_json = {"DSL": grammar.json(), "frontiers": [f.json() for f in frontiers], **kwargs}
+    stitch_kwargs = stitch_core.from_dreamcoder(dreamcoder_json)
+    stitch_kwargs.update(dict(utility_by_rewrite=True))
+
+    # Actually run Stitch.
+    compress_result = stitch_core.compress(**stitch_kwargs, iterations=3, max_arity=3)
+
+    rewritten_progs = compress_result.json['rewritten_dreamcoder']
+    task_strings = stitch_kwargs.pop("tasks", [])
+    anon_to_name = stitch_kwargs.pop("anonymous_to_named", [])
+
+    # Create a new grammar object.
+    dreamcoder_json['DSL']['productions'].extend(
+        [{'logProbability': 0, 'expression': abs['dreamcoder']} for abs in compress_result.json['abstractions']])
+    new_grammar = grammar_from_json(dreamcoder_json)
+
+    str_to_task = {str(frontier.task): frontier.task for frontier in frontiers}
+
+    # Create new frontiers.
+    task_to_unscored_frontier = {}
+    for task_str, rewritten_prog in zip(task_strings, rewritten_progs):
+
+        # Very hacky -- just string replacing names with the original anonymous function.
+        anon_prog = rewritten_prog
+        for stitch_name, invention in anon_to_name:
+            anon_prog = anon_prog.replace(stitch_name, invention)
+        program = Program.parse(anon_prog)
+
+        frontier_entry = FrontierEntry(program, logPrior=0, logLikelihood=0)
+        task_to_unscored_frontier.setdefault(task_str, Frontier([], str_to_task[task_str])).entries.append(frontier_entry)
+
+    # TODO: Rescore the frontiers.
+    new_frontiers = list(task_to_unscored_frontier.values())
+    # new_frontiers = [new_grammar.rescoreFrontier(frontier) for frontier in task_to_unscored_frontier.values()]
+
+    return new_grammar, new_frontiers
