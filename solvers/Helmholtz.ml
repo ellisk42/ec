@@ -1,4 +1,5 @@
 open Core
+open Poly
 
 open Dreaming
 
@@ -10,11 +11,11 @@ open Utils
 open Timeout
 open Type
 open Tower
-    
+
 open Yojson.Basic
 
-    
-    
+
+
 
 let run_job channel =
   let open Yojson.Basic.Util in
@@ -38,7 +39,7 @@ let run_job channel =
     try deserialize_grammar g |> make_dummy_contextual
     with _ -> deserialize_contextual_grammar g
   in
-  let show_vars = 
+  let show_vars =
     try j |> member "use_vars_in_tokenized" |> to_bool
     with _ -> false
   in
@@ -64,15 +65,15 @@ let output_job ?maxExamples:(maxExamples=50000) ?show_vars:(show_vars=false) res
       let p = (maxExamples |> Float.of_int)/.(l |> Float.of_int) in
       result |> List.filter ~f:(fun _ -> Random.float 1. < p)
   in
-  let message : json = 
+  let message : t =
     `List(results |> List.map ~f:(fun (behavior, (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
-                "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)));  
+                "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)));
                 "tokens", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_tokens show_vars)));
                 ])))
-  in 
+  in
   message
 
-let _ = 
+let _ =
   run_job Pervasives.stdin |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout

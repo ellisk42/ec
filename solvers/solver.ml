@@ -56,9 +56,9 @@ let load_problems channel =
     with _ -> raise (Failure "could not unpack")
   in
 
-  let tf = j |> member "tasks" |> to_list |> List.map ~f:(fun j -> 
+  let tf = j |> member "tasks" |> to_list |> List.map ~f:(fun j ->
       let e = j |> member "examples" |> to_list in
-      let task_type = j |> member "request" |> deserialize_type in 
+      let task_type = j |> member "request" |> deserialize_type in
       let examples = e |> List.map ~f:(fun ex -> (ex |> member "inputs" |> to_list |> List.map ~f:unpack,
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
@@ -72,7 +72,7 @@ let load_problems channel =
            | None -> (Printf.eprintf " (ocaml) FATAL: Could not find handler for %s\n" special;
                       exit 1)
          with _ -> supervised_task) ~timeout:timeout name task_type examples
-      in 
+      in
       (task, maximum_frontier))
   in
 
@@ -80,10 +80,10 @@ let load_problems channel =
   (* let most_specific_type = unify_many_types (tf |> List.map ~f:(fun (t,_) -> t.task_type)) in
    * let tf = tf |> List.map ~f:(fun (t,f) -> ({t with task_type=most_specific_type},f)) in *)
 
-  let verbose = try j |> member "verbose" |> to_bool      
+  let verbose = try j |> member "verbose" |> to_bool
     with _ -> false
   in
-  
+
   let _ = try
       shatter_factor := (j |> member "shatter" |> to_int)
     with _ -> ()
@@ -108,7 +108,7 @@ let load_problems channel =
   let timeout = j |> member "timeout" |> to_float in
   let nc =
     try
-      j |> member "nc" |> to_int 
+      j |> member "nc" |> to_int
     with _ -> 1
   in
   (tf,g,
@@ -119,7 +119,7 @@ let load_problems channel =
 let export_frontiers number_enumerated tf solutions: string =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
-  let serialization : Yojson.Basic.json =
+  let serialization : Yojson.Basic.t =
     `Assoc(("number_enumerated",`Int(number_enumerated)) ::
            List.map2_exn tf solutions ~f:(fun (t,_) ss ->
         (t.name, `List(ss |> List.map ~f:(fun s ->

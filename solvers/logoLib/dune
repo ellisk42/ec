@@ -1,0 +1,3 @@
+(library
+ (name logoLib)
+ (libraries vg vg.cairo))

@@ -1,9 +1,10 @@
 open Core
+open Poly
 
 open Type
 open Program
 open Utils
-    
+
 type variable = {mutable gradient : float option;
                  mutable data : float option;
                  volatile : bool; (* whether this depends on something which is a function of learned parameters *)
@@ -44,10 +45,10 @@ let make_binary_variable forward backward a b =
 
 let make_unitary_variable forward backward a =
   make_variable (fun x -> match x with
-      |[a;] -> forward a 
+      |[a;] -> forward a
       |_ -> raise (Failure "unitary variable did not get 1 arguments"))
     (fun x -> match x with
-      |[a;] -> backward a 
+      |[a;] -> backward a
       |_ -> raise (Failure "urinary variable did not get 1 backward arguments"))
     [a;]
 
@@ -90,10 +91,10 @@ let update_variable v x =
 
 
 let (+&) =
-  make_binary_variable (+.) (fun _ _ -> [1.;1.]) 
+  make_binary_variable (+.) (fun _ _ -> [1.;1.])
 
 let (-&) =
-  make_binary_variable (-.) (fun _ _ -> [1.;-1.]) 
+  make_binary_variable (-.) (fun _ _ -> [1.;-1.])
 
 let ( *& ) =
   make_binary_variable ( *. ) (fun a b -> [b;a])
@@ -124,14 +125,14 @@ let clamp ~l ~u =
         a)
     (fun a ->
        if a > u || a < l then [0.] else [1.])
-    
+
 
 let log_soft_max xs =
-  make_variable (fun vs -> 
+  make_variable (fun vs ->
       let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in
       let zm = List.fold_right ~init:0. ~f:(fun x a -> exp (x -. m) +. a) vs in
       m+. (log zm))
-    (fun vs -> 
+    (fun vs ->
       let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in
       let zm = List.fold_right ~init:0. ~f:(fun x a -> exp (x -. m) +. a) vs in
       List.map vs ~f:(fun x -> (exp (x-.m)) /. zm))
@@ -186,13 +187,13 @@ let rec run_optimizer opt ?update:(update = 1000)
   let l = update_network loss in
   if iterations = 0 then l else begin
 
-    if update > 0 && iterations mod update = 0 then begin 
+    if update > 0 && iterations mod update = 0 then begin
       Printf.eprintf "LOSS: %f\n" l;
       parameters |> List.iter ~f:(fun p -> Printf.eprintf "parameter %f\t" (p.data |> get_some));
       Printf.eprintf "\n";
     end else ();
 
-    parameters |> List.map ~f:differentiate |> opt |> 
+    parameters |> List.map ~f:differentiate |> opt |>
     List.iter2_exn parameters ~f:(fun x dx ->
         let v = x.data |> get_some in
         update_variable x (v +. dx));
@@ -211,7 +212,7 @@ let restarting_optimize opt ?update:(update = 1000)
 let gradient_descent ?lr:(lr = 0.001) =
   List.map ~f:(fun dx -> ~-. (lr*.dx))
 
-let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) = 
+let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
   let first_iteration = ref true in
   let previous_signs = ref [] in
   let individual_rates = ref [] in
@@ -226,14 +227,14 @@ let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
       previous_signs := new_signs;
       individual_rates := dxs |> List.map ~f:(fun _ -> lr);
 
-      updates      
-    end else begin 
+      updates
+    end else begin
       individual_rates := List.map3_exn !individual_rates !previous_signs new_signs
           ~f:(fun individual_rate previous_sign new_sign ->
               if previous_sign = new_sign
               then individual_rate*.grow
               else individual_rate*.decay);
-      
+
       let updates = List.map2_exn !individual_rates dxs
           ~f:(fun individual_rate dx ->
               if dx > 0.
@@ -264,7 +265,7 @@ let test_differentiation () =
 
   ignore(update_network z);
 
-  Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);  
+  Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);
 
   update_variable x 2.;
   update_variable y 2.;
@@ -372,7 +373,7 @@ let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) 
 (*           List.fold2_exn p y ~init:(~$0.) ~f:(fun a _p _y -> a +& (e _p _y)) *)
 (*         with _ -> raise DifferentiableBadShape) *)
 (*   | t -> raise (Failure ("placeholder_data: bad type "^(string_of_type t))) *)
-  
+
 
 
 let test_program_differentiation() =
@@ -416,7 +417,7 @@ let test_program_differentiation() =
 (*   | Summation(ss) -> ss |> List.map ~f:show_symbolic |> join ~separator:" + " |> Printf.sprintf "(%s)" *)
 (*   | Product(ss) -> ss |> List.map ~f:show_symbolic |> join ~separator:" * " |> Printf.sprintf "(%s)" *)
 (*   | Quotient(n,d) -> Printf.sprintf "(%s / %s)" (show_symbolic n) (show_symbolic d) *)
-    
+
 
 
 (* let program_to_symbolic_expression p = *)
@@ -467,7 +468,7 @@ let test_program_differentiation() =
 (*     let q = q @ (List.range (List.length q) d |> List.map ~f:(fun _ -> SymbolicZero)) in *)
 (*     List.map2_exn p q ~f:make_summation *)
 (*   in  *)
-  
+
 (*   let rec multiply_polynomials p q = *)
 (*     match p with *)
 (*     | [] -> [] *)
@@ -476,7 +477,7 @@ let test_program_differentiation() =
 (*         (q |> List.map ~f:(fun q' -> make_product k q')) *)
 (*         (multiply_polynomials p q |> multiply_polynomial_by_x) *)
 (*   in *)
-  
+
 (*   let rec simplify_product (components : canonical_polynomial list) = *)
 (*     match components with *)
 (*     | [] -> assert (false) *)
@@ -484,7 +485,7 @@ let test_program_differentiation() =
 (*     | x :: y :: z -> *)
 (*       multiply_polynomials x y :: z |> simplify_product *)
 (*   in  *)
-    
+
 (*   match s with *)
 (*   | SymbolicVariable -> [SymbolicZero;SymbolicUnit;], [SymbolicUnit] *)
 (*   | SymbolicConstant(_) -> [s], [SymbolicUnit] *)
@@ -528,7 +529,7 @@ let test_program_differentiation() =
 (*     | Product(ss) -> *)
 (*       let ss = ss |> List.map ~f:simplify_coefficient in *)
 (*       assert (false) *)
-      
+
 
 (*   (n |> List.map ~f:simplify_coefficient, *)
 (*    d |> List.map ~f:simplify_coefficient) *)
@@ -546,7 +547,3 @@ let test_program_differentiation() =
 (* ;; *)
 
 (* test_simplify() *)
-    
-
-    
-   

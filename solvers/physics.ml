@@ -1,11 +1,12 @@
 open Core
+open Poly
 
 open Utils
 open Differentiation
 open Program
 open Type
 open Task
-    
+
 let tvector = make_ground "vector"
 let tobject = make_ground "object"
 let tfield = make_ground "field"
@@ -51,9 +52,9 @@ primitive "dp" (tvector @> tvector @> treal)
 primitive "vector-length" (tvector @> treal)
   (fun v -> v |> List.map ~f:(fun x -> x *& x) |> List.reduce_exn ~f:(+&) |> square_root);;
 
-  
-      
-                       
+
+
+
 register_special_task "physics"
   (fun extra ?timeout:(timeout=0.01) name request _ ->
 
@@ -146,7 +147,3 @@ register_special_task "physics"
             if List.for_all l ~f:(fun {data=Some(this_loss)} -> this_loss < t)
             then 0. -. d*.parameterPenalty
             else log 0.)})
-          
-
-     
-     
