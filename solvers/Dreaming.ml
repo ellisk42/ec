@@ -1,4 +1,5 @@
 open Core
+open Poly
 
 open Pregex
 open Program
@@ -24,10 +25,10 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)
       | None -> l := Some(List.length key)
       | Some(l') -> assert (List.length key = l'));
   let l = !l |> get_some in
-  
+
   let containers = Array.init l  ~f:(fun _ -> make_poly_table()) in
   let output_vectors = empty_resizable() in
-  
+
   Hashtbl.iteri behavior_to_programs ~f:(fun ~key ~data ->
       let this_index = output_vectors.ra_occupancy in
       push_resizable output_vectors (key, data);
@@ -45,7 +46,7 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)
 
   (* Checks whether there exists another output vector that contains everything in this vector *)
   let is_bad_index i =
-    let dominating = ref None in  
+    let dominating = ref None in
     let outputs, _ = get_resizable output_vectors i in
     (* Initialize dominating to be the smallest set *)
     outputs |> List.iteri ~f:(fun output_index this_output ->
@@ -66,7 +67,7 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)
             | None -> dominating := Some(others)
             | Some(d) -> dominating := Some(Int.Set.inter d others));
     let nightmare = Int.Set.length (!dominating |> get_some) > 1 in
-    if nightmare && false then begin 
+    if nightmare && false then begin
       Printf.eprintf "NIGHTMARE!!!";
       get_resizable output_vectors i |> snd |> snd |> List.iter ~f:(fun p -> p |> string_of_program |> Printf.eprintf "%s\n")
       (* get_resizable output_vectors i |> fst |> List.iter2_exn extra ~f:(fun i pv -> *)
@@ -76,20 +77,20 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)
   in
 
   let number_of_nightmares = ref 0 in
-  let sweet_dreams = 
+  let sweet_dreams =
     List.range 0 output_vectors.ra_occupancy |>
     List.filter_map ~f:(fun i ->
         if is_bad_index i then (incr number_of_nightmares; None) else
-          Some(get_resizable output_vectors i))  
+          Some(get_resizable output_vectors i))
   in
   Printf.eprintf "Removed %d nightmares in %s.\n"
     (!number_of_nightmares) (Time.diff (Time.now ()) start_time |> Time.Span.to_string);
   sweet_dreams
 
-  
+
 let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc=1) g request ~timeout ~maximumSize =
   assert (nc = 1); (* FIXME *)
-  
+
   let behavior_to_programs = make_poly_list_table() in
 
   let update ~key ~data =
@@ -104,13 +105,13 @@ let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc
 
   let merge other =
     Hashtbl.iteri other ~f:update
-  in 
+  in
 
   set_enumeration_timeout timeout;
 
   let rec loop lb =
-    if enumeration_timed_out() then () else begin 
-      let final_results = 
+    if enumeration_timed_out() then () else begin
+      let final_results =
         enumerate_programs ~extraQuiet:true~nc:nc ~final:(fun () -> [behavior_to_programs])
           g request lb (lb+.1.5) (fun p l ->
               if Hashtbl.length behavior_to_programs > maximumSize then set_enumeration_timeout (-1.0) else
@@ -141,7 +142,7 @@ let rec unpack x =
     x |> to_list |> List.map ~f:unpack |> magical
   with _ -> raise (Failure "could not unpack")
 
-let rec pack t v : json =
+let rec pack t v : t =
   let open Yojson.Basic.Util in
   match t with
   | TCon("list",[t'],_) -> `List(magical v |> List.map ~f:(pack t'))
@@ -168,7 +169,7 @@ let default_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t
           match run_for_interval ~attempts:2 timeout
                   (fun () -> run_lazy_analyzed_with_arguments p input)
           with
-          | Some(value) -> PolyValue.pack return value            
+          | Some(value) -> PolyValue.pack return value
           | _ -> PolyValue.None
         with (* We have to be a bit careful with exceptions if the
               * synthesized program generated an exception, then we just
@@ -189,14 +190,14 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
   let return = return_of_type request in
 
   let testConstants=["x4";"a bc d"]  in
-  let constants = testConstants |> List.map ~f:String.to_list in 
+  let constants = testConstants |> List.map ~f:String.to_list in
 
   fun program ->
     let constant_results = (* results from substituting with each constant *)
       constants |> List.concat_map ~f:(fun constant ->
           match substitute_string_constants [constant] program with
-          | [program'] -> 
-            let p = analyze_lazy_evaluation program' in    
+          | [program'] ->
+            let p = analyze_lazy_evaluation program' in
             inputs |> List.map ~f:(fun input ->
                 try
                   match run_for_interval ~attempts:2
@@ -217,20 +218,20 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
 register_special_helmholtz "string" string_hash;;
 
 let rec unpack_clevr x =
-  let open Yojson.Basic.Util in 
+  let open Yojson.Basic.Util in
   try x |> to_assoc |> magical with _ ->
   try x |> to_list |> List.map ~f:unpack_clevr |> magical
   with _ -> raise (Failure "could not unpack clevr objects");;
 
 (* Pack and sort any object lists, if we decide we want them. *)
-let rec poly_pack_clevr t v = 
+let rec poly_pack_clevr t v =
   match t with
-  | TCon("list",[t'],_) -> 
-    let return_list = 
-      match t' with 
+  | TCon("list",[t'],_) ->
+    let return_list =
+      match t' with
       | TCon("tclevrobject",[],_) -> sort_dedup (magical v)
-      | _ -> v 
-    in PolyValue.List(magical return_list |> List.map ~f:(poly_pack_clevr (magical t'))) 
+      | _ -> v
+    in PolyValue.List(magical return_list |> List.map ~f:(poly_pack_clevr (magical t')))
   | TCon("int",[],_) -> PolyValue.Integer(magical v)
   | TCon("bool",[],_) -> PolyValue.Boolean(magical v)
   | TCon("tclevrobject",[],_) -> PolyValue.FullString(magical (obj_to_string (magical (v))))
@@ -242,9 +243,9 @@ let clevr_hash ?timeout:(timeout=0.005) request inputs : program -> PolyList.t o
   (* convert json -> ocaml *)
   let inputs : 'a list list = unpack_clevr inputs in
   let return = return_of_type request in
-  
+
   (** Allow behavior duplication in CLEVR **)
-  let open Random in 
+  let open Random in
   fun program ->
     let p = analyze_lazy_evaluation program in
     let outputs = inputs |> List.map ~f:(fun input ->
@@ -252,9 +253,9 @@ let clevr_hash ?timeout:(timeout=0.005) request inputs : program -> PolyList.t o
           match run_for_interval ~attempts:2 timeout
                   (fun () -> run_lazy_analyzed_with_arguments p input)
           with
-          | Some(value) -> 
-            let max_programs = 5000000 in 
-            let random_hash = Random.int max_programs in 
+          | Some(value) ->
+            let max_programs = 5000000 in
+            let random_hash = Random.int max_programs in
             let packed = PolyValue.Integer(magical random_hash) in
             packed
           | _ -> PolyValue.None
@@ -318,14 +319,14 @@ register_special_helmholtz "clevr" clevr_hash;;
 (*             with *)
 (*             | None -> None *)
 (*             |  *)
-  
-  
+
+
 
 let tower_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
 
   assert (request = (ttower @> ttower));
-  
+
   fun program ->
     let arrangement = evaluate_discrete_tower_program timeout program in
     let l = List.length arrangement in
@@ -345,7 +346,7 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t op
   let open Yojson.Basic.Util in
 
   assert (request = (turtle @> turtle));
-  
+
   let table = Hashtbl.Poly.create() in
 
   fun program ->
@@ -353,7 +354,7 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t op
     let l = run_for_interval ~attempts:2 timeout (fun () ->
         let x = run_lazy_analyzed_with_arguments p [] in
         let l = LogoLib.LogoInterpreter.turtle_to_list x in
-        if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l) then None else 
+        if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l) then None else
           match Hashtbl.find table l with
           | Some(a) -> Some(a)
           | None -> begin
@@ -393,9 +394,9 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
   in
   let default_constant = build_constant_regex ['c';'o';'n';'s';'t';'9';'#';] in
   fun expression ->
-    if number_of_free_parameters expression > 1 then None else 
+    if number_of_free_parameters expression > 1 then None else
       run_for_interval ~attempts:2 timeout
-        (fun () -> 
+        (fun () ->
            let r = expression |> substitute_constant_regex default_constant |>
                    regex_of_program |> canonical_regex in
            [poly_of_regex r])

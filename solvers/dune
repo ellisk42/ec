@@ -1,0 +1,29 @@
+(executables
+ (package dreamcoder-solvers)
+ (public_names
+  solver
+  compression
+  helmholtz
+  logoDrawString
+  protonet_tester
+  versionDemo
+  re2Test
+  clevrTest
+  clevrSolver
+  test_clevr_primitives)
+ (modes native)
+ (ocamlopt_flags :standard -O3 -unboxed-types -nodynlink -w -20)
+ (libraries
+  core
+  core_unix
+  core_unix.sys_unix
+  core_kernel.pairing_heap
+  re2
+  yojson
+  geomLib
+  logoLib
+  ocaml-protoc
+  zmq
+  str)
+ (preprocess
+  (pps ppx_jane)))

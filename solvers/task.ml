@@ -1,5 +1,7 @@
 open Core
-open Unix
+open Poly
+open Core_unix
+module Heap = Pairing_heap
 
 open CachingTable
 open Timeout
@@ -77,10 +79,10 @@ let run_recent_logo ~timeout program =
                     let x = run_lazy_analyzed_with_arguments p [] in
                     let l = LogoLib.LogoInterpreter.turtle_to_list x in
                     if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l)
-                    then None  
+                    then None
                     else match CachingTable.find p2i l with
                       | Some(bx) -> Some(bx)
-                      | None -> 
+                      | None ->
                         let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
                         CachingTable.set p2i l bx;
                         Some(bx))
@@ -108,11 +110,11 @@ register_special_task "clevrobjectlist" (fun extras
             try
               match run_for_interval
                       timeout
-                      (fun () -> 
+                      (fun () ->
                         let output = run_lazy_analyzed_with_arguments p xs in
-                        let compare = 
+                        let compare =
                         Program.compare_objs (magical output) (magical y)
-                        in compare 
+                        in compare
                         )
               with
                 | Some(true) -> loop e
@@ -124,8 +126,8 @@ register_special_task "clevrobjectlist" (fun extras
                   * exception on
                   *)
               | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-              | EnumerationTimeout  -> 
-                let _ = Printf.eprintf("Enumeration timeout;") in 
+              | EnumerationTimeout  ->
+                let _ = Printf.eprintf("Enumeration timeout;") in
                 raise EnumerationTimeout
               | _                   ->  false
         in
@@ -140,7 +142,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
     let proto =
       try
         extras |> member "proto" |> to_bool
-      with _ -> (Printf.eprintf "proto parameter not set! FATAL"; exit 1)                
+      with _ -> (Printf.eprintf "proto parameter not set! FATAL"; exit 1)
     in
 
   let by = match examples with
@@ -165,7 +167,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
                 (match run_recent_logo ~timeout p with
                  | Some(bx) when (LogoLib.LogoInterpreter.fp_equal bx by 0) -> Some(0.)
                  | _ -> None)
-              else 
+              else
             run_for_interval
               timeout
               (fun () ->
@@ -245,7 +247,7 @@ register_special_task "differentiable"
       try
         extras |> member name |> to_int
       with _ -> default
-    in 
+    in
     let temperature = maybe_float "temperature" 1. in
     let parameterPenalty = maybe_float "parameterPenalty" 0. in
     let maxParameters = maybe_int "maxParameters" 99 in
@@ -262,15 +264,15 @@ register_special_task "differentiable"
         extras |> member "proportional" |> to_bool
       with _ -> false
     in
-    
-                                         
+
+
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
   let examples = examples |> List.map ~f:(fun (xs,y) ->
       (List.map2_exn argument_types xs ~f:placeholder_data,
       placeholder_data return_type y))
   in
-    
+
   let loss = polymorphic_sse ~clipOutput ~clipLoss return_type in
   { name = name    ;
     task_type = ty ;
@@ -278,7 +280,7 @@ register_special_task "differentiable"
       (fun expression ->
          let (p,parameters) = replace_placeholders expression in
          assert (List.length parameters <= maxParameters);
-        if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else 
+        if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else
           let p = analyze_lazy_evaluation p in
           (* let predictions = examples |> List.map ~f:(fun (xs,_) -> *)
           (*     run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs)) *)
@@ -309,11 +311,11 @@ register_special_task "differentiable"
         | Some(l) ->
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
-          let l = if proportional && List.length parameters > 0 then begin 
+          let l = if proportional && List.length parameters > 0 then begin
               assert (List.length parameters = 1);
               parameters |> List.iter ~f:(fun p -> update_variable p 1.);
               assert (false)
-            end else 
+            end else
                 let l = l *& (~$ (1. /. n)) in
                 let l = restarting_optimize (rprop ~lr ~decay ~grow)
                     ~attempts:restarts
@@ -339,7 +341,7 @@ register_special_task "stringConstant" (fun extras
       try
         extras |> member name |> to_int
       with _ -> default
-    in 
+    in
     let stringConstants =
       extras |> member "stringConstants" |> to_list |> List.map ~f:to_string |> List.map ~f:(String.to_list)
     in
@@ -348,7 +350,7 @@ register_special_task "stringConstant" (fun extras
 
   let lc = log (26.*.2.+.10.) in
   let lc = 0.-.lc in
-  
+
   { name = name    ;
     task_type = ty ;
     log_likelihood =
@@ -390,7 +392,7 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
   {request = f.request;
    programs = f.programs |> List.filter_map ~f:(fun (program, descriptionLength) ->
        let likelihood = t.log_likelihood program in
-       if likelihood > -0.1 then 
+       if likelihood > -0.1 then
          Some((program, descriptionLength +. likelihood))
        else None)
   }
@@ -426,12 +428,12 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
   (* Store the hits in a priority queue *)
   (* We will only ever maintain maximumFrontier best solutions *)
   let hits =
-    Array.init nt ~f:(fun _ -> 
+    Array.init nt ~f:(fun _ ->
         Heap.create
           ~cmp:(fun h1 h2 ->
               Float.compare (h1.hit_likelihood+.h1.hit_prior) (h2.hit_likelihood+.h2.hit_prior))
           ()) in
-  
+
   let lower_bound = ref lowerBound in
 
   let startTime = Time.now () in
@@ -455,13 +457,13 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
           (fun p logPrior ->
              incr number_of_enumerated_programs;
              incr total_number_of_enumerated_programs;
-             
+
              let mdl = 0.-.logPrior in
 
              assert( !lower_bound <= mdl);
              assert( mdl < budgetIncrement+.(!lower_bound));
 
-             range nt |> List.iter ~f:(fun j -> 
+             range nt |> List.iter ~f:(fun j ->
                  let logLikelihood = tasks.(j).log_likelihood p in
                  if is_valid logLikelihood then begin
                    let dt = Time.abs_diff startTime (Time.now ())
@@ -495,11 +497,10 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
                        if Heap.length old_heap > maximumFrontier.(j)
                        then Heap.remove_top old_heap))))
       ;
-      
+
       lower_bound := budgetIncrement+. (!lower_bound);
 
     done ;
-    
+
   (hits |> Array.to_list |> List.map ~f:Heap.to_list,
    !total_number_of_enumerated_programs)
-

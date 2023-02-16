@@ -1,4 +1,5 @@
 open Core
+open Poly
 
 open Timeout
 open Task
@@ -7,7 +8,7 @@ open Program
 open Type
 open Yojson.Basic.Util
 
-    
+
 type str = String of char list | Dot | D | S | W | L | U
 [@@deriving compare]
 
@@ -23,7 +24,7 @@ let get_character_class = function
   | D -> d_ls | S -> s_ls | W -> w_ls | L -> l_ls | U -> u_ls
   | _ -> assert (false)
 
-type pregex = 
+type pregex =
 	| Constant of str
 	| Kleene of pregex
 	| Plus of pregex
@@ -57,19 +58,19 @@ and
   hash_constant = function
   | String(cs) -> List.fold_right ~init:17 ~f:(fun c a -> Hashtbl.hash (Hashtbl.hash c,a)) cs
   | c -> Hashtbl.hash c
-                   
+
 
 let rec canonical_regex r =
   let empty_regex = Constant(String([])) in
-  
+
   match r with
   | Constant(_) -> r
   | Plus(b) ->
-    let b = canonical_regex b in 
+    let b = canonical_regex b in
     canonical_regex (Concat(b,Kleene(b)))
   | Kleene(b) ->
     let b = canonical_regex b in
-    if b = empty_regex then empty_regex else Kleene(b)    
+    if b = empty_regex then empty_regex else Kleene(b)
   | Maybe(b) -> Alt(empty_regex,b) |> canonical_regex
   (* associative rules *)
   | Concat(Concat(a,b),c) -> canonical_regex (Concat(a,Concat(b,c)))
@@ -144,7 +145,7 @@ let match_regex regex s =
     {match_target=s; match_likelihood=0.;}
     regex
     (fun final ->
-       if final.match_target = [] then  
+       if final.match_target = [] then
          final_state := Some(final));
   while !final_state = None && not (Heap.is_empty h) do
     let _,k = Heap.pop_exn h in
@@ -155,22 +156,22 @@ let match_regex regex s =
   | _ -> log 0.
 ;;
 
-if false then begin 
+if false then begin
   Printf.eprintf "%f\n"
     (match_regex (Concat(Kleene(Alt(Constant(D),Constant(S))),Constant(String([])))) ['9';' ';]);
   flush_everything();
   assert (false)
 end;;
 
-           
-  
+
+
 
 
 type continuation = pregex option * string
 
 
 
-let rec try_remove_prefix prefix str = 
+let rec try_remove_prefix prefix str =
 	(* returns a none if can't remove, else the removed list *)
 	match (prefix, str) with
 	| ([], l) -> Some(l)
@@ -178,31 +179,31 @@ let rec try_remove_prefix prefix str =
 	| (ph::pt, sh::st) -> if ph = sh then try_remove_prefix pt st else None;;
 
 let consumeConst c char_list =
-  match char_list with 
+  match char_list with
   | [] -> (match c with
       (* We are done! We didn't need to match anything and we have nothing *)
       | String([]) -> [(None, []), 0.]
       (* We failed - we needed to terminate matching because the string is up *)
       | _ -> [])
-  | hd :: tl -> 
-    match c with 
-    | String(ls) -> 
-      (match try_remove_prefix ls char_list with 
+  | hd :: tl ->
+    match c with
+    | String(ls) ->
+      (match try_remove_prefix ls char_list with
        | None -> []
        | Some(remainder) -> [ (None, remainder), 0. ])
     | _ ->
-      let character_class = get_character_class c in 
+      let character_class = get_character_class c in
       if List.mem ~equal:(=) character_class hd
       then [(None, tl), -. log (List.length character_class |> Float.of_int)]
       else []
-        
 
-let f_kleene a partial = 
+
+let f_kleene a partial =
 	match partial with
 	|  ((None, remainder), score) -> ((Some(Kleene(a)), remainder), score +. log 0.5)
 	|  ((Some(r), remainder), score) -> ((Some(Concat(r, Kleene(a))), remainder), score +. log 0.5);; (* is this order of r and a correct?*)
 
-let f_plus a partial = 
+let f_plus a partial =
 	match partial with
 	|  ((None, remainder), score) -> ((Some(Kleene(a)), remainder), score)
 	|  ((Some(r), remainder), score) -> ((Some(Concat(r, Kleene(a))), remainder), score) ;; (* is this order of r and a correct?*)
@@ -211,18 +212,18 @@ let f_maybe a ((r, remainder), score) = ((r, remainder), score +. log 0.5) ;;
 
 let f_alt ((r, remainder), score) = ((r, remainder), score +. log 0.5 ) ;;
 
-let f_concat a b partial = 
-	match partial with 
+let f_concat a b partial =
+	match partial with
 	| ((None, remainder), score) -> ((Some(b), remainder), score)
 	| ((Some(r), remainder), score) -> ((Some(Concat(r, b)), remainder), score) ;;
 
-let rec kleeneConsume a str = 
+let rec kleeneConsume a str =
 	((None, str), log 0.5 ) :: (consume (Some(a), str) |> List.map ~f:(f_kleene a))
 
-and plusConsume a str = 
+and plusConsume a str =
   consume (Some(a), str) |> List.map ~f:(f_plus a)
 
-and maybeConsume a str = 
+and maybeConsume a str =
   ((None, str), log 0.5 ) :: (consume (Some(a), str) |> List.map ~f:(f_maybe a))
 
 and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
@@ -232,8 +233,8 @@ and consume cont = (* return a list of continuation, score tuples? *)
   | (None, []) -> assert false (* no regular expression and nothing to consume - this is a match, and should have been caught earlier *)
   | (None, _ :: _) -> [] (* no regular expression and things to consume - not a match *)
   | (Some(Constant(c)), str) -> consumeConst c str
-  | (Some(Kleene(a)), str) -> kleeneConsume a str 
-  | (Some(Plus(a)), str) -> plusConsume a str 
+  | (Some(Kleene(a)), str) -> kleeneConsume a str
+  | (Some(Plus(a)), str) -> plusConsume a str
   | (Some(Maybe(a)), str) -> maybeConsume a str
   | (Some(Alt(a,b)), str) -> List.map (consume (Some(a), str) @ consume (Some(b), str)) ~f:f_alt
   | (Some(Concat(a,b)), str) -> concatConsume a b str
@@ -241,29 +242,29 @@ and consume cont = (* return a list of continuation, score tuples? *)
 
 let preg_match preg str = (* dikjstras *)
 
-  let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in 
+  let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in
   let heap = Heap.create ~cmp:cmp () in
   Heap.add heap ((Some(preg), str), 0.);
   let visited = Hash_set.Poly.create() in
   let solution = ref None in
 
-  let consume_loop (cont_old, score_old) = 
+  let consume_loop (cont_old, score_old) =
     consume cont_old |> List.iter ~f:(fun (cont, score) ->
-	if not (Hash_set.mem visited cont) then begin 
+	if not (Hash_set.mem visited cont) then begin
 	  Hash_set.add visited cont;
 	  let newscore = score +. score_old in
 	  match cont with
-	  | (None, []) -> 
+	  | (None, []) ->
 	    solution := Some(newscore) (* TODO output *)
           | _ ->
             Heap.add heap (cont, newscore)
         end)
-  in 
+  in
 
   while !solution = None && not (Heap.top heap = None) do
     match Heap.pop heap with
     | Some(partial) -> consume_loop partial
-    | None -> assert false		
+    | None -> assert false
   done;
 
   match !solution with
@@ -365,7 +366,7 @@ dot_ls |> List.iter ~f: (fun i ->
 	| Some(datum) -> Printf.sprintf "string_%s" datum
     in
     let the_primitive = primitive name (tregex @> tregex)
-        (fun k -> Concat(Constant(String([i])),k)) in 
+        (fun k -> Concat(Constant(String([i])),k)) in
     Hashtbl.set constant_to_regex ~key:i ~data:the_primitive);;
 
 
@@ -373,7 +374,7 @@ let regex_of_program expression : pregex =
   run_lazy_analyzed_with_arguments (analyze_lazy_evaluation expression) [empty_regex];;
 
 (* Printf.eprintf "hello world %" *)
- 
+
 register_special_task "regex"
   (fun extra ?timeout:(timeout=0.001)
     name task_type examples ->
@@ -416,17 +417,17 @@ register_special_task "regex"
                    loop observations)
         with
         | None -> log 0.
-        | Some(l) -> 
+        | Some(l) ->
       	  (let cutoff_option = extra |> member "cutoff" |> to_number_option in
       	   match cutoff_option with
-           | None -> l        
-      	   | Some(cutoff) -> 
+           | None -> l
+      	   | Some(cutoff) ->
       	     if l >= cutoff then l -. (Float.of_int number_of_constants) *. const_cost
              else log 0.)
-    in 
+    in
 
     {name; task_type; log_likelihood;} )
-                                
+
 
 (* let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp) ;;
 let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  ((preg_match (Constant(D)) ['9']) |> exp) ;; *)
@@ -437,7 +438,7 @@ let _ = assert (preg_match (Alt(Constant(String(['k'])), Constant(D)))  ['9'] = 
 
 (* qs for kevin:
 map -> List.map list ~f:fun
-implicit def - good 
+implicit def - good
 concat_lists -> List.concat [list1; list2 ...]
 and recursion?
 function defs with pattern matching?
@@ -448,4 +449,3 @@ Hash_set.Poly.create()
 String.to_list()
 ref and !
 Hash_set.mem candidates *)
-

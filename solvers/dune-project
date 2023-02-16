@@ -1,0 +1,20 @@
+(lang dune 3.5)
+(using menhir 2.1)
+
+(generate_opam_files true)
+(package
+ (name dreamcoder-solvers)
+ (synopsis "Solver components of Dreamcoder")
+ (depends
+  (ocaml (and (>= 4.14) (< 5)))
+   ocaml-option-flambda
+   core
+   core_unix
+   re2
+   yojson
+   ocaml-protoc
+   zmq
+   vg
+   cairo2
+   menhir
+   ppx_jane))

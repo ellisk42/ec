@@ -40,3 +40,14 @@ tests/out/
 moses_compiled/
 .word_vectors_cache
 .DS_Store
+
+/versionDemo
+/clevrSolver
+/clevrTest
+/compression
+/helmholtz
+/logoDrawString
+/protonet_tester
+/re2Test
+/solver
+/test_clevr_primitives
