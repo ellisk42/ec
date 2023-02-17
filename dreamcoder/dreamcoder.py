@@ -604,7 +604,7 @@ def ecIterator(grammar, tasks,
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
 
         # WAKING UP
-        if useDSL:
+        if useDSL and enumerationTimeout > 0:
             enumeration_time = enumerationTimeout
             if initialTimeout is not None and initialTimeoutIterations is not None:
                 if j < initialTimeoutIterations:

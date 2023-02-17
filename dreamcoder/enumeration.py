@@ -58,7 +58,7 @@ def multicoreEnumeration(g, tasks, _=None,
             k = (task2grammar[t], t.request)
         jobs[k] = jobs.get(k, []) + [t]
 
-    disableParallelism = len(jobs) == 1
+    disableParallelism = len(jobs) == 1 or CPUs == 1
     parallelCallback = launchParallelProcess if not disableParallelism else lambda f, * \
         a, **k: f(*a, **k)
     if disableParallelism:
