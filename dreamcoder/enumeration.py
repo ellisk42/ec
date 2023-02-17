@@ -372,11 +372,11 @@ def solveForTask_ocaml(_=None,
 
 def solveForTask_pypy(_=None,
                       elapsedTime=0.,
-                      g=None, task=None,
+                      g=None, tasks=None,
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False,unigramGrammar=None):
+                      evaluationTimeout=None, maximumFrontiers=None, testing=False,unigramGrammar=None, **kwargs):
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -394,7 +394,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False,unigramGrammar=None):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False, unigramGrammar=None, **kwargs):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              testing=testing,

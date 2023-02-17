@@ -291,7 +291,7 @@ class FragmentGrammar(object):
             aic=1.0,
             structurePenalty=0.001,
             a=0,
-            CPUs=1):
+            CPUs=1, **kwargs):
         _ = topk_use_only_likelihood # not used in python compressor
         originalFrontiers = frontiers
         frontiers = [frontier for frontier in frontiers if not frontier.empty]
