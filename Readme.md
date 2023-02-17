@@ -16,9 +16,15 @@ pip install --upgrade setuptools;
 ```
 2. Install the requirements.
 ```
-pip install -r requirements.txt
+pip install -r requirements.txt;
+pip install -r language_requirements_3_7_7.txt
 ```
-3. Download the NLTK Tokenizer. At an interactive Python prompt, run:
+3. Test the setup is correct by running using python-only functions without language.
+```
+python bin/list.py --enumerationTimeout 1 --recognitionTimeout 0 --iterations 1 --solver python --compressor stitch --primitives rich
+```
+
+4. Download the NLTK Tokenizer. At an interactive Python prompt, run:
 ```
 > import nltk; nltk.download('punkt')
 ```
