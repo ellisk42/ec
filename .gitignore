@@ -51,3 +51,6 @@ moses_compiled/
 /re2Test
 /solver
 /test_clevr_primitives
+
+failures/*
+jsonDebug
