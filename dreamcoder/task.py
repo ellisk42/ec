@@ -74,8 +74,10 @@ class Task(object):
         if timeout is not None:
             def timeoutCallBack(_1, _2): raise EvaluationTimeout()
         try:
-            signal.signal(signal.SIGVTALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
+            # Start a timer if a timeout is provided.
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, timeoutCallBack)
+                signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
 
             try:
                 f = e.evaluate([])
