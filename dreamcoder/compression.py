@@ -10,7 +10,7 @@ import stitch_core
 from dreamcoder.fragmentGrammar import FragmentGrammar
 from dreamcoder.frontier import Frontier, FrontierEntry
 from dreamcoder.grammar import Grammar
-from dreamcoder.program import Program, Invented
+from dreamcoder.program import Program, Invented, EtaLongVisitor, EtaExpandFailure
 from dreamcoder.utilities import eprint, timing, callCompiled, get_root_dir
 from dreamcoder.vs import induceGrammar_Beta, RewriteWithInventionVisitor
 from dreamcoder.translation import serialize_language_alignments
@@ -265,7 +265,7 @@ def rustInduce(g0, frontiers, _=None,
     return g, newFrontiers
 
 
-def stitchInduce(grammar: Grammar, frontiers: List[Frontier], **kwargs):
+def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_compression=3, **kwargs):
     """Compresses the library, generating a new grammar based on the frontiers, using Stitch."""
 
     def grammar_from_json(grammar_json: dict) -> Grammar:
@@ -285,34 +285,44 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], **kwargs):
     stitch_kwargs.update(dict(utility_by_rewrite=True))
 
     # Actually run Stitch.
-    compress_result = stitch_core.compress(**stitch_kwargs, iterations=3, max_arity=3)
+    compress_result = stitch_core.compress(**stitch_kwargs, iterations=max_compression, max_arity=a)
 
-    rewritten_progs = compress_result.json['rewritten_dreamcoder']
-    task_strings = stitch_kwargs.pop("tasks", [])
-    anon_to_name = stitch_kwargs.pop("anonymous_to_named", [])
+    # TODO: Post-hoc filter the abstractions to remove those that are not that useful since Stitch does
+    # not currently have a stopping condition (so it will always return max_compression inventions).
+    # Now, we re-run Stitch to only have the number of inventions that are in more than 1 program.
+    # This is because it isn't clear how to rewrite the programs with only the top inventions using
+    # the Stitch python bindings.
+    n_useful_abstractions = len([abs for abs in compress_result.json['abstractions'] if abs['num_uses'] > 1])
+    compress_result = stitch_core.compress(**stitch_kwargs, iterations=n_useful_abstractions, max_arity=a)
 
-    # Create a new grammar object.
+    # Create a new grammar object from the compression.
+    abstractions = compress_result.json['abstractions']
     dreamcoder_json['DSL']['productions'].extend(
-        [{'logProbability': 0, 'expression': abs['dreamcoder']} for abs in compress_result.json['abstractions']])
+        [{'logProbability': 0, 'expression': abs['dreamcoder']} for abs in abstractions])
     new_grammar = grammar_from_json(dreamcoder_json)
 
+    # Get list of task objects in the same order as the rewritten programs.
+    rewritten_progs = compress_result.json['rewritten_dreamcoder']
+    task_strings = stitch_kwargs.pop("tasks", [])
     str_to_task = {str(frontier.task): frontier.task for frontier in frontiers}
+    tasks = [str_to_task[task_string] for task_string in task_strings]
 
     # Create new frontiers.
     task_to_unscored_frontier = {}
-    for task_str, rewritten_prog in zip(task_strings, rewritten_progs):
+    for task, rewritten_prog in zip(tasks, rewritten_progs):
 
-        # Very hacky -- just string replacing names with the original anonymous function.
-        anon_prog = rewritten_prog
-        for stitch_name, invention in anon_to_name:
-            anon_prog = anon_prog.replace(stitch_name, invention)
-        program = Program.parse(anon_prog)
+        program = Program.parse(rewritten_prog)
+
+        # Hack to avoid fatal error when computing likelihood summaries.
+        try:
+            program = EtaLongVisitor(request=task.request).execute(program)
+        except EtaExpandFailure:
+            raise EtaExpandFailure(rewritten_prog)
 
         frontier_entry = FrontierEntry(program, logPrior=0, logLikelihood=0)
-        task_to_unscored_frontier.setdefault(task_str, Frontier([], str_to_task[task_str])).entries.append(frontier_entry)
+        task_to_unscored_frontier.setdefault(str(task), Frontier([], task)).entries.append(frontier_entry)
 
-    # TODO: Rescore the frontiers.
-    new_frontiers = list(task_to_unscored_frontier.values())
-    # new_frontiers = [new_grammar.rescoreFrontier(frontier) for frontier in task_to_unscored_frontier.values()]
+    # Rescore the frontiers.
+    new_frontiers = [new_grammar.rescoreFrontier(frontier) for frontier in task_to_unscored_frontier.values()]
 
     return new_grammar, new_frontiers
