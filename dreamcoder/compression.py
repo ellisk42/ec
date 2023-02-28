@@ -307,16 +307,23 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_co
     name_mapping = stitch_core.name_mapping_dreamcoder(dreamcoder_json) + stitch_core.name_mapping_stitch(compress_result.json)
     rewritten_dc = stitch_core.stitch_to_dreamcoder(rewritten_progs.rewritten, name_mapping)
 
-    task_strings = stitch_kwargs.pop("tasks", [])
+    task_strings = stitch_kwargs.pop("tasks", [])   # Same order as rewritten_dc.
     str_to_task = {str(frontier.task): frontier.task for frontier in frontiers}
-    tasks = [str_to_task[task_string] for task_string in task_strings]
 
     # Create new frontiers.
-    task_to_unscored_frontier = {}
-    for task, rewritten_prog in zip(tasks, rewritten_dc):
+    task_to_unscored_frontier = {task_str: Frontier([], task) for task_str, task in str_to_task.items()}
+    for task_str, rewritten_prog in zip(task_strings, rewritten_dc):
         program = Program.parse(rewritten_prog)
+
+        # Check that the program is already in eta-long form.
+        try:
+            program_ = EtaLongVisitor(request=str_to_task[task_str].request).execute(program)
+            assert program_ == program, f"{program_} != {program}"  
+        except EtaExpandFailure:
+            raise EtaExpandFailure(rewritten_prog)
+        
         frontier_entry = FrontierEntry(program, logPrior=0, logLikelihood=0)
-        task_to_unscored_frontier.setdefault(str(task), Frontier([], task)).entries.append(frontier_entry)
+        task_to_unscored_frontier[task_str].entries.append(frontier_entry)
 
     # Rescore the frontiers.
     new_frontiers = [new_grammar.rescoreFrontier(frontier) for frontier in task_to_unscored_frontier.values()]
