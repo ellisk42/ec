@@ -282,18 +282,13 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_co
     # Parse the arguments for the Stitch compressor.
     dreamcoder_json = {"DSL": grammar.json(), "frontiers": [f.json() for f in frontiers], **kwargs}
     stitch_kwargs = stitch_core.from_dreamcoder(dreamcoder_json)
-    stitch_kwargs.update(dict(utility_by_rewrite=True))
+    stitch_kwargs.update(dict(eta_long=True, utility_by_rewrite=True))
 
     # Actually run Stitch.
     compress_result = stitch_core.compress(**stitch_kwargs, iterations=max_compression, max_arity=a)
 
     # TODO: Post-hoc filter the abstractions to remove those that are not that useful since Stitch does
     # not currently have a stopping condition (so it will always return max_compression inventions).
-    # Now, we re-run Stitch to only have the number of inventions that are in more than 1 program.
-    # This is because it isn't clear how to rewrite the programs with only the top inventions using
-    # the Stitch python bindings.
-    n_useful_abstractions = len([abs for abs in compress_result.json['abstractions'] if abs['num_uses'] > 1])
-    compress_result = stitch_core.compress(**stitch_kwargs, iterations=n_useful_abstractions, max_arity=a)
 
     # Create a new grammar object from the compression.
     abstractions = compress_result.json['abstractions']
@@ -301,24 +296,25 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_co
         [{'logProbability': 0, 'expression': abs['dreamcoder']} for abs in abstractions])
     new_grammar = grammar_from_json(dreamcoder_json)
 
+    # If we didn't find any new abstractions, return the old grammar.
+    # stitch_core.rewrite throws an error if no abstractions are provided.
+    if len(compress_result.abstractions) == 0:
+        return grammar, frontiers
+
     # Get list of task objects in the same order as the rewritten programs.
-    rewritten_progs = compress_result.json['rewritten_dreamcoder']
+    # rewritten_progs_ = compress_result.json['rewritten_dreamcoder']
+    rewritten_progs = stitch_core.rewrite(abstractions=compress_result.abstractions, **stitch_kwargs)
+    name_mapping = stitch_core.name_mapping_dreamcoder(dreamcoder_json) + stitch_core.name_mapping_stitch(compress_result.json)
+    rewritten_dc = stitch_core.stitch_to_dreamcoder(rewritten_progs.rewritten, name_mapping)
+
     task_strings = stitch_kwargs.pop("tasks", [])
     str_to_task = {str(frontier.task): frontier.task for frontier in frontiers}
     tasks = [str_to_task[task_string] for task_string in task_strings]
 
     # Create new frontiers.
     task_to_unscored_frontier = {}
-    for task, rewritten_prog in zip(tasks, rewritten_progs):
-
+    for task, rewritten_prog in zip(tasks, rewritten_dc):
         program = Program.parse(rewritten_prog)
-
-        # Hack to avoid fatal error when computing likelihood summaries.
-        try:
-            program = EtaLongVisitor(request=task.request).execute(program)
-        except EtaExpandFailure:
-            raise EtaExpandFailure(rewritten_prog)
-
         frontier_entry = FrontierEntry(program, logPrior=0, logLikelihood=0)
         task_to_unscored_frontier.setdefault(str(task), Frontier([], task)).entries.append(frontier_entry)
 
