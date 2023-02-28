@@ -290,23 +290,8 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_co
     # TODO: Post-hoc filter the abstractions to remove those that are not that useful since Stitch does
     # not currently have a stopping condition (so it will always return max_compression inventions).
 
-    # Create a new grammar object from the compression.
-    abstractions = compress_result.json['abstractions']
-    dreamcoder_json['DSL']['productions'].extend(
-        [{'logProbability': 0, 'expression': abs['dreamcoder']} for abs in abstractions])
-    new_grammar = grammar_from_json(dreamcoder_json)
-
-    # If we didn't find any new abstractions, return the old grammar.
-    # stitch_core.rewrite throws an error if no abstractions are provided.
-    if len(compress_result.abstractions) == 0:
-        return grammar, frontiers
-
     # Get list of task objects in the same order as the rewritten programs.
-    # rewritten_progs_ = compress_result.json['rewritten_dreamcoder']
-    rewritten_progs = stitch_core.rewrite(abstractions=compress_result.abstractions, **stitch_kwargs)
-    name_mapping = stitch_core.name_mapping_dreamcoder(dreamcoder_json) + stitch_core.name_mapping_stitch(compress_result.json)
-    rewritten_dc = stitch_core.stitch_to_dreamcoder(rewritten_progs.rewritten, name_mapping)
-
+    rewritten_dc = compress_result.json['rewritten_dreamcoder']
     task_strings = stitch_kwargs.pop("tasks", [])   # Same order as rewritten_dc.
     str_to_task = {str(frontier.task): frontier.task for frontier in frontiers}
 
@@ -314,16 +299,14 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_co
     task_to_unscored_frontier = {task_str: Frontier([], task) for task_str, task in str_to_task.items()}
     for task_str, rewritten_prog in zip(task_strings, rewritten_dc):
         program = Program.parse(rewritten_prog)
-
-        # Check that the program is already in eta-long form.
-        try:
-            program_ = EtaLongVisitor(request=str_to_task[task_str].request).execute(program)
-            assert program_ == program, f"{program_} != {program}"  
-        except EtaExpandFailure:
-            raise EtaExpandFailure(rewritten_prog)
-        
         frontier_entry = FrontierEntry(program, logPrior=0, logLikelihood=0)
         task_to_unscored_frontier[task_str].entries.append(frontier_entry)
+
+    # Create a new grammar object from the compression.
+    abstractions = compress_result.json['abstractions']
+    dreamcoder_json['DSL']['productions'].extend(
+        [{'logProbability': 0, 'expression': abs['dreamcoder']} for abs in abstractions])
+    new_grammar = grammar_from_json(dreamcoder_json)
 
     # Rescore the frontiers.
     new_frontiers = [new_grammar.rescoreFrontier(frontier) for frontier in task_to_unscored_frontier.values()]
