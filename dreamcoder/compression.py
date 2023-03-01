@@ -289,9 +289,17 @@ def stitchInduce(grammar: Grammar, frontiers: List[Frontier], a: int = 3, max_co
 
     # TODO: Post-hoc filter the abstractions to remove those that are not that useful since Stitch does
     # not currently have a stopping condition (so it will always return max_compression inventions).
-
+    
+    # If we didn't find any new abstractions, return the old grammar.
+    # stitch_core.rewrite throws an error if no abstractions are provided.
+    if len(compress_result.abstractions) == 0:
+        return grammar, frontiers
+    
     # Get list of task objects in the same order as the rewritten programs.
-    rewritten_dc = compress_result.json['rewritten_dreamcoder']
+    rewritten_progs = stitch_core.rewrite(abstractions=compress_result.abstractions, **stitch_kwargs)
+    name_mapping = stitch_core.name_mapping_dreamcoder(dreamcoder_json) + stitch_core.name_mapping_stitch(compress_result.json)
+    rewritten_dc = stitch_core.stitch_to_dreamcoder(rewritten_progs.rewritten, name_mapping)
+    
     task_strings = stitch_kwargs.pop("tasks", [])   # Same order as rewritten_dc.
     str_to_task = {str(frontier.task): frontier.task for frontier in frontiers}
 
