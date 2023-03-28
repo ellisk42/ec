@@ -27,7 +27,8 @@ class QuantumTask(dc.task.Task):
         yh_true = self.target_circuit_evaluation
         
         yh = QuantumTask.last_circuit_evaluation
-        # TO DISABLE CACHING (for testing)
+        
+        # TO DISABLE CACHING (for testing):
         # yh =  execute_quantum_algorithm(e, self.n_qubits, timeout)
         
         if yh is None:
@@ -56,6 +57,8 @@ class QuantumTask(dc.task.Task):
             # # Without phase equivalence: already implemented when calculating unitary
             
             if np.any(np.abs(yh-yh_true)>= 1e-3):
+                # This is too slow...
+                # if np.abs((np.trace(np.matmul(yh.conj().T, yh_true))/len(yh_true))).round(3)!=1:
                 return dc.utilities.NEGATIVEINFINITY
         except ValueError:
             return dc.utilities.NEGATIVEINFINITY 

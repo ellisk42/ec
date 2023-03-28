@@ -30,9 +30,9 @@ if __name__ == '__main__':
     arguments = commandlineArguments(
         CPUs=numberOfCPUs(),
         iterations=100,#40
-        enumerationTimeout=150,#-g  #1000
+        enumerationTimeout=200, #150,#-g  #1000
         taskBatchSize=25, # smaller should be faster
-        taskReranker="randomShuffle", #defualt
+        taskReranker="randomShuffle", #default
         structurePenalty=6, # increase regularization 3 4 (it awas 1) look at a few [1,15]
         pseudoCounts=10, #increase 100 test a few values
         solver="bottom", 

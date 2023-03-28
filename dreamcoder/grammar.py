@@ -1988,6 +1988,7 @@ class PCFG():
                 for e in complete_skeleton(cost-skeleton_cost, skeleton):
                     # ENUMERATED_LIST.append(e)
                     # eprint(e, skeleton,skeleton_cost)
+                    # eprint(e)
                     yield e # return also the unitaries
 
 ENUMERATED_LIST = []

@@ -97,7 +97,6 @@ def main(arguments):
         outputDirectory = "/".join(arguments["resume"].split("/")[:-1])
     del arguments["outputDirectory"]
     os.system("mkdir -p %s"%outputDirectory)
-    
     # Dump arguments
     with open(f"{outputDirectory}/arguments.pickle", "wb") as f:
         pickle.dump(arguments,f)
@@ -108,7 +107,7 @@ def main(arguments):
     
     
     # Get quantum task dataset
-    tasks, train_tasks, test_tasks = get_tasks(50, "medium_3qubit")
+    tasks, train_tasks, test_tasks = get_tasks(50, "medium_3qubit_2023_fastphase")
 
     # check LIMITED_CONNECTIVITY
     if arguments["limitedConnectivity"]: 
@@ -124,8 +123,16 @@ def main(arguments):
                            outputPrefix=f"{outputDirectory}/quantum_train",
                            **arguments)
     
-    for result in generator:          
+    for result in generator:      
         # TEST at each step
+        train_result = test_grammar(result.grammars[-1], 
+                     train_tasks, 
+                     arguments, 
+                     f"{outputDirectory}/quantum_test-train_{len(result.grammars)-1}")
+        with open(f"{outputDirectory}/solved_train.txt", "a") as f:
+            f.write(f"{train_result.learningCurve[-1]}\n")
+        
+        
         test_result = test_grammar(result.grammars[-1], 
                      test_tasks, 
                      arguments, 

@@ -45,6 +45,7 @@ try:
             return self
         
         def get_result(self, circuit):
+            # TODO: this should also be normalized as the other circuit!
             return np.array(qk.execute(circuit, backend).result().get_unitary()).T
         
         def __exit__(self,*args, **kwargs):
@@ -414,9 +415,9 @@ def circuit_to_mat(full_circuit):
                 
                 
             mat = tensor_to_mat(tensor)
-            
+            full_circuit_cache[t_full_circuit] = mat
             # normalize extra circuit phase
-            s1 = np.sum(mat.round(5))
+            s1 = np.sum(mat.round(5)).round(5) # TODO: be careful with this change!
             if s1 ==0:
                 idx = np.where((mat).round(5)!=0)
                 s1 = mat[idx[0][0], idx[1][0]]
@@ -729,6 +730,7 @@ def execute_quantum_algorithm(p, n_qubits, timeout=None):
         return None
     
 def execute_program(program,arguments):
+    # TODO: remove eprint
     if "rep" in str(program):
         eprint(program)
     circuit = program.evaluate([])
