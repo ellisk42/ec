@@ -415,7 +415,8 @@ def circuit_to_mat(full_circuit):
                 
                 
             mat = tensor_to_mat(tensor)
-            full_circuit_cache[t_full_circuit] = mat
+            # full_circuit_cache[t_full_circuit] = mat
+            
             # normalize extra circuit phase
             s1 = np.sum(mat.round(5)).round(5) # TODO: be careful with this change!
             if s1 ==0:
