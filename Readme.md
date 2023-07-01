@@ -31,7 +31,7 @@ pip install -r requirements.txt
 ```
 Please also install a branch of Qiskit that implements the Solovay Kitaev decomposition:
 ```
-pip install git+https://github.com/LNoorl/qiskit-terra.git@feature/sk-pass
+pip install git+https://github.com/LNoorl/qiskit-terra.git@5f2b29139782f11606357e9621e7e7edbe2de260
 ```
 
 ### Running tasks
