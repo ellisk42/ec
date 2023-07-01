@@ -32,5 +32,6 @@ language_experiments/
 tests/out/
 .DS_Store
 .ipynb_checkpoints
+.vscode/*
 logs
 old_logs
