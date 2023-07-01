@@ -1,6 +1,6 @@
 # Discovering Quantum Circuit Components with Program Synthesis
 
-![Sketch](figures/algorithm_sketch.png)
+![Sketch](readme_figures/algorithm_sketch.png)
 This repository provides the research code developed for the experiments shown in the paper "Discovering Quantum Circuit Components with Program Synthesis" by Leopoldo Sarra, Kevin Ellis, and Florian Marquardt.
 
 
