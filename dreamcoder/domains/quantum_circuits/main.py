@@ -107,7 +107,9 @@ def main(arguments):
     
     
     # Get quantum task dataset
+    # TODO: this is hard coded!
     tasks, train_tasks, test_tasks = get_tasks(50, "medium_3qubit_2023_fastphase")
+    # tasks, train_tasks, test_tasks = get_tasks(150, "medium_5qubit_2023_fastphase")
 
     # check LIMITED_CONNECTIVITY
     if arguments["limitedConnectivity"]: 
@@ -118,6 +120,11 @@ def main(arguments):
 
     # TRAIN
     g0 = grammar
+    if arguments["fromGrammar"] is not None:
+        with open(f"experimentOutputs/quantum/{arguments['fromGrammar']}","rb") as f:
+            g0 = pickle.load(f)
+    del arguments["fromGrammar"]
+    
     generator = dc.dreamcoder.ecIterator(g0, train_tasks,
                            testingTasks=[],
                            outputPrefix=f"{outputDirectory}/quantum_train",

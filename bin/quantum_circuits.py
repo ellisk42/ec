@@ -24,6 +24,7 @@ def quantum_extras(parser):
     parser.add_argument("--limitedConnectivity",action='store_true')
     parser.add_argument("--outputDirectory",default="default", type=str)
     parser.add_argument("--nqubit",default=3, type=int)
+    parser.add_argument("--fromGrammar",default=None, type=str)
 
 if __name__ == '__main__': 
     
