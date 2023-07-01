@@ -1874,7 +1874,6 @@ class PCFG():
                                         a2 = a2.wrap_in_abstractions(nl2)
                                         for a3 in expressions_of_size(at3, size-cost-c1-c2):
                                             a3 = a3.wrap_in_abstractions(nl3)
-                                            # if len(set([str(a1),str(a2),str(a3)]))==3:
                                             new.append(Application(Application(Application(k, a1), a2), a3))
                     elif len(arguments) == 4:
                         nl1, at1 = arguments[0]
@@ -1892,7 +1891,6 @@ class PCFG():
                                                 a3 = a3.wrap_in_abstractions(nl3)
                                                 for a4 in expressions_of_size(at3, size-cost-c1-c2-c3):
                                                     a4 = a4.wrap_in_abstractions(nl4)
-                                                    # if len(set([str(a1),str(a2),str(a3),str(a4)]))==4:
                                                     new.append(Application(Application(Application(Application(k, a1), a2), a3), a4))
                     elif len(arguments) == 5:
                         nl1, at1 = arguments[0]
@@ -1913,8 +1911,7 @@ class PCFG():
                                                     for a4 in expressions_of_size(at4, c4):
                                                         a4 = a4.wrap_in_abstractions(nl4)
                                                         for a5 in expressions_of_size(at5, size-cost-c1-c2-c3-c4):
-                                                            a5 = a4.wrap_in_abstractions(nl5)
-                                                            # if len(set([str(a1),str(a2),str(a3),str(a4), str(a5)]))==5:
+                                                            a5 = a5.wrap_in_abstractions(nl5)
                                                             new.append(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5))
                     elif len(arguments) == 6:
                         nl1, at1 = arguments[0]
@@ -1939,11 +1936,75 @@ class PCFG():
                                                             for a5 in expressions_of_size(at5, c5):
                                                                 a5= a5.wrap_in_abstractions(nl5)
                                                                 for a6 in expressions_of_size(at6, size-cost-c1-c2-c3-c4-c5):
-                                                                    a6 = a4.wrap_in_abstractions(nl6)
-                                                                    # if len(set([str(a1),str(a2),str(a3),str(a4), str(a5),str(a6)]))==6:
+                                                                    a6 = a6.wrap_in_abstractions(nl6)
                                                                     new.append(Application(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5),a6))
+                    
+                    elif len(arguments) == 7:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        nl4, at4 = arguments[3]
+                        nl5, at5 = arguments[4]
+                        nl6, at6 = arguments[5]
+                        nl7, at7 = arguments[6]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for c3 in range(size-cost-c1-c2):
+                                            for a3 in expressions_of_size(at3, c3):
+                                                a3 = a3.wrap_in_abstractions(nl3)
+                                                for c4 in range(size-cost-c1-c2-c3):
+                                                    for a4 in expressions_of_size(at4, c4):
+                                                        a4 = a4.wrap_in_abstractions(nl4)
+                                                        for c5 in range(size-cost-c1-c2-c3-c4):
+                                                            for a5 in expressions_of_size(at5, c5):
+                                                                a5= a5.wrap_in_abstractions(nl5)
+                                                                for c6 in range(size-cost-c1-c2-c3-c4-c5):
+                                                                    for a6 in expressions_of_size(at6, c6):
+                                                                        a6 = a6.wrap_in_abstractions(nl6)
+                                                                        for a7 in expressions_of_size(at7, size-cost-c1-c2-c3-c4-c5-c6):
+                                                                            a7 = a7.wrap_in_abstractions(nl7)
+                                                                            new.append(Application(Application(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5),a6),a7))
+                    
+                    elif len(arguments) == 8:
+                        nl1, at1 = arguments[0]
+                        nl2, at2 = arguments[1]
+                        nl3, at3 = arguments[2]
+                        nl4, at4 = arguments[3]
+                        nl5, at5 = arguments[4]
+                        nl6, at6 = arguments[5]
+                        nl7, at7 = arguments[6]
+                        nl8, at8 = arguments[7]
+                        for c1 in range(size-cost):
+                            for a1 in expressions_of_size(at1, c1):
+                                a1 = a1.wrap_in_abstractions(nl1)
+                                for c2 in range(size-cost-c1):
+                                    for a2 in expressions_of_size(at2, c2):
+                                        a2 = a2.wrap_in_abstractions(nl2)
+                                        for c3 in range(size-cost-c1-c2):
+                                            for a3 in expressions_of_size(at3, c3):
+                                                a3 = a3.wrap_in_abstractions(nl3)
+                                                for c4 in range(size-cost-c1-c2-c3):
+                                                    for a4 in expressions_of_size(at4, c4):
+                                                        a4 = a4.wrap_in_abstractions(nl4)
+                                                        for c5 in range(size-cost-c1-c2-c3-c4):
+                                                            for a5 in expressions_of_size(at5, c5):
+                                                                a5= a5.wrap_in_abstractions(nl5)
+                                                                for c6 in range(size-cost-c1-c2-c3-c4-c5):
+                                                                    for a6 in expressions_of_size(at6, c6):
+                                                                        a6 = a6.wrap_in_abstractions(nl6)
+                                                                        for c7 in range(size-cost-c1-c2-c3-c4-c5-c6):
+                                                                            for a7 in expressions_of_size(at7, c7):
+                                                                                a7 = a7.wrap_in_abstractions(nl7)
+                                                                                for a8 in expressions_of_size(at8, size-cost-c1-c2-c3-c4-c5-c6-c7):
+                                                                                    a8 = a8.wrap_in_abstractions(nl8)
+                                                                                    new.append(Application(Application(Application(Application(Application(Application(Application(Application(k, a1), a2), a3), a4), a5),a6),a7),a8))
+                            
                     else:
-                        assert False, "more than six arguments not supported for the enumeration algorithm but that is not for any good reason. If you need more, please write another loop."
+                        assert False, "more than eight arguments not supported for the enumeration algorithm but that is not for any good reason. If you need more, please write another loop."
 
                 if observational_equivalence:
                     accepted_new = []
